@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Stack, Typography } from "@common-origin/design-system";
 

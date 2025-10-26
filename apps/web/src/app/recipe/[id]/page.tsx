@@ -1,11 +1,20 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Stack, Typography } from "@common-origin/design-system";
 
 type RecipePageProps = {
   params: Promise<{ id: string }>;
 };
 
-export default async function RecipePage({ params }: RecipePageProps) {
-  const { id } = await params;
+export default function RecipePage({ params }: RecipePageProps) {
+  const [id, setId] = useState<string>("");
+  
+  useEffect(() => {
+    params.then((resolvedParams) => {
+      setId(resolvedParams.id);
+    });
+  }, [params]);
   
   return (
     <main style={{ padding: 24 }}>

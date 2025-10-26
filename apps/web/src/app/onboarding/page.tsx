@@ -1,3 +1,5 @@
+"use client";
+
 import { Stack, Typography } from "@common-origin/design-system";
 
 export default function OnboardingPage() {
