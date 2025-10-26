@@ -1,0 +1,15 @@
+node_modules
+.out
+.next
+.env
+.env.local
+.env.production.local
+.env.development.local
+.vercel
+.DS_Store
+dist
+build
+.turbo
+*.log
+*.tsbuildinfo
+.vscode/settings.json
