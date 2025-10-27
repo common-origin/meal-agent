@@ -1,0 +1,288 @@
+{
+  "id": "nagi-vegetarian-chow-mein",
+  "sourceUrl": "https://www.recipetineats.com/vegetarian-chow-mein/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:48:28.941Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Vegetarian Chow Mein",
+    "author": {
+      "@type": "Person",
+      "name": "Nagi | RecipeTin Eats"
+    },
+    "description": "This vegetarian/vegan version of chow mein is very close to the traditional version, but I have created a sauce without oyster sauce in it - and obviously substituted the meat with tofu. This recipe contains directions to make this from scratch as well as the directions for making this using my Real Chinese All Purpose Stir Fry Sauce (Vegetarian version) which, if you have a stash of it on hand, makes this super quick to make because you already have the sauce ready made!",
+    "datePublished": "2014-06-06T09:30:48+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2014/06/Vegetarian-Tofu-Chow-Mein-1.jpg",
+      "https://www.recipetineats.com/tachyon/2014/06/Vegetarian-Tofu-Chow-Mein-1.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2014/06/Vegetarian-Tofu-Chow-Mein-1.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2014/06/Vegetarian-Tofu-Chow-Mein-1.jpg?resize=480%2C270"
+    ],
+    "recipeYield": [
+      "2"
+    ],
+    "prepTime": "PT10M",
+    "cookTime": "PT5M",
+    "totalTime": "PT15M",
+    "recipeIngredient": [
+      "6 oz / 180 g   fresh chow mein noodles",
+      "2 tbsp oil",
+      "2  garlic cloves (, minced)",
+      "2 cups shredded Chinese cabbage",
+      "1/2 cup carrot (, julienned)",
+      "2  scallion/shallot stems (, cut into 2\"/4cm pieces)",
+      "1 cup bean sprouts",
+      "5 oz / 150 g   firm tofu (, sliced)",
+      "1/2 tbsp soy sauce",
+      "1 tbsp Chinese cooking wine",
+      "1/2 tbsp hoisin sauce",
+      "1 1/2 tbsp soy sauce",
+      "1/2 tbsp chilli garlic sauce or sriracha ((optional))",
+      "2 tsp sugar",
+      "1/2 tsp sesame oil",
+      "1/4 cup water",
+      "White pepper"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Prepare noodles according to packet instructions (usually soaking it in boiling water).",
+        "name": "Prepare noodles according to packet instructions (usually soaking it in boiling water).",
+        "url": "https://www.recipetineats.com/vegetarian-chow-mein/#wprm-recipe-26525-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Combine tofu with marinade and set aside for 5 minutes.",
+        "name": "Combine tofu with marinade and set aside for 5 minutes.",
+        "url": "https://www.recipetineats.com/vegetarian-chow-mein/#wprm-recipe-26525-step-0-1"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Combine sauce ingredients in a small bowl.",
+        "name": "Combine sauce ingredients in a small bowl.",
+        "url": "https://www.recipetineats.com/vegetarian-chow-mein/#wprm-recipe-26525-step-0-2"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Heat oil in wok over high heat, add garlic and stir fry for 10 seconds.",
+        "name": "Heat oil in wok over high heat, add garlic and stir fry for 10 seconds.",
+        "url": "https://www.recipetineats.com/vegetarian-chow-mein/#wprm-recipe-26525-step-0-3"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add tofu and stir fry until starting to caramelise - about 1 minute. Stir fry gently so the tofu doesn't break.",
+        "name": "Add tofu and stir fry until starting to caramelise - about 1 minute. Stir fry gently so the tofu doesn't break.",
+        "url": "https://www.recipetineats.com/vegetarian-chow-mein/#wprm-recipe-26525-step-0-4"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add the cabbage and carrot and stir fry until the cabbage starts to wilt.",
+        "name": "Add the cabbage and carrot and stir fry until the cabbage starts to wilt.",
+        "url": "https://www.recipetineats.com/vegetarian-chow-mein/#wprm-recipe-26525-step-0-5"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add the noodles, scallions/shallots, bean sprouts and sauce and stir fry until the noodles are warmed through and sauce evenly coats the noodles - about 1 minute. Don't cook it too much - the bean sprouts should still be quite crisp, not wilted.",
+        "name": "Add the noodles, scallions/shallots, bean sprouts and sauce and stir fry until the noodles are warmed through and sauce evenly coats the noodles - about 1 minute. Don't cook it too much - the bean sprouts should still be quite crisp, not wilted.",
+        "url": "https://www.recipetineats.com/vegetarian-chow-mein/#wprm-recipe-26525-step-0-6"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Serve immediately.",
+        "name": "Serve immediately.",
+        "url": "https://www.recipetineats.com/vegetarian-chow-mein/#wprm-recipe-26525-step-0-7"
+      },
+      {
+        "@type": "HowToSection",
+        "name": "Directions using homemade Real Chinese All Purpose Stir Fry Sauce",
+        "itemListElement": [
+          {
+            "@type": "HowToStep",
+            "text": "If you have a jar of homemade Real Chinese All Purpose Stir Fry Sauce, you do not need to make the marinade or sauce for this recipe.",
+            "name": "If you have a jar of homemade Real Chinese All Purpose Stir Fry Sauce, you do not need to make the marinade or sauce for this recipe.",
+            "url": "https://www.recipetineats.com/vegetarian-chow-mein/#wprm-recipe-26525-step-1-0"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Substitute the tofu marinade with 1 tbsp Stir Fry Sauce",
+            "name": "Substitute the tofu marinade with 1 tbsp Stir Fry Sauce",
+            "url": "https://www.recipetineats.com/vegetarian-chow-mein/#wprm-recipe-26525-step-1-1"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Substitute the Sauce ingredients with 1/4 cup Stir Fry Sauce and 1/4 cup water.",
+            "name": "Substitute the Sauce ingredients with 1/4 cup Stir Fry Sauce and 1/4 cup water.",
+            "url": "https://www.recipetineats.com/vegetarian-chow-mein/#wprm-recipe-26525-step-1-2"
+          }
+        ]
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.88",
+      "ratingCount": "16",
+      "reviewCount": "10"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Nagi, what brand of 'fresh' Chow Mein noodles are you using here in Australia?",
+        "author": {
+          "@type": "Person",
+          "name": "Karina"
+        },
+        "datePublished": "2024-05-10"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Easy to make and tastes delicious. Used red cabbage instead. Fresh and filling. The whole family enjoyed it using sriracha",
+        "author": {
+          "@type": "Person",
+          "name": "Melissa Bowman"
+        },
+        "datePublished": "2023-10-16"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Nagi this was delicious, my boys asked for seconds and willing ate all the vegetables and the tofu! It took me 5 mins to prep.  Thank you, your meals are literally foolproof.",
+        "author": {
+          "@type": "Person",
+          "name": "Karen"
+        },
+        "datePublished": "2023-07-25"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Another fab recipe ,this woman never fails me❤️",
+        "author": {
+          "@type": "Person",
+          "name": "Charmaine"
+        },
+        "datePublished": "2023-01-11"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Tripled the recipe for visiting vegan members of the family. It was delicious and a resounding success. I was hoping to save some for leftovers but no chance! They kept eating till it was all gone. Their last visit, I cooked your vegetarian lentil soup - also a big hit. Thank you Nagi, you’re a star.  ⭐️",
+        "author": {
+          "@type": "Person",
+          "name": "Marea"
+        },
+        "datePublished": "2021-03-10"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Thanks Nagi another winner! I double the recipe and left out the sriracha because my daughter doesn’t like chilli but my hubby and I added sriracha on top which worked fine! Thanks will make this again!",
+        "author": {
+          "@type": "Person",
+          "name": "Tracie"
+        },
+        "datePublished": "2020-11-24"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Another 5 star recipe Nagi! I've cooked chow mein for 40 years &amp; this recipe is the best. Easy, &amp; flavorful. My husband &amp; I loved it. Maybe I read it wrong but I found it yielded way more than 2 svgs. More like 6. Anyways, more the better! Love your recipes &amp; the excellent way you detail each step!",
+        "author": {
+          "@type": "Person",
+          "name": "Ann D Adachi"
+        },
+        "datePublished": "2020-08-19"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "This is so delicious 🤤 and easy to make.  Thank you for this fantastic recipe.  You’re awesome, Nagi! 😊",
+        "author": {
+          "@type": "Person",
+          "name": "Nina"
+        },
+        "datePublished": "2020-06-16"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "3"
+        },
+        "reviewBody": "This didn't really work for me. Are we meant to drain tofu from the marinade and stir fry? I tipped mine in all together, ended up with way too much sauce and the tofu crumbled apart. Thinking if I do it again I'll use the store bought block of Chinese flavored tofu as it seems much firmer than what I ended up with 😦",
+        "author": {
+          "@type": "Person",
+          "name": "Jane"
+        },
+        "datePublished": "2019-11-29"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I accidentally left my review for this recipe on the chicken chow mein recipe. Oops. This vegetarian version last night and it was truly spectacular. I really can't believe something this delicious and authentic tasting came from my kitchen. Everybody loved it.",
+        "author": {
+          "@type": "Person",
+          "name": "Jill Evans"
+        },
+        "datePublished": "2018-10-13"
+      }
+    ],
+    "recipeCategory": [
+      "Noodles",
+      "Stir Fry",
+      "Vegan",
+      "Vegetarian"
+    ],
+    "recipeCuisine": [
+      "Asian",
+      "Chinese"
+    ],
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "servingSize": "436 g",
+      "calories": "390 kcal",
+      "carbohydrateContent": "40.4 g",
+      "proteinContent": "16.4 g",
+      "fatContent": "20.2 g",
+      "saturatedFatContent": "3.9 g",
+      "cholesterolContent": "25 mg",
+      "sodiumContent": "1079 mg",
+      "fiberContent": "3.7 g",
+      "sugarContent": "8.7 g"
+    },
+    "@id": "https://www.recipetineats.com/vegetarian-chow-mein/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/vegetarian-chow-mein/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/vegetarian-chow-mein/"
+  }
+}

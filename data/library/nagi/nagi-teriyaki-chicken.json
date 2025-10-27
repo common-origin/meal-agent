@@ -1,0 +1,299 @@
+{
+  "id": "nagi-teriyaki-chicken",
+  "sourceUrl": "https://www.recipetineats.com/teriyaki-chicken/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:48:27.426Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Teriyaki Chicken (With Homemade Teriyaki Sauce)",
+    "author": {
+      "@type": "Person",
+      "name": "Nagi | RecipeTin Eats"
+    },
+    "description": "Make your own Teriyaki Sauce at home - not only is it easy, fast and more tasty, the marinade infuses into the flesh better. Make a larger batch and store it in the fridge so you have it on hand for a quick meal! Also great to cook on the outdoor grill/BBQ. Though not strictly a 15 minute meal because of the marinating time, I have classified it in 15 minute meals because the cooking and active prep time is less than 15 minutes.",
+    "datePublished": "2014-07-12T18:13:46+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2014/07/Teriyaki-Chicken-2-1.jpg",
+      "https://www.recipetineats.com/tachyon/2014/07/Teriyaki-Chicken-2-1.jpg?resize=450%2C375",
+      "https://www.recipetineats.com/tachyon/2014/07/Teriyaki-Chicken-2-1.jpg?resize=450%2C270"
+    ],
+    "recipeYield": [
+      "4"
+    ],
+    "prepTime": "PT2M",
+    "cookTime": "PT13M",
+    "totalTime": "PT15M",
+    "recipeIngredient": [
+      "4 tbsp Teriyaki Sauce Marinade",
+      "4  chicken thigh fillets (, skinless and boneless (about 5oz/150g each))",
+      "1 tbsp oil",
+      "2 tbsp soy sauce",
+      "2 tbsp mirin",
+      "2 tbsp Japanese cooking wine ((sake))",
+      "2 tbsp water"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToSection",
+        "name": "Teriyaki Sauce Marinade (\"Marinade\")",
+        "itemListElement": [
+          {
+            "@type": "HowToStep",
+            "text": "Combine the 4 ingredients in a small saucepan over high heat.",
+            "name": "Combine the 4 ingredients in a small saucepan over high heat.",
+            "url": "https://www.recipetineats.com/teriyaki-chicken/#wprm-recipe-26378-step-0-0"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Bring to boil, then turn heat down and simmer until it reduces by half - it should only take 5 minutes or so. The consistency should be like a light syrup. Keep your eye on it - it will start to thicken suddenly!",
+            "name": "Bring to boil, then turn heat down and simmer until it reduces by half - it should only take 5 minutes or so. The consistency should be like a light syrup. Keep your eye on it - it will start to thicken suddenly!",
+            "url": "https://www.recipetineats.com/teriyaki-chicken/#wprm-recipe-26378-step-0-1"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Bring to room temperature before using.",
+            "name": "Bring to room temperature before using.",
+            "url": "https://www.recipetineats.com/teriyaki-chicken/#wprm-recipe-26378-step-0-2"
+          }
+        ]
+      },
+      {
+        "@type": "HowToSection",
+        "name": "Chicken",
+        "itemListElement": [
+          {
+            "@type": "HowToStep",
+            "text": "Combine the Marinade with the chicken and marinate for at least 20 minutes, preferably overnight.",
+            "name": "Combine the Marinade with the chicken and marinate for at least 20 minutes, preferably overnight.",
+            "url": "https://www.recipetineats.com/teriyaki-chicken/#wprm-recipe-26378-step-1-0"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Remove chicken from Marinade but do not discard the Marinade liquid.",
+            "name": "Remove chicken from Marinade but do not discard the Marinade liquid.",
+            "url": "https://www.recipetineats.com/teriyaki-chicken/#wprm-recipe-26378-step-1-1"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Heat oil in non stick pan over medium to medium-high heat. You don't want it too hot because otherwise the sugar in the Marinade will burn before the inside is cooked.",
+            "name": "Heat oil in non stick pan over medium to medium-high heat. You don't want it too hot because otherwise the sugar in the Marinade will burn before the inside is cooked.",
+            "url": "https://www.recipetineats.com/teriyaki-chicken/#wprm-recipe-26378-step-1-2"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Place the chicken in the pan and cook the first side for around 3 minutes, checking to ensure the skin isn't cooking too quickly. If it is, remove pan from heat and turn the heat down, and add about 2 to 4 tbsp of water to the pan then return to the stovetop. The water slows down the searing process on the skin while still allowing the chicken to cook on the inside.",
+            "name": "Place the chicken in the pan and cook the first side for around 3 minutes, checking to ensure the skin isn't cooking too quickly. If it is, remove pan from heat and turn the heat down, and add about 2 to 4 tbsp of water to the pan then return to the stovetop. The water slows down the searing process on the skin while still allowing the chicken to cook on the inside.",
+            "url": "https://www.recipetineats.com/teriyaki-chicken/#wprm-recipe-26378-step-1-3"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Turn chicken over and cook the other side. Just before the chicken is finished cooking, add 2 tbsp of water to the pan and and swirl around and mix with the marinade that has come off the chicken. This will make a dark glossy \"sauce\". Move the chicken around in the pan to coat with this sauce.",
+            "name": "Turn chicken over and cook the other side. Just before the chicken is finished cooking, add 2 tbsp of water to the pan and and swirl around and mix with the marinade that has come off the chicken. This will make a dark glossy \"sauce\". Move the chicken around in the pan to coat with this sauce.",
+            "url": "https://www.recipetineats.com/teriyaki-chicken/#wprm-recipe-26378-step-1-4"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "The Marinade is a strong flavour so you shouldn't need any extra sauce. But if you do want more, add equal parts of Teriyaki Sauce and water to the pan and allow to come to a simmer and let it cook until the desired consistency.",
+            "name": "The Marinade is a strong flavour so you shouldn't need any extra sauce. But if you do want more, add equal parts of Teriyaki Sauce and water to the pan and allow to come to a simmer and let it cook until the desired consistency.",
+            "url": "https://www.recipetineats.com/teriyaki-chicken/#wprm-recipe-26378-step-1-5"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Serve with rice.",
+            "name": "Serve with rice.",
+            "url": "https://www.recipetineats.com/teriyaki-chicken/#wprm-recipe-26378-step-1-6"
+          }
+        ]
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "25",
+      "reviewCount": "12"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I made salmon for me and chicken for the rest of the fam. This was a real hit! This will go into our regular rotation. Thanks Nagi",
+        "author": {
+          "@type": "Person",
+          "name": "Charli"
+        },
+        "datePublished": "2025-09-04"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I made this chicken for my daughter’s birthday dinner (12 adults and 6 small children), everyone loved it and requested that I make it again!  Thanks for the delicious recipe!",
+        "author": {
+          "@type": "Person",
+          "name": "Kerry"
+        },
+        "datePublished": "2024-02-26"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I was a little time poor &amp; didn’t marinate my chicken. I plan fried chicken thighs and when ready to serve, I poured the teriyaki sauce over the cooked chicken &amp; garnished with chopped spring onion. Served with rice &amp; Chang’s crunchy Asian Salad. My fussy family loved it ❤️ thanks Nagi",
+        "author": {
+          "@type": "Person",
+          "name": "Leanne Rooijmans"
+        },
+        "datePublished": "2024-01-28"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I was a little time poor &amp; didn’t marinate my chicken. I plan fried chicken thighs and when ready to serve poured the teriyaki sauce over the cooked chicken &amp; garnished with chopped spring onion. Served with rice &amp; Chang’s crunchy Asia Salad. My fussy family loved it ❤️ thanks Nagi",
+        "author": {
+          "@type": "Person",
+          "name": "Leanne Rooijmans"
+        },
+        "datePublished": "2024-01-28"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Tried this last night and it was super good! I added 1 tsp of sugar and also had stir-fry veggies on the side. It turned out reaaaallly well. :) Thanks for the simple yet amazing recipe, Nagi!",
+        "author": {
+          "@type": "Person",
+          "name": "Grace"
+        },
+        "datePublished": "2024-01-17"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Hola Nagi l hope you are doing well just l let you know that’s you’re doing very excellent comida muchas felicidades l love you chef Nagi 🙏🙏🙏🙏♥️",
+        "author": {
+          "@type": "Person",
+          "name": "Jose"
+        },
+        "datePublished": "2023-11-17"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Love this recipe! All of yours actually! \r\n\r\nAny chance this recipe could be used with beef in the slow cooker? Would you add more water etc?",
+        "author": {
+          "@type": "Person",
+          "name": "Lily"
+        },
+        "datePublished": "2023-10-21"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "This recipe is the another homerun!  My picky eater son has loved EVERY recipe I have tried from your collection!  Keep them coming Nagi!!",
+        "author": {
+          "@type": "Person",
+          "name": "Ana Kiritsis"
+        },
+        "datePublished": "2023-09-29"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Hi, \r\nRecipe is missing the (presumed) honey! I added 2 tablespoons and it worked out great :)",
+        "author": {
+          "@type": "Person",
+          "name": "Gabrielle Mason"
+        },
+        "datePublished": "2023-08-30"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Did you by chance slick the chicken thighs in half?\r\n\r\nIt took way longer to cook on each side than three minutes. Used standard lillydale chicken thighs.",
+        "author": {
+          "@type": "Person",
+          "name": "Mich"
+        },
+        "datePublished": "2023-03-31"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Delicious and easy sauce.",
+        "author": {
+          "@type": "Person",
+          "name": "Becky"
+        },
+        "datePublished": "2022-11-13"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Absolutely loved this recipe. The chicken was so tasty and succulent. I paired it with rice and broccolini. Delicious meal I will be cooking again.",
+        "author": {
+          "@type": "Person",
+          "name": "Fiona Farley"
+        },
+        "datePublished": "2022-07-11"
+      }
+    ],
+    "recipeCategory": [
+      "BBQ",
+      "Grilling"
+    ],
+    "recipeCuisine": [
+      "Asian",
+      "Japanese"
+    ],
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "servingSize": "161 g",
+      "calories": "182 kcal",
+      "carbohydrateContent": "0.6 g",
+      "proteinContent": "27.3 g",
+      "fatContent": "8.8 g",
+      "saturatedFatContent": "1.8 g",
+      "cholesterolContent": "114 mg",
+      "sodiumContent": "786 mg"
+    },
+    "@id": "https://www.recipetineats.com/teriyaki-chicken/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/teriyaki-chicken/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/teriyaki-chicken/"
+  }
+}

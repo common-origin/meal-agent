@@ -1,0 +1,339 @@
+{
+  "id": "nagi-creamy-mushroom-and-spinach-orzo-risoni-one-pot",
+  "sourceUrl": "https://www.recipetineats.com/creamy-mushroom-and-spinach-orzo-risoni-one-pot/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:48:30.526Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Creamy Mushroom and Spinach Orzo (Risoni) (One Pot)",
+    "author": {
+      "@type": "Person",
+      "name": "Nagi | RecipeTin Eats"
+    },
+    "description": "An easy dinner for midweek all made in one pot. Super creamy but made without a single drop of cream! Nutrition grade rating of A-. Make it even more nutritious by adding more vegetables!",
+    "datePublished": "2015-05-25T18:00:00+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2015/05/Spinach-Parmesan-Creamy-Risoni-2_in-pan.jpg",
+      "https://www.recipetineats.com/tachyon/2015/05/Spinach-Parmesan-Creamy-Risoni-2_in-pan.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2015/05/Spinach-Parmesan-Creamy-Risoni-2_in-pan.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2015/05/Spinach-Parmesan-Creamy-Risoni-2_in-pan.jpg?resize=480%2C270"
+    ],
+    "recipeYield": [
+      "4"
+    ],
+    "prepTime": "PT10M",
+    "cookTime": "PT20M",
+    "totalTime": "PT30M",
+    "recipeIngredient": [
+      "1 tbsp olive oil",
+      "1.2 lb / 600g   mushrooms (, sliced (I used button mushrooms))",
+      "3 tbsp butter, unsalted",
+      "3  garlic cloves (, minced)",
+      "1  small onion (, finely diced)",
+      "3 tbsp flour",
+      "1 1/2 cups / 375 ml  milk ((I used low fat))",
+      "3 cups / 750 ml  chicken broth",
+      "1 1/2 cups orzo / risoni, uncooked ((Note 1))",
+      "1/2 tsp salt",
+      "Black pepper",
+      "3/4 cup parmesan cheese (, grated)",
+      "8 oz / 250g   frozen spinach ((1 box), thawed, excess water squeezed out)",
+      "Extra parmesan cheese",
+      "Finely chopped parsley"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Heat the olive oil in a large non stick pan over high heat (if you aren't using non stick, use more oil).",
+        "name": "Heat the olive oil in a large non stick pan over high heat (if you aren't using non stick, use more oil).",
+        "url": "https://www.recipetineats.com/creamy-mushroom-and-spinach-orzo-risoni-one-pot/#wprm-recipe-25155-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add the mushrooms and cook until softened (around 3 minutes). Remove from the pan and set aside.",
+        "name": "Add the mushrooms and cook until softened (around 3 minutes). Remove from the pan and set aside.",
+        "url": "https://www.recipetineats.com/creamy-mushroom-and-spinach-orzo-risoni-one-pot/#wprm-recipe-25155-step-0-1"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Lower the heat to medium and melt the butter in the pan. Add garlic and onion, and sauté until the onion becomes translucent - around 3 minutes.",
+        "name": "Lower the heat to medium and melt the butter in the pan. Add garlic and onion, and sauté until the onion becomes translucent - around 3 minutes.",
+        "url": "https://www.recipetineats.com/creamy-mushroom-and-spinach-orzo-risoni-one-pot/#wprm-recipe-25155-step-0-2"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add the flour, stir it in and cook for 1 minute.",
+        "name": "Add the flour, stir it in and cook for 1 minute.",
+        "url": "https://www.recipetineats.com/creamy-mushroom-and-spinach-orzo-risoni-one-pot/#wprm-recipe-25155-step-0-3"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add the milk and chicken broth and use a whisk to mix the butter flour mixture into the liquid.",
+        "name": "Add the milk and chicken broth and use a whisk to mix the butter flour mixture into the liquid.",
+        "url": "https://www.recipetineats.com/creamy-mushroom-and-spinach-orzo-risoni-one-pot/#wprm-recipe-25155-step-0-4"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Increase heat to medium high. Add the orzo/risoni, salt and pepper, stir once, then put a lid on (Note 2). Bring it to a simmer, then leave it to cook for around 8 to 10 minutes or until the orzo/risoni is cooked but still slightly firm, and it is still quite saucy. Note: If you have a strong stove, turn it down slightly so it just simmers).",
+        "name": "Increase heat to medium high. Add the orzo/risoni, salt and pepper, stir once, then put a lid on (Note 2). Bring it to a simmer, then leave it to cook for around 8 to 10 minutes or until the orzo/risoni is cooked but still slightly firm, and it is still quite saucy. Note: If you have a strong stove, turn it down slightly so it just simmers).",
+        "url": "https://www.recipetineats.com/creamy-mushroom-and-spinach-orzo-risoni-one-pot/#wprm-recipe-25155-step-0-5"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "While the orzo is cooking, break up the spinach into little pieces with your fingers.",
+        "name": "While the orzo is cooking, break up the spinach into little pieces with your fingers.",
+        "url": "https://www.recipetineats.com/creamy-mushroom-and-spinach-orzo-risoni-one-pot/#wprm-recipe-25155-step-0-6"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Remove the pan from the stove. Stir through the parmesan, spinach and cooked mushrooms. Check if more salt or pepper is required.",
+        "name": "Remove the pan from the stove. Stir through the parmesan, spinach and cooked mushrooms. Check if more salt or pepper is required.",
+        "url": "https://www.recipetineats.com/creamy-mushroom-and-spinach-orzo-risoni-one-pot/#wprm-recipe-25155-step-0-7"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Serve immediately, garnished with more parmesan and fresh finely chopped parsley, if desired.",
+        "name": "Serve immediately, garnished with more parmesan and fresh finely chopped parsley, if desired.",
+        "url": "https://www.recipetineats.com/creamy-mushroom-and-spinach-orzo-risoni-one-pot/#wprm-recipe-25155-step-0-8"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.97",
+      "ratingCount": "55",
+      "reviewCount": "16"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Just made this used silver beet from the garden and some extra broccoli and some fresh oregano and basil. Made heaps and was delicious !",
+        "author": {
+          "@type": "Person",
+          "name": "Lizz"
+        },
+        "datePublished": "2025-09-28"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I grilled some chicken breast and sliced it and then mixed it at the end for a little extra protein. I used a blend of mushrooms too. It was a very simple and easy weeknight dinner for two with about 3 small portions for meals after!  This one is a keeper.",
+        "author": {
+          "@type": "Person",
+          "name": "Roger"
+        },
+        "datePublished": "2025-07-18"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "10/10, this dish is incredible! Such a soul food, I actually forgot the parmesan!! It was still incredible. I added the flesh from a whole roast chicken and it was perfect.",
+        "author": {
+          "@type": "Person",
+          "name": "Shaye Haasbroek"
+        },
+        "datePublished": "2025-05-13"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Yum, had some Swiss brown mushrooms to use up, so did scale recipe back for 2 servings. I used veggies stock then cream. With lid on I did find sauce a bit runny, so took lid off and simmered a little longer. Didn't have spinach either, so for the green element added frozen peas. Which worked really well, a great quick dinner .",
+        "author": {
+          "@type": "Person",
+          "name": "Msmoo"
+        },
+        "datePublished": "2024-08-20"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Delicious 😋",
+        "author": {
+          "@type": "Person",
+          "name": "Francine m platt"
+        },
+        "datePublished": "2024-06-24"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Absolutely phenomenal. I didn’t realise that I had forgotten to add in the parmesan - it was THAT flavourful and delicious. I also made this with risotto instead of orzo. Completely obsessed",
+        "author": {
+          "@type": "Person",
+          "name": "Jas"
+        },
+        "datePublished": "2024-05-25"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Oops forgot to rate!! I’d give it 10 stars!",
+        "author": {
+          "@type": "Person",
+          "name": "Kristin Jazdzewski"
+        },
+        "datePublished": "2024-04-08"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I made this recipe last night. All I can say is …..OH MY GOODNESS! Absolutely delicious. Only had heavy cream and fresh spinach on hand. After other reviews, I added a squeeze of lemon once on my plate. I sent this to all of my foodie friends.",
+        "author": {
+          "@type": "Person",
+          "name": "Marjorie Tague"
+        },
+        "datePublished": "2024-02-28"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Love your recipes Nagi👌Absolutely delicious😋 used a mixture of mushrooms only &amp; served rissoto with a chicken  dish I made in the oven!",
+        "author": {
+          "@type": "Person",
+          "name": "Roshini Naidu"
+        },
+        "datePublished": "2023-04-18"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "This recipe is so great and easy! Added truffle oil before serving and it's phenomenal :)",
+        "author": {
+          "@type": "Person",
+          "name": "Kirsten"
+        },
+        "datePublished": "2023-03-08"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Amazing recipe. So glad to find good vegetarian recipes! Thanks Nagi",
+        "author": {
+          "@type": "Person",
+          "name": "Sandhya"
+        },
+        "datePublished": "2023-03-07"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "So yummy. I added chicken to it!",
+        "author": {
+          "@type": "Person",
+          "name": "Adree"
+        },
+        "datePublished": "2022-10-31"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Made this on my lunch break 😋, I was so surprised that alot of the items were staples. Added zucchini  &amp; peas as well, really flavoursome, wholesome and quick to make. Thanks Nagi 😊 much appreciated",
+        "author": {
+          "@type": "Person",
+          "name": "Anne-Maree"
+        },
+        "datePublished": "2022-09-28"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Winner winner chicken dinner!  Made for 2, used 1-1/2 c fresh spinach, scarfed down by my veggie-hesitant spouse ;)",
+        "author": {
+          "@type": "Person",
+          "name": "Sheila"
+        },
+        "datePublished": "2022-09-12"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Delicious! I used fresh kale/spinach instead of frozen spinach, and added in chilli flakes for extra flavour. It was a big hit and people went back for 3rd helpings!",
+        "author": {
+          "@type": "Person",
+          "name": "Andrea"
+        },
+        "datePublished": "2022-05-11"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I admit it: I'm a glutton. I used heavy cream with just a bit of water.\r\n\r\nI wilted down one bunch of fresh spinach (that's all I had) and let it drain. I didn't have enough mushrooms or spinach, but by the time it was done, all I can say is . . . oh. my. goodness! One of the most tasty pastas I've eaten, let alone made, in a long time. Just decadent!\r\n\r\nNagi, do you have any suggestions on how to do this recipe with the sauce and pasta separate? I was thinking of cutting the milk and chicken broth by 1/2 and keeping everything else the same. My reason for wanting to do this is so I could save some for lunch the next day, and I think it would hold up better if I could just add the sauce to the pasta.\r\n\r\nThank you so much for a delectable recipe!",
+        "author": {
+          "@type": "Person",
+          "name": "Bad Kitty"
+        },
+        "datePublished": "2022-03-11"
+      }
+    ],
+    "recipeCategory": [
+      "Pasta"
+    ],
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "servingSize": "601 g",
+      "calories": "542 kcal",
+      "carbohydrateContent": "67.9 g",
+      "proteinContent": "27.3 g",
+      "fatContent": "19.2 g",
+      "saturatedFatContent": "9 g",
+      "cholesterolContent": "37 mg",
+      "sodiumContent": "1172 mg",
+      "fiberContent": "5.7 g",
+      "sugarContent": "12 g"
+    },
+    "@id": "https://www.recipetineats.com/creamy-mushroom-and-spinach-orzo-risoni-one-pot/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/creamy-mushroom-and-spinach-orzo-risoni-one-pot/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/creamy-mushroom-and-spinach-orzo-risoni-one-pot/"
+  }
+}

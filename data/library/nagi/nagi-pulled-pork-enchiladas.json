@@ -1,0 +1,290 @@
+{
+  "id": "nagi-pulled-pork-enchiladas",
+  "sourceUrl": "https://www.recipetineats.com/pulled-pork-enchiladas/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:48:17.881Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Pulled Pork Enchiladas",
+    "author": {
+      "@type": "Person",
+      "name": "Nagi | RecipeTin Eats"
+    },
+    "description": "Using leftover Pork Carnitas (Mexican Pulled Pork) or other shredded meat, it takes a mere 15 minutes to assemble this dish to pop into the oven, making this a sensational mid week meal! Note that the Pork Carnitas used in this recipe is already seasoned and flavoured so if you substitute with an unseasoned meat then please refer to the notes for seasonings to add to the filling mixture.",
+    "datePublished": "2014-07-17T20:57:00+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2014/07/Pork-Carnitas-Enchiladas-3-1.jpg",
+      "https://www.recipetineats.com/tachyon/2014/07/Pork-Carnitas-Enchiladas-3-1.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2014/07/Pork-Carnitas-Enchiladas-3-1.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2014/07/Pork-Carnitas-Enchiladas-3-1.jpg?resize=480%2C270"
+    ],
+    "recipeYield": [
+      "4"
+    ],
+    "prepTime": "PT15M",
+    "cookTime": "PT25M",
+    "totalTime": "PT40M",
+    "recipeIngredient": [
+      "2 cups (packed)  Pork Carnitas (Mexican Pulled Pork) or other shredded meat (see notes)",
+      "1 tbsp olive oil",
+      "1 cup tinned black beans or red kidney beans (, drained)",
+      "1 can (15oz / 400g)   corn kernels (, drained)",
+      "2 cups shredded cheese ((any good melting cheese))",
+      "8  tortillas",
+      "3 cups (750ml / 25oz)   Enchilada Sauce  ((homemade or store bought))"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Preheat oven to 350F/180C.",
+        "name": "Preheat oven to 350F/180C.",
+        "url": "https://www.recipetineats.com/pulled-pork-enchiladas/#wprm-recipe-26360-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Heat 1 tbsp olive oil in a pan over high heat. Add the pork carnitas and cook until the bottom is nicely browned - about 1 1/2 minutes. Do not turn, just make the bottom crispy (to keep the pulled pork as moist as possible), then remove the pulled pork into a bowl. It does not matter if the top isn't heated through, it will heat in the oven.",
+        "name": "Heat 1 tbsp olive oil in a pan over high heat. Add the pork carnitas and cook until the bottom is nicely browned - about 1 1/2 minutes. Do not turn, just make the bottom crispy (to keep the pulled pork as moist as possible), then remove the pulled pork into a bowl. It does not matter if the top isn't heated through, it will heat in the oven.",
+        "url": "https://www.recipetineats.com/pulled-pork-enchiladas/#wprm-recipe-26360-step-0-1"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add the corn, black beans, 1/2 cup enchilada sauce and 1/2 cup cheese into the bowl and mix to combine.",
+        "name": "Add the corn, black beans, 1/2 cup enchilada sauce and 1/2 cup cheese into the bowl and mix to combine.",
+        "url": "https://www.recipetineats.com/pulled-pork-enchiladas/#wprm-recipe-26360-step-0-2"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Spread 1/2 cup of Enchilada Sauce on the bottom of the baking dish.",
+        "name": "Spread 1/2 cup of Enchilada Sauce on the bottom of the baking dish.",
+        "url": "https://www.recipetineats.com/pulled-pork-enchiladas/#wprm-recipe-26360-step-0-3"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Place 1/2 packed cup of filling (from step 3) into a tortilla and roll up and place in the baking dish.",
+        "name": "Place 1/2 packed cup of filling (from step 3) into a tortilla and roll up and place in the baking dish.",
+        "url": "https://www.recipetineats.com/pulled-pork-enchiladas/#wprm-recipe-26360-step-0-4"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Pour over the remaining Enchilada Sauce, and bake for 10 minutes.",
+        "name": "Pour over the remaining Enchilada Sauce, and bake for 10 minutes.",
+        "url": "https://www.recipetineats.com/pulled-pork-enchiladas/#wprm-recipe-26360-step-0-5"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Remove from oven and scatter the cheese on, then bake for a further 10 to 15 minutes until the cheese is bubbling and golden.",
+        "name": "Remove from oven and scatter the cheese on, then bake for a further 10 to 15 minutes until the cheese is bubbling and golden.",
+        "url": "https://www.recipetineats.com/pulled-pork-enchiladas/#wprm-recipe-26360-step-0-6"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Let stand for 5 minutes before serving.",
+        "name": "Let stand for 5 minutes before serving.",
+        "url": "https://www.recipetineats.com/pulled-pork-enchiladas/#wprm-recipe-26360-step-0-7"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "51",
+      "reviewCount": "13"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Best enchilada sauce ever!  My house smells so good with this in my oven!",
+        "author": {
+          "@type": "Person",
+          "name": "Jo"
+        },
+        "datePublished": "2025-07-07"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Another banger of a recipe!\r\nI made these tonight with some leftover pulled pork and it was delicious! The meat was a simple pork shoulder recipe, roasted low and slow, so I took your tips on adding seasoning to the meat. Looking back, I didn’t remember the combo correctly and unnecessarily added ground chile powder, but it still turned out delicious.\r\n\r\nI’ve made your sauce before with the beef enchiladas recipe, though I had some cans of pre-made sauce in the pantry that I needed to use before they expired. Rosarita makes legit enchilada sauce, though I definitely prefer your recipe. \r\n\r\nI will definitely make these again.",
+        "author": {
+          "@type": "Person",
+          "name": "Jeremy"
+        },
+        "datePublished": "2024-02-07"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Thanks Nagi, just what I was looking for today.  You have a lovely website that popped up first with a great recipe!",
+        "author": {
+          "@type": "Person",
+          "name": "davey"
+        },
+        "datePublished": "2024-01-27"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "This was so yummy and easy to make!  I used leftover pulled pork (already seasoned) added the black beans, corn and cheese and it took me about 5 minutes to put together.  Because my pork was already cooked I skipped step 2.  So happy to have an easy, quick meal to add to the rotation.",
+        "author": {
+          "@type": "Person",
+          "name": "Donna"
+        },
+        "datePublished": "2023-12-28"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I would eat your own bum if I knew you loved it so much",
+        "author": {
+          "@type": "Person",
+          "name": "gregory too"
+        },
+        "datePublished": "2023-08-30"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "wow i would eat my own bum if iknew i loved it so much",
+        "author": {
+          "@type": "Person",
+          "name": "gregory"
+        },
+        "datePublished": "2023-06-25"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Yummy!",
+        "author": {
+          "@type": "Person",
+          "name": "Angela W Broyles"
+        },
+        "datePublished": "2023-06-08"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "These were delicious. Made them with defrosted pork from tacos a couple of months back and it worked perfectly. My partner and I both went back for seconds!",
+        "author": {
+          "@type": "Person",
+          "name": "Sam"
+        },
+        "datePublished": "2023-03-12"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I made these using some leftover pulled pork I froze from a roast a few weeks ago.  Used the seasonings as indicated in the note and enchilada sauce from Trader Joes.  Super easy to put together and my son who normally will not eat pork told me it was really good!",
+        "author": {
+          "@type": "Person",
+          "name": "DenimDaisy26"
+        },
+        "datePublished": "2023-02-07"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Best enchiladas ever. Period.\r\n\r\nThe sauce is so simple to make, I have even made it on a camping stove and it is just as good.",
+        "author": {
+          "@type": "Person",
+          "name": "Petra"
+        },
+        "datePublished": "2022-09-01"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I have been cooking dinner for my friend once a week for 10+ years. She is always very appreciative, but tonight I made this and she said it's in the top 3 things I've ever made. Winner!",
+        "author": {
+          "@type": "Person",
+          "name": "Dee"
+        },
+        "datePublished": "2022-08-21"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Amazing! So happy to have a recipe for leftover pulled pork.\r\nIt's a keeper!",
+        "author": {
+          "@type": "Person",
+          "name": "Gail"
+        },
+        "datePublished": "2022-07-07"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "These were delicious! I made the pulled bbq pork the week before &amp; used leftovers in this recipe. Super fast, super good. It’s snowing here in Colorado, so this was a perfect comfort meal. Thanks Nagi. I’m loving your recipes.",
+        "author": {
+          "@type": "Person",
+          "name": "Belinda"
+        },
+        "datePublished": "2021-10-14"
+      }
+    ],
+    "recipeCategory": [
+      "Baked",
+      "Fast"
+    ],
+    "recipeCuisine": [
+      "Mexican"
+    ],
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "servingSize": "324 g",
+      "calories": "788 kcal",
+      "carbohydrateContent": "82.9 g",
+      "proteinContent": "42.2 g",
+      "fatContent": "36.5 g",
+      "saturatedFatContent": "17.2 g",
+      "cholesterolContent": "105 mg",
+      "sodiumContent": "423 mg",
+      "fiberContent": "18.5 g",
+      "sugarContent": "4.8 g"
+    },
+    "@id": "https://www.recipetineats.com/pulled-pork-enchiladas/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/pulled-pork-enchiladas/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/pulled-pork-enchiladas/"
+  }
+}

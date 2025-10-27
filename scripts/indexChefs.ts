@@ -61,6 +61,21 @@ interface ChefConfig {
   excludePatterns: string[]; // NEW: Patterns to exclude (must not contain these)
 }
 
+interface RecipeFilters {
+  maxTotalTimeMinutes?: number; // Max total time in minutes (default: 45)
+  maxIngredients?: number; // Max number of ingredients (default: 15)
+  excludeCategories: string[]; // Categories to exclude (e.g., "Breakfast", "Dessert")
+  requireDinnerFocused: boolean; // Only accept dinner/main course recipes
+}
+
+// Recipe filtering criteria
+const RECIPE_FILTERS: RecipeFilters = {
+  maxTotalTimeMinutes: 60, // Up to 1 hour (includes prep + cook)
+  maxIngredients: 18, // Allow slightly more complex recipes
+  excludeCategories: ["Breakfast", "Brunch", "Dessert", "Baking", "Drinks", "Cocktails", "Snack", "Cupcake", "Sweet", "Cookie", "Brownie", "Cake", "Tart"],
+  requireDinnerFocused: true // Focus on dinner recipes
+};
+
 // Configuration for chefs to index
 const CHEFS: ChefConfig[] = [
   {
@@ -80,6 +95,68 @@ const THROTTLE_MS = 1000; // 1 second between requests
 
 // Helper: Sleep for throttling
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Helper: Parse ISO 8601 duration (PT45M, PT1H30M, etc.) to minutes
+function parseDurationToMinutes(duration?: string): number | null {
+  if (!duration) return null;
+  
+  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
+  if (!match) return null;
+  
+  const hours = parseInt(match[1] || "0", 10);
+  const minutes = parseInt(match[2] || "0", 10);
+  return hours * 60 + minutes;
+}
+
+// Helper: Validate recipe against filtering criteria
+function isRecipeSuitable(recipe: Recipe, filters: RecipeFilters): { suitable: boolean; reason?: string } {
+  // Check recipe categories for exclusions
+  if (recipe.recipeCategory) {
+    const categories = Array.isArray(recipe.recipeCategory) 
+      ? recipe.recipeCategory 
+      : [recipe.recipeCategory];
+    
+    const hasExcludedCategory = categories.some(cat => 
+      filters.excludeCategories.some(excluded => 
+        cat.toLowerCase().includes(excluded.toLowerCase())
+      )
+    );
+    
+    if (hasExcludedCategory) {
+      return { suitable: false, reason: `excluded category: ${categories.join(", ")}` };
+    }
+    
+    // If dinner-focused required, check for dinner/main course categories
+    if (filters.requireDinnerFocused) {
+      const dinnerKeywords = ["dinner", "main", "lunch", "entree", "entrée"];
+      const isDinnerFocused = categories.some(cat => 
+        dinnerKeywords.some(keyword => cat.toLowerCase().includes(keyword))
+      );
+      
+      // If no explicit dinner category, we'll be lenient and accept it
+      // (many recipes don't categorize, or use cuisine/dish type instead)
+      // We mainly want to exclude breakfast/dessert which we already did above
+    }
+  }
+  
+  // Check total time
+  if (filters.maxTotalTimeMinutes && recipe.totalTime) {
+    const totalMinutes = parseDurationToMinutes(recipe.totalTime);
+    if (totalMinutes && totalMinutes > filters.maxTotalTimeMinutes) {
+      return { suitable: false, reason: `too long: ${totalMinutes} min (max: ${filters.maxTotalTimeMinutes})` };
+    }
+  }
+  
+  // Check ingredient count
+  if (filters.maxIngredients && recipe.recipeIngredient) {
+    const ingredientCount = recipe.recipeIngredient.length;
+    if (ingredientCount > filters.maxIngredients) {
+      return { suitable: false, reason: `too many ingredients: ${ingredientCount} (max: ${filters.maxIngredients})` };
+    }
+  }
+  
+  return { suitable: true };
+}
 
 // Helper: Fetch with error handling
 async function fetchWithRetry(url: string, retries = 3): Promise<string> {
@@ -285,7 +362,7 @@ async function indexChef(chef: ChefConfig): Promise<void> {
   // and the parser doesn't handle multiple user-agent sections correctly
   const filteredUrls = afterFirstFilter
     // .filter((url: string) => isUrlAllowed(url, robots))  // DISABLED
-    .slice(0, 50); // Fetch first 50 recipes per chef
+    .slice(0, 100); // Fetch first 100 recipes per chef (filters will reduce this)
 
   console.log(`  ✓ Found ${filteredUrls.length} recipe URLs to index`);
   
@@ -311,21 +388,28 @@ async function indexChef(chef: ChefConfig): Promise<void> {
       const recipe = extractRecipeJsonLd(html);
 
       if (recipe) {
-        const recipeId = generateRecipeId(url, chef.name);
-        const outputPath = join(chefDir, `${recipeId}.json`);
+        // Validate recipe against filtering criteria
+        const validation = isRecipeSuitable(recipe, RECIPE_FILTERS);
         
-        const recipeData = {
-          id: recipeId,
-          sourceUrl: url,
-          chef: chef.name,
-          domain: chef.domain,
-          indexedAt: new Date().toISOString(),
-          recipe
-        };
+        if (!validation.suitable) {
+          console.log(`    ⊘ Skipped: ${validation.reason}`);
+        } else {
+          const recipeId = generateRecipeId(url, chef.name);
+          const outputPath = join(chefDir, `${recipeId}.json`);
+          
+          const recipeData = {
+            id: recipeId,
+            sourceUrl: url,
+            chef: chef.name,
+            domain: chef.domain,
+            indexedAt: new Date().toISOString(),
+            recipe
+          };
 
-        writeFileSync(outputPath, JSON.stringify(recipeData, null, 2));
-        console.log(`    ✓ Saved: ${recipeId}`);
-        successCount++;
+          writeFileSync(outputPath, JSON.stringify(recipeData, null, 2));
+          console.log(`    ✓ Saved: ${recipeId}`);
+          successCount++;
+        }
       } else {
         console.log(`    ✗ No Recipe schema found`);
       }

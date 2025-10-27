@@ -1,0 +1,248 @@
+{
+  "id": "nagi-cheese-and-bacon-potato-skins",
+  "sourceUrl": "https://www.recipetineats.com/cheese-and-bacon-potato-skins/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:49:38.778Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Cheese and Bacon Potato Skins",
+    "author": {
+      "@type": "Person",
+      "name": "Nagi | RecipeTin Eats"
+    },
+    "description": "My potato skins are made extra crispy and extra tasty by brushing them with bacon fat!",
+    "datePublished": "2016-01-15T18:00:00+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2016/01/Cheese-Bacon-Potato-Skins_5.jpg",
+      "https://www.recipetineats.com/tachyon/2016/01/Cheese-Bacon-Potato-Skins_5.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2016/01/Cheese-Bacon-Potato-Skins_5.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2016/01/Cheese-Bacon-Potato-Skins_5.jpg?resize=480%2C270"
+    ],
+    "recipeYield": [
+      "6"
+    ],
+    "prepTime": "PT10M",
+    "cookTime": "PT45M",
+    "totalTime": "PT55M",
+    "recipeIngredient": [
+      "2 lb / 1 kg (about 8-10)  medium potatoes (, scrubbed clean (Note 1))",
+      "10 oz / 300 g   streaky fatty bacon (, diced (Note 2))",
+      "1 1/2 cups grated cheese ((tasty, cheddar, gruyere, Monterey Jack))",
+      "Salt and pepper",
+      "Sour cream",
+      "1  scallion/shallot stem (, finely sliced (green party only))"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToSection",
+        "name": "Prepare Potato Skins",
+        "itemListElement": [
+          {
+            "@type": "HowToStep",
+            "text": "Prick each potato 4 times with a fork, then place them on the outer edge of the microwave turntable. Microwave on high for 8 minutes, then turn the potatoes and microwave on high for another 8 minutes.",
+            "name": "Prick each potato 4 times with a fork, then place them on the outer edge of the microwave turntable. Microwave on high for 8 minutes, then turn the potatoes and microwave on high for another 8 minutes.",
+            "url": "https://www.recipetineats.com/cheese-and-bacon-potato-skins/#wprm-recipe-24948-step-0-0"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Use a sharp knife to cut the potatoes in half. Use a spoon to scoop out the potato, leaving a thin skin about 1/2cm/ 1/6\" thick.",
+            "name": "Use a sharp knife to cut the potatoes in half. Use a spoon to scoop out the potato, leaving a thin skin about 1/2cm/ 1/6\" thick.",
+            "url": "https://www.recipetineats.com/cheese-and-bacon-potato-skins/#wprm-recipe-24948-step-0-1"
+          }
+        ]
+      },
+      {
+        "@type": "HowToSection",
+        "name": "Bacon",
+        "itemListElement": [
+          {
+            "@type": "HowToStep",
+            "text": "Preheat oven to 180C/350F.",
+            "name": "Preheat oven to 180C/350F.",
+            "url": "https://www.recipetineats.com/cheese-and-bacon-potato-skins/#wprm-recipe-24948-step-1-0"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Spread bacon on a tray and bake for 8 minutes, or until LIGHT golden and the fat has melted.",
+            "name": "Spread bacon on a tray and bake for 8 minutes, or until LIGHT golden and the fat has melted.",
+            "url": "https://www.recipetineats.com/cheese-and-bacon-potato-skins/#wprm-recipe-24948-step-1-1"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Remove bacon onto a paper towel lined plate using a slotting spoon. RESERVE bacon fat on tray.",
+            "name": "Remove bacon onto a paper towel lined plate using a slotting spoon. RESERVE bacon fat on tray.",
+            "url": "https://www.recipetineats.com/cheese-and-bacon-potato-skins/#wprm-recipe-24948-step-1-2"
+          }
+        ]
+      },
+      {
+        "@type": "HowToSection",
+        "name": "Crisp Potato Skins",
+        "itemListElement": [
+          {
+            "@type": "HowToStep",
+            "text": "Place potato skins upside down on the tray. Use a brush to brush the bacon fat on the tray onto the potato skin. Sprinkle with salt and pepper.",
+            "name": "Place potato skins upside down on the tray. Use a brush to brush the bacon fat on the tray onto the potato skin. Sprinkle with salt and pepper.",
+            "url": "https://www.recipetineats.com/cheese-and-bacon-potato-skins/#wprm-recipe-24948-step-2-0"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Bake for 15 to 20 minutes, or until the skin is quite crispy.",
+            "name": "Bake for 15 to 20 minutes, or until the skin is quite crispy.",
+            "url": "https://www.recipetineats.com/cheese-and-bacon-potato-skins/#wprm-recipe-24948-step-2-1"
+          }
+        ]
+      },
+      {
+        "@type": "HowToSection",
+        "name": "Fill Potato Skins",
+        "itemListElement": [
+          {
+            "@type": "HowToStep",
+            "text": "Remove baking tray from the oven and turn the potato skins over.",
+            "name": "Remove baking tray from the oven and turn the potato skins over.",
+            "url": "https://www.recipetineats.com/cheese-and-bacon-potato-skins/#wprm-recipe-24948-step-3-0"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Sprinkle with salt and pepper. Fill the potato skins with 2/3 of the bacon, then top with cheese.",
+            "name": "Sprinkle with salt and pepper. Fill the potato skins with 2/3 of the bacon, then top with cheese.",
+            "url": "https://www.recipetineats.com/cheese-and-bacon-potato-skins/#wprm-recipe-24948-step-3-1"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Top with remaining bacon.",
+            "name": "Top with remaining bacon.",
+            "url": "https://www.recipetineats.com/cheese-and-bacon-potato-skins/#wprm-recipe-24948-step-3-2"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Bake for 10 minutes or until cheese is melted.",
+            "name": "Bake for 10 minutes or until cheese is melted.",
+            "url": "https://www.recipetineats.com/cheese-and-bacon-potato-skins/#wprm-recipe-24948-step-3-3"
+          }
+        ]
+      },
+      {
+        "@type": "HowToSection",
+        "name": "To serve",
+        "itemListElement": [
+          {
+            "@type": "HowToStep",
+            "text": "Serve with sour cream, sprinkled with scallions.",
+            "name": "Serve with sour cream, sprinkled with scallions.",
+            "url": "https://www.recipetineats.com/cheese-and-bacon-potato-skins/#wprm-recipe-24948-step-4-0"
+          }
+        ]
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "14",
+      "reviewCount": "7"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Sorry Nagi, forgot to rate your potatoe skins.",
+        "author": {
+          "@type": "Person",
+          "name": "Fred"
+        },
+        "datePublished": "2025-07-02"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Absolutely delicious and Savory, I cooked the spuds in my convection oven for better texture. I made a double batch &amp; The family loved them ,Plus I put the green onion slices on top of the sour cream to serve",
+        "author": {
+          "@type": "Person",
+          "name": "John C."
+        },
+        "datePublished": "2023-12-04"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Baby potatoes are the perfect size for party food, then using a melon baller to scoop out the flesh makes it heaps easier than a knife and it makes a perfect hollow in the potato.",
+        "author": {
+          "@type": "Person",
+          "name": "Kris"
+        },
+        "datePublished": "2022-09-05"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I have made these potato skins  at least 30 times and hope to be able to make another 30.  These are the cat's meow IMHO.",
+        "author": {
+          "@type": "Person",
+          "name": "Bj"
+        },
+        "datePublished": "2021-12-11"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "wow. Great.  Wonderful.",
+        "author": {
+          "@type": "Person",
+          "name": "bita"
+        },
+        "datePublished": "2020-06-19"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Oh my gosh, Nagi! These are delicious! My mother came across your website and found these delicious potato skins. She insisted we make them right away. I must say, no regrets on not waiting because they were to die for. \r\nThough, we did a minor change of adding the sour cream onto skins and baking them all together instead of adding the sour cream on top afterwards once they were out of the oven and done. We will totally be making these again! :D \r\nI am into food photography so I decided to photograph the delicious creation and share the picture along with you: http://fav.me/dcayahr",
+        "author": {
+          "@type": "Person",
+          "name": "Livia Thibeault-Budai"
+        },
+        "datePublished": "2018-05-28"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "NAGI!! OMGosh! \r\nSo, the spouse is a FREAK about his potato skins....actually he's a freak about all things potato. He loves his potatoes. You have elevated yourself to goddess status in our home now. These are so crisp, so delicious, &amp; incredibly versatile. I added yellow onion to some (with the bacon &amp; cheese to bake), I put guacamole on some instead of sour cream, then on the others I used that sauce you gave with the potato wedges (sour cream &amp; sweet chili). They are freakin' AMAZING!! \r\nThe family is going to collapse with joy. When I opened the oven I'm pretty sure I heard angels sing.",
+        "author": {
+          "@type": "Person",
+          "name": "Josie Halbach"
+        },
+        "datePublished": "2016-03-20"
+      }
+    ],
+    "recipeCategory": [
+      "Party Food"
+    ],
+    "@id": "https://www.recipetineats.com/cheese-and-bacon-potato-skins/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/cheese-and-bacon-potato-skins/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/cheese-and-bacon-potato-skins/"
+  }
+}

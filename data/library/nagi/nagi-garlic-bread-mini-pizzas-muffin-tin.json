@@ -1,0 +1,177 @@
+{
+  "id": "nagi-garlic-bread-mini-pizzas-muffin-tin",
+  "sourceUrl": "https://www.recipetineats.com/garlic-bread-mini-pizzas-muffin-tin/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:49:41.031Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Garlic Bread Mini Pizzas (Muffin Tin)",
+    "author": {
+      "@type": "Person",
+      "name": "Nagi | RecipeTin Eats"
+    },
+    "description": "These mini pizzas are made using bread! Brushed with garlic butter so this really does taste like a cross between garlic bread and pizza. The filling options are endless - use your favourite pizza toppings.",
+    "datePublished": "2015-10-09T18:51:23+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2015/10/Garlic-Bread-Mini-Pizza_600px_Featured.jpg",
+      "https://www.recipetineats.com/tachyon/2015/10/Garlic-Bread-Mini-Pizza_600px_Featured.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2015/10/Garlic-Bread-Mini-Pizza_600px_Featured.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2015/10/Garlic-Bread-Mini-Pizza_600px_Featured.jpg?resize=480%2C270"
+    ],
+    "recipeYield": [
+      "12"
+    ],
+    "prepTime": "PT15M",
+    "cookTime": "PT10M",
+    "totalTime": "PT25M",
+    "recipeIngredient": [
+      "12 slices white sandwich bread (, fresh (Note 1))",
+      "2 tbsp butter",
+      "2  garlic cloves (, crushed)",
+      "1/8 tsp salt",
+      "1/2 cup pizza sauce ((Note 2))",
+      "1/4 cup red onion (, finely diced)",
+      "1/3 cup mushroom (, finely chopped)",
+      "3/4 cup grated cheese (, melting (I used a mix of mozzarella and tasty, equal amounts))",
+      "1/4 cup sliced small pepperoni ((Note 3))"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Preheat oven to 180C/350F.",
+        "name": "Preheat oven to 180C/350F.",
+        "url": "https://www.recipetineats.com/garlic-bread-mini-pizzas-muffin-tin/#wprm-recipe-24962-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Use a large empty can (800g/28oz canned tomato can) to cut out rounds from the bread. (Note 4)",
+        "name": "Use a large empty can (800g/28oz canned tomato can) to cut out rounds from the bread. (Note 4)",
+        "url": "https://www.recipetineats.com/garlic-bread-mini-pizzas-muffin-tin/#wprm-recipe-24962-step-0-1"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Mould into a muffin tin.",
+        "name": "Mould into a muffin tin.",
+        "url": "https://www.recipetineats.com/garlic-bread-mini-pizzas-muffin-tin/#wprm-recipe-24962-step-0-2"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Place butter, garlic and salt in a microwave-proof bowl or mug and microwave in 30 second increments until the butter is melted.",
+        "name": "Place butter, garlic and salt in a microwave-proof bowl or mug and microwave in 30 second increments until the butter is melted.",
+        "url": "https://www.recipetineats.com/garlic-bread-mini-pizzas-muffin-tin/#wprm-recipe-24962-step-0-3"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Brush cups with butter, ensuring you use the garlic too.",
+        "name": "Brush cups with butter, ensuring you use the garlic too.",
+        "url": "https://www.recipetineats.com/garlic-bread-mini-pizzas-muffin-tin/#wprm-recipe-24962-step-0-4"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Divide the pizza sauce between the cups, then top with onion and mushrooms.",
+        "name": "Divide the pizza sauce between the cups, then top with onion and mushrooms.",
+        "url": "https://www.recipetineats.com/garlic-bread-mini-pizzas-muffin-tin/#wprm-recipe-24962-step-0-5"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Top with cheese then with pepperoni.",
+        "name": "Top with cheese then with pepperoni.",
+        "url": "https://www.recipetineats.com/garlic-bread-mini-pizzas-muffin-tin/#wprm-recipe-24962-step-0-6"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Bake for 10 to 15 minutes, or until the cheese is melted and bread is golden on the edges.",
+        "name": "Bake for 10 to 15 minutes, or until the cheese is melted and bread is golden on the edges.",
+        "url": "https://www.recipetineats.com/garlic-bread-mini-pizzas-muffin-tin/#wprm-recipe-24962-step-0-7"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Serve warm!",
+        "name": "Serve warm!",
+        "url": "https://www.recipetineats.com/garlic-bread-mini-pizzas-muffin-tin/#wprm-recipe-24962-step-0-8"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "13",
+      "reviewCount": "4"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "These are outstanding! Simple, SO tasty and, similar to others, kids, teenagers and husband devoured them. I cheated and used garlic butter and passata with Italian Herbs thrown in. Mushroom, green capsicum and red onion (and cheese!) was a particular winner. This recipe has gone under the radar - deserves more votes ❤️",
+        "author": {
+          "@type": "Person",
+          "name": "Jill"
+        },
+        "datePublished": "2024-03-16"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I did the shortcut version of not cutting the rounds so they didn’t look as pretty as yours 😂I have no words for how delicious these are!! Soooo yummy!! My only complaint is that I could probably eat an entire loaf of bread when made this way 🤣\r\nThanks for another fantastic recipe",
+        "author": {
+          "@type": "Person",
+          "name": "Priscilla Katuramu"
+        },
+        "datePublished": "2020-07-01"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "wow thank you for the tips! \r\nby the way, my husband and i not only love the mini pizzas but we devoured them 😁\r\np.s. i found you during christmas. received tons of compliments on potlucks. friends wanted recipes but i don’t want to share 😆.  i did share them with family though. my husband is so impressed with my cooking! 🏆 wife! thanks to you Nagi!",
+        "author": {
+          "@type": "Person",
+          "name": "laura"
+        },
+        "datePublished": "2020-04-02"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "These are amazingly yummy, made them for a bunch of teenagers and they disappeared in seconds",
+        "author": {
+          "@type": "Person",
+          "name": "heather"
+        },
+        "datePublished": "2019-05-24"
+      }
+    ],
+    "recipeCategory": [
+      "Party Food"
+    ],
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "servingSize": "41 g",
+      "calories": "108 kcal",
+      "carbohydrateContent": "9.4 g",
+      "proteinContent": "3.8 g",
+      "fatContent": "6.2 g",
+      "saturatedFatContent": "3 g",
+      "cholesterolContent": "14 mg",
+      "sodiumContent": "250 mg",
+      "sugarContent": "1.5 g",
+      "unsaturatedFatContent": "0.1 g"
+    },
+    "@id": "https://www.recipetineats.com/garlic-bread-mini-pizzas-muffin-tin/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/garlic-bread-mini-pizzas-muffin-tin/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/garlic-bread-mini-pizzas-muffin-tin/"
+  }
+}

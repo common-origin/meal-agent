@@ -1,0 +1,233 @@
+{
+  "id": "nagi-honey-sriracha-glazed-chicken-skewers",
+  "sourceUrl": "https://www.recipetineats.com/honey-sriracha-glazed-chicken-skewers/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:48:37.850Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Honey Sriracha Chicken Skewers",
+    "author": {
+      "@type": "Person",
+      "name": "Nagi | RecipeTin Eats"
+    },
+    "description": "Spice Level: MediumJust 5 ingredients is all you need to make a marinade that doubles as a fantastic glaze for these skewers! Just 20 minutes of marinating time required. A great balance of sweet, spicy and savoury.&nbsp;",
+    "datePublished": "2016-01-01T18:00:00+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2016/01/Honey-Sriracha-Glazed-Chicken-Skewers_1.jpg",
+      "https://www.recipetineats.com/tachyon/2016/01/Honey-Sriracha-Glazed-Chicken-Skewers_1.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2016/01/Honey-Sriracha-Glazed-Chicken-Skewers_1.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2016/01/Honey-Sriracha-Glazed-Chicken-Skewers_1.jpg?resize=480%2C270"
+    ],
+    "recipeYield": [
+      "4",
+      "4 Servings"
+    ],
+    "prepTime": "PT15M",
+    "cookTime": "PT10M",
+    "totalTime": "PT25M",
+    "recipeIngredient": [
+      "1.5 lb / 750g lb / 750g   chicken thigh fillets ((Note 1))",
+      "1/3 cup honey",
+      "2 tbsp Dijon mustard ((Note 2))",
+      "4 tbsp soy sauce",
+      "2  garlic cloves (, crushed)",
+      "2 - 3 tbsp sriracha OR any other hot sauce ((e.g. Frank's), adjust amount to your taste)",
+      "1/4 tsp salt",
+      "1 1/2 tbsp oil ((I used vegetable))"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Cut the chicken into 2cm / 4/5\" cubes.",
+        "name": "Cut the chicken into 2cm / 4/5\" cubes.",
+        "url": "https://www.recipetineats.com/honey-sriracha-glazed-chicken-skewers/#wprm-recipe-25474-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Mix Marinade ingredients together in a bowl until smooth.",
+        "name": "Mix Marinade ingredients together in a bowl until smooth.",
+        "url": "https://www.recipetineats.com/honey-sriracha-glazed-chicken-skewers/#wprm-recipe-25474-step-0-1"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Transfer 4 tablespoons of the Marinade into a small bowl (\"Reserved Marinade\", to use for basting).",
+        "name": "Transfer 4 tablespoons of the Marinade into a small bowl (\"Reserved Marinade\", to use for basting).",
+        "url": "https://www.recipetineats.com/honey-sriracha-glazed-chicken-skewers/#wprm-recipe-25474-step-0-2"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add chicken into the bowl with the remaining Marinade. Mix to coat and set aside for 20 minutes to marinade (up to overnight). (Note 3)",
+        "name": "Add chicken into the bowl with the remaining Marinade. Mix to coat and set aside for 20 minutes to marinade (up to overnight). (Note 3)",
+        "url": "https://www.recipetineats.com/honey-sriracha-glazed-chicken-skewers/#wprm-recipe-25474-step-0-3"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Thread chicken onto skewers, discard marinade in the bowl. I used 14 small ones about 18cm/7\" long, 4 pieces of chicken on each.",
+        "name": "Thread chicken onto skewers, discard marinade in the bowl. I used 14 small ones about 18cm/7\" long, 4 pieces of chicken on each.",
+        "url": "https://www.recipetineats.com/honey-sriracha-glazed-chicken-skewers/#wprm-recipe-25474-step-0-4"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Heat oil on a BBQ or skillet over medium heat. Place skewers on the BBQ and cook the first side for 2 1/2 minutes, then turn the skewers.",
+        "name": "Heat oil on a BBQ or skillet over medium heat. Place skewers on the BBQ and cook the first side for 2 1/2 minutes, then turn the skewers.",
+        "url": "https://www.recipetineats.com/honey-sriracha-glazed-chicken-skewers/#wprm-recipe-25474-step-0-5"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Baste the COOKED side that is now facing up generously with the reserved Reserved Marinade. After 2 1/2 minutes, turn the skewers and quickly baste the other side generously with the Reserved Marinade. Turn immediately. Cook for just a few seconds, then transfer to a plate. (Note 4)",
+        "name": "Baste the COOKED side that is now facing up generously with the reserved Reserved Marinade. After 2 1/2 minutes, turn the skewers and quickly baste the other side generously with the Reserved Marinade. Turn immediately. Cook for just a few seconds, then transfer to a plate. (Note 4)",
+        "url": "https://www.recipetineats.com/honey-sriracha-glazed-chicken-skewers/#wprm-recipe-25474-step-0-6"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Baste the skewers on the plate one more time with the Reserved Marinade, then serve.",
+        "name": "Baste the skewers on the plate one more time with the Reserved Marinade, then serve.",
+        "url": "https://www.recipetineats.com/honey-sriracha-glazed-chicken-skewers/#wprm-recipe-25474-step-0-7"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "I served mine with Cilantro/Coriander Lime Rice (Note 5)",
+        "name": "I served mine with Cilantro/Coriander Lime Rice (Note 5)",
+        "url": "https://www.recipetineats.com/honey-sriracha-glazed-chicken-skewers/#wprm-recipe-25474-step-0-8"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "13",
+      "reviewCount": "8"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Amazing! Cooked it under the broiler and turned out perfectly",
+        "author": {
+          "@type": "Person",
+          "name": "Taco"
+        },
+        "datePublished": "2024-05-01"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Had some pre diced chicken and was going to make skewers but after marinading decided to cook straight on the bbq. Caramelised wonderfully with the high heat and served on rice with a salad. This is one of my new fav chicken marinades by you.",
+        "author": {
+          "@type": "Person",
+          "name": "Natalie"
+        },
+        "datePublished": "2023-02-06"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I made these for lunch today. Absolute winner!",
+        "author": {
+          "@type": "Person",
+          "name": "Gabi"
+        },
+        "datePublished": "2022-12-30"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Absolutely juicy and delicious! My daughter loves them, and so do I!",
+        "author": {
+          "@type": "Person",
+          "name": "Natascha"
+        },
+        "datePublished": "2021-06-09"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Was looking for a quick chicken dinner and stumbled across this recipe. In only 40 minutes we had dinner on the table.  Chicken was so delicious! Thank you Nagi for yet another wonderful recipe 😋",
+        "author": {
+          "@type": "Person",
+          "name": "Maria"
+        },
+        "datePublished": "2020-10-01"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Delicious! Didn't cut up into pieces, just BBQ'd the boneless thighs and basted them. But held back some more of the marinade to use for my vegetable stir-fry. \r\nJasmine rice, stir-fry veggies topped with the thighs (chopped up) made for a perfect rice bowl dinner!\r\n\r\nLoved the spiciness of this recipe. Will be making it again for sure!! Already thinking about it. 😃",
+        "author": {
+          "@type": "Person",
+          "name": "SandraM"
+        },
+        "datePublished": "2017-11-04"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Hi Nagi, Megan here - TJ's human. \r\nJust wanted to let you know this recipe has been in high rotation on the human dinner menu for a little while. I have even added vegetables to the skewers to make it last longer (I know - shock/horror at the vegetables). The sauce is amazing. Though I struggle to have any left to pour over the meat once it is all cooked, as I am cooking on a weber bbq, I think some of the basting might get a little lost over the grill... though I could be cooking too much chicken - but that could never happen. \r\nThe rice is also so lovey. My mother is growing fresh herbs on the balcony and they are forever going right into that rice... as well as her lime tree is coming in handy. \r\nI was just scouring your site for another chicken recipe and this one came up in my sights again... so I thought I would leave a quick note. \r\nAs I have said before, the humans in this house thank you for your recipes.",
+        "author": {
+          "@type": "Person",
+          "name": "Megan"
+        },
+        "datePublished": "2016-10-07"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I cheated and just marinated whole thigh pieces but the sauce was delicious!! My husband wants me to next try it on wings.",
+        "author": {
+          "@type": "Person",
+          "name": "J-Mom"
+        },
+        "datePublished": "2016-04-20"
+      }
+    ],
+    "recipeCategory": [
+      "BBQ",
+      "Dinner"
+    ],
+    "recipeCuisine": [
+      "Asian-syle"
+    ],
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "servingSize": "254 g",
+      "calories": "387 kcal",
+      "carbohydrateContent": "16.9 g",
+      "proteinContent": "38.1 g",
+      "fatContent": "15.4 g",
+      "saturatedFatContent": "3.1 g",
+      "cholesterolContent": "158 mg",
+      "sodiumContent": "1349 mg",
+      "fiberContent": "23.6 g",
+      "sugarContent": "38.1 g"
+    },
+    "@id": "https://www.recipetineats.com/honey-sriracha-glazed-chicken-skewers/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/honey-sriracha-glazed-chicken-skewers/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/honey-sriracha-glazed-chicken-skewers/"
+  }
+}

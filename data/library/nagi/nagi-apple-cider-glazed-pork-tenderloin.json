@@ -1,0 +1,232 @@
+{
+  "id": "nagi-apple-cider-glazed-pork-tenderloin",
+  "sourceUrl": "https://www.recipetineats.com/apple-cider-glazed-pork-tenderloin/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:48:36.415Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Apple Cider Glazed Pork Tenderloin",
+    "author": {
+      "@type": "Person",
+      "name": "Nagi | RecipeTin Eats"
+    },
+    "description": "Apple cider is the secret to a marinade that makes pork tenderloin incredibly moist with a gorgeous glaze! The marinade also does double duty as the sauce. You will be amazed at the incredible flavour in this with so few ingredients! I used Rochdale Apple Cider for this recipe - a New Zealand cider that is available at all major liquor outlets in Australia including Dan Murphy's and Liquorland.",
+    "datePublished": "2016-01-25T18:00:00+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2016/01/Apple-Cider-Glazed-Pork-Tenderloin_2.jpg",
+      "https://www.recipetineats.com/tachyon/2016/01/Apple-Cider-Glazed-Pork-Tenderloin_2.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2016/01/Apple-Cider-Glazed-Pork-Tenderloin_2.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2016/01/Apple-Cider-Glazed-Pork-Tenderloin_2.jpg?resize=480%2C270"
+    ],
+    "recipeYield": [
+      "4"
+    ],
+    "prepTime": "PT5M",
+    "cookTime": "PT30M",
+    "totalTime": "PT35M",
+    "recipeIngredient": [
+      "1  lb/500g pork tenderloin",
+      "11  oz/330ml sweet apple cider ((alcoholic aka \"hard cider\") - I used Rochdale Apple Cider (Note 1))",
+      "1  bay leaf (, dried (or 2 fresh))",
+      "2 tbsp honey",
+      "2 tbsp brown sugar",
+      "2  garlic cloves (, minced)",
+      "1/2 tsp salt",
+      "Black Pepper",
+      "1 tbsp olive oil",
+      "1 1/2 tbsp butter",
+      "1 tbsp dijon mustard",
+      "Salt and pepper"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Mix the Marinade ingredients in a bowl.",
+        "name": "Mix the Marinade ingredients in a bowl.",
+        "url": "https://www.recipetineats.com/apple-cider-glazed-pork-tenderloin/#wprm-recipe-23025-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Place Marinade and pork in a large ziplock bag and marinate in the refrigerator overnight, up to 24 hours.",
+        "name": "Place Marinade and pork in a large ziplock bag and marinate in the refrigerator overnight, up to 24 hours.",
+        "url": "https://www.recipetineats.com/apple-cider-glazed-pork-tenderloin/#wprm-recipe-23025-step-0-1"
+      },
+      {
+        "@type": "HowToSection",
+        "name": "To Cook",
+        "itemListElement": [
+          {
+            "@type": "HowToStep",
+            "text": "Remove pork in the marinade from the refrigerator 30 minutes prior to cooking (to bring to room temperature).",
+            "name": "Remove pork in the marinade from the refrigerator 30 minutes prior to cooking (to bring to room temperature).",
+            "url": "https://www.recipetineats.com/apple-cider-glazed-pork-tenderloin/#wprm-recipe-23025-step-1-0"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Preheat oven to 180C/350F.",
+            "name": "Preheat oven to 180C/350F.",
+            "url": "https://www.recipetineats.com/apple-cider-glazed-pork-tenderloin/#wprm-recipe-23025-step-1-1"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Heat olive oil in a skillet over medium high heat. Remove pork from marinade (reserve marinade) and place in pan. Sear until golden brown all over - don't let it burn (Note 2).",
+            "name": "Heat olive oil in a skillet over medium high heat. Remove pork from marinade (reserve marinade) and place in pan. Sear until golden brown all over - don't let it burn (Note 2).",
+            "url": "https://www.recipetineats.com/apple-cider-glazed-pork-tenderloin/#wprm-recipe-23025-step-1-2"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Transfer skillet to the oven and roast for 15 to 20 minutes, or until the internal temperature using a meat thermometer reads 145F/62C. (Note 3)",
+            "name": "Transfer skillet to the oven and roast for 15 to 20 minutes, or until the internal temperature using a meat thermometer reads 145F/62C. (Note 3)",
+            "url": "https://www.recipetineats.com/apple-cider-glazed-pork-tenderloin/#wprm-recipe-23025-step-1-3"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Remove pork from skillet onto a plate and cover loosely with foil to rest while you make the sauce.",
+            "name": "Remove pork from skillet onto a plate and cover loosely with foil to rest while you make the sauce.",
+            "url": "https://www.recipetineats.com/apple-cider-glazed-pork-tenderloin/#wprm-recipe-23025-step-1-4"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Place skillet on the stove over high heat with butter. When the butter is melted, add reserved Marinade and mustard. Whisk until smooth.",
+            "name": "Place skillet on the stove over high heat with butter. When the butter is melted, add reserved Marinade and mustard. Whisk until smooth.",
+            "url": "https://www.recipetineats.com/apple-cider-glazed-pork-tenderloin/#wprm-recipe-23025-step-1-5"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Bring to boil, then turn heat down so it is simmering VERY rapidly, and cook until the liquid becomes syrupy - about 4 to 5 minutes. Adjust salt to taste.",
+            "name": "Bring to boil, then turn heat down so it is simmering VERY rapidly, and cook until the liquid becomes syrupy - about 4 to 5 minutes. Adjust salt to taste.",
+            "url": "https://www.recipetineats.com/apple-cider-glazed-pork-tenderloin/#wprm-recipe-23025-step-1-6"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Remove skillet from the stove, roll pork in the sauce, then remove and slice. Pour remaining sauce in the skillet into a jug and serve on the side.",
+            "name": "Remove skillet from the stove, roll pork in the sauce, then remove and slice. Pour remaining sauce in the skillet into a jug and serve on the side.",
+            "url": "https://www.recipetineats.com/apple-cider-glazed-pork-tenderloin/#wprm-recipe-23025-step-1-7"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "I served this with a fennel apple salad on the side. (Note 4)",
+            "name": "I served this with a fennel apple salad on the side. (Note 4)",
+            "url": "https://www.recipetineats.com/apple-cider-glazed-pork-tenderloin/#wprm-recipe-23025-step-1-8"
+          }
+        ]
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.94",
+      "ratingCount": "15",
+      "reviewCount": "7"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Excellent fall fare for us in New Hampshire USA. Served with Farro, butternut mash and green beans: effin’delish! 😊",
+        "author": {
+          "@type": "Person",
+          "name": "Loonchick"
+        },
+        "datePublished": "2022-11-15"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "After husband had cleaned his plate , he declared .... RESTAURANT QUALITY !!!!!! \r\nabsolutely gorgeous ...",
+        "author": {
+          "@type": "Person",
+          "name": "Mandy"
+        },
+        "datePublished": "2022-03-12"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "4"
+        },
+        "reviewBody": "Brilliant! I’m a new admirer &amp; have tried several of your recipes!\r\nFor 4, need 2 x 340 gms approx pork fillets, tie tails in to bring meat to consistent size. Only needs 15 mins roasting, 5 mins resting.\r\nUpscaled quantities for marinade, eg 500ml apple cider, 4 garlic cloves, 2 bay leaves.\r\nCould possibly halve the honey &amp; brown sugar.\r\nFor an extra special finish, strain the glaze prior to serving in a jug.\r\nServe with apple, pear &amp; fennel salad with a Dijon mustard lemony dressing (basically Woolworths but using Dijon instead of tahini which need more olive oil)",
+        "author": {
+          "@type": "Person",
+          "name": "Susie"
+        },
+        "datePublished": "2022-02-24"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I made this for a dinner party over the weekend and got rave reviews. Simple, delicious - perfect. Thanks, Nagi!",
+        "author": {
+          "@type": "Person",
+          "name": "Rebecca"
+        },
+        "datePublished": "2021-12-10"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I just made this recipe tonight and it was delicious. I am in the U. S. and not particularly fond of hard cider so I used apple cider from a local apple orchard. I used honey Dijon mustard instead of the plain Dijon. The marinade thickened up at the end and was delicious.",
+        "author": {
+          "@type": "Person",
+          "name": "Rebecca Brown"
+        },
+        "datePublished": "2021-10-14"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "O.M.G.",
+        "author": {
+          "@type": "Person",
+          "name": "alimak"
+        },
+        "datePublished": "2020-01-09"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "OMG - SO delicious!!! I will definitely be making this again.",
+        "author": {
+          "@type": "Person",
+          "name": "Lola"
+        },
+        "datePublished": "2019-11-03"
+      }
+    ],
+    "recipeCategory": [
+      "Dinner"
+    ],
+    "recipeCuisine": [
+      "Western"
+    ],
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "servingSize": "315 g",
+      "calories": "404 kcal"
+    },
+    "@id": "https://www.recipetineats.com/apple-cider-glazed-pork-tenderloin/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/apple-cider-glazed-pork-tenderloin/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/apple-cider-glazed-pork-tenderloin/"
+  }
+}

@@ -1,0 +1,285 @@
+{
+  "id": "nagi-middle-eastern-roasted-vegetables-with-tahini-drizzle",
+  "sourceUrl": "https://www.recipetineats.com/middle-eastern-roasted-vegetables-with-tahini-drizzle/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:48:23.206Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Middle Eastern Roasted Vegetables with Tahini Sauce",
+    "author": {
+      "@type": "Person",
+      "name": "Nagi | RecipeTin Eats"
+    },
+    "description": "A simple Middle Eastern dish that's perfect for using up left over veggies at the end of a week. You can use any vegetables you want, just make sure to cut them to size so they cook in roughly the same time. Stuffed into pitas, it makes a wonderful light meal or lunch, or a perfect side.",
+    "datePublished": "2014-06-11T08:32:13+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2014/06/DSC_0035-1.jpg",
+      "https://www.recipetineats.com/tachyon/2014/06/DSC_0035-1.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2014/06/DSC_0035-1.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2014/06/DSC_0035-1.jpg?resize=480%2C270"
+    ],
+    "recipeYield": [
+      "2",
+      "2 light meal, 4 as a side"
+    ],
+    "prepTime": "PT10M",
+    "cookTime": "PT30M",
+    "totalTime": "PT40M",
+    "recipeIngredient": [
+      "1  red onion (, sliced thickly)",
+      "1  carrot (, cut into thick sticks)",
+      "1  zucchini (, cut into thick sticks)",
+      "1/4  pumpkin (, cut into 2\"/3cm cubes)",
+      "1 1/2 cups large cauliflower florets",
+      "1  beetroot (, cut into 1.5\"/2cm cubes)",
+      "2 tbsp olive oil",
+      "1 tsp salt",
+      "Black pepper",
+      "3 tbsp tahini",
+      "3 tbsp lemon juice",
+      "1  small garlic clove (, minced (or 1/2 large))",
+      "1/2 tsp salt",
+      "Black pepper",
+      "Water",
+      "2 tsp za'atar spice mix ((see notes))",
+      "2 tbsp pine nuts (, dry roasted)",
+      "1 tbsp coriander (, chopped (or parsley))"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Preheat oven to 350F/180C.",
+        "name": "Preheat oven to 350F/180C.",
+        "url": "https://www.recipetineats.com/middle-eastern-roasted-vegetables-with-tahini-drizzle/#wprm-recipe-23416-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Combine Roasted Vegetable ingredients, spread on baking tray and bake for 30 to 40 minutes.",
+        "name": "Combine Roasted Vegetable ingredients, spread on baking tray and bake for 30 to 40 minutes.",
+        "url": "https://www.recipetineats.com/middle-eastern-roasted-vegetables-with-tahini-drizzle/#wprm-recipe-23416-step-0-1"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Combine Tahini Sauce ingredients. Mix until smooth, and use water to adjust to the consistency of honey.",
+        "name": "Combine Tahini Sauce ingredients. Mix until smooth, and use water to adjust to the consistency of honey.",
+        "url": "https://www.recipetineats.com/middle-eastern-roasted-vegetables-with-tahini-drizzle/#wprm-recipe-23416-step-0-2"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Pile roasted vegetables onto a plate. Sprinkle with za'atar, drizzle with Tahini Sauce, scatter over roasted pine nuts and coriander.",
+        "name": "Pile roasted vegetables onto a plate. Sprinkle with za'atar, drizzle with Tahini Sauce, scatter over roasted pine nuts and coriander.",
+        "url": "https://www.recipetineats.com/middle-eastern-roasted-vegetables-with-tahini-drizzle/#wprm-recipe-23416-step-0-3"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Serve with lebanese bread wedges or pita bread.",
+        "name": "Serve with lebanese bread wedges or pita bread.",
+        "url": "https://www.recipetineats.com/middle-eastern-roasted-vegetables-with-tahini-drizzle/#wprm-recipe-23416-step-0-4"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.85",
+      "ratingCount": "19",
+      "reviewCount": "14"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "4"
+        },
+        "reviewBody": "Loved the results - the veggies were consumed in a heartbeat at a 4th of July gathering. I doubled the tahini sauce, placing the extra sauce next to the food platter. I would recommend roasting the veggies at 400-425F, which is the usual recommendation for roasting veggies. That's the only reason I gave this recipe 4 vs. 5 stars.",
+        "author": {
+          "@type": "Person",
+          "name": "SF Ana"
+        },
+        "datePublished": "2025-07-09"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "4"
+        },
+        "reviewBody": "Loved the results - the veggies were consumed in a heartbeat at a 4th of July gathering. I doubled the tahini sauce, placing the extra sauce next to the food platter. I would recommend roasting the veggies at 400-425F, which is the usual recommendation for roasting veggies.",
+        "author": {
+          "@type": "Person",
+          "name": "SF Ana"
+        },
+        "datePublished": "2025-07-09"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "This is fantastic!  Simple, flexible and tasty!\r\n\r\nI basically don't like vegetables.. but have tried to serve my family and myself more vetables for health, \r\n\r\nThis time I roasted only 3 kinds - cauliflower, mushrooms, sweetpotatoes -\r\nwith arranged tahini sauce 50% penut butter.",
+        "author": {
+          "@type": "Person",
+          "name": "Chiyo"
+        },
+        "datePublished": "2025-05-07"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "This is on regular rotation in our household. I add sultanas with a red wine vinegar reduction as a side.",
+        "author": {
+          "@type": "Person",
+          "name": "Nicole Naunton"
+        },
+        "datePublished": "2024-07-08"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Delicious dressing! Perfect balance :) Thanks :)",
+        "author": {
+          "@type": "Person",
+          "name": "Les"
+        },
+        "datePublished": "2023-10-24"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Made this tonight. Really delicious, so many flavours. \r\nDidn’t have much cauliflower so added some chickpeas instead. Some came out crunchy. \r\nHubby liked it too, so that’s a bonus.",
+        "author": {
+          "@type": "Person",
+          "name": "Alison Holmes"
+        },
+        "datePublished": "2023-05-17"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I crave this tahini sauce constantly 😆",
+        "author": {
+          "@type": "Person",
+          "name": "Amy Morgan"
+        },
+        "datePublished": "2022-12-07"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Ah Nagi, you've done it again! 🤣👍",
+        "author": {
+          "@type": "Person",
+          "name": "Steph"
+        },
+        "datePublished": "2022-02-09"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Nagi, you knocked it out of the park again!! I used your Chicken Shawarma spices to marinate some bone in, skin on thighs, then I roasted them at the same time as these vegetables.. I served everything with the toppings, together... .so, so, so good!!!",
+        "author": {
+          "@type": "Person",
+          "name": "Katherine"
+        },
+        "datePublished": "2022-02-05"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "So very tasty, this is regularly on our menu! For health, cost, flavour and effort it’s outstanding 😍",
+        "author": {
+          "@type": "Person",
+          "name": "Kyra"
+        },
+        "datePublished": "2021-12-27"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Fab dish....\r\nRoasted Butternut Squash coated in Rapeseed oil and a sprinkling of Sweet Paprika for 30 mins, added red onion halfway through.  Toasted some Pumpkin Seeds and added a few leftover pieces of cooked chicken before dressing in the Tahini Sauce, topped with Coriander; delicious. \r\n\r\nThanks Nagi",
+        "author": {
+          "@type": "Person",
+          "name": "Kaye"
+        },
+        "datePublished": "2021-07-18"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Hi Nagi, I used this as a general guide for roasting vegetables without bothering with the sauce and it was yummy. Just letting you know though, that the measurements for imperial and metric are not even close for matching up for the chopped pumpkin and beetroot",
+        "author": {
+          "@type": "Person",
+          "name": "Beeble"
+        },
+        "datePublished": "2020-12-01"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Sorry, forgot to give it 5 stars!",
+        "author": {
+          "@type": "Person",
+          "name": "jo"
+        },
+        "datePublished": "2020-10-19"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Thanks Nagi for this recipe. I used it to do my roast vegetables which served as a side to a slow cooked leg of lamb I did for my wife's birthday! (recipe of that also taken from you...)\r\nI left out onion and cauliflower and added red pepper instead.\r\nI did not use the tahini sauce or the garnishes, instead topped the veggies with bits of goat cheese.\r\nIt came out amazing!",
+        "author": {
+          "@type": "Person",
+          "name": "TLH"
+        },
+        "datePublished": "2020-01-26"
+      }
+    ],
+    "recipeCategory": [
+      "Light Meal",
+      "Salad",
+      "Side"
+    ],
+    "recipeCuisine": [
+      "Middle Eastern"
+    ],
+    "@id": "https://www.recipetineats.com/middle-eastern-roasted-vegetables-with-tahini-drizzle/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/middle-eastern-roasted-vegetables-with-tahini-drizzle/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/middle-eastern-roasted-vegetables-with-tahini-drizzle/"
+  }
+}
