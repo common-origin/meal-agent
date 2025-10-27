@@ -1,0 +1,211 @@
+{
+  "id": "nagi-crispy-cheesy-sausage-hash-browns",
+  "sourceUrl": "https://www.recipetineats.com/crispy-cheesy-sausage-hash-browns/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:31:10.104Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Crispy Cheesy Sausage Hash Browns",
+    "author": {
+      "@type": "Person",
+      "name": "Nagi | RecipeTin Eats"
+    },
+    "description": "Loaded hash browns! These are made with sausage and cheese mixed throughout the shredded potato, then panfried until golden. Great for make ahead and as finger food for parties! ! PS This is also sensational made with chorizo. Ugh. It's so good that it's painful!",
+    "datePublished": "2015-08-21T18:00:00+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2015/08/Cheesy-Sausage-Hash-Browns_2.jpg",
+      "https://www.recipetineats.com/tachyon/2015/08/Cheesy-Sausage-Hash-Browns_2.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2015/08/Cheesy-Sausage-Hash-Browns_2.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2015/08/Cheesy-Sausage-Hash-Browns_2.jpg?resize=480%2C270"
+    ],
+    "recipeYield": [
+      "13",
+      "13 - 15"
+    ],
+    "prepTime": "PT10M",
+    "cookTime": "PT18M",
+    "totalTime": "PT28M",
+    "recipeIngredient": [
+      "1 lb / 500g   potato (, about two large (Note 1))",
+      "2 1/2 tbsp oil",
+      "8 oz / 250g   sausage (, remove from casings (the best quality you can afford))",
+      "3/4 cup grated cheddar cheese ((or any other melting cheese, but not mozzarella))",
+      "1/2 cup sliced scallions/shallots ((green and white part))",
+      "1  egg",
+      "1/4 cup flour",
+      "Pepper"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Peel and shred the potato using a standard box grater.",
+        "name": "Peel and shred the potato using a standard box grater.",
+        "url": "https://www.recipetineats.com/crispy-cheesy-sausage-hash-browns/#wprm-recipe-25537-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Place the potato in a colander and run under cold water for 10 seconds, or until the water runs clear.",
+        "name": "Place the potato in a colander and run under cold water for 10 seconds, or until the water runs clear.",
+        "url": "https://www.recipetineats.com/crispy-cheesy-sausage-hash-browns/#wprm-recipe-25537-step-0-1"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Shake off excess water, then transfer the potato to a clean tea towel. Bundle it up and squeeze hard to remove excess water, then transfer to a bowl.",
+        "name": "Shake off excess water, then transfer the potato to a clean tea towel. Bundle it up and squeeze hard to remove excess water, then transfer to a bowl.",
+        "url": "https://www.recipetineats.com/crispy-cheesy-sausage-hash-browns/#wprm-recipe-25537-step-0-2"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Heat 1/2 tbsp of oil in a skillet over high heat. Cook the sausage, breaking it up as you go (like cooking ground meat/mince).",
+        "name": "Heat 1/2 tbsp of oil in a skillet over high heat. Cook the sausage, breaking it up as you go (like cooking ground meat/mince).",
+        "url": "https://www.recipetineats.com/crispy-cheesy-sausage-hash-browns/#wprm-recipe-25537-step-0-3"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add sausage to potatoes. Add remaining ingredients and mix to combine.",
+        "name": "Add sausage to potatoes. Add remaining ingredients and mix to combine.",
+        "url": "https://www.recipetineats.com/crispy-cheesy-sausage-hash-browns/#wprm-recipe-25537-step-0-4"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Wipe the skillet clean with a paper towel, discarding excess fat. Heat 1 tbsp oil in a skillet over medium high heat.",
+        "name": "Wipe the skillet clean with a paper towel, discarding excess fat. Heat 1 tbsp oil in a skillet over medium high heat.",
+        "url": "https://www.recipetineats.com/crispy-cheesy-sausage-hash-browns/#wprm-recipe-25537-step-0-5"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Place 1/4 cup of mixture in the skillet, and use the base of the cup measure to pat it down to about 8mm / 1/3\" thickness. Repeat for however many you can fit in the skillet.",
+        "name": "Place 1/4 cup of mixture in the skillet, and use the base of the cup measure to pat it down to about 8mm / 1/3\" thickness. Repeat for however many you can fit in the skillet.",
+        "url": "https://www.recipetineats.com/crispy-cheesy-sausage-hash-browns/#wprm-recipe-25537-step-0-6"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Cook until deep golden brown (about 3 minutes), then flip and cook the other side until golden brown and crispy.",
+        "name": "Cook until deep golden brown (about 3 minutes), then flip and cook the other side until golden brown and crispy.",
+        "url": "https://www.recipetineats.com/crispy-cheesy-sausage-hash-browns/#wprm-recipe-25537-step-0-7"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Remove onto a rack and place in a low oven to keep warm while you cook the remaining hash browns.",
+        "name": "Remove onto a rack and place in a low oven to keep warm while you cook the remaining hash browns.",
+        "url": "https://www.recipetineats.com/crispy-cheesy-sausage-hash-browns/#wprm-recipe-25537-step-0-8"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Serve hot, garnished with extra scallions/shallots if desired.",
+        "name": "Serve hot, garnished with extra scallions/shallots if desired.",
+        "url": "https://www.recipetineats.com/crispy-cheesy-sausage-hash-browns/#wprm-recipe-25537-step-0-9"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "13",
+      "reviewCount": "6"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Very simple and very delicious and filling, I wanted to mention it pairs well also adding tomatoes as a garnish or cooking with it and adding a cooked egg on top !",
+        "author": {
+          "@type": "Person",
+          "name": "Sage Ramirez"
+        },
+        "datePublished": "2024-06-10"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "You continue to be a legend go to for almost any recipe I am looking for Nagi.  These are so so good - give yourself another pat on the back girl! x x",
+        "author": {
+          "@type": "Person",
+          "name": "barbie"
+        },
+        "datePublished": "2023-04-21"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Yum yum and yum!!!! I subbed a mix of red/green chopped peppers for the onions and used mozzarella because I like my cheese very mild :-) and these were soooo good. Paired with your magic broccoli for a super tasty light dinner!! Thanks for another awesome recipe",
+        "author": {
+          "@type": "Person",
+          "name": "Priscilla"
+        },
+        "datePublished": "2020-10-25"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Excellent! We gobbled these up in no time. Super flavor and a great recipe!My wife give me 5 stars for it! Thanks for posting it up!",
+        "author": {
+          "@type": "Person",
+          "name": "Bruce"
+        },
+        "datePublished": "2017-04-04"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Gosh you can make hash browns look so fancy! I agree every point in the post, especially getting high quality sausage! It does make a huge difference. Sausage, eggs, veggies and some carb, my favorite combo for breakfast! This will be on our weekend menu now :)",
+        "author": {
+          "@type": "Person",
+          "name": "Maggie"
+        },
+        "datePublished": "2015-08-25"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "These look scrumptious, love crispy fried potatoes and that fact you schooled me that there are 4 food groups in there makes it all the better!",
+        "author": {
+          "@type": "Person",
+          "name": "Kevin | KevinIsCooking"
+        },
+        "datePublished": "2015-08-24"
+      }
+    ],
+    "recipeCategory": [
+      "Breakfast",
+      "Brunch",
+      "Party Food"
+    ],
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "servingSize": "62 g",
+      "calories": "129 kcal",
+      "carbohydrateContent": "7.3 g",
+      "proteinContent": "5.6 g",
+      "fatContent": "8.6 g",
+      "saturatedFatContent": "2.9 g",
+      "transFatContent": "0.1 g",
+      "cholesterolContent": "29 mg",
+      "sodiumContent": "230 mg",
+      "fiberContent": "0.8 g"
+    },
+    "@id": "https://www.recipetineats.com/crispy-cheesy-sausage-hash-browns/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/crispy-cheesy-sausage-hash-browns/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/crispy-cheesy-sausage-hash-browns/"
+  }
+}

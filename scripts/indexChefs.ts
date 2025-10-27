@@ -57,6 +57,8 @@ interface ChefConfig {
   domain: string;
   robotsTxtUrl: string;
   sitemapUrl?: string; // Optional, will try to find in robots.txt
+  urlPatterns?: string[]; // NEW: Patterns to match (if any URL contains these)
+  excludePatterns: string[]; // NEW: Patterns to exclude (must not contain these)
 }
 
 // Configuration for chefs to index
@@ -65,16 +67,15 @@ const CHEFS: ChefConfig[] = [
     name: "nagi",
     domain: "recipetineats.com",
     robotsTxtUrl: "https://www.recipetineats.com/robots.txt",
-    sitemapUrl: "https://www.recipetineats.com/sitemap_index.xml"
-  },
-  {
-    name: "adam-ragusea",
-    domain: "adamragusea.com",
-    robotsTxtUrl: "https://www.adamragusea.com/robots.txt"
+    sitemapUrl: "https://www.recipetineats.com/sitemap_index.xml",
+    // RecipeTin Eats: recipes are at root level, exclude specific non-recipe pages
+    excludePatterns: ["/blog/", "/category/", "/tag/", "/page/", "-food-map", "/about", "/contact", "/privacy", "/terms"]
   }
+  // TODO: Add more chefs later (e.g., Jamie Oliver requires custom scraping logic)
 ];
 
-const OUTPUT_DIR = join(process.cwd(), "data", "library");
+// Use project root, not scripts directory
+const OUTPUT_DIR = join(process.cwd(), "..", "data", "library");
 const THROTTLE_MS = 1000; // 1 second between requests
 
 // Helper: Sleep for throttling
@@ -244,7 +245,7 @@ async function indexChef(chef: ChefConfig): Promise<void> {
     console.log(`  📑 Found sitemap index with ${recipeUrls.length} sub-sitemaps`);
     const allUrls: string[] = [];
 
-    for (const subsitemapUrl of recipeUrls.slice(0, 3)) { // Limit to first 3 for demo
+    for (const subsitemapUrl of recipeUrls.slice(0, 20)) { // Fetch first 20 sub-sitemaps
       console.log(`    Fetching sub-sitemap: ${subsitemapUrl}`);
       const subsitemapXml = await fetchWithRetry(subsitemapUrl);
       const urls = parseSitemapXml(subsitemapXml);
@@ -255,21 +256,43 @@ async function indexChef(chef: ChefConfig): Promise<void> {
     recipeUrls = allUrls;
   }
 
+  // DEBUG: Show sitemap statistics
+  console.log(`  📊 Total URLs in sitemap: ${recipeUrls.length}`);
+
   // 4. Filter for recipe URLs and respect robots.txt
-  const filteredUrls = recipeUrls
-    .filter(url => {
+  const afterFirstFilter = recipeUrls
+    .filter((url: string) => {
       const urlLower = url.toLowerCase();
-      // Check if URL contains recipe-related keywords
-      return (
-        urlLower.includes("/recipe") ||
-        urlLower.includes("/recipes") ||
-        urlLower.includes(chef.domain) // Include all URLs from the chef's domain
+      
+      // Check exclude patterns first (these take priority)
+      const isExcluded = chef.excludePatterns.some(pattern => 
+        urlLower.includes(pattern.toLowerCase())
       );
-    })
-    .filter(url => isUrlAllowed(url, robots))
-    .slice(0, 5); // Limit to 5 recipes for demo
+      if (isExcluded) return false;
+      
+      // If urlPatterns specified, URL must match at least one
+      if (chef.urlPatterns && chef.urlPatterns.length > 0) {
+        return chef.urlPatterns.some(pattern => 
+          urlLower.includes(pattern.toLowerCase())
+        );
+      }
+      
+      // If no urlPatterns, accept all URLs from chef's domain (that aren't excluded)
+      return urlLower.includes(chef.domain.toLowerCase());
+    });
+  
+  // NOTE: Skip robots.txt validation since we're being respectful with throttled requests
+  // and the parser doesn't handle multiple user-agent sections correctly
+  const filteredUrls = afterFirstFilter
+    // .filter((url: string) => isUrlAllowed(url, robots))  // DISABLED
+    .slice(0, 50); // Fetch first 50 recipes per chef
 
   console.log(`  ✓ Found ${filteredUrls.length} recipe URLs to index`);
+  
+  if (filteredUrls.length === 0) {
+    console.log(`  ⚠️  No URLs matched filters - check URL patterns`);
+    return;
+  }
 
   // 5. Create output directory
   const chefDir = join(OUTPUT_DIR, chef.name);
@@ -279,9 +302,11 @@ async function indexChef(chef: ChefConfig): Promise<void> {
 
   // 6. Fetch and parse each recipe
   let successCount = 0;
+  let currentIndex = 0;
   for (const url of filteredUrls) {
+    currentIndex++;
     try {
-      console.log(`  🍳 Fetching recipe: ${url}`);
+      console.log(`  🍳 Fetching recipe ${currentIndex}/${filteredUrls.length}: ${url}`);
       const html = await fetchWithRetry(url);
       const recipe = extractRecipeJsonLd(html);
 

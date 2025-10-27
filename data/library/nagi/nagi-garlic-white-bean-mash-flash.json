@@ -1,0 +1,142 @@
+{
+  "id": "nagi-garlic-white-bean-mash-flash",
+  "sourceUrl": "https://www.recipetineats.com/garlic-white-bean-mash-flash/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:31:01.688Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Garlic White Bean Mash In A Flash",
+    "author": {
+      "@type": "Person",
+      "name": "Nagi | RecipeTin"
+    },
+    "description": "Sometimes you've just gotta have mash but you simply don't have the energy (or time) to peel, cut, boil and mash potatoes. On such occasions, this Garlic White Bean Mash In A Flash is simply fabulous to satisfy your craving - suitably named because it requires such little effort to make. I made this as a side for my Healthy Parmesan Garlic Crumbed Fish to make a complete meal in 15 minutes. This recipe is also great to use as a topping for bruschetta.",
+    "datePublished": "2014-07-02T21:57:58+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2014/07/White-Bean-Mash-1.jpg",
+      "https://www.recipetineats.com/tachyon/2014/07/White-Bean-Mash-1.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2014/07/White-Bean-Mash-1.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2014/07/White-Bean-Mash-1.jpg?resize=480%2C270"
+    ],
+    "recipeYield": [
+      "2"
+    ],
+    "prepTime": "PT1M",
+    "cookTime": "PT3M",
+    "totalTime": "PT4M",
+    "recipeIngredient": [
+      "1 tbsp extra virgin olive oil",
+      "1  garlic clove (, minced)",
+      "1 can cannellini beans ((15oz / 420g can), drained)",
+      "1/3 cup vegetable stock",
+      "1/2  lemon zest ((optional))",
+      "Salt and pepper to taste"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Heat oil in pan over medium high, add garlic and sauté until fragrant.",
+        "name": "Heat oil in pan over medium high, add garlic and sauté until fragrant.",
+        "url": "https://www.recipetineats.com/garlic-white-bean-mash-flash/#wprm-recipe-26406-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add beans, stock and lemon zest.",
+        "name": "Add beans, stock and lemon zest.",
+        "url": "https://www.recipetineats.com/garlic-white-bean-mash-flash/#wprm-recipe-26406-step-0-1"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Simmer for 2 minutes, then use a fork or potato masher to mash.",
+        "name": "Simmer for 2 minutes, then use a fork or potato masher to mash.",
+        "url": "https://www.recipetineats.com/garlic-white-bean-mash-flash/#wprm-recipe-26406-step-0-2"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Season to taste with salt and pepper.",
+        "name": "Season to taste with salt and pepper.",
+        "url": "https://www.recipetineats.com/garlic-white-bean-mash-flash/#wprm-recipe-26406-step-0-3"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "6",
+      "reviewCount": "4"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Love this recipe we add some Persian fetta also , yummo",
+        "author": {
+          "@type": "Person",
+          "name": "Lynda"
+        },
+        "datePublished": "2021-08-22"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Delicious",
+        "author": {
+          "@type": "Person",
+          "name": "Martine Dion"
+        },
+        "datePublished": "2020-10-30"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "OMG ... Enjoy I did! Thank you for the speedy reply. We loved this recipe and it was so simple to prepare. This will definitely be added to my rotation of side dishes. I also made your Sticky Baked Chicken Thighs which were absolutely delicious as well!",
+        "author": {
+          "@type": "Person",
+          "name": "Marlene"
+        },
+        "datePublished": "2020-06-22"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I made this tonight with crispy skin salmon. YUM. So delicious. I could have eaten a whole bowl of it.",
+        "author": {
+          "@type": "Person",
+          "name": "Danielle"
+        },
+        "datePublished": "2018-07-24"
+      }
+    ],
+    "recipeCategory": [
+      "Sides"
+    ],
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "servingSize": "262 g",
+      "calories": "269 kcal",
+      "carbohydrateContent": "32.5 g",
+      "proteinContent": "15.8 g",
+      "fatContent": "7.2 g",
+      "saturatedFatContent": "1.1 g",
+      "sodiumContent": "127 mg",
+      "fiberContent": "10.7 g"
+    },
+    "@id": "https://www.recipetineats.com/garlic-white-bean-mash-flash/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/garlic-white-bean-mash-flash/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/garlic-white-bean-mash-flash/"
+  }
+}

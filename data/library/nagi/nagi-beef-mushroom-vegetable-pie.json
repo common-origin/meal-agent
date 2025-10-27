@@ -1,0 +1,192 @@
+{
+  "id": "nagi-beef-mushroom-vegetable-pie",
+  "sourceUrl": "https://www.recipetineats.com/beef-mushroom-vegetable-pie/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:30:31.480Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Beef and Mushroom Pie (3 in 1)",
+    "author": {
+      "@type": "Person",
+      "name": "Nagi | RecipeTin Eats"
+    },
+    "description": "This is comfort food at its best because it's so fast to prepare. Made using leftover Slow Cooked Beef Cheeks in Red Wine, this pie takes just 15 minutes to prepare to pop into the oven to bake until puffed and golden.",
+    "datePublished": "2014-08-24T10:37:30+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2014/08/Beef-Cheek-Pie-1-1.jpg",
+      "https://www.recipetineats.com/tachyon/2014/08/Beef-Cheek-Pie-1-1.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2014/08/Beef-Cheek-Pie-1-1.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2014/08/Beef-Cheek-Pie-1-1.jpg?resize=480%2C270"
+    ],
+    "recipeYield": [
+      "4"
+    ],
+    "prepTime": "PT15M",
+    "cookTime": "PT25M",
+    "totalTime": "PT40M",
+    "recipeIngredient": [
+      "1  sheet ready rolled puff pastry ((25cm x 25cm / 10\" x 10\"), thawed)",
+      "1  egg (, lightly beaten)",
+      "2 cups shredded beef cheeks from Slow Cooked Beef Cheeks in Red Wine leftovers",
+      "1 1/2 cups leftover sauce from Slow Cooked Beef Cheeks in Red Wine",
+      "2 tbsp olive oil",
+      "1  onion ((brown, white or yellow), diced)",
+      "2  garlic cloves (, minced)",
+      "2  carrots (, diced roughly to the size of peas (about 1 1/2 cups))",
+      "1 cup frozen green peas",
+      "1 cup canned crushed tomato",
+      "1 1/2 cups sliced button mushrooms",
+      "3 tbsp tomato paste",
+      "1 cup water",
+      "1 tsp thyme ((dried))",
+      "1 tsp oregano ((dried))",
+      "1 tsp salt (, plus more to taste)",
+      "Black pepper"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Preheat the oven to 180C/350F.",
+        "name": "Preheat the oven to 180C/350F.",
+        "url": "https://www.recipetineats.com/beef-mushroom-vegetable-pie/#wprm-recipe-26209-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "You will need 4 x 1 2/3 cup capacity ramekins.",
+        "name": "You will need 4 x 1 2/3 cup capacity ramekins.",
+        "url": "https://www.recipetineats.com/beef-mushroom-vegetable-pie/#wprm-recipe-26209-step-0-1"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Place 1 ramekin on the puff pastry and use it as a guide to cut rounds out of the puff pastry. Cut 4 rounds.",
+        "name": "Place 1 ramekin on the puff pastry and use it as a guide to cut rounds out of the puff pastry. Cut 4 rounds.",
+        "url": "https://www.recipetineats.com/beef-mushroom-vegetable-pie/#wprm-recipe-26209-step-0-2"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Heat oil in large heavy based pan over medium high heat.",
+        "name": "Heat oil in large heavy based pan over medium high heat.",
+        "url": "https://www.recipetineats.com/beef-mushroom-vegetable-pie/#wprm-recipe-26209-step-0-3"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add onion and garlic, and sauté for 2 minutes.",
+        "name": "Add onion and garlic, and sauté for 2 minutes.",
+        "url": "https://www.recipetineats.com/beef-mushroom-vegetable-pie/#wprm-recipe-26209-step-0-4"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add carrots and sauté for 1 minute. Then add mushrooms and sauté for another minute.",
+        "name": "Add carrots and sauté for 1 minute. Then add mushrooms and sauté for another minute.",
+        "url": "https://www.recipetineats.com/beef-mushroom-vegetable-pie/#wprm-recipe-26209-step-0-5"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add remaining Pie Filling ingredients. Let simmer for 3 minutes to bring the flavours together.",
+        "name": "Add remaining Pie Filling ingredients. Let simmer for 3 minutes to bring the flavours together.",
+        "url": "https://www.recipetineats.com/beef-mushroom-vegetable-pie/#wprm-recipe-26209-step-0-6"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Divide the Pie Filling between the 4 ramekins. Top with puff pastry rounds and cut a small slash in each (steam vents).",
+        "name": "Divide the Pie Filling between the 4 ramekins. Top with puff pastry rounds and cut a small slash in each (steam vents).",
+        "url": "https://www.recipetineats.com/beef-mushroom-vegetable-pie/#wprm-recipe-26209-step-0-7"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Brush with egg, then place into the oven to bake for 20 to 25 minutes until the pastry is dark golden and puffed.",
+        "name": "Brush with egg, then place into the oven to bake for 20 to 25 minutes until the pastry is dark golden and puffed.",
+        "url": "https://www.recipetineats.com/beef-mushroom-vegetable-pie/#wprm-recipe-26209-step-0-8"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Remove from oven, let stand for 5 minutes before serving.",
+        "name": "Remove from oven, let stand for 5 minutes before serving.",
+        "url": "https://www.recipetineats.com/beef-mushroom-vegetable-pie/#wprm-recipe-26209-step-0-9"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "5",
+      "reviewCount": "4"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Love the beef cheeks and so easy to make.\r\nCould I use the Aussie meat pies in my pie maker and would I have to cook the pastry first? Thank you.",
+        "author": {
+          "@type": "Person",
+          "name": "Sabina"
+        },
+        "datePublished": "2019-09-21"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Great stuff. Tasted better and better through the week. will make again into pie form.",
+        "author": {
+          "@type": "Person",
+          "name": "Mikey"
+        },
+        "datePublished": "2019-07-03"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I hope this recipe will be like by my kids, They never eaten beef before and i want to taste them in shape of this recipe. Thanks",
+        "author": {
+          "@type": "Person",
+          "name": "Amber Frank"
+        },
+        "datePublished": "2018-03-10"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "This is the best pie I have ever made – and maybe even the best I’ve ever eaten. I added some finely diced zucchini as well as finely diced mushrooms and I think I probably increased the meat/sauce to get five pies out of this; but I don’t think you could go wrong tweaking this recipe slightly, because the base of slow cooked beef cheeks and sauce is just so freaking perfect. I just wish beef cheeks would become cheap again so that I could make this more often! I love a lot of Nagi recipes but this might just be the best.",
+        "author": {
+          "@type": "Person",
+          "name": "Bec"
+        },
+        "datePublished": "2017-06-16"
+      }
+    ],
+    "recipeCategory": [
+      "Baking",
+      "Pie"
+    ],
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "servingSize": "389 g",
+      "calories": "562 kcal",
+      "carbohydrateContent": "27.5 g",
+      "proteinContent": "27.9 g",
+      "fatContent": "34.6 g",
+      "saturatedFatContent": "13 g",
+      "cholesterolContent": "105 mg",
+      "sodiumContent": "1028 mg",
+      "fiberContent": "3.9 g",
+      "sugarContent": "5 g"
+    },
+    "@id": "https://www.recipetineats.com/beef-mushroom-vegetable-pie/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/beef-mushroom-vegetable-pie/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/beef-mushroom-vegetable-pie/"
+  }
+}

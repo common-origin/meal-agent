@@ -1,0 +1,312 @@
+{
+  "id": "nagi-aloo-paratha-indian-potato-stuffed-flatbread",
+  "sourceUrl": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:31:07.012Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Aloo Paratha (Indian Potato Stuffed Flatbread)",
+    "author": {
+      "@type": "Person",
+      "name": "Nagi | RecipeTin Eats"
+    },
+    "description": "Aloo Paratha is a very popular breakfast dish in India. The beauty of this recipe is how flexible it is - there are so many options and variations you can do and I've provided a bunch of suggestions in the notes. The dough is extremely simple to make and handle. The only \"must do\" in this recipe is letting the dough rest for 20 minutes.",
+    "datePublished": "2014-12-07T05:00:00+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2014/11/Aloo-Paratha-3.jpg",
+      "https://www.recipetineats.com/tachyon/2014/11/Aloo-Paratha-3.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2014/11/Aloo-Paratha-3.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2014/11/Aloo-Paratha-3.jpg?resize=480%2C270"
+    ],
+    "recipeYield": [
+      "4"
+    ],
+    "prepTime": "PT15M",
+    "cookTime": "PT12M",
+    "totalTime": "PT27M",
+    "recipeIngredient": [
+      "2 1/2 cups plain white flour ((Note 1))",
+      "1 tsp salt",
+      "1 cup water ((Note 2))",
+      "2 tbsp vegetable oil ((or any other cooking oil), ghee or butter)",
+      "1 1/2 cups mashed potato ((Notes 3 and 4))",
+      "1/2 cup shallots/scallions (, chopped)",
+      "2 tbsp fresh coriander/cilantro (, roughly chopped (optional - adds a nice burst of freshness))",
+      "1/2 tsp fresh ginger (, grated (optional - Note 5))",
+      "1 tsp Garam Masala ((Note 6))",
+      "1 tsp Ajwain/ Carom seeds OR 1 tsp thyme ((Note 7))",
+      "1/4 tsp chili powder ((Note 8))",
+      "1/2 tsp salt"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Place the flour, water and salt in a bowl. Use a table knife to mix the ingredients together, then use your hands.",
+        "name": "Place the flour, water and salt in a bowl. Use a table knife to mix the ingredients together, then use your hands.",
+        "url": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/#wprm-recipe-25866-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Once the dough is sort of formed, turn it out onto a work surface and knead it 60 times. It should be smooth and elastic, not sticky or crumbly.",
+        "name": "Once the dough is sort of formed, turn it out onto a work surface and knead it 60 times. It should be smooth and elastic, not sticky or crumbly.",
+        "url": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/#wprm-recipe-25866-step-0-1"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Form the dough into a ball, cover with cling wrap and set aside for at least 20 minutes (up to a few hours). Do not refrigerate.",
+        "name": "Form the dough into a ball, cover with cling wrap and set aside for at least 20 minutes (up to a few hours). Do not refrigerate.",
+        "url": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/#wprm-recipe-25866-step-0-2"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Meanwhile, make the Filling. Place all Filling ingredients into a bowl and mix to combine.",
+        "name": "Meanwhile, make the Filling. Place all Filling ingredients into a bowl and mix to combine.",
+        "url": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/#wprm-recipe-25866-step-0-3"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Preheat oven to very low (to keep Parathas warm because you can only cook one at a time).",
+        "name": "Preheat oven to very low (to keep Parathas warm because you can only cook one at a time).",
+        "url": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/#wprm-recipe-25866-step-0-4"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Cut the dough into 4 pieces with a knife.",
+        "name": "Cut the dough into 4 pieces with a knife.",
+        "url": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/#wprm-recipe-25866-step-0-5"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Take one ball and use a rolling pin to roll it out into a round about 18cm/7\" in diameter.",
+        "name": "Take one ball and use a rolling pin to roll it out into a round about 18cm/7\" in diameter.",
+        "url": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/#wprm-recipe-25866-step-0-6"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Place 1/3 cup of the Filling into the middle of the rolled out dough.",
+        "name": "Place 1/3 cup of the Filling into the middle of the rolled out dough.",
+        "url": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/#wprm-recipe-25866-step-0-7"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Gather the edges of the dough to enclose the Filling (see photo below). Remove as much air as possible from inside then pinch to seal.",
+        "name": "Gather the edges of the dough to enclose the Filling (see photo below). Remove as much air as possible from inside then pinch to seal.",
+        "url": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/#wprm-recipe-25866-step-0-8"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Flatten the ball slightly and shape the flattened disc into a circle using your hands.",
+        "name": "Flatten the ball slightly and shape the flattened disc into a circle using your hands.",
+        "url": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/#wprm-recipe-25866-step-0-9"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Turn the dough over so the \"sealed\" side is facing down. Use a rolling pin to roll it out to about 1 1/2 cm / 2/3\" thickness. Repeat with remaining dough.",
+        "name": "Turn the dough over so the \"sealed\" side is facing down. Use a rolling pin to roll it out to about 1 1/2 cm / 2/3\" thickness. Repeat with remaining dough.",
+        "url": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/#wprm-recipe-25866-step-0-10"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Heat 1 tbsp of oil in a non stick fry pan over medium heat.",
+        "name": "Heat 1 tbsp of oil in a non stick fry pan over medium heat.",
+        "url": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/#wprm-recipe-25866-step-0-11"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Place one Paratha into the fry pan and cook the first side for 1 minute 45 seconds. Use an egg flip to check if it is ready to turn - the underside should be golden brown.",
+        "name": "Place one Paratha into the fry pan and cook the first side for 1 minute 45 seconds. Use an egg flip to check if it is ready to turn - the underside should be golden brown.",
+        "url": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/#wprm-recipe-25866-step-0-12"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Turn the Paratha over and cook the other side for 1 minute 30 seconds.",
+        "name": "Turn the Paratha over and cook the other side for 1 minute 30 seconds.",
+        "url": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/#wprm-recipe-25866-step-0-13"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Remove from fry pan onto a wire rack (this stops the underside from going soggy due to sweat) and place into a low oven to keep warm while you cook the remaining Parathas.",
+        "name": "Remove from fry pan onto a wire rack (this stops the underside from going soggy due to sweat) and place into a low oven to keep warm while you cook the remaining Parathas.",
+        "url": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/#wprm-recipe-25866-step-0-14"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add a small drizzle of the remaining oil into the pan (you should not need much). Proceed to cook the remaining Parathas.",
+        "name": "Add a small drizzle of the remaining oil into the pan (you should not need much). Proceed to cook the remaining Parathas.",
+        "url": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/#wprm-recipe-25866-step-0-15"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Cut into 4 pieces and serve immediately. It can be served with chutney or yoghurt on the side. I find that the Filling has so much flavour that it doesn't need anything on the side.",
+        "name": "Cut into 4 pieces and serve immediately. It can be served with chutney or yoghurt on the side. I find that the Filling has so much flavour that it doesn't need anything on the side.",
+        "url": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/#wprm-recipe-25866-step-0-16"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.89",
+      "ratingCount": "42",
+      "reviewCount": "10"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Using a cast iron, I watch them poof up, thin out and cook well. Perhaps if they \"pop\" they aren't cooking correct?",
+        "author": {
+          "@type": "Person",
+          "name": "Em"
+        },
+        "datePublished": "2025-08-20"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "This has become a big favorite in our house. I love your original recipe, just amazing flavor exploding. I was asked to make the dough with variations and we've tried it now with plain potato, your potato, ham, mozzarella, provolone &amp; pepperoni. I've lost count how much we've made this one.  \r\nEasy &amp; awesome dough. Your recipes don't disappoint. Thanks for keeping the kitchen fun!!",
+        "author": {
+          "@type": "Person",
+          "name": "Em"
+        },
+        "datePublished": "2025-08-20"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "4"
+        },
+        "reviewBody": "I don't know how these are supposed to be, mine were browned but doughy and dense inside. I did have problems with my coconut oil smoking- it's supposed to handle up to 365 degrees, but it looked like it'd catch fire at medium heat! I tried to roll some thinner, but the filling leaked through while cooking. The filling is good, but I never have scallions so I substituted giant bbq green onions and some colby jack I needed to use up. Next time I'd stuff naan or use the flatbread recipe and eat them like tacos, since high-heat oil is expensive and/or unhealthy.",
+        "author": {
+          "@type": "Person",
+          "name": "jb"
+        },
+        "datePublished": "2025-01-05"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "My husband &amp; I love simple, healthy and flavorful recipes - this hit home across the board. Thank you so much, its been added to our rotating favorites.",
+        "author": {
+          "@type": "Person",
+          "name": "Mel"
+        },
+        "datePublished": "2024-03-28"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Everyone loves naan but more people should be loving this recipe as a side to a curry! The potato filling is fabulous - I had to stop myself from eating it before it went in the dough. This is totally worth the small effort involved - do yourself a favour and try it!",
+        "author": {
+          "@type": "Person",
+          "name": "Lisa"
+        },
+        "datePublished": "2023-12-14"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "This was so good!! My partner and I are not very experienced in Indian cooking and we can’t believe how great this came out. All the notes were helpful too.  We added some chopped broccoli to the filling and served the meal with mango chutney and harissa.   It was all delicious thank you!!",
+        "author": {
+          "@type": "Person",
+          "name": "Cameryn"
+        },
+        "datePublished": "2023-01-15"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "First time making Aloo Paratha, really enjoyed these. A good sub when you have a samosa type craving but don't want to be bothered with deep frying!\r\n\r\nThank you Nagi!",
+        "author": {
+          "@type": "Person",
+          "name": "Holly"
+        },
+        "datePublished": "2022-08-16"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Excellent recipe, it worked out great and they ere delicious with plain yogurt. Thanks a lot Nagi 👏👏👏",
+        "author": {
+          "@type": "Person",
+          "name": "Iris Estrada"
+        },
+        "datePublished": "2022-03-07"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Hey Nagi, thanks for your recipe! I made this a few times already and everyone loves it! \r\nXOXO from LA",
+        "author": {
+          "@type": "Person",
+          "name": "Aida"
+        },
+        "datePublished": "2021-08-12"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "My Punjabi Mom approves your recipe! She has been making paranthas ever since I was a child :) I remember Saturday and Sunday morning breakfasts - yummy parantha made from whole wheat or atta flour. Lentils is another thing you could fill with.",
+        "author": {
+          "@type": "Person",
+          "name": "Agill"
+        },
+        "datePublished": "2021-07-19"
+      }
+    ],
+    "recipeCategory": [
+      "Appetizer",
+      "Breakfast",
+      "Starter"
+    ],
+    "recipeCuisine": [
+      "Indian"
+    ],
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "servingSize": "246 g",
+      "calories": "440 kcal",
+      "carbohydrateContent": "76.6 g",
+      "proteinContent": "10.2 g",
+      "fatContent": "9.9 g",
+      "saturatedFatContent": "4.5 g",
+      "transFatContent": "0.5 g",
+      "cholesterolContent": "16 mg",
+      "sodiumContent": "1183 mg",
+      "fiberContent": "3.4 g",
+      "sugarContent": "104 g"
+    },
+    "@id": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/aloo-paratha-indian-potato-stuffed-flatbread/"
+  }
+}

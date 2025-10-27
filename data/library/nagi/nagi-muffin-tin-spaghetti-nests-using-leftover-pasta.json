@@ -1,0 +1,118 @@
+{
+  "id": "nagi-muffin-tin-spaghetti-nests-using-leftover-pasta",
+  "sourceUrl": "https://www.recipetineats.com/muffin-tin-spaghetti-nests-using-leftover-pasta/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:30:49.327Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Muffin Tin Spaghetti Nests (Using Leftover Pasta)",
+    "author": {
+      "@type": "Person",
+      "name": "Nagi | RecipeTin Eats"
+    },
+    "description": "This is a great way to use up leftover pasta - you can use any type, whether it's tomato or cream based. It's kid friendly, and you can use it as an opportunity to add hidden vegetables, like grated carrot and zucchini. You can also freeze it - it reheats well in both the oven and microwave.",
+    "datePublished": "2014-05-28T16:03:13+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2014/05/Spaghetti-Muffin-Tin-2-Version-2-1.jpg",
+      "https://www.recipetineats.com/tachyon/2014/05/Spaghetti-Muffin-Tin-2-Version-2-1.jpg?resize=450%2C375",
+      "https://www.recipetineats.com/tachyon/2014/05/Spaghetti-Muffin-Tin-2-Version-2-1.jpg?resize=450%2C270"
+    ],
+    "prepTime": "PT5M",
+    "cookTime": "PT10M",
+    "totalTime": "PT15M",
+    "recipeIngredient": [
+      "Leftover pasta and sauce mixed together",
+      "1  egg per 3 packed cups of pasta ((see notes))",
+      "Grated melting cheese"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Preheat oven to 350F/180C.",
+        "name": "Preheat oven to 350F/180C.",
+        "url": "https://www.recipetineats.com/muffin-tin-spaghetti-nests-using-leftover-pasta/#wprm-recipe-26570-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Mix the egg and pasta together.",
+        "name": "Mix the egg and pasta together.",
+        "url": "https://www.recipetineats.com/muffin-tin-spaghetti-nests-using-leftover-pasta/#wprm-recipe-26570-step-0-1"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Spray muffin tins with oil, then pack tightly with pasta. If you don't pack the pasta in, it will fall apart.",
+        "name": "Spray muffin tins with oil, then pack tightly with pasta. If you don't pack the pasta in, it will fall apart.",
+        "url": "https://www.recipetineats.com/muffin-tin-spaghetti-nests-using-leftover-pasta/#wprm-recipe-26570-step-0-2"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Bake until the pasta goes crunchy and golden on top - around 5 to 8 minutes.",
+        "name": "Bake until the pasta goes crunchy and golden on top - around 5 to 8 minutes.",
+        "url": "https://www.recipetineats.com/muffin-tin-spaghetti-nests-using-leftover-pasta/#wprm-recipe-26570-step-0-3"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Remove from oven and sprinkle on cheese, then return to oven until cheese melts.",
+        "name": "Remove from oven and sprinkle on cheese, then return to oven until cheese melts.",
+        "url": "https://www.recipetineats.com/muffin-tin-spaghetti-nests-using-leftover-pasta/#wprm-recipe-26570-step-0-4"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "3",
+      "reviewCount": "3"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Any chance of this little gem repeating again with a video too. Grandchildren love your recipes and like to watch your videos while attempting to make them theirselves.",
+        "author": {
+          "@type": "Person",
+          "name": "Jeanette"
+        },
+        "datePublished": "2024-10-16"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I left it in for 20 minutes and not crunchy.",
+        "author": {
+          "@type": "Person",
+          "name": "Denise"
+        },
+        "datePublished": "2022-03-28"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "This is a great recipe - I used it as a guide when I had some leftover penne pasta to make little pasta cakes for my one-year-old.  He loved them!",
+        "author": {
+          "@type": "Person",
+          "name": "Blogging Mrs B"
+        },
+        "datePublished": "2016-07-05"
+      }
+    ],
+    "recipeCategory": [
+      "Kid Friendly",
+      "Snack"
+    ],
+    "@id": "https://www.recipetineats.com/muffin-tin-spaghetti-nests-using-leftover-pasta/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/muffin-tin-spaghetti-nests-using-leftover-pasta/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/muffin-tin-spaghetti-nests-using-leftover-pasta/"
+  }
+}

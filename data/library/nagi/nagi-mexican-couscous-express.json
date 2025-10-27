@@ -1,0 +1,133 @@
+{
+  "id": "nagi-mexican-couscous-express",
+  "sourceUrl": "https://www.recipetineats.com/mexican-couscous-express/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:30:35.965Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Mexican Couscous Express",
+    "author": {
+      "@id": "https://www.recipetineats.com/#/schema/person/1684e6a75e9f91ae2e33ca2de95b47e2"
+    },
+    "description": "The most ridiculously easy and fast mid week meal that's darn tasty and wonderfully light. Feel free to ramp up the toppings - I just added some diced avocado and tomato to keep it fresh, but I also have it with a dollop of source cream and grated cheese. And I have also been known to add crispy tortilla chips too….",
+    "datePublished": "2014-06-03T22:37:25+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2014/06/Express-Mexican-Couscous-3-Version-21-450x450-1.jpg",
+      "https://www.recipetineats.com/tachyon/2014/06/Express-Mexican-Couscous-3-Version-21-450x450-1.jpg?resize=450%2C375",
+      "https://www.recipetineats.com/tachyon/2014/06/Express-Mexican-Couscous-3-Version-21-450x450-1.jpg?resize=450%2C270"
+    ],
+    "recipeYield": [
+      "4"
+    ],
+    "prepTime": "PT10M",
+    "totalTime": "PT10M",
+    "recipeIngredient": [
+      "1 1/2 tsp salt",
+      "2 tsp cumin powder",
+      "1 tsp onion powder",
+      "1 cup couscous",
+      "1 cup boiling water",
+      "1/4 cup tomato paste",
+      "1 tbsp diced jalapeño ((fresh is better, but tinned also ok))",
+      "2  scallions ((shallots), roughly sliced (optional))",
+      "1 can (15 oz / 400 g)  black beans (or red kidney beans)",
+      "1 can (15 oz / 400 g)  corn kernels",
+      "Handful of  coriander / cilantro",
+      "1  tomato (, deseeded and diced)",
+      "1/2  avocado (, diced)",
+      "Sour cream",
+      "Grated cheese"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Place salt, cumin, onion powder and couscous in a bowl, quickly toss to combine.",
+        "name": "Place salt, cumin, onion powder and couscous in a bowl, quickly toss to combine.",
+        "url": "https://www.recipetineats.com/mexican-couscous-express/#wprm-recipe-26540-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add boiling water, cover and set aside for 5 minutes.",
+        "name": "Add boiling water, cover and set aside for 5 minutes.",
+        "url": "https://www.recipetineats.com/mexican-couscous-express/#wprm-recipe-26540-step-0-1"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Fluff with fork, add tomato paste and stir to evenly coat the couscous.",
+        "name": "Fluff with fork, add tomato paste and stir to evenly coat the couscous.",
+        "url": "https://www.recipetineats.com/mexican-couscous-express/#wprm-recipe-26540-step-0-2"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add remaining ingredients.",
+        "name": "Add remaining ingredients.",
+        "url": "https://www.recipetineats.com/mexican-couscous-express/#wprm-recipe-26540-step-0-3"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Serve with optional toppings.",
+        "name": "Serve with optional toppings.",
+        "url": "https://www.recipetineats.com/mexican-couscous-express/#wprm-recipe-26540-step-0-4"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.67",
+      "ratingCount": "3",
+      "reviewCount": "3"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Delicious! Super quick to put together and very tasty. I added some lime juice and hot sauce on top 😋",
+        "author": {
+          "@type": "Person",
+          "name": "Holly"
+        },
+        "datePublished": "2024-12-11"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Really good! I will admit that I did a little bit of tweaking (didn't have the jalapeños, don't like cumin, not enough beans or corn, way less salt.....) but I'm so excited with how well it turned out! We topped it with tomato, avocado, and a little lime juice. (: I'd have eaten a lot more couscous by now if hadn't taken me so long to find such a good recipe.",
+        "author": {
+          "@type": "Person",
+          "name": "Mickey"
+        },
+        "datePublished": "2019-05-12"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "4"
+        },
+        "reviewBody": "Great recipe for our young family. I made the couscous without the optional toppings, kept those separate so the kids could create their own dishes at the table, as per your suggestion I also made the Carnitas as well to be used as a topping - kids whoofed down their creations (avocado, tomatoe, cucumber, grated cheese and pork).   Great easy, mid-week dinner for a busy mum!",
+        "author": {
+          "@type": "Person",
+          "name": "Victoria"
+        },
+        "datePublished": "2018-10-09"
+      }
+    ],
+    "recipeCategory": [
+      "Meal"
+    ],
+    "recipeCuisine": [
+      "Mexican"
+    ],
+    "@id": "https://www.recipetineats.com/mexican-couscous-express/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/mexican-couscous-express/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/mexican-couscous-express/"
+  }
+}

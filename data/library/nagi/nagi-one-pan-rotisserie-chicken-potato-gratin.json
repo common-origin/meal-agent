@@ -1,0 +1,287 @@
+{
+  "id": "nagi-one-pan-rotisserie-chicken-potato-gratin",
+  "sourceUrl": "https://www.recipetineats.com/one-pan-rotisserie-chicken-potato-gratin/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:30:52.468Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Rotisserie Flavoured Chicken and Potato Bake &amp; a Giveaway!",
+    "author": {
+      "@type": "Person",
+      "name": "Nagi | RecipeTin Eats"
+    },
+    "description": "A one pan meal - TWO dishes in one pan! By baking the potato gratin with chicken on top, the chicken juices mix into the potato gratin, creating incredible flavour. The chicken fat is rendered on the stove first to remove excess fat and is seasoned with a rotisserie chicken flavoured rub.",
+    "datePublished": "2015-02-16T21:00:00+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2015/02/DSC_0178.jpg",
+      "https://www.recipetineats.com/tachyon/2015/02/DSC_0178.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2015/02/DSC_0178.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2015/02/DSC_0178.jpg?resize=480%2C270"
+    ],
+    "recipeYield": [
+      "4"
+    ],
+    "prepTime": "PT15M",
+    "cookTime": "PT60M",
+    "totalTime": "PT75M",
+    "recipeIngredient": [
+      "1/2 tsp onion powder",
+      "1/2 tsp garlic powder",
+      "1 tsp paprika",
+      "1 1/2 tsp dried thyme leaves",
+      "1/2 tsp salt",
+      "1/4 tsp black pepper",
+      "4  chicken thigh fillets (, skin on and bone in (about 1.5lb/750g))",
+      "1 tbsp olive oil",
+      "1  large onion (, halved then sliced)",
+      "2  garlic cloves (, crushed)",
+      "1.5 lb / 750g   potatoes ((Note 1), peeled and sliced into 1/8\" / 0.3cm slices)",
+      "1 cup milk",
+      "1 tsp salt",
+      "Black pepper",
+      "1/2 cup parmesan (, grated)"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Preheat oven to 350F/180C.",
+        "name": "Preheat oven to 350F/180C.",
+        "url": "https://www.recipetineats.com/one-pan-rotisserie-chicken-potato-gratin/#wprm-recipe-25729-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Combine the Rub ingredients in a small bowl. Rub onto the chicken, using most on the skin side.",
+        "name": "Combine the Rub ingredients in a small bowl. Rub onto the chicken, using most on the skin side.",
+        "url": "https://www.recipetineats.com/one-pan-rotisserie-chicken-potato-gratin/#wprm-recipe-25729-step-0-1"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Heat olive oil over medium heat in a large fry pan. (Note 2) Place chicken in the pan, skin side down. Cook for 10 minutes - this renders the fat. Then turn and cook the other side for 2 minutes. Remove chicken onto a plate.",
+        "name": "Heat olive oil over medium heat in a large fry pan. (Note 2) Place chicken in the pan, skin side down. Cook for 10 minutes - this renders the fat. Then turn and cook the other side for 2 minutes. Remove chicken onto a plate.",
+        "url": "https://www.recipetineats.com/one-pan-rotisserie-chicken-potato-gratin/#wprm-recipe-25729-step-0-2"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Pour out and discard all the fat but do not wipe the pan. Return the pan to the stove and turn up the heat to medium high.",
+        "name": "Pour out and discard all the fat but do not wipe the pan. Return the pan to the stove and turn up the heat to medium high.",
+        "url": "https://www.recipetineats.com/one-pan-rotisserie-chicken-potato-gratin/#wprm-recipe-25729-step-0-3"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add the onion and garlic together and sauté for 2 minutes.",
+        "name": "Add the onion and garlic together and sauté for 2 minutes.",
+        "url": "https://www.recipetineats.com/one-pan-rotisserie-chicken-potato-gratin/#wprm-recipe-25729-step-0-4"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add half the milk and bring to simmer. Use a wooden spoon to scrape the bottom of the pan to mix the brown bits into the milk.",
+        "name": "Add half the milk and bring to simmer. Use a wooden spoon to scrape the bottom of the pan to mix the brown bits into the milk.",
+        "url": "https://www.recipetineats.com/one-pan-rotisserie-chicken-potato-gratin/#wprm-recipe-25729-step-0-5"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Place half the potatoes in the pan. Scatter over 1/2 tsp salt, black pepper and half the parmesan.",
+        "name": "Place half the potatoes in the pan. Scatter over 1/2 tsp salt, black pepper and half the parmesan.",
+        "url": "https://www.recipetineats.com/one-pan-rotisserie-chicken-potato-gratin/#wprm-recipe-25729-step-0-6"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Repeat with remaining potato, salt and parmesan, then pour over the remaining milk.",
+        "name": "Repeat with remaining potato, salt and parmesan, then pour over the remaining milk.",
+        "url": "https://www.recipetineats.com/one-pan-rotisserie-chicken-potato-gratin/#wprm-recipe-25729-step-0-7"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Use a egg flip to press the potatoes into the milk while it simmers for 10 minutes and some of the milk has evaporated.",
+        "name": "Use a egg flip to press the potatoes into the milk while it simmers for 10 minutes and some of the milk has evaporated.",
+        "url": "https://www.recipetineats.com/one-pan-rotisserie-chicken-potato-gratin/#wprm-recipe-25729-step-0-8"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Place chicken on the potato, then place in the oven and bake for 40 to 50 minutes, until the chicken is cooked and the potatoes are golden brown on top.",
+        "name": "Place chicken on the potato, then place in the oven and bake for 40 to 50 minutes, until the chicken is cooked and the potatoes are golden brown on top.",
+        "url": "https://www.recipetineats.com/one-pan-rotisserie-chicken-potato-gratin/#wprm-recipe-25729-step-0-9"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Allow to rest for 5 minutes before serving.",
+        "name": "Allow to rest for 5 minutes before serving.",
+        "url": "https://www.recipetineats.com/one-pan-rotisserie-chicken-potato-gratin/#wprm-recipe-25729-step-0-10"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.93",
+      "ratingCount": "51",
+      "reviewCount": "11"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "This is an issue for many of us! (and rarely dealt with by the recipe author. You can scrape a lot of the fat off with a paring knife, but it's time-consuming. I'm lucky enough to have a small, old-timey store near me that has great chicken, but you pay more and they tend to be small, so you have to buy more!",
+        "author": {
+          "@type": "Person",
+          "name": "Martha"
+        },
+        "datePublished": "2025-10-18"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Dear Nagi,\r\n\r\nI promise; I do cook more than chicken! 😆😅🤣\r\n\r\nIn the last week, I have made 2 wonderful chicken thigh recipes from your collection; this was the first one!\r\n\r\nI was a wee bit worried after seeing the very charred skin, but I had faith in your talents and process Nagi!  And I was so happy with the end result!\r\n\r\nThe dark 'char' was in great part to the dried spices cooking into the chicken.  The flavour was not one of burned, but rather, as promised, a deep roast chicken flavour.  The thighs were tender and flavourful, and the potatoes cooked perfectly!\r\n\r\nThis was an easy to prepare dish with great results.  Thank you Nagi, and team, for another \r\nlovely recipe.\r\n\r\n\"Cheers\"! to you and your sweet boy, Dozer!\r\n\r\nFrom, \r\nThe Canadian Prairies",
+        "author": {
+          "@type": "Person",
+          "name": "Alex"
+        },
+        "datePublished": "2025-08-29"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "So good! I used skin on but boneless chicken thighs…worked really well, the skin went nice and crispy.",
+        "author": {
+          "@type": "Person",
+          "name": "Edwina Revell"
+        },
+        "datePublished": "2025-04-06"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "YUM!!",
+        "author": {
+          "@type": "Person",
+          "name": "Lisa"
+        },
+        "datePublished": "2024-04-27"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "This is an amazing recipe! I’m definitely making it again.",
+        "author": {
+          "@type": "Person",
+          "name": "Christine"
+        },
+        "datePublished": "2024-03-27"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Amazing! Very kid-friendly and perfectly filling. So easy to prep &amp; loved that it’s a one-pot dish. Thank you so much for this one!!",
+        "author": {
+          "@type": "Person",
+          "name": "Mia"
+        },
+        "datePublished": "2023-07-15"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Loved this!! The chicken tasted just like a roasted chicken from the supermarket. Only issue was there was too much chicken fat when it was done cooking. I think I should have cooked the underside longer. I used large thighs, and there was a lot of skin on that side too.",
+        "author": {
+          "@type": "Person",
+          "name": "Jeff"
+        },
+        "datePublished": "2023-02-12"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Made this once and we all loved it. The chicken was nice and crispy but perfectly juicy and the potatoes were amazing. Had the flavor from the sauce but also the juices from the chicken. Making it again but tripling the recipe as my family wants leftovers. One of the best recipes I've made of your's and more people should try it.",
+        "author": {
+          "@type": "Person",
+          "name": "Scott Holmquist"
+        },
+        "datePublished": "2022-11-10"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Perfect!",
+        "author": {
+          "@type": "Person",
+          "name": "Amy Morgan"
+        },
+        "datePublished": "2022-11-08"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Another winner from Nagi!  We are getting potatoes from our garden and I wanted to try something new and this was fabulous.  My hubby started talking about lunch leftovers after we finished dinner!  Followed instructions exactly and it was awesome.  Thank you again Nagi for another great meal!",
+        "author": {
+          "@type": "Person",
+          "name": "Natalie M Hook"
+        },
+        "datePublished": "2022-08-31"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "4"
+        },
+        "reviewBody": "Another tasty meal!\r\n\r\nThanks Nagi!",
+        "author": {
+          "@type": "Person",
+          "name": "Holly"
+        },
+        "datePublished": "2022-03-09"
+      }
+    ],
+    "recipeCategory": [
+      "Baked Meals",
+      "Roasted"
+    ],
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "servingSize": "492 g",
+      "calories": "593 kcal",
+      "carbohydrateContent": "37.9 g",
+      "proteinContent": "62.5 g",
+      "fatContent": "20.6 g",
+      "saturatedFatContent": "6.2 g",
+      "cholesterolContent": "177 mg",
+      "sodiumContent": "1727 mg",
+      "fiberContent": "5.8 g",
+      "sugarContent": "6.8 g"
+    },
+    "@id": "https://www.recipetineats.com/one-pan-rotisserie-chicken-potato-gratin/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/one-pan-rotisserie-chicken-potato-gratin/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/one-pan-rotisserie-chicken-potato-gratin/"
+  }
+}

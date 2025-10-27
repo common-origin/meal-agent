@@ -1,0 +1,253 @@
+{
+  "id": "nagi-hummus-lamb",
+  "sourceUrl": "https://www.recipetineats.com/hummus-lamb/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:30:45.610Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Hummus with Lamb",
+    "author": {
+      "@type": "Person",
+      "name": "Nagi | RecipeTin Eats"
+    },
+    "description": "Hummus topped with aromatic lamb mince. A starter or a small meal, this is a show stopper hummus. If you haven't tried this before, you're in for a real treat! This recipe makes 2 starter size plates (double what you see in the photo).",
+    "datePublished": "2014-08-21T20:00:59+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2014/08/Hummus-with-Lamb-3-1.jpg",
+      "https://www.recipetineats.com/tachyon/2014/08/Hummus-with-Lamb-3-1.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2014/08/Hummus-with-Lamb-3-1.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2014/08/Hummus-with-Lamb-3-1.jpg?resize=480%2C270"
+    ],
+    "recipeYield": [
+      "8"
+    ],
+    "prepTime": "PT10M",
+    "cookTime": "PT5M",
+    "totalTime": "PT15M",
+    "recipeIngredient": [
+      "8 oz / 250 g   ground lamb ((mince))",
+      "1/2  brown onion (, finely diced)",
+      "1 tbsp olive oil",
+      "1/2 tsp cumin powder",
+      "1/2 tsp coriander powder",
+      "1/2 tsp paprika powder",
+      "1/8 tsp cinnamon powder",
+      "1/4 tsp black pepper",
+      "1 tsp salt",
+      "15 oz / 400 g   tin chickpeas (, drained)",
+      "1/4 cup water",
+      "1  garlic clove",
+      "Juice of ½ a small lemon",
+      "2 tbsp tahini ((sesame paste))",
+      "2 tbsp extra virgin olive oil",
+      "Salt and pepper",
+      "1 tbsp pine nuts",
+      "1 tbsp parsley (, finely chopped)",
+      "Extra virgin olive oil ((for drizzling))"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Place a pan over medium high heat. Add pine nuts and toast until golden. Remove pine nuts from pan and set aside.",
+        "name": "Place a pan over medium high heat. Add pine nuts and toast until golden. Remove pine nuts from pan and set aside.",
+        "url": "https://www.recipetineats.com/hummus-lamb/#wprm-recipe-26212-step-0-0"
+      },
+      {
+        "@type": "HowToSection",
+        "name": "Lamb mince",
+        "itemListElement": [
+          {
+            "@type": "HowToStep",
+            "text": "Return pan to stove (still on medium high heat) and add olive oil.",
+            "name": "Return pan to stove (still on medium high heat) and add olive oil.",
+            "url": "https://www.recipetineats.com/hummus-lamb/#wprm-recipe-26212-step-1-0"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Add onion and cook until translucent (2 minutes). Then turn up the heat to high, add mince, spices and salt. Cook, breaking up the mince into small pieces, until browned and cooked through (3 minutes).",
+            "name": "Add onion and cook until translucent (2 minutes). Then turn up the heat to high, add mince, spices and salt. Cook, breaking up the mince into small pieces, until browned and cooked through (3 minutes).",
+            "url": "https://www.recipetineats.com/hummus-lamb/#wprm-recipe-26212-step-1-1"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Set aside and cover so it doesn't dry out. Bring it to room temperature.",
+            "name": "Set aside and cover so it doesn't dry out. Bring it to room temperature.",
+            "url": "https://www.recipetineats.com/hummus-lamb/#wprm-recipe-26212-step-1-2"
+          }
+        ]
+      },
+      {
+        "@type": "HowToSection",
+        "name": "Hummus",
+        "itemListElement": [
+          {
+            "@type": "HowToStep",
+            "text": "Place all ingredients except salt in a food processor or blender and process until smooth.",
+            "name": "Place all ingredients except salt in a food processor or blender and process until smooth.",
+            "url": "https://www.recipetineats.com/hummus-lamb/#wprm-recipe-26212-step-2-0"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Taste before adding salt and pepper. Different brands of chick peas have different levels of saltiness. Also adjust acidity with lemon juice, if required.",
+            "name": "Taste before adding salt and pepper. Different brands of chick peas have different levels of saltiness. Also adjust acidity with lemon juice, if required.",
+            "url": "https://www.recipetineats.com/hummus-lamb/#wprm-recipe-26212-step-2-1"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Use water to adjust the consistency to a tomato sauce (ketchup) like consistency. This consistency is \"proper\" hummus. In the Middle East, hummus is not the thick consistency that is typical of store bought hummus in Western countries, it is thinner.",
+            "name": "Use water to adjust the consistency to a tomato sauce (ketchup) like consistency. This consistency is \"proper\" hummus. In the Middle East, hummus is not the thick consistency that is typical of store bought hummus in Western countries, it is thinner.",
+            "url": "https://www.recipetineats.com/hummus-lamb/#wprm-recipe-26212-step-2-2"
+          }
+        ]
+      },
+      {
+        "@type": "HowToSection",
+        "name": "Assemble",
+        "itemListElement": [
+          {
+            "@type": "HowToStep",
+            "text": "Spread hummus on a plate, using the back of a spoon to create \"swirls\".",
+            "name": "Spread hummus on a plate, using the back of a spoon to create \"swirls\".",
+            "url": "https://www.recipetineats.com/hummus-lamb/#wprm-recipe-26212-step-3-0"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Top with lamb mince, scatter over the pine nuts and sprinkle with parsley. Finish with a drizzle of olive oil.",
+            "name": "Top with lamb mince, scatter over the pine nuts and sprinkle with parsley. Finish with a drizzle of olive oil.",
+            "url": "https://www.recipetineats.com/hummus-lamb/#wprm-recipe-26212-step-3-1"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Serve with pita bread.",
+            "name": "Serve with pita bread.",
+            "url": "https://www.recipetineats.com/hummus-lamb/#wprm-recipe-26212-step-3-2"
+          }
+        ]
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.94",
+      "ratingCount": "15",
+      "reviewCount": "7"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Love this recipe and make regularly for a weekly dinner meal. I normally use beef mince due to lamb being a bit more expensive.",
+        "author": {
+          "@type": "Person",
+          "name": "Catherine"
+        },
+        "datePublished": "2025-07-30"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Fabulous-made it yesterday, loved it. So made it again today,",
+        "author": {
+          "@type": "Person",
+          "name": "Kate"
+        },
+        "datePublished": "2022-06-11"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Absolutely delicious and really easy to make. I have made this with Beyond mince too and it’s fantastic. Vegetarians/vegans will love it and meat eaters will too. Thanks Nagi, this an amazing recipe!",
+        "author": {
+          "@type": "Person",
+          "name": "Vesna"
+        },
+        "datePublished": "2022-02-06"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I made this tonight with the chickpea rice pilaf - delicious. I loved how quick this combo was. I’ll be adding this to our regular meal rotation. Thanks again Nagi!",
+        "author": {
+          "@type": "Person",
+          "name": "Emma"
+        },
+        "datePublished": "2021-09-20"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Totally love this recipe and its simplicity. I did make it with a few variations...like a little more chilli for the mince and a dash of cummin in the hummus. But it was so easy to put together. The intention was entree but ended up having it as a main, lucky it was just the two of us 😜",
+        "author": {
+          "@type": "Person",
+          "name": "Flevy Crasto"
+        },
+        "datePublished": "2021-06-09"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Oh Nagi!  This was just amazing.  Its been hard to find meat here just lately but we lucked into some ground lamb and found this was a perfect way to stretch it out.  It was perfect!  Thank you so much!",
+        "author": {
+          "@type": "Person",
+          "name": "Lynn Elliott"
+        },
+        "datePublished": "2020-03-24"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I'm cooking this tonight for tea, I made the hummus (yum) this morning and it's in the fridge, no cumin in the pantry but I have harrisa, and reading the comments it will be ok to use. I might have tea early tonight!!",
+        "author": {
+          "@type": "Person",
+          "name": "Tracy Lockhart"
+        },
+        "datePublished": "2019-10-12"
+      }
+    ],
+    "recipeCategory": [
+      "Appetizer"
+    ],
+    "recipeCuisine": [
+      "Middle Eastern"
+    ],
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "servingSize": "108 g",
+      "calories": "325 kcal",
+      "carbohydrateContent": "34 g",
+      "proteinContent": "19.1 g",
+      "fatContent": "13.3 g",
+      "saturatedFatContent": "2.1 g",
+      "cholesterolContent": "26 mg",
+      "sodiumContent": "330 mg",
+      "fiberContent": "9.9 g",
+      "sugarContent": "6 g"
+    },
+    "@id": "https://www.recipetineats.com/hummus-lamb/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/hummus-lamb/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/hummus-lamb/"
+  }
+}

@@ -1,0 +1,139 @@
+{
+  "id": "nagi-easy-french-onion-soup-dip",
+  "sourceUrl": "https://www.recipetineats.com/easy-french-onion-soup-dip/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:30:38.492Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Easy French Onion Soup Dip",
+    "author": {
+      "@id": "https://www.recipetineats.com/#/schema/person/1684e6a75e9f91ae2e33ca2de95b47e2"
+    },
+    "description": "Throw back from the 80's! This French Onion Dip is the ONLY recipe I make using a store bought packet mix. I can't let it go - it brings me right back to my childhood!",
+    "datePublished": "2017-06-02T19:10:00+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2017/06/French-Onion-Dip-with-Soup-Mix-5.jpg",
+      "https://www.recipetineats.com/tachyon/2017/06/French-Onion-Dip-with-Soup-Mix-5.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2017/06/French-Onion-Dip-with-Soup-Mix-5.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2017/06/French-Onion-Dip-with-Soup-Mix-5.jpg?resize=480%2C270"
+    ],
+    "recipeYield": [
+      "10"
+    ],
+    "prepTime": "PT5M",
+    "recipeIngredient": [
+      "400 g / 14 oz  sour cream ((full fat is better))",
+      "½ cup mayonnaise ((Mayo labelled “whole egg” mayo is best))",
+      "40 g / 1.4 oz  French Onion Soup Mix (store bought) (, salt reduced is best)"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Mix ingredients together in a bowl. Rest for 5 minutes or until onion bits in the soup mix become softened.",
+        "name": "Mix ingredients together in a bowl. Rest for 5 minutes or until onion bits in the soup mix become softened.",
+        "url": "https://www.recipetineats.com/easy-french-onion-soup-dip/#wprm-recipe-21665-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Serve with your favorite chips!",
+        "name": "Serve with your favorite chips!",
+        "url": "https://www.recipetineats.com/easy-french-onion-soup-dip/#wprm-recipe-21665-step-0-1"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "11",
+      "reviewCount": "6"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I'd forgotten how damn good this is! Haven't made it for 20 years, so easy &amp; everyone enjoyed it. :)",
+        "author": {
+          "@type": "Person",
+          "name": "Delphia"
+        },
+        "datePublished": "2024-10-22"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I've been making plain ol' soup mix &amp; sour cream dip for years; but this is MUCH better! The addition of mayo makes it creamier &amp; the flavors are better balanced. GREAT!!",
+        "author": {
+          "@type": "Person",
+          "name": "Tammie"
+        },
+        "datePublished": "2022-10-06"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Very nice dip, I added some crispy bacon bits and some chopped chives",
+        "author": {
+          "@type": "Person",
+          "name": "Jodie"
+        },
+        "datePublished": "2022-02-05"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Amazing! Hands down the best French onion dip ever!",
+        "author": {
+          "@type": "Person",
+          "name": "Josh"
+        },
+        "datePublished": "2021-12-28"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "tastes great",
+        "author": {
+          "@type": "Person",
+          "name": "Richard"
+        },
+        "datePublished": "2020-12-21"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Delicious! \r\nSo simple and easy to make; the Mayo was a nice touch on the classic soup mix/sour cream hack for a more creamy texture, yum!\r\nHalved the qty it to keep fresh longer and make a more “standard” dip size and kept the other soup pack half for another batch later!",
+        "author": {
+          "@type": "Person",
+          "name": "Sara"
+        },
+        "datePublished": "2020-10-20"
+      }
+    ],
+    "recipeCategory": [
+      "Appetizer"
+    ],
+    "@id": "https://www.recipetineats.com/easy-french-onion-soup-dip/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/easy-french-onion-soup-dip/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/easy-french-onion-soup-dip/"
+  }
+}

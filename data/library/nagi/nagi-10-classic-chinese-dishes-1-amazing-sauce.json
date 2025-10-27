@@ -1,0 +1,111 @@
+{
+  "id": "nagi-10-classic-chinese-dishes-1-amazing-sauce",
+  "sourceUrl": "https://www.recipetineats.com/10-classic-chinese-dishes-1-amazing-sauce/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:31:05.398Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "CHICKEN CHOW MEIN",
+    "author": {
+      "@id": "https://www.recipetineats.com/#/schema/person/1684e6a75e9f91ae2e33ca2de95b47e2"
+    },
+    "description": "One of the most popular Chinese restaurant noodle dishes.",
+    "datePublished": "2014-06-25T10:00:28+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2014/10/Chow-Mein_in-Wok_680px-SQ.jpg",
+      "https://www.recipetineats.com/tachyon/2014/10/Chow-Mein_in-Wok_680px-SQ.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2014/10/Chow-Mein_in-Wok_680px-SQ.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2014/10/Chow-Mein_in-Wok_680px-SQ.jpg?resize=480%2C270"
+    ],
+    "recipeIngredient": [
+      "200 g/7oz   fresh chow mein egg noodles",
+      "2 cups Chinese cabbage (, shredded)",
+      "1 cup carrot (, shredded)",
+      "100 g/4oz   chicken ((or beef or pork) sliced against the grain)",
+      "2  shallot/scallion stems (, cut into 2″/4cm slices)",
+      "3  garlic cloves (, minced)",
+      "1 1/2 tbsp oil",
+      "¼ cup Real Chinese All Purpose Stir Fry Sauce",
+      "½ cup water"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Prepare noodles according to packet instructions.&nbsp;",
+        "name": "Prepare noodles according to packet instructions.&nbsp;",
+        "url": "https://www.recipetineats.com/10-classic-chinese-dishes-1-amazing-sauce/#wprm-recipe-30114-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Heat oil in wok over high heat. Add garlic and sauté for 10 seconds, then add the chicken and sauté until just cooked and nicely browned.&nbsp;",
+        "name": "Heat oil in wok over high heat. Add garlic and sauté for 10 seconds, then add the chicken and sauté until just cooked and nicely browned.&nbsp;",
+        "url": "https://www.recipetineats.com/10-classic-chinese-dishes-1-amazing-sauce/#wprm-recipe-30114-step-0-1"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add the cabbage and carrot, stir fry for 30 seconds, then add the Sauce and water and let it cook for 30 seconds until the Sauce starts to thicken.",
+        "name": "Add the cabbage and carrot, stir fry for 30 seconds, then add the Sauce and water and let it cook for 30 seconds until the Sauce starts to thicken.",
+        "url": "https://www.recipetineats.com/10-classic-chinese-dishes-1-amazing-sauce/#wprm-recipe-30114-step-0-2"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Then add the noodles and shallots and toss to coat with the sauce, then serve immediately.",
+        "name": "Then add the noodles and shallots and toss to coat with the sauce, then serve immediately.",
+        "url": "https://www.recipetineats.com/10-classic-chinese-dishes-1-amazing-sauce/#wprm-recipe-30114-step-0-3"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "5",
+      "reviewCount": "3"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I have made many times, but haven't in a while.  3Good size servings or 4 a bit smaller servings. Make for boyfriend and I. My go to chow mein, looking for =ward to trying the others here.",
+        "author": {
+          "@type": "Person",
+          "name": "Laura"
+        },
+        "datePublished": "2024-01-21"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Cooked the chicken and vegetables using frozen pack of stir fry veg due to time constraints and used fresh bok choy and snow peas from the garden, with extra sauce. The kids finished theirs before me for the first time!!  \r\nWinner, Winner, Nagi’s Chicken Dinner!!",
+        "author": {
+          "@type": "Person",
+          "name": "Gabrielle"
+        },
+        "datePublished": "2022-10-03"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Hi Nagi, can you use this Chinese all purpose sauce for the Changs Cripsy Noodle Salad recipe you have on your website? Many thanks!",
+        "author": {
+          "@type": "Person",
+          "name": "Sarah"
+        },
+        "datePublished": "2021-03-21"
+      }
+    ],
+    "@id": "https://www.recipetineats.com/10-classic-chinese-dishes-1-amazing-sauce/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/10-classic-chinese-dishes-1-amazing-sauce/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/10-classic-chinese-dishes-1-amazing-sauce/"
+  }
+}

@@ -1,0 +1,198 @@
+{
+  "id": "nagi-chicken-spinach-bread-bake-strata",
+  "sourceUrl": "https://www.recipetineats.com/chicken-spinach-bread-bake-strata/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:30:57.241Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Chicken and Spinach Strata (Bread Bake)",
+    "author": {
+      "@type": "Person",
+      "name": "Nagi | RecipeTin Eats"
+    },
+    "description": "Dinner in a snap! No chopping, and a great way to use up leftovers.",
+    "datePublished": "2014-08-17T17:51:51+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2014/08/Chicken-Spinach-Strata-Baking-Dish-1-1.jpg",
+      "https://www.recipetineats.com/tachyon/2014/08/Chicken-Spinach-Strata-Baking-Dish-1-1.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2014/08/Chicken-Spinach-Strata-Baking-Dish-1-1.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2014/08/Chicken-Spinach-Strata-Baking-Dish-1-1.jpg?resize=480%2C270"
+    ],
+    "recipeYield": [
+      "4",
+      "4 to 5"
+    ],
+    "prepTime": "PT10M",
+    "cookTime": "PT15M",
+    "totalTime": "PT25M",
+    "recipeIngredient": [
+      "7 cups french bread (, cut into 2 cm / 1 inch cubes)",
+      "1 cup grated cheese ((any melting cheese is fine - tasty, cheddar, mozzarella))",
+      "250 g / 8 oz   frozen spinach ((2 packets, chopped))",
+      "1 cup shredded or diced chicken (, or any other cooked protein, ham or bacon)",
+      "Parsley (, finely chopped (garnish - optional))",
+      "6  eggs",
+      "1 1/4 cups milk",
+      "1/4 cup grated parmesan",
+      "1 tsp salt",
+      "Black pepper"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Defrost the spinach in the microwave (4 minutes on high), then squeeze out excess water.",
+        "name": "Defrost the spinach in the microwave (4 minutes on high), then squeeze out excess water.",
+        "url": "https://www.recipetineats.com/chicken-spinach-bread-bake-strata/#wprm-recipe-26230-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Make Egg mixture: Place ingredients into a bowl and whisk until combined.",
+        "name": "Make Egg mixture: Place ingredients into a bowl and whisk until combined.",
+        "url": "https://www.recipetineats.com/chicken-spinach-bread-bake-strata/#wprm-recipe-26230-step-0-1"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Spread half the bread into the base of a baking dish 25cm x 25cm (10\" x 10\").",
+        "name": "Spread half the bread into the base of a baking dish 25cm x 25cm (10\" x 10\").",
+        "url": "https://www.recipetineats.com/chicken-spinach-bread-bake-strata/#wprm-recipe-26230-step-0-2"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Layer with the spinach, then chicken then top with half the cheese.",
+        "name": "Layer with the spinach, then chicken then top with half the cheese.",
+        "url": "https://www.recipetineats.com/chicken-spinach-bread-bake-strata/#wprm-recipe-26230-step-0-3"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Top with remaining bread. Squish the bread down to compress (this helps the egg mixture to be soaked up evenly).",
+        "name": "Top with remaining bread. Squish the bread down to compress (this helps the egg mixture to be soaked up evenly).",
+        "url": "https://www.recipetineats.com/chicken-spinach-bread-bake-strata/#wprm-recipe-26230-step-0-4"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Pour over egg mixture - try to cover all the bread evenly.",
+        "name": "Pour over egg mixture - try to cover all the bread evenly.",
+        "url": "https://www.recipetineats.com/chicken-spinach-bread-bake-strata/#wprm-recipe-26230-step-0-5"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Top with remaining cheese, then squish down to help the bread soak up the egg mixture.",
+        "name": "Top with remaining cheese, then squish down to help the bread soak up the egg mixture.",
+        "url": "https://www.recipetineats.com/chicken-spinach-bread-bake-strata/#wprm-recipe-26230-step-0-6"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Set aside for at least 15 minutes, preferably 30 minutes.",
+        "name": "Set aside for at least 15 minutes, preferably 30 minutes.",
+        "url": "https://www.recipetineats.com/chicken-spinach-bread-bake-strata/#wprm-recipe-26230-step-0-7"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "To freeze: Cover tightly and place in freezer. Defrost completely before cooking.",
+        "name": "To freeze: Cover tightly and place in freezer. Defrost completely before cooking.",
+        "url": "https://www.recipetineats.com/chicken-spinach-bread-bake-strata/#wprm-recipe-26230-step-0-8"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Preheat oven to 180C/350F.",
+        "name": "Preheat oven to 180C/350F.",
+        "url": "https://www.recipetineats.com/chicken-spinach-bread-bake-strata/#wprm-recipe-26230-step-0-9"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Cover baking dish with foil and bake for 20 minutes. Remove foil, then bake for a further 10 minutes until golden on top.",
+        "name": "Cover baking dish with foil and bake for 20 minutes. Remove foil, then bake for a further 10 minutes until golden on top.",
+        "url": "https://www.recipetineats.com/chicken-spinach-bread-bake-strata/#wprm-recipe-26230-step-0-10"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Serve immediately, sprinkled with parsley if desired.",
+        "name": "Serve immediately, sprinkled with parsley if desired.",
+        "url": "https://www.recipetineats.com/chicken-spinach-bread-bake-strata/#wprm-recipe-26230-step-0-11"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.5",
+      "ratingCount": "4",
+      "reviewCount": "4"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "4"
+        },
+        "reviewBody": "I made this yesterday for lunch, it was good! I had a leg of ham so used that instead of chicken ( about 3/4 cup chopped ham). Will try it with chicken next time .",
+        "author": {
+          "@type": "Person",
+          "name": "Cate"
+        },
+        "datePublished": "2024-01-10"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I made this as an all veggie version with the silverbeet out of our garden. Was astounded that my meat-loving husband scoffed it down and said it was amazing (jaw drop!). Thanks Nagi x",
+        "author": {
+          "@type": "Person",
+          "name": "Shelly"
+        },
+        "datePublished": "2023-09-02"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "4"
+        },
+        "reviewBody": "This dish was amazing and easy to cook with kids. I always find that recipes aren’t accurate but these recipes are very accurate and simple yet delicious.",
+        "author": {
+          "@type": "Person",
+          "name": "Emily"
+        },
+        "datePublished": "2023-06-27"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "This was a huge hit in our house! I have a 9yr odl boy who never eats spinach and THIS did the trick! I wondered what is the baking dish you use as I would love to get one!",
+        "author": {
+          "@type": "Person",
+          "name": "Audrey-Maeve"
+        },
+        "datePublished": "2022-02-04"
+      }
+    ],
+    "recipeCategory": [
+      "Baking",
+      "Midweek Meals"
+    ],
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "servingSize": "310 g",
+      "calories": "470 kcal",
+      "carbohydrateContent": "34.1 g",
+      "proteinContent": "37.3 g",
+      "fatContent": "20.9 g",
+      "saturatedFatContent": "10.3 g",
+      "cholesterolContent": "312 mg",
+      "sodiumContent": "1333 mg",
+      "fiberContent": "2.6 g",
+      "sugarContent": "4.9 g"
+    },
+    "@id": "https://www.recipetineats.com/chicken-spinach-bread-bake-strata/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/chicken-spinach-bread-bake-strata/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/chicken-spinach-bread-bake-strata/"
+  }
+}

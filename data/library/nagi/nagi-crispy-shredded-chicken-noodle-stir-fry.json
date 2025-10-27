@@ -1,0 +1,168 @@
+{
+  "id": "nagi-crispy-shredded-chicken-noodle-stir-fry",
+  "sourceUrl": "https://www.recipetineats.com/crispy-shredded-chicken-noodle-stir-fry/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:30:58.308Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Crispy Shredded Chicken Noodle Stir Fry",
+    "author": {
+      "@type": "Person",
+      "name": "Nagi | RecipeTin Eats"
+    },
+    "description": "This is a super quick stir fry made using the chicken and braising liquid from my Slow Cooker Crispy Chinese Shredded Chicken. It freezes extremely well so is fantastic to have on hand for fast midweek meals. I made this stir fry using Chinese Broccoli but you can use whatever vegetables you wish. Bean sprouts, carrots, other Chinese greens, broccoli and sliced onion would go particularly well in this dish.",
+    "datePublished": "2014-11-02T03:00:00+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2014/10/DSC_0180.jpg",
+      "https://www.recipetineats.com/tachyon/2014/10/DSC_0180.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2014/10/DSC_0180.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2014/10/DSC_0180.jpg?resize=480%2C270"
+    ],
+    "recipeYield": [
+      "2"
+    ],
+    "prepTime": "PT5M",
+    "cookTime": "PT5M",
+    "totalTime": "PT10M",
+    "recipeIngredient": [
+      "5 oz / 150g   dried rice stick noodles ((see note 1))",
+      "2 tbsp oil ((vegetable, canola or peanut oil))",
+      "2  garlic cloves (, smashed (see note 2))",
+      "1 cup Slow Cooker Crispy Chinese Shredded Chicken ((\"Shredded Chicken\"))",
+      "1/2 cup Slow Cooker Crispy Chinese Shredded Chicken braising liquid ((see note 3))",
+      "1 tbsp Sriracha sauce ((or any hot sauce or chili paste) (optional))",
+      "3 cups (tightly packed)  Chinese broccoli, leaves separated from stems (cut stems vertically into thin sticks) (about 1 small bunch)"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Cook / soak rice stick noodles according to packet instructions. Drain and set aside.",
+        "name": "Cook / soak rice stick noodles according to packet instructions. Drain and set aside.",
+        "url": "https://www.recipetineats.com/crispy-shredded-chicken-noodle-stir-fry/#wprm-recipe-25943-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Heat oil in wok or large fry pan over high heat.",
+        "name": "Heat oil in wok or large fry pan over high heat.",
+        "url": "https://www.recipetineats.com/crispy-shredded-chicken-noodle-stir-fry/#wprm-recipe-25943-step-0-1"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add garlic and stir fry for 30 seconds to flavour the oil. Remove and discard garlic.",
+        "name": "Add garlic and stir fry for 30 seconds to flavour the oil. Remove and discard garlic.",
+        "url": "https://www.recipetineats.com/crispy-shredded-chicken-noodle-stir-fry/#wprm-recipe-25943-step-0-2"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add the Chinese broccoli stems and Shredded Chicken and stir fry for 1 1/2 minutes.",
+        "name": "Add the Chinese broccoli stems and Shredded Chicken and stir fry for 1 1/2 minutes.",
+        "url": "https://www.recipetineats.com/crispy-shredded-chicken-noodle-stir-fry/#wprm-recipe-25943-step-0-3"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add the noodles, braising liquid and Sriracaha (if using) and stir fry, tossing the noodles rapidly to coat with the sauce for about 1 minute. The sugar in the braising liquid should make the noodles char a bit.",
+        "name": "Add the noodles, braising liquid and Sriracaha (if using) and stir fry, tossing the noodles rapidly to coat with the sauce for about 1 minute. The sugar in the braising liquid should make the noodles char a bit.",
+        "url": "https://www.recipetineats.com/crispy-shredded-chicken-noodle-stir-fry/#wprm-recipe-25943-step-0-4"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add the Chinese broccoli leaves and toss to mix in with the noodles, then remove from heat. The Chinese broccoli leaves will continue to cook from the residual heat.",
+        "name": "Add the Chinese broccoli leaves and toss to mix in with the noodles, then remove from heat. The Chinese broccoli leaves will continue to cook from the residual heat.",
+        "url": "https://www.recipetineats.com/crispy-shredded-chicken-noodle-stir-fry/#wprm-recipe-25943-step-0-5"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Serve immediately.",
+        "name": "Serve immediately.",
+        "url": "https://www.recipetineats.com/crispy-shredded-chicken-noodle-stir-fry/#wprm-recipe-25943-step-0-6"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "6",
+      "reviewCount": "4"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Made this last night and it was packed with incredible flavour and so delicious.  Everyone scoffed it down.  I ended up using more noodles so used more of the braising liquid and I was so excited it was as yummy as it looked because I have also got a batch of the chicken and liquid in the freezer.  Everyone loved this!!!!!!",
+        "author": {
+          "@type": "Person",
+          "name": "Lisa Kelly"
+        },
+        "datePublished": "2016-11-11"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Brilliant use of time and ingredient, here!  Our whole family (six boys and two dads) loves both noodles and chicken; I can't wait to wow them with this recipe of yours.  Thanks so much for sharing!",
+        "author": {
+          "@type": "Person",
+          "name": "Dan from Platter Talk"
+        },
+        "datePublished": "2015-05-02"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Hi Nagi,  I've come back to add a thank you comment.  I have made this dish time and time again and it is simply delicious.  Such a quick week night meal that is full proof.  So damn yummy!",
+        "author": {
+          "@type": "Person",
+          "name": "Natalie"
+        },
+        "datePublished": "2015-03-09"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I love everything about this! I have such a hard time finding Chinese broccoli when the farmer's market isn't running. I have no idea why it isn't more common in grocery stores because it's the best! Have you tried this with broccoli or broccolini?",
+        "author": {
+          "@type": "Person",
+          "name": "Marissa | Pinch and Swirl"
+        },
+        "datePublished": "2014-11-05"
+      }
+    ],
+    "recipeCategory": [
+      "Noodles",
+      "Stir Fry"
+    ],
+    "recipeCuisine": [
+      "Asian",
+      "Chinese"
+    ],
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "servingSize": "340 g",
+      "calories": "476 kcal",
+      "carbohydrateContent": "56.5 g",
+      "proteinContent": "27.7 g",
+      "fatContent": "16.3 g",
+      "saturatedFatContent": "2.6 g",
+      "cholesterolContent": "54 mg",
+      "sodiumContent": "394 mg",
+      "fiberContent": "0.9 g",
+      "sugarContent": "1.8 g"
+    },
+    "@id": "https://www.recipetineats.com/crispy-shredded-chicken-noodle-stir-fry/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/crispy-shredded-chicken-noodle-stir-fry/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/crispy-shredded-chicken-noodle-stir-fry/"
+  }
+}

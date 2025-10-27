@@ -1,0 +1,128 @@
+{
+  "id": "nagi-mexican-pork-rolls-caramelised-onion",
+  "sourceUrl": "https://www.recipetineats.com/mexican-pork-rolls-caramelised-onion/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:30:04.935Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Mexican Pork Rolls",
+    "author": {
+      "@type": "Person",
+      "name": "Nagi | RecipeTin Eats"
+    },
+    "description": "Soft white rolls piled high with shredded pork mixed with enchilada sauce, topped with gooey melted cheese and caramelized onions.",
+    "datePublished": "2014-09-06T19:31:08+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2014/09/DSC_0170-1.jpg",
+      "https://www.recipetineats.com/tachyon/2014/09/DSC_0170-1.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2014/09/DSC_0170-1.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2014/09/DSC_0170-1.jpg?resize=480%2C270"
+    ],
+    "recipeYield": [
+      "4"
+    ],
+    "prepTime": "PT5M",
+    "cookTime": "PT15M",
+    "totalTime": "PT20M",
+    "recipeIngredient": [
+      "1 1/2 cups shredded Pork Carnitas ((Mexican Pulled Pork))",
+      "1/2 cup Enchilada Sauce ((preferably homemade - here is my Easy Classic Enchilada Sauce))",
+      "1 1/2 tbsp butter",
+      "2  brown onions (, halved and finely sliced)",
+      "1 1/2 tbsp brown sugar",
+      "1 tbsp balsamic vinegar",
+      "1/2 tsp salt",
+      "Black pepper",
+      "1/2 cup grated mozzarella cheese ((or any other good melting cheese))",
+      "4  soft white bread rolls",
+      "Fresh parsley (, finely chopped, for garnish (optional))"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Melt butter in a fry pan over medium heat. Add onions and cook for 7 minutes, stirring every now and then so they cook evenly. Add remaining Caramelized Onion ingredients and cook for a further 5 minutes, stirring occasionally until sticky and caramelised. Remove onion from pan and set aside.",
+        "name": "Melt butter in a fry pan over medium heat. Add onions and cook for 7 minutes, stirring every now and then so they cook evenly. Add remaining Caramelized Onion ingredients and cook for a further 5 minutes, stirring occasionally until sticky and caramelised. Remove onion from pan and set aside.",
+        "url": "https://www.recipetineats.com/mexican-pork-rolls-caramelised-onion/#wprm-recipe-26095-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Brown Pork Carnitas: Wipe pan clean and return to stove. Heat 1/2 tbsp oil over high heat. Add Pork Carnitas and press down lightly with a spatula to help crisp up. When the Pork Carnitas are heated through and the underside is golden brown and crisp (about 1 to 1/2 minutes), remove from pan (do not flip).",
+        "name": "Brown Pork Carnitas: Wipe pan clean and return to stove. Heat 1/2 tbsp oil over high heat. Add Pork Carnitas and press down lightly with a spatula to help crisp up. When the Pork Carnitas are heated through and the underside is golden brown and crisp (about 1 to 1/2 minutes), remove from pan (do not flip).",
+        "url": "https://www.recipetineats.com/mexican-pork-rolls-caramelised-onion/#wprm-recipe-26095-step-0-1"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Place Pork Carnitas and Enchilada Sauce and mix to combine.",
+        "name": "Place Pork Carnitas and Enchilada Sauce and mix to combine.",
+        "url": "https://www.recipetineats.com/mexican-pork-rolls-caramelised-onion/#wprm-recipe-26095-step-0-2"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Preheat grill (broiler) on high.",
+        "name": "Preheat grill (broiler) on high.",
+        "url": "https://www.recipetineats.com/mexican-pork-rolls-caramelised-onion/#wprm-recipe-26095-step-0-3"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Split rolls in half. Divide the Filling between them and pile onto the bottom half of the roll. Top with cheese then grill (broil) for 3 minutes until melted.",
+        "name": "Split rolls in half. Divide the Filling between them and pile onto the bottom half of the roll. Top with cheese then grill (broil) for 3 minutes until melted.",
+        "url": "https://www.recipetineats.com/mexican-pork-rolls-caramelised-onion/#wprm-recipe-26095-step-0-4"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Remove from the grill, top with caramelised onion and sprinkle with parsley (if using).",
+        "name": "Remove from the grill, top with caramelised onion and sprinkle with parsley (if using).",
+        "url": "https://www.recipetineats.com/mexican-pork-rolls-caramelised-onion/#wprm-recipe-26095-step-0-5"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Sandwich with the other half of the bread roll and serve immediately.",
+        "name": "Sandwich with the other half of the bread roll and serve immediately.",
+        "url": "https://www.recipetineats.com/mexican-pork-rolls-caramelised-onion/#wprm-recipe-26095-step-0-6"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "1",
+      "reviewCount": "1"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I made these yesterday for the fam. I've never cooked pulled pork before. I've always been weary of cooking big chunks of meat lest it might not turn out right. But the pork carinita served as a slider, blew everyone at home away. Some of us even went for seconds (and thirds). I reckon this is going to be my party trick-dish. Doesn't take too much effort and comes out so wow!",
+        "author": {
+          "@type": "Person",
+          "name": "Harry"
+        },
+        "datePublished": "2018-01-04"
+      }
+    ],
+    "recipeCuisine": [
+      "Mexican"
+    ],
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "servingSize": "212 g",
+      "calories": "419 kcal",
+      "carbohydrateContent": "48.1 g",
+      "proteinContent": "21.2 g",
+      "fatContent": "15.8 g",
+      "saturatedFatContent": "7.6 g",
+      "cholesterolContent": "50 mg",
+      "sodiumContent": "551 mg",
+      "fiberContent": "4.9 g",
+      "sugarContent": "9.5 g"
+    },
+    "@id": "https://www.recipetineats.com/mexican-pork-rolls-caramelised-onion/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/mexican-pork-rolls-caramelised-onion/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/mexican-pork-rolls-caramelised-onion/"
+  }
+}

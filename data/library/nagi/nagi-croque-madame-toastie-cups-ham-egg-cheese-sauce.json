@@ -1,0 +1,248 @@
+{
+  "id": "nagi-croque-madame-toastie-cups-ham-egg-cheese-sauce",
+  "sourceUrl": "https://www.recipetineats.com/croque-madame-toastie-cups-ham-egg-cheese-sauce/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:30:03.503Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Muffin Tin Breakfast Croque Madame Toastie Cups",
+    "author": {
+      "@type": "Person",
+      "name": "Nagi | RecipeTin Eats"
+    },
+    "description": "A fresh take on the classic French grilled ham and cheese! Adapted from a recipe by Rachel Khoo.",
+    "datePublished": "2014-12-22T20:00:00+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2014/12/Croque-Madame-2.jpg",
+      "https://www.recipetineats.com/tachyon/2014/12/Croque-Madame-2.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2014/12/Croque-Madame-2.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2014/12/Croque-Madame-2.jpg?resize=480%2C270"
+    ],
+    "recipeYield": [
+      "6"
+    ],
+    "prepTime": "PT10M",
+    "cookTime": "PT30M",
+    "totalTime": "PT40M",
+    "recipeIngredient": [
+      "1 1/2 tbsp unsalted butter",
+      "1 1/2 tbsp flour",
+      "1 1/4 cups milk ((full fat works best, though low fat does work))",
+      "1/3 cup grated gruyere cheese ((or tasty or cheddar), plus extra for sprinkling)",
+      "2 tsp Dijon mustard",
+      "1/4 tsp freshly ground nutmeg",
+      "1/4 tsp salt",
+      "Black pepper",
+      "6  large slices of fresh white bread ((Notes 1 and 2))",
+      "2 tbsp melted butter ((salted or unsalted))",
+      "6  eggs",
+      "100 g / 3 oz   leg ham",
+      "Fresh parsley (, finely chopped)",
+      "Freshly ground nutmeg"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Turn the oven on to 180C/350F.",
+        "name": "Turn the oven on to 180C/350F.",
+        "url": "https://www.recipetineats.com/croque-madame-toastie-cups-ham-egg-cheese-sauce/#wprm-recipe-25815-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Cut the crusts off the bread, then roll out with a rolling pin until flattened.",
+        "name": "Cut the crusts off the bread, then roll out with a rolling pin until flattened.",
+        "url": "https://www.recipetineats.com/croque-madame-toastie-cups-ham-egg-cheese-sauce/#wprm-recipe-25815-step-0-1"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Press the bread into Texas muffin tins to form cups. Place into the oven (even if it is still heating up) for 5 minutes, just to dry the bread out a bit (Note 3). Don't let it brown.",
+        "name": "Press the bread into Texas muffin tins to form cups. Place into the oven (even if it is still heating up) for 5 minutes, just to dry the bread out a bit (Note 3). Don't let it brown.",
+        "url": "https://www.recipetineats.com/croque-madame-toastie-cups-ham-egg-cheese-sauce/#wprm-recipe-25815-step-0-2"
+      },
+      {
+        "@type": "HowToSection",
+        "name": "Bechamel Cheese Sauce",
+        "itemListElement": [
+          {
+            "@type": "HowToStep",
+            "text": "Melt the butter in a saucepan over medium high heat. Add the flour and stir until a paste forms.",
+            "name": "Melt the butter in a saucepan over medium high heat. Add the flour and stir until a paste forms.",
+            "url": "https://www.recipetineats.com/croque-madame-toastie-cups-ham-egg-cheese-sauce/#wprm-recipe-25815-step-1-0"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Add half the milk and whisk until the sauce thickens - around 1 minute.",
+            "name": "Add half the milk and whisk until the sauce thickens - around 1 minute.",
+            "url": "https://www.recipetineats.com/croque-madame-toastie-cups-ham-egg-cheese-sauce/#wprm-recipe-25815-step-1-1"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Add the remaining milk, Dijon mustard, nutmeg, salt and pepper. Keep whisking because once the milk heats up, it thickens very quickly. Whisk until the sauce is thick enough to coat the spoon thickly (around 1 1/2 to 2 minutes), around the consistency of tomato ketchup.",
+            "name": "Add the remaining milk, Dijon mustard, nutmeg, salt and pepper. Keep whisking because once the milk heats up, it thickens very quickly. Whisk until the sauce is thick enough to coat the spoon thickly (around 1 1/2 to 2 minutes), around the consistency of tomato ketchup.",
+            "url": "https://www.recipetineats.com/croque-madame-toastie-cups-ham-egg-cheese-sauce/#wprm-recipe-25815-step-1-2"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Remove from heat and let cool for 5 minutes. The sauce will thicken considerably as it cools. Then stir the cheese in.",
+            "name": "Remove from heat and let cool for 5 minutes. The sauce will thicken considerably as it cools. Then stir the cheese in.",
+            "url": "https://www.recipetineats.com/croque-madame-toastie-cups-ham-egg-cheese-sauce/#wprm-recipe-25815-step-1-3"
+          }
+        ]
+      },
+      {
+        "@type": "HowToSection",
+        "name": "Assemble Toast Cups",
+        "itemListElement": [
+          {
+            "@type": "HowToStep",
+            "text": "Brush the melted butter around the edges of the toast cups (to help them brown nicely).",
+            "name": "Brush the melted butter around the edges of the toast cups (to help them brown nicely).",
+            "url": "https://www.recipetineats.com/croque-madame-toastie-cups-ham-egg-cheese-sauce/#wprm-recipe-25815-step-2-0"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Divide the ham between the toast cups, then carefully crack an egg into each.",
+            "name": "Divide the ham between the toast cups, then carefully crack an egg into each.",
+            "url": "https://www.recipetineats.com/croque-madame-toastie-cups-ham-egg-cheese-sauce/#wprm-recipe-25815-step-2-1"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Top with Bechamel Cheese Sauce, then sprinkle each with a pinch of grated cheese.",
+            "name": "Top with Bechamel Cheese Sauce, then sprinkle each with a pinch of grated cheese.",
+            "url": "https://www.recipetineats.com/croque-madame-toastie-cups-ham-egg-cheese-sauce/#wprm-recipe-25815-step-2-2"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Bake for 18 minutes (for runny yolks) to 23 minutes (firm yolks). (Note 4)",
+            "name": "Bake for 18 minutes (for runny yolks) to 23 minutes (firm yolks). (Note 4)",
+            "url": "https://www.recipetineats.com/croque-madame-toastie-cups-ham-egg-cheese-sauce/#wprm-recipe-25815-step-2-3"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Rest for a few minutes, then sprinkle with parsley and a grating of fresh nutmeg.",
+            "name": "Rest for a few minutes, then sprinkle with parsley and a grating of fresh nutmeg.",
+            "url": "https://www.recipetineats.com/croque-madame-toastie-cups-ham-egg-cheese-sauce/#wprm-recipe-25815-step-2-4"
+          },
+          {
+            "@type": "HowToStep",
+            "text": "Serve immediately.",
+            "name": "Serve immediately.",
+            "url": "https://www.recipetineats.com/croque-madame-toastie-cups-ham-egg-cheese-sauce/#wprm-recipe-25815-step-2-5"
+          }
+        ]
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "12",
+      "reviewCount": "6"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "These were great, easy to make. I used seeded mustard as I had no dijon. Husband loved them. I used what I thought was a texas muffin tray but it was so much bigger!  made it a little hard to get out but all good.",
+        "author": {
+          "@type": "Person",
+          "name": "Delphia"
+        },
+        "datePublished": "2025-01-27"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Brilliant - we had made this years ago from Little Paris Kitchen, and went looking for the recipe after we noticed leftover Christmas ham and a bit of white sauce that didn't make it into last night's lasagna... 10 min at 160 degrees in an air fryer, delicious!",
+        "author": {
+          "@type": "Person",
+          "name": "Njb"
+        },
+        "datePublished": "2025-01-17"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I did this for a last minutes Sunday morning gathering, with over 8 adults and 12 kids. It was such a hit! All my families and guests love it. I end up finished all 50 eggs I had. The great thing about it, it takes so little time to get it ready and yet taste so good! Thank you sooooo much for sharing, Nagi.",
+        "author": {
+          "@type": "Person",
+          "name": "CT"
+        },
+        "datePublished": "2019-03-26"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "My husband loves a croque madame, so I surprised him with these on New Year's day. \r\nHe loved them &amp; so did I. I know I'm weird, but I don't like bread, so this was perfect for me too ~ \r\njust enough bread to hold it together, but not so much that I had to deconstruct my sandwich \r\nto enjoy it. This is going to be a go-to for breakfast when we have guests &amp; will be a regular \r\n\"breakfast for dinner\" choice for us when it's just we two. \r\nThanks again!",
+        "author": {
+          "@type": "Person",
+          "name": "Fiona Jones"
+        },
+        "datePublished": "2018-01-03"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I made these for breakfast this morning.  Sensational!  They would be a great brunch party dish too.  Very quickly assembled for a crowd.",
+        "author": {
+          "@type": "Person",
+          "name": "Kathleen"
+        },
+        "datePublished": "2017-02-04"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "These are lovely!  I have LOTS of ham left over.  I cooked two hams in the space of 3 days.  One ham is gone, thankfully.  I did make the most wonderful scalloped potatoes and ham the other night and now I know what I'm making for breakfast tomorrow!  \r\n\r\nI hope you had a wonderful Christmas my sweet friend.",
+        "author": {
+          "@type": "Person",
+          "name": "Maureen | Orgasmic Chef"
+        },
+        "datePublished": "2014-12-26"
+      }
+    ],
+    "recipeCategory": [
+      "Breakfast",
+      "Brunch"
+    ],
+    "recipeCuisine": [
+      "French"
+    ],
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "servingSize": "156 g",
+      "calories": "266 kcal",
+      "carbohydrateContent": "19 g",
+      "proteinContent": "14 g",
+      "fatContent": "15.3 g",
+      "saturatedFatContent": "7.6 g",
+      "cholesterolContent": "192 mg",
+      "sodiumContent": "594 mg",
+      "fiberContent": "0.6 g",
+      "sugarContent": "4.9 g"
+    },
+    "@id": "https://www.recipetineats.com/croque-madame-toastie-cups-ham-egg-cheese-sauce/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/croque-madame-toastie-cups-ham-egg-cheese-sauce/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/croque-madame-toastie-cups-ham-egg-cheese-sauce/"
+  }
+}

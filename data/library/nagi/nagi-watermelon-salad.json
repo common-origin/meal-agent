@@ -1,0 +1,168 @@
+{
+  "id": "nagi-watermelon-salad",
+  "sourceUrl": "https://www.recipetineats.com/watermelon-salad/",
+  "chef": "nagi",
+  "domain": "recipetineats.com",
+  "indexedAt": "2025-10-27T02:30:16.274Z",
+  "recipe": {
+    "@type": "Recipe",
+    "name": "Watermelon Salad",
+    "author": {
+      "@id": "https://www.recipetineats.com/#/schema/person/1684e6a75e9f91ae2e33ca2de95b47e2"
+    },
+    "description": "As strange as it sounds, sweet, juicy watermelon with feta, red onion and mint is a winning combination. This summery, light salad is refreshing and is perfect for a summer barbeque.",
+    "datePublished": "2014-05-29T07:36:49+00:00",
+    "image": [
+      "https://www.recipetineats.com/tachyon/2014/05/Watermelon-Salad-v2.jpg",
+      "https://www.recipetineats.com/tachyon/2014/05/Watermelon-Salad-v2.jpg?resize=500%2C500",
+      "https://www.recipetineats.com/tachyon/2014/05/Watermelon-Salad-v2.jpg?resize=500%2C375",
+      "https://www.recipetineats.com/tachyon/2014/05/Watermelon-Salad-v2.jpg?resize=480%2C270"
+    ],
+    "recipeYield": [
+      "4",
+      "4 as side"
+    ],
+    "prepTime": "PT10M",
+    "totalTime": "PT10M",
+    "recipeIngredient": [
+      "1 kg / 2 lbs   watermelon",
+      "1  small Spanish red onion (, finely sliced)",
+      "3 tbsp red wine vinegar",
+      "Salt and pepper",
+      "5 tbsp extra virgin olive oil",
+      "1 1/2 tbs fresh mint (, roughly chopped)",
+      "75 g / 3 oz   Danish feta cheese (, crumbled into medium size pieces)",
+      "Whole mint sprigs (, to garnish)"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Cut the flesh from the melon and cut into bite size pieces, removing and discarding the seeds, and set aside. Peel and halve the onion, and thinly slice.",
+        "name": "Cut the flesh from the melon and cut into bite size pieces, removing and discarding the seeds, and set aside. Peel and halve the onion, and thinly slice.",
+        "url": "https://www.recipetineats.com/watermelon-salad/#wprm-recipe-26560-step-0-0"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "In a small bowl, combine the vinegar, salt, pepper, and whisk until salt is dissolved. Slowly whisk in the olive oil, a few drops at a time. Add in the chopped mint, taste, and adjust seasonings.",
+        "name": "In a small bowl, combine the vinegar, salt, pepper, and whisk until salt is dissolved. Slowly whisk in the olive oil, a few drops at a time. Add in the chopped mint, taste, and adjust seasonings.",
+        "url": "https://www.recipetineats.com/watermelon-salad/#wprm-recipe-26560-step-0-1"
+      },
+      {
+        "@type": "HowToStep",
+        "text": "In a large bowl, combine the melon, onion, and feta. Pour the dressing over the melon mixture and toss gently until everything is coated and evenly mixed. Garnish with mint sprigs.",
+        "name": "In a large bowl, combine the melon, onion, and feta. Pour the dressing over the melon mixture and toss gently until everything is coated and evenly mixed. Garnish with mint sprigs.",
+        "url": "https://www.recipetineats.com/watermelon-salad/#wprm-recipe-26560-step-0-2"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "7",
+      "reviewCount": "7"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Yum yum yum. This is the best recipe, no cucumber in sight 😋",
+        "author": {
+          "@type": "Person",
+          "name": "Valeria"
+        },
+        "datePublished": "2024-08-25"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Absolutely loved this watermelon salad. It’s so refreshing and really easy to put together. Very moreish so I suggest making double!",
+        "author": {
+          "@type": "Person",
+          "name": "Morgan"
+        },
+        "datePublished": "2023-10-29"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I made this for lunch guests recently &amp; it was a BIG hit (I was asked for the recipe).  It’s my family’s favourite summer salad! The colour &amp; flavours along with the texture are all a delight!",
+        "author": {
+          "@type": "Person",
+          "name": "Julie"
+        },
+        "datePublished": "2023-03-29"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I actually add sliced chicken breast marinated in mojito marinade, with pine seeds. as a full lunch.",
+        "author": {
+          "@type": "Person",
+          "name": "Jacqueline Keau"
+        },
+        "datePublished": "2019-02-13"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Another hit! We have a daughter who is milk allergic (not just lactose intolerant) so we have goat cheese of numerous varieties in our home. This was a big hit with her!",
+        "author": {
+          "@type": "Person",
+          "name": "Josie Halbach"
+        },
+        "datePublished": "2015-09-01"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "I absolutely agree!",
+        "author": {
+          "@type": "Person",
+          "name": "Nagi | RecipeTin"
+        },
+        "datePublished": "2014-06-23"
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5"
+        },
+        "reviewBody": "Oooh, watermelon and feta. That's actually a really good combo. I know a lot of watermelon salads end up sounding weird, but it's such a versatile fruit, it actually works!",
+        "author": {
+          "@type": "Person",
+          "name": "Farah @ The Cooking Jar"
+        },
+        "datePublished": "2014-06-23"
+      }
+    ],
+    "recipeCategory": [
+      "Salad"
+    ],
+    "recipeCuisine": [
+      "Italian"
+    ],
+    "@id": "https://www.recipetineats.com/watermelon-salad/#recipe",
+    "isPartOf": {
+      "@id": "https://www.recipetineats.com/watermelon-salad/"
+    },
+    "mainEntityOfPage": "https://www.recipetineats.com/watermelon-salad/"
+  }
+}
