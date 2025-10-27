@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Stack, Typography } from "@common-origin/design-system";
+import { Stack, Typography, IconButton } from "@common-origin/design-system";
 import { saveWeeklyOverrides } from "@/lib/storage";
 import { nextWeekMondayISO } from "@/lib/schedule";
 import { track } from "@/lib/analytics";
@@ -102,19 +102,13 @@ export default function WeeklyOverridesSheet({
           <Stack direction="column" gap="lg">
             <Stack direction="row" justifyContent="space-between" alignItems="center">
               <Typography variant="h2">Next Week&apos;s Preferences</Typography>
-              <button
-                type="button"
+              <IconButton
+                variant="naked"
+                iconName="close"
+                size="medium"
                 onClick={onClose}
-                style={{
-                  background: "none",
-                  border: "none",
-                  fontSize: "24px",
-                  cursor: "pointer"
-                }}
                 aria-label="Close"
-              >
-                ×
-              </button>
+              />
             </Stack>
 
             {/* Dinners */}

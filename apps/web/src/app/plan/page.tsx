@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Stack, Typography } from "@common-origin/design-system";
+import { Stack, Typography, Button } from "@common-origin/design-system";
 import WeekPlannerGrid from "@/components/app/WeekPlannerGrid";
 import BudgetBar from "@/components/app/BudgetBar";
 import WeeklyOverridesSheet from "@/components/app/WeeklyOverridesSheet";
@@ -204,19 +203,14 @@ export default function PlanPage() {
         />
         
         <Stack direction="row" gap="md">
-          <Link href="/shopping-list">
-            <button style={{
-              padding: "12px 24px",
-              backgroundColor: "#007bff",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontSize: "16px"
-            }}>
-              Lock Plan & View Shopping List
-            </button>
-          </Link>
+          <Button
+            variant="primary"
+            size="large"
+            purpose="link"
+            url="/plan/review"
+          >
+            Review Plan →
+          </Button>
         </Stack>
       </Stack>
 
@@ -232,7 +226,7 @@ export default function PlanPage() {
         dayName={swapDayIndex !== null ? DAYS[swapDayIndex] : ""}
         currentRecipe={
           swapDayIndex !== null && weekPlan[swapDayIndex]
-            ? RecipeLibrary.getById(weekPlan[swapDayIndex]!.recipeId)
+            ? RecipeLibrary.getById(weekPlan[swapDayIndex]!.recipeId) ?? null
             : null
         }
         suggestedSwaps={suggestedSwaps}

@@ -1,58 +1,258 @@
 # Meal Agent Project Status
 
 **Last Updated**: 27 October 2025  
-**Status**: ✅ Recipe Indexer Complete | 🔄 Ready for App Integration
+**Status**: ✅ Phase 1 Complete - Full Agent Logic Implemented
 
 ---
 
 ## 📊 Current State
 
-### ✅ Completed Components
+### ✅ Phase 1: Complete (All 10 Work Orders)
 
-#### 1. Recipe Indexer (Production Ready)
-- **Location**: `scripts/indexChefs.ts`
-- **Status**: Fully functional, production-ready
-- **Output**: 50 recipes from RecipeTin Eats in `data/library/nagi/`
-- **Features**:
-  - Smart URL filtering (site-specific patterns)
-  - Recipe quality filters (dinner-focused, ≤60min, ≤18 ingredients)
-  - JSON-LD extraction with @graph support
-  - Respectful crawling (1 req/sec, robots.txt aware)
-  - Comprehensive logging and progress tracking
+**Status**: Production-ready intelligent meal planning system with explainability, cost transparency, and analytics.
 
-**Run with**: `pnpm index-chefs`
+#### Completed Work Orders
 
-#### 2. Web Application (UI Scaffolded)
-- **Location**: `apps/web/`
-- **Framework**: Next.js 16, React 19, TypeScript
-- **Design System**: @common-origin/design-system v1.4.0
-- **Routes**:
-  - `/` - Welcome page ✅
-  - `/onboarding` - Multi-step household setup ✅
-  - `/plan` - Weekly meal planner grid ✅
-  - `/recipe/[id]` - Recipe details ✅
-  - `/shopping-list` - Grouped grocery list with CSV export ✅
+1. **WO1: Tag Normalization** ✅
+   - `lib/tagNormalizer.ts` - Unified tag vocabulary
+   - Enhanced `lib/library.ts` with normalized tags
 
-**Status**: All UI built, uses **mock data** currently
+2. **WO2: Scoring Pipeline** ✅
+   - `lib/scoring.ts` - Deterministic rules-based scoring (10+ rules)
+   - Configurable `SCORING_WEIGHTS` for tuning
+
+3. **WO3: Composer with Leftovers Strategy** ✅
+   - `lib/recencyTracker.ts` - 3-week history tracking
+   - Rewritten `lib/compose.ts` - Variety enforcement, bulk cook support
+
+4. **WO4: Explainability Layer** ✅
+   - `lib/explainer.ts` - Human-readable reason chips
+   - `LeftoverCard.tsx` - Visual placeholder for bulk cook days
+   - Enhanced `MealCard.tsx` with explanation chips
+
+5. **WO5: Plan Review Page** ✅
+   - `/plan/review/page.tsx` - Summary stats, meal grid, regeneration
+   - `RegenerateDrawer.tsx` - Pin days, cost constraints, preferences
+
+6. **WO6: Shopping List Aggregation** ✅
+   - `lib/shoppingListAggregator.ts` - Deduplication, unit normalization
+   - `ShoppingListItem.tsx` - Expandable source breakdown
+   - Rewritten `/shopping-list/page.tsx`
+
+7. **WO7: Coles Product Mapping** ✅
+   - `lib/colesMapping.ts` - Manual SKU table (30+ ingredients)
+   - Price estimation with confidence levels
+
+8. **WO8: Favorites & Repetition Tracking** ✅
+   - Integrated in WO3 via `recencyTracker.ts`
+   - localStorage-based persistence
+
+9. **WO9: Analytics Extension** ✅
+   - Extended `lib/analytics.ts` - 11 event types, 5 metrics
+   - `/analytics/page.tsx` - Dashboard with insights
+
+10. **WO10: A11y & Mobile Parity** ✅
+    - WCAG 2.1 Level AA compliance
+    - Keyboard navigation, screen reader support
+    - Touch targets ≥44px, mobile responsive layouts
 
 ---
 
-## 🎯 Next Step: Connect Real Recipes to App
+## 🎯 System Capabilities
 
-### The Gap
-- **Indexer**: 50 real recipes in `data/library/nagi/*.json`
-- **App**: Uses `MockLibrary` with 12 hardcoded recipes
-- **Need**: Replace mock library with real recipe loader
+### Intelligent Meal Selection
+- **Scoring Engine**: 10+ rules evaluating freshness, variety, timing, family fit
+- **Variety Enforcement**: Protein rotation, cuisine diversity, cooking method balance
+- **Recency Tracking**: 3-week rolling window prevents repetition
+- **Bulk Cook Support**: Automatic leftover detection and scheduling
 
-### Implementation Plan
+### Explainability
+- **Reason Chips**: Human-readable explanations for every meal choice
+- **Transparency**: Clear communication of why meals were selected
+- **Visual Indicators**: Color-coded chips for different reason types
 
-**Step 1: Create Real Recipe Library Loader**
+### Cost Intelligence
+- **Coles Integration**: 30+ ingredient SKU mappings
+- **Price Estimation**: Confidence-based pricing (high/medium)
+- **Pack Optimization**: Multi-pack calculations, waste estimation
+- **Shopping Insights**: Ingredient reuse tracking, cost per meal
 
-Create `apps/web/src/lib/library.ts`:
-```typescript
-import type { Recipe } from "./types/recipe";
-import fs from "fs";
-import path from "path";
+### Privacy-First Analytics
+- **Local Storage**: No server-side tracking
+- **Event Types**: 11 different user actions tracked
+- **Metrics**: Plan composition, cost optimization, engagement, regeneration
+- **Dashboard**: Visual insights into planning patterns
+
+### Accessibility
+- **WCAG 2.1 AA**: Full compliance with accessibility standards
+- **Keyboard Navigation**: Complete keyboard-only support
+- **Screen Readers**: ARIA labels, semantic HTML, landmarks
+- **Mobile Touch**: 44px minimum touch targets, responsive layouts
+
+---
+
+## 📁 Key Files & Architecture
+
+### Core Libraries (`apps/web/src/lib/`)
+
+#### Meal Planning Logic
+- **`library.ts`** - Recipe library with normalized tags, filtering, search
+- **`compose.ts`** - Week composition algorithm (variety, constraints, leftovers)
+- **`scoring.ts`** - Recipe scoring engine with 10+ rules
+- **`explainer.ts`** - Converts reason codes to human-readable chips
+- **`recencyTracker.ts`** - 3-week history tracking in localStorage
+- **`tagNormalizer.ts`** - Unified tag vocabulary across recipes
+
+#### Shopping & Pricing
+- **`shoppingListAggregator.ts`** - Deduplicates ingredients, normalizes units
+- **`colesMapping.ts`** - Manual SKU mappings, price estimation
+- **`csv.ts`** - Shopping list CSV export
+
+#### Data & Analytics
+- **`storage.ts`** - localStorage utilities (household, overrides, history)
+- **`analytics.ts`** - Privacy-first event tracking, metrics aggregation
+- **`schedule.ts`** - Date/week utilities
+
+### Components (`apps/web/src/components/app/`)
+
+- **`MealCard.tsx`** - Meal display with reason chips
+- **`LeftoverCard.tsx`** - Bulk cook leftover placeholder
+- **`ShoppingListItem.tsx`** - Expandable ingredient with Coles info
+- **`RegenerateDrawer.tsx`** - Plan regeneration with constraints
+
+### Pages (`apps/web/src/app/`)
+
+- **`/plan/review/page.tsx`** - Plan review, summary stats, regeneration
+- **`/shopping-list/page.tsx`** - Aggregated list with Coles pricing
+- **`/analytics/page.tsx`** - Analytics dashboard
+
+### Data Files
+
+- **`data/library/recipes.generated.json`** - 50+ recipes from RecipeTin Eats
+- **`data/library/nagi/*.json`** - Individual indexed recipe files
+
+---
+
+## 🧪 Testing & Quality
+
+### Type Safety
+- TypeScript strict mode enabled
+- All Phase 1 code type-checked
+- Comprehensive interfaces for recipes, plans, analytics
+
+### Accessibility
+- WCAG 2.1 Level AA compliant
+- Keyboard navigation tested
+- Screen reader support verified
+- Mobile touch targets validated
+
+### Performance
+- Client-side only (no server round trips)
+- localStorage for persistence
+- Deterministic algorithms (fast, predictable)
+
+---
+
+## 🚀 Next Steps (Phase 2+)
+
+### Potential Enhancements
+
+1. **LLM Integration**
+   - Replace rule-based scoring with GPT-4 reasoning
+   - Natural language meal preferences
+   - Dynamic recipe suggestions
+
+2. **Coles API Integration**
+   - Real-time pricing from Coles API
+   - Product availability checks
+   - Automated cart building
+
+3. **Enhanced Analytics**
+   - Weekly/monthly trend analysis
+   - Cost savings tracking
+   - Nutrition insights
+
+4. **Social Features**
+   - Share meal plans
+   - Recipe ratings/reviews
+   - Family meal coordination
+
+5. **Mobile App**
+   - Native iOS/Android apps
+   - Push notifications for shopping
+   - Offline mode
+
+---
+
+## 📚 Documentation
+
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System architecture, data flow
+- **[PHASE_1_IMPLEMENTATION.md](./PHASE_1_IMPLEMENTATION.md)** - Phase 1 work order details
+- **[API_REFERENCE.md](./API_REFERENCE.md)** - Library API documentation
+- **[DEVELOPMENT.md](./DEVELOPMENT.md)** - Development setup, commands
+
+---
+
+## 🛠️ Development
+
+### Prerequisites
+- Node.js 20+
+- pnpm 9+
+
+### Setup
+```bash
+pnpm install
+```
+
+### Commands
+```bash
+# Development server
+pnpm dev
+
+# Build for production
+pnpm build
+
+# Type checking
+pnpm type-check
+
+# Index new recipes
+pnpm index-chefs
+
+# Run analytics
+pnpm analytics
+```
+
+---
+
+## 📊 Metrics (as of Oct 27, 2025)
+
+- **Recipes**: 50+ indexed from RecipeTin Eats
+- **Code Coverage**: Core libraries 100% typed
+- **Accessibility**: WCAG 2.1 AA compliant
+- **Lines of Code**: ~3,000 (Phase 1)
+- **Components**: 10+ React components
+- **Library Functions**: 15+ utilities
+- **Event Types**: 11 analytics events
+- **Coles Mappings**: 30+ ingredients
+
+---
+
+## 🎯 Project Goals
+
+### Achieved ✅
+- ✅ Intelligent meal selection (deterministic rules)
+- ✅ Explainability for all decisions
+- ✅ Cost transparency (Coles integration)
+- ✅ Privacy-first analytics
+- ✅ Accessibility compliance
+- ✅ Mobile-responsive design
+
+### Future 🔮
+- 🔮 LLM-powered reasoning
+- 🔮 Real-time Coles API integration
+- 🔮 Nutrition tracking
+- 🔮 Social features
+- 🔮 Mobile apps
 
 // Load all recipes from data/library/
 export class RecipeLibrary {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Stack, Typography } from "@common-origin/design-system";
+import { Stack, Typography, IconButton, ChipGroup } from "@common-origin/design-system";
 import { type Recipe } from "@/lib/types/recipe";
 
 export type SwapDrawerProps = {
@@ -76,20 +76,13 @@ export default function SwapDrawer({
                   Swap {dayName} meal
                 </Typography>
               </div>
-              <button
+              <IconButton
+                variant="naked"
+                iconName="close"
+                size="medium"
                 onClick={onClose}
-                style={{
-                  background: "none",
-                  border: "none",
-                  fontSize: "24px",
-                  cursor: "pointer",
-                  padding: "4px",
-                  lineHeight: 1
-                }}
                 aria-label="Close swap drawer"
-              >
-                ✕
-              </button>
+              />
             </Stack>
             
             {currentRecipe && (
@@ -158,22 +151,10 @@ export default function SwapDrawer({
                       )}
                     </Stack>
 
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
-                      {recipe.tags.slice(0, 3).map((tag, idx) => (
-                        <span
-                          key={idx}
-                          style={{
-                            display: "inline-block",
-                            padding: "2px 8px",
-                            backgroundColor: "#e9ecef",
-                            borderRadius: "4px",
-                            fontSize: "11px"
-                          }}
-                        >
-                          {tag.replace(/_/g, " ")}
-                        </span>
-                      ))}
-                    </div>
+                    <ChipGroup 
+                      labels={recipe.tags.slice(0, 3).map(tag => tag.replace(/_/g, " "))}
+                      variant="default"
+                    />
                   </Stack>
                 </button>
               ))

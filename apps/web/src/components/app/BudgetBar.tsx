@@ -1,4 +1,4 @@
-import { Stack, Typography } from "@common-origin/design-system";
+import { Stack, Typography, ProgressBar } from "@common-origin/design-system";
 
 export type BudgetBarProps = {
   currentSpend: number;
@@ -23,20 +23,11 @@ export default function BudgetBar({
         </Typography>
       </Stack>
       
-      <div style={{
-        width: "100%",
-        height: "8px",
-        backgroundColor: "#e9ecef",
-        borderRadius: "4px",
-        overflow: "hidden"
-      }}>
-        <div style={{
-          width: `${percentage}%`,
-          height: "100%",
-          backgroundColor: isOverBudget ? "#dc3545" : "#28a745",
-          transition: "width 0.3s ease"
-        }} />
-      </div>
+      <ProgressBar
+        value={percentage}
+        color={isOverBudget ? "error" : "success"}
+        height="md"
+      />
       
       {isOverBudget && (
         <Typography variant="small">

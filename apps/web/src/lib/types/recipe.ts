@@ -49,14 +49,16 @@ export type PlanDay = {
   recipeId: string; 
   scaledServings: number; 
   notes?: string; 
-  bulk?: boolean 
+  bulk?: boolean;
+  reasons?: string[]; // Explainable reasons for selection (e.g., "favorite", "≤40m", "best value")
 };
 
 export type PlanWeek = { 
   startISO: string; 
   days: PlanDay[]; 
   costEstimate: number; 
-  conflicts: string[] 
+  conflicts: string[];
+  suggestedSwaps?: Record<number, Recipe[]>; // Day index → swap suggestions
 };
 
 export type CartLine = { 
