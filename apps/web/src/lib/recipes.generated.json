@@ -1,0 +1,3539 @@
+[
+  {
+    "id": "nagi-10-classic-chinese-dishes-1-amazing-sauce",
+    "title": "CHICKEN CHOW MEIN",
+    "source": {
+      "url": "https://www.recipetineats.com/10-classic-chinese-dishes-1-amazing-sauce/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:09.161Z"
+    },
+    "timeMins": 30,
+    "serves": 4,
+    "tags": [
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 200,
+        "name": "g/7oz   fresh chow mein egg noodles"
+      },
+      {
+        "qty": 2,
+        "unit": "cups",
+        "name": "Chinese cabbage (, shredded)"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "carrot (, shredded)"
+      },
+      {
+        "qty": 100,
+        "name": "g/4oz   chicken ((or beef or pork) sliced against the grain)"
+      },
+      {
+        "qty": 2,
+        "name": "shallot/scallion stems (, cut into 2″/4cm slices)"
+      },
+      {
+        "qty": 3,
+        "unit": "garlic",
+        "name": "cloves (, minced)"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 tbsp oil"
+      },
+      {
+        "name": "¼ cup Real Chinese All Purpose Stir Fry Sauce"
+      },
+      {
+        "name": "½ cup water"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-4-ingredient-crunchy-chicken-mashed-potato-cucumber-ribbon-tomato-salad",
+    "title": "Super Quick Chicken Dinner: Crumbed Chicken with Mashed Potatoes",
+    "source": {
+      "url": "https://www.recipetineats.com/4-ingredient-crunchy-chicken-mashed-potato-cucumber-ribbon-tomato-salad/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:47:58.513Z"
+    },
+    "timeMins": 15,
+    "serves": 2,
+    "tags": [
+      "chicken",
+      "dinner",
+      "quick"
+    ],
+    "ingredients": [
+      {
+        "qty": 400,
+        "unit": "g",
+        "name": "/ 13oz   chicken breast minute steaks ((4 pieces x 100g/3oz each) (Note 1))"
+      },
+      {
+        "qty": 4,
+        "unit": "tbsp",
+        "name": "mayonnaise (, preferably whole egg (Note 2))"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "parmesan cheese (, grated)"
+      },
+      {
+        "qty": 6,
+        "unit": "tbsp",
+        "name": "panko breadcrumbs ((Note 3))"
+      },
+      {
+        "qty": 2,
+        "unit": "medium",
+        "name": "potatoes ((Note 4), not peeled)"
+      },
+      {
+        "qty": 1,
+        "unit": "to",
+        "name": "1/2 cup milk ((full fat or low fat))"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "butter ((optional))"
+      },
+      {
+        "name": "Salt and pepper (, to taste)"
+      },
+      {
+        "qty": 1,
+        "unit": "large",
+        "name": "cucumber ((or 2 small cucumbers))"
+      },
+      {
+        "qty": 1,
+        "unit": "punnet",
+        "name": "cherry tomatoes ((or 2 medium tomatoes))"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "lemon juice"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "olive oil"
+      },
+      {
+        "name": "Salt and pepper (, to taste)"
+      }
+    ],
+    "costPerServeEst": 3.53
+  },
+  {
+    "id": "nagi-apple-cider-glazed-pork-tenderloin",
+    "title": "Apple Cider Glazed Pork Tenderloin",
+    "source": {
+      "url": "https://www.recipetineats.com/apple-cider-glazed-pork-tenderloin/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:36.415Z"
+    },
+    "timeMins": 35,
+    "serves": 4,
+    "tags": [
+      "dinner",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 1,
+        "name": "lb/500g pork tenderloin"
+      },
+      {
+        "qty": 11,
+        "name": "oz/330ml sweet apple cider ((alcoholic aka \"hard cider\") - I used Rochdale Apple Cider (Note 1))"
+      },
+      {
+        "qty": 1,
+        "unit": "bay",
+        "name": "leaf (, dried (or 2 fresh))"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "honey"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "brown sugar"
+      },
+      {
+        "qty": 2,
+        "unit": "garlic",
+        "name": "cloves (, minced)"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "salt"
+      },
+      {
+        "name": "Black Pepper"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "olive oil"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 tbsp butter"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "dijon mustard"
+      },
+      {
+        "name": "Salt and pepper"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-bacon-wrapped-hot-dogs-with-cheese-sauce",
+    "title": "Bacon Wrapped Hot Dogs with Cheese Sauce",
+    "source": {
+      "url": "https://www.recipetineats.com/bacon-wrapped-hot-dogs-with-cheese-sauce/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:46.758Z"
+    },
+    "timeMins": 25,
+    "serves": 6,
+    "tags": [
+      "bbq",
+      "grilling",
+      "party_food",
+      "quick"
+    ],
+    "ingredients": [
+      {
+        "name": "2½ cups grated cheddar or tasty cheese (, or any other good melting cheese)"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "cornstarch ((corn flour))"
+      },
+      {
+        "qty": 1,
+        "unit": "can",
+        "name": "evaporated milk ((375g / 12oz))"
+      },
+      {
+        "name": "½ tsp onion powder ((optional - adds extra flavour))"
+      },
+      {
+        "name": "½ tsp garlic powder ((optional - adds extra flavour))"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "salt"
+      },
+      {
+        "qty": 1,
+        "unit": "to",
+        "name": "2 tbsp milk"
+      },
+      {
+        "qty": 6,
+        "unit": "hot",
+        "name": "dogs ((American style - Note 1))"
+      },
+      {
+        "qty": 6,
+        "unit": "strips",
+        "name": "of streaky bacon (, long enough to wrap each hot dog)"
+      },
+      {
+        "qty": 12,
+        "unit": "to",
+        "name": "othpicks (, soaked in water for 30 minutes)"
+      },
+      {
+        "qty": 4,
+        "unit": "brown",
+        "name": "onions (, peeled and sliced)"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "oil"
+      },
+      {
+        "qty": 6,
+        "unit": "soft",
+        "name": "hot dog buns"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "bacon (, diced)"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-beef-cheek-ragu-pasta-cook-eat-thrice",
+    "title": "Beef Cheek Ragu Pasta",
+    "source": {
+      "url": "https://www.recipetineats.com/beef-cheek-ragu-pasta-cook-eat-thrice/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:47:07.025Z"
+    },
+    "timeMins": 15,
+    "serves": 4,
+    "tags": [
+      "pasta",
+      "quick"
+    ],
+    "ingredients": [
+      {
+        "qty": 350,
+        "unit": "g",
+        "name": "/ 12 oz   dried spaghetti"
+      },
+      {
+        "qty": 2,
+        "unit": "cups",
+        "name": "leftover beef from Slow Cooked Beef Cheeks in Red Wine (, shredded)"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "Sauce of Slow Cooked Beef Cheeks in Red Wine"
+      },
+      {
+        "qty": 1,
+        "unit": "onion",
+        "name": "((brown, white or yellow), diced)"
+      },
+      {
+        "qty": 2,
+        "unit": "garlic",
+        "name": "cloves (, minced)"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "olive oil"
+      },
+      {
+        "qty": 2,
+        "unit": "cups",
+        "name": "crushed tomato ((canned))"
+      },
+      {
+        "qty": 3,
+        "unit": "tbsp",
+        "name": "tomato paste"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "water"
+      },
+      {
+        "qty": 1,
+        "unit": "to",
+        "name": "2 tsp salt ((adjust to taste))"
+      },
+      {
+        "name": "Black pepper"
+      },
+      {
+        "name": "Freshly grated parmesan cheese"
+      },
+      {
+        "name": "Parsley (, finely chopped)"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-cheese-and-bacon-potato-skins",
+    "title": "Cheese and Bacon Potato Skins",
+    "source": {
+      "url": "https://www.recipetineats.com/cheese-and-bacon-potato-skins/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:49:38.778Z"
+    },
+    "timeMins": 55,
+    "serves": 6,
+    "tags": [
+      "party_food",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 2,
+        "unit": "lb",
+        "name": "/ 1 kg (about 8-10)  medium potatoes (, scrubbed clean (Note 1))"
+      },
+      {
+        "qty": 10,
+        "unit": "oz",
+        "name": "/ 300 g   streaky fatty bacon (, diced (Note 2))"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 cups grated cheese ((tasty, cheddar, gruyere, Monterey Jack))"
+      },
+      {
+        "name": "Salt and pepper"
+      },
+      {
+        "name": "Sour cream"
+      },
+      {
+        "qty": 1,
+        "name": "scallion/shallot stem (, finely sliced (green party only))"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-cheese-bacon-hash-brown-muffins",
+    "title": "Cheese and Bacon Muffin Tin Hash Browns",
+    "source": {
+      "url": "https://www.recipetineats.com/cheese-bacon-hash-brown-muffins/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:47:50.482Z"
+    },
+    "timeMins": 45,
+    "serves": 12,
+    "tags": [
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 1,
+        "unit": "kg",
+        "name": "/ 2 lb   starchy potatoes ((see notes))"
+      },
+      {
+        "qty": 2,
+        "name": "1/2 tbsp olive oil (, separated)"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "grated cheese ((any melting cheese))"
+      },
+      {
+        "qty": 3,
+        "unit": "bacon",
+        "name": "rashers (, finely diced)"
+      },
+      {
+        "qty": 3,
+        "unit": "tsp",
+        "name": "salt"
+      },
+      {
+        "name": "Pepper"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "parsley (, finely chopped (for garnish - optional))"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-cheese-truffles-mini-cheese-balls",
+    "title": "Cheese Truffles (Mini Cheese Balls)",
+    "source": {
+      "url": "https://www.recipetineats.com/cheese-truffles-mini-cheese-balls/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:47:46.748Z"
+    },
+    "timeMins": 15,
+    "serves": 18,
+    "tags": [
+      "appetizer",
+      "party_food",
+      "quick"
+    ],
+    "ingredients": [
+      {
+        "qty": 8,
+        "unit": "oz",
+        "name": "/ 250g   cream cheese (, softened)"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "grated cheese ((tasty, cheddar or any other cheese with flavour))"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "garlic powder"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "worcestershire sauce"
+      },
+      {
+        "name": "Salt to taste"
+      },
+      {
+        "qty": 10,
+        "unit": "oz",
+        "name": "/ 300g   goats cheese"
+      },
+      {
+        "qty": 10,
+        "unit": "oz",
+        "name": "/ 300g   Danish feta ((Note 1))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "grated cheese ((tasty, cheddar or any other cheese with flavour))"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "sour cream ((or approximately 2 tsp of milk or water))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "finely chopped fresh herbs ((I used parsley and dill))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "parmesan cheese (, finely shredded or grated)"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "walnuts (, finely chopped)"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "dried cranberries (, finely chopped)"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-cheesy-jalapeno-bacon-stuffed-baguette-with-garlic-butter",
+    "title": "Cheesy Jalapeno Bacon Stuffed Baguette with Garlic Butter",
+    "source": {
+      "url": "https://www.recipetineats.com/cheesy-jalapeno-bacon-stuffed-baguette-with-garlic-butter/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:50.034Z"
+    },
+    "timeMins": 35,
+    "serves": 25,
+    "tags": [
+      "party_food",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "oil"
+      },
+      {
+        "qty": 8,
+        "unit": "oz",
+        "name": "/ 250g   bacon, diced (I used lean bacon)"
+      },
+      {
+        "qty": 1,
+        "unit": "x",
+        "name": "20\" / 50 cm baguette / french stick"
+      },
+      {
+        "qty": 8,
+        "unit": "oz",
+        "name": "/ 250g   Philadelphia cream cheese, softened (full or low fat)"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "cheddar cheese, shredded (Note 1)"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "mozzarella cheese, shredded"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "packed jalapeños, finely chopped (if using fresh, deseed it. Or use canned, drained)"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "finely chopped scallions/shallots, green and white part (packed)"
+      },
+      {
+        "name": "Black pepper"
+      },
+      {
+        "qty": 3,
+        "unit": "tbsp",
+        "name": "butter"
+      },
+      {
+        "qty": 2,
+        "unit": "garlic",
+        "name": "cloves, minced"
+      },
+      {
+        "name": "Pinch of salt"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-chili-con-carne-corn-bread-pie",
+    "title": "Chili Con Carne Corn Bread Pie",
+    "source": {
+      "url": "https://www.recipetineats.com/chili-con-carne-corn-bread-pie/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:47:38.570Z"
+    },
+    "timeMins": 25,
+    "serves": 4,
+    "tags": [
+      "pie",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 4,
+        "unit": "cups",
+        "name": "Shredded Beef Chili Con Carne"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "fresh parsley (, finely chopped (optional))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "melted butter"
+      },
+      {
+        "qty": 3,
+        "name": "eggs"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "milk"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "polenta / cornmeal ((Note 3))"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 cups self raising flour ((or 3 tsp baking powder plus 1 1/4 cups + 3 tbsp of plain flour))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "sugar"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "salt"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "of canned creamed corn"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-creamy-bacon-chicken-and-broccoli-bread-bake",
+    "title": "Creamy Bacon, Chicken and Broccoli Strata (Bread Bake)",
+    "source": {
+      "url": "https://www.recipetineats.com/creamy-bacon-chicken-and-broccoli-bread-bake/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:49:25.772Z"
+    },
+    "timeMins": 55,
+    "serves": 4,
+    "tags": [
+      "main"
+    ],
+    "ingredients": [
+      {
+        "qty": 250,
+        "unit": "g",
+        "name": "/ 8 oz   chicken breast fillet (, cut into small bite size pieces)"
+      },
+      {
+        "qty": 2,
+        "unit": "bacon",
+        "name": "rashers (, diced)"
+      },
+      {
+        "qty": 1,
+        "unit": "small",
+        "name": "brown onion ((or 1/2 large), diced)"
+      },
+      {
+        "qty": 4,
+        "unit": "packed",
+        "name": "cups (300g/10oz)  broccoli florets"
+      },
+      {
+        "qty": 1,
+        "unit": "garlic",
+        "name": "clove (, minced)"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "olive oil"
+      },
+      {
+        "qty": 40,
+        "unit": "g",
+        "name": "/ 1.3 oz / 3 tbsp   butter"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "flour"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "grated cheese ((tasty, cheddar, gruyere or any other good melting cheese))"
+      },
+      {
+        "qty": 3,
+        "unit": "cups",
+        "name": "low fat milk"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "garlic powder"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "salt"
+      },
+      {
+        "name": "Black pepper"
+      },
+      {
+        "qty": 3,
+        "unit": "to",
+        "name": "4 slices of thick slice white sandwich bread (, cut into 1cm / 1/3\" cubes (note 1))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "panko ((or breadcrumbs))"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "parmesan cheese (, grated)"
+      },
+      {
+        "name": "Fresh parsley (, finely chopped, to garnish (optional))"
+      }
+    ],
+    "costPerServeEst": 2.11
+  },
+  {
+    "id": "nagi-creamy-healthy-broccoli-soup",
+    "title": "Creamy Healthy Broccoli Soup",
+    "source": {
+      "url": "https://www.recipetineats.com/creamy-healthy-broccoli-soup/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:49:09.901Z"
+    },
+    "timeMins": 15,
+    "serves": 2,
+    "tags": [
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 1,
+        "unit": "large",
+        "name": "head of broccoli"
+      },
+      {
+        "qty": 1,
+        "unit": "potato",
+        "name": "(, peeled and roughly chopped into cubes about 1.5cm / 1/2\" cubes)"
+      },
+      {
+        "qty": 1,
+        "unit": "white",
+        "name": "or brown onion (, roughly diced)"
+      },
+      {
+        "qty": 2,
+        "unit": "cloves",
+        "name": "garlic"
+      },
+      {
+        "qty": 2,
+        "unit": "cups",
+        "name": "/ 500 ml  vegetable stock / broth"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "/ 250 ml  milk ((low fat, cow or soy))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "/ 125 ml  water"
+      },
+      {
+        "name": "Salt and pepper"
+      }
+    ],
+    "costPerServeEst": 2.65
+  },
+  {
+    "id": "nagi-creamy-mushroom-and-spinach-orzo-risoni-one-pot",
+    "title": "Creamy Mushroom and Spinach Orzo (Risoni) (One Pot)",
+    "source": {
+      "url": "https://www.recipetineats.com/creamy-mushroom-and-spinach-orzo-risoni-one-pot/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:30.526Z"
+    },
+    "timeMins": 30,
+    "serves": 4,
+    "tags": [
+      "pasta",
+      "quick"
+    ],
+    "ingredients": [
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "olive oil"
+      },
+      {
+        "qty": 1.2,
+        "unit": "lb",
+        "name": "/ 600g   mushrooms (, sliced (I used button mushrooms))"
+      },
+      {
+        "qty": 3,
+        "unit": "tbsp",
+        "name": "butter, unsalted"
+      },
+      {
+        "qty": 3,
+        "unit": "garlic",
+        "name": "cloves (, minced)"
+      },
+      {
+        "qty": 1,
+        "unit": "small",
+        "name": "onion (, finely diced)"
+      },
+      {
+        "qty": 3,
+        "unit": "tbsp",
+        "name": "flour"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 cups / 375 ml  milk ((I used low fat))"
+      },
+      {
+        "qty": 3,
+        "unit": "cups",
+        "name": "/ 750 ml  chicken broth"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 cups orzo / risoni, uncooked ((Note 1))"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "salt"
+      },
+      {
+        "name": "Black pepper"
+      },
+      {
+        "qty": 3,
+        "unit": "cup",
+        "name": "parmesan cheese (, grated)"
+      },
+      {
+        "qty": 8,
+        "unit": "oz",
+        "name": "/ 250g   frozen spinach ((1 box), thawed, excess water squeezed out)"
+      },
+      {
+        "name": "Extra parmesan cheese"
+      },
+      {
+        "name": "Finely chopped parsley"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-crispy-chinese-rice-paper-wrapped-fish-5-ingredients",
+    "title": "Crispy Chinese Rice Paper Wrapped Fish (5 Ingredients)",
+    "source": {
+      "url": "https://www.recipetineats.com/crispy-chinese-rice-paper-wrapped-fish-5-ingredients/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:47:23.419Z"
+    },
+    "timeMins": 30,
+    "serves": 4,
+    "tags": [
+      "fish",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 1.1,
+        "unit": "lb",
+        "name": "/ 600 g   firm white fish fillets ((Note 1))"
+      },
+      {
+        "qty": 2,
+        "unit": "tsp",
+        "name": "Chinese Five Spice Powder ((Note 2))"
+      },
+      {
+        "qty": 3,
+        "name": "- 1 tsp salt"
+      },
+      {
+        "name": "Black pepper"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "coriander/cilantro leaves"
+      },
+      {
+        "qty": 15,
+        "unit": "to",
+        "name": "18  rice paper rounds (, 22cm/9\" diameter (Note 3))"
+      },
+      {
+        "qty": 2,
+        "unit": "to",
+        "name": "3 tbsp cooking oil"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-crispy-couscous-pancake-tomato-onion",
+    "title": "Crispy Couscous Pancake with Tomato &amp; Onion",
+    "source": {
+      "url": "https://www.recipetineats.com/crispy-couscous-pancake-tomato-onion/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:49:02.032Z"
+    },
+    "timeMins": 25,
+    "serves": 4,
+    "tags": [
+      "sides",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 4,
+        "unit": "tbsp",
+        "name": "olive oil"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "couscous"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "vegetable stock powder (or chicken stock powder, or just salt)"
+      },
+      {
+        "qty": 3,
+        "unit": "cup",
+        "name": "boiling water"
+      },
+      {
+        "qty": 1,
+        "unit": "brown",
+        "name": "onion, diced"
+      },
+      {
+        "qty": 2,
+        "unit": "medium",
+        "name": "tomatoes, diced (about 1 1/4 cups) (see notes)"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "tomato paste"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "sugar"
+      },
+      {
+        "name": "Handful coriander or parsley leaves (optional)"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "salt"
+      },
+      {
+        "name": "Fresh black pepper"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-crispy-shredded-chicken-noodle-stir-fry",
+    "title": "Crispy Shredded Chicken Noodle Stir Fry",
+    "source": {
+      "url": "https://www.recipetineats.com/crispy-shredded-chicken-noodle-stir-fry/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:02.941Z"
+    },
+    "timeMins": 10,
+    "serves": 2,
+    "tags": [
+      "noodles",
+      "stir_fry",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 5,
+        "unit": "oz",
+        "name": "/ 150g   dried rice stick noodles ((see note 1))"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "oil ((vegetable, canola or peanut oil))"
+      },
+      {
+        "qty": 2,
+        "unit": "garlic",
+        "name": "cloves (, smashed (see note 2))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "Slow Cooker Crispy Chinese Shredded Chicken ((\"Shredded Chicken\"))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "Slow Cooker Crispy Chinese Shredded Chicken braising liquid ((see note 3))"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "Sriracha sauce ((or any hot sauce or chili paste) (optional))"
+      },
+      {
+        "qty": 3,
+        "unit": "cups",
+        "name": "(tightly packed)  Chinese broccoli, leaves separated from stems (cut stems vertically into thin sticks) (about 1 small bunch)"
+      }
+    ],
+    "costPerServeEst": 2.47
+  },
+  {
+    "id": "nagi-cuban-pork-sandwich-cubanos-from-chef-movie",
+    "title": "Cuban Pork Sandwich (Cubanos) from Chef Movie",
+    "source": {
+      "url": "https://www.recipetineats.com/cuban-pork-sandwich-cubanos-from-chef-movie/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:08.116Z"
+    },
+    "timeMins": 25,
+    "serves": 2,
+    "tags": [
+      "lunch",
+      "sandwich",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 2,
+        "unit": "thin",
+        "name": "slices baked leg ham"
+      },
+      {
+        "qty": 4,
+        "unit": "large",
+        "name": "(, thin slices Mojo Marinated Pork)"
+      },
+      {
+        "qty": 2,
+        "unit": "pieces",
+        "name": "of white baguettes (, 6 inch/15 cm in length, cut in half)"
+      },
+      {
+        "name": "Melted butter (, for brushing)"
+      },
+      {
+        "name": "American mustard"
+      },
+      {
+        "qty": 2,
+        "unit": "thin",
+        "name": "slices Swiss cheese"
+      },
+      {
+        "qty": 2,
+        "unit": "or",
+        "name": "3   dill pickles (, thinly sliced)"
+      }
+    ],
+    "costPerServeEst": 2.47
+  },
+  {
+    "id": "nagi-dan-dan-noodle-soup-vegetarian",
+    "title": "Dan Dan Noodle Soup (Vegetarian)",
+    "source": {
+      "url": "https://www.recipetineats.com/dan-dan-noodle-soup-vegetarian/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:47:31.046Z"
+    },
+    "timeMins": 15,
+    "serves": 4,
+    "tags": [
+      "noodles",
+      "soup",
+      "quick"
+    ],
+    "ingredients": [
+      {
+        "qty": 400,
+        "unit": "g",
+        "name": "dried rice stick noodles ((see notes))"
+      },
+      {
+        "qty": 4,
+        "unit": "cups",
+        "name": "(32 oz/1 litre)   vegetable or chicken stock (broth)"
+      },
+      {
+        "qty": 5,
+        "unit": "cups",
+        "name": "water"
+      },
+      {
+        "qty": 3,
+        "unit": "large",
+        "name": "garlic cloves (, minced)"
+      },
+      {
+        "qty": 2,
+        "unit": "tsp",
+        "name": "minced ginger"
+      },
+      {
+        "qty": 2,
+        "unit": "tsp",
+        "name": "sugar"
+      },
+      {
+        "qty": 3,
+        "unit": "tbsp",
+        "name": "soy sauce"
+      },
+      {
+        "qty": 2,
+        "unit": "tsp",
+        "name": "cornflour / corn starch"
+      },
+      {
+        "qty": 2,
+        "unit": "Tbsp",
+        "name": "sesame paste or tahini"
+      },
+      {
+        "qty": 4,
+        "unit": "tbsp",
+        "name": "black vinegar ((see notes))"
+      },
+      {
+        "qty": 2,
+        "unit": "tsp",
+        "name": "chilli bean sauce ((or substitute with another chilli paste or sauce). Adjust to taste!)"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 tsp sesame oil"
+      },
+      {
+        "qty": 2,
+        "unit": "medium",
+        "name": "carrots (, peeled and sliced diagonally)"
+      },
+      {
+        "qty": 4,
+        "unit": "bok",
+        "name": "choy"
+      },
+      {
+        "qty": 2,
+        "unit": "cups",
+        "name": "broccoli florets"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 cups bean sprouts"
+      },
+      {
+        "qty": 1,
+        "unit": "scallion",
+        "name": "/ shallot (, chopped)"
+      }
+    ],
+    "costPerServeEst": 2.11
+  },
+  {
+    "id": "nagi-easy-french-onion-soup-dip",
+    "title": "Easy French Onion Soup Dip",
+    "source": {
+      "url": "https://www.recipetineats.com/easy-french-onion-soup-dip/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:47:42.860Z"
+    },
+    "timeMins": 30,
+    "serves": 10,
+    "tags": [
+      "appetizer",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 400,
+        "unit": "g",
+        "name": "/ 14 oz  sour cream ((full fat is better))"
+      },
+      {
+        "name": "½ cup mayonnaise ((Mayo labelled “whole egg” mayo is best))"
+      },
+      {
+        "qty": 40,
+        "unit": "g",
+        "name": "/ 1.4 oz  French Onion Soup Mix (store bought) (, salt reduced is best)"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-garlic-bread-mini-pizzas-muffin-tin",
+    "title": "Garlic Bread Mini Pizzas (Muffin Tin)",
+    "source": {
+      "url": "https://www.recipetineats.com/garlic-bread-mini-pizzas-muffin-tin/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:49:41.031Z"
+    },
+    "timeMins": 25,
+    "serves": 12,
+    "tags": [
+      "party_food",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 12,
+        "unit": "slices",
+        "name": "white sandwich bread (, fresh (Note 1))"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "butter"
+      },
+      {
+        "qty": 2,
+        "unit": "garlic",
+        "name": "cloves (, crushed)"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "salt"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "pizza sauce ((Note 2))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "red onion (, finely diced)"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "mushroom (, finely chopped)"
+      },
+      {
+        "qty": 3,
+        "unit": "cup",
+        "name": "grated cheese (, melting (I used a mix of mozzarella and tasty, equal amounts))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "sliced small pepperoni ((Note 3))"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-garlic-white-bean-mash-flash",
+    "title": "Garlic White Bean Mash In A Flash",
+    "source": {
+      "url": "https://www.recipetineats.com/garlic-white-bean-mash-flash/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:05.536Z"
+    },
+    "timeMins": 4,
+    "serves": 2,
+    "tags": [
+      "sides",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "extra virgin olive oil"
+      },
+      {
+        "qty": 1,
+        "unit": "garlic",
+        "name": "clove (, minced)"
+      },
+      {
+        "qty": 1,
+        "unit": "can",
+        "name": "cannellini beans ((15oz / 420g can), drained)"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "vegetable stock"
+      },
+      {
+        "qty": 1,
+        "unit": "lemon",
+        "name": "zest ((optional))"
+      },
+      {
+        "name": "Salt and pepper to taste"
+      }
+    ],
+    "costPerServeEst": 2.3
+  },
+  {
+    "id": "nagi-grilled-vegetable-platter",
+    "title": "Grilled Vegetables Platter",
+    "source": {
+      "url": "https://www.recipetineats.com/grilled-vegetable-platter/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:49:14.157Z"
+    },
+    "timeMins": 15,
+    "serves": 4,
+    "tags": [
+      "appetizer",
+      "meal",
+      "party_food",
+      "quick"
+    ],
+    "ingredients": [
+      {
+        "qty": 1,
+        "unit": "red",
+        "name": "capsicum ((bell pepper), cut into slices)"
+      },
+      {
+        "qty": 1,
+        "unit": "red",
+        "name": "onion (, peeled and cut into 12 wedges)"
+      },
+      {
+        "qty": 1,
+        "unit": "large",
+        "name": "eggplant (, sliced vertically into 1/2 cm / 1/5\" slices)"
+      },
+      {
+        "qty": 3,
+        "unit": "zucchinis",
+        "name": "(, sliced vertically into thin slices)"
+      },
+      {
+        "qty": 3,
+        "unit": "squash",
+        "name": "(, sliced into thin slices)"
+      },
+      {
+        "name": "Olive oil"
+      },
+      {
+        "name": "Salt"
+      },
+      {
+        "name": "Pepper"
+      },
+      {
+        "name": "Parsley or coriander leaves and lemon wedges (, for garnish)"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "Greek yoghurt"
+      },
+      {
+        "qty": 1,
+        "unit": "garlic",
+        "name": "clove (, crushed)"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "cumin powder"
+      },
+      {
+        "name": "Squeeze of lemon juice"
+      },
+      {
+        "name": "Salt and pepper"
+      },
+      {
+        "name": "Extra pinch of cumin (, for garnish)"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-herb-chilli-feta",
+    "title": "Feta Marinated with Herbs and Chilli",
+    "source": {
+      "url": "https://www.recipetineats.com/herb-chilli-feta/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:43.686Z"
+    },
+    "timeMins": 5,
+    "serves": 4,
+    "tags": [
+      "appetizer",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 8,
+        "unit": "oz",
+        "name": "/ 250 g   feta cheese (, preferably Danish or another creamy type (see notes))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "extra virgin oil"
+      },
+      {
+        "qty": 2,
+        "unit": "garlic",
+        "name": "cloves (, peeled)"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "herbs (, finely chopped. (I used parsley and thyme leaves))"
+      },
+      {
+        "qty": 1,
+        "unit": "birds",
+        "name": "eye chilli (, finely chopped (or any fresh red chilli of choice))"
+      },
+      {
+        "name": "1//4 tsp lemon rind (, finely grated)"
+      },
+      {
+        "name": "Black pepper"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-homemade-teriyaki-sauce",
+    "title": "Homemade Teriyaki Sauce",
+    "source": {
+      "url": "https://www.recipetineats.com/homemade-teriyaki-sauce/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:47:19.219Z"
+    },
+    "timeMins": 12,
+    "serves": 8,
+    "tags": [
+      "marinade",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "soy sauce"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "mirin"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "Japanese cooking wine ((sake))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "water"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-honey-lemon-chicken",
+    "title": "Honey Lemon Chicken",
+    "source": {
+      "url": "https://www.recipetineats.com/honey-lemon-chicken/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:47:54.156Z"
+    },
+    "timeMins": 12,
+    "serves": 4,
+    "tags": [
+      "dinner",
+      "quick"
+    ],
+    "ingredients": [
+      {
+        "qty": 1,
+        "unit": "lb",
+        "name": "/ 500g  chicken breast (2 pieces)"
+      },
+      {
+        "name": "Salt and pepper"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "/ 35 g  flour (any)"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 tbsp butter"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "olive oil"
+      },
+      {
+        "qty": 1,
+        "unit": "garlic",
+        "name": "clove, minced"
+      },
+      {
+        "qty": 3,
+        "unit": "cup",
+        "name": "/ 185 ml  chicken broth / stock"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "/ 85g  honey"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "/ 60 ml  lemon juice (fresh)"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "soy sauce"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "water"
+      },
+      {
+        "name": "Lemon slices"
+      },
+      {
+        "name": "Finely chopped parsley"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-honey-sriracha-glazed-chicken-skewers",
+    "title": "Honey Sriracha Chicken Skewers",
+    "source": {
+      "url": "https://www.recipetineats.com/honey-sriracha-glazed-chicken-skewers/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:37.850Z"
+    },
+    "timeMins": 25,
+    "serves": 4,
+    "tags": [
+      "bbq",
+      "dinner",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 1.5,
+        "unit": "lb",
+        "name": "/ 750g lb / 750g   chicken thigh fillets ((Note 1))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "honey"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "Dijon mustard ((Note 2))"
+      },
+      {
+        "qty": 4,
+        "unit": "tbsp",
+        "name": "soy sauce"
+      },
+      {
+        "qty": 2,
+        "unit": "garlic",
+        "name": "cloves (, crushed)"
+      },
+      {
+        "qty": 2,
+        "name": "- 3 tbsp sriracha OR any other hot sauce ((e.g. Frank's), adjust amount to your taste)"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "salt"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 tbsp oil ((I used vegetable))"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-hot-mushroom-pepperoni-pizza-dip",
+    "title": "Hot Mushroom and Pepperoni Pizza Dip",
+    "source": {
+      "url": "https://www.recipetineats.com/hot-mushroom-pepperoni-pizza-dip/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:16.140Z"
+    },
+    "timeMins": 35,
+    "serves": 8,
+    "tags": [
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 8,
+        "unit": "oz",
+        "name": "/ 250g   cream cheese (, at room temperature)"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "grated parmesan cheese"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "sour cream ((light or full fat))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "pizza sauce ((see notes for fast homemade pizza sauce recipe))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "pepperoni (, roughly diced)"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "onion (, diced (brown, white, yellow or red))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "mushrooms (, roughly diced)"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "mozzarella cheese (, grated)"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "tasty cheese (, grated (or any other melting cheese with flavour) (see notes))"
+      },
+      {
+        "qty": 12,
+        "unit": "slices",
+        "name": "pepperoni"
+      },
+      {
+        "qty": 2,
+        "unit": "french",
+        "name": "sticks (, cut into slices)"
+      },
+      {
+        "qty": 2,
+        "unit": "cloves",
+        "name": "garlic (, halved (skin on))"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-italian-baked-chicken-potatoes-cherry-tomatoes",
+    "title": "Baked Italian Chicken with Potatoes",
+    "source": {
+      "url": "https://www.recipetineats.com/italian-baked-chicken-potatoes-cherry-tomatoes/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:47:53.100Z"
+    },
+    "timeMins": 60,
+    "serves": 4,
+    "tags": [
+      "baked"
+    ],
+    "ingredients": [
+      {
+        "qty": 4,
+        "name": "- 5  chicken thigh fillets (, skin on and bone in (about 6oz/200g each))"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "olive oil"
+      },
+      {
+        "qty": 1,
+        "unit": "tin",
+        "name": "(14oz/400g)  crushed tomatoes"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 cups cherry tomatos"
+      },
+      {
+        "qty": 3,
+        "name": "(around 1.5lb/ 750g in total)  medium size potatoes (, peeled and cut into bite size pieces)"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "mozzarella cheese (, grated (or any other good melting cheese))"
+      },
+      {
+        "name": "Salt and pepper"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "each dried rosemary and thyme ((OR oregano) leaves (or 2 tbsp fresh))"
+      },
+      {
+        "qty": 2,
+        "unit": "garlic",
+        "name": "cloves (, minced)"
+      },
+      {
+        "qty": 3,
+        "unit": "tbsp",
+        "name": "red wine or white wine vinegar ((Note 1))"
+      },
+      {
+        "qty": 3,
+        "unit": "tbsp",
+        "name": "extra virgin olive oil"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "salt"
+      },
+      {
+        "name": "Black pepper"
+      },
+      {
+        "name": "Basil leaves ((optional))"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-italian-dressing-chicken-marinade",
+    "title": "Italian Dressing Chicken Marinade",
+    "source": {
+      "url": "https://www.recipetineats.com/italian-dressing-chicken-marinade/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:49:17.992Z"
+    },
+    "timeMins": 20,
+    "serves": 4,
+    "tags": [
+      "barbecue",
+      "bbq",
+      "chicken",
+      "grill",
+      "quick"
+    ],
+    "ingredients": [
+      {
+        "qty": 4,
+        "name": "1/2 tbsp white wine vinegar ((Note 1))"
+      },
+      {
+        "qty": 2,
+        "unit": "cloves",
+        "name": "garlic"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "extra virgin olive oil"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "dijon mustard"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 tsp sugar"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "salt"
+      },
+      {
+        "name": "Black pepper"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "olive oil"
+      },
+      {
+        "qty": 2,
+        "name": "1/2 tsp mixed Italian dried herbs ((either a packet mix or mix herbs like basil, parsley, oregano, rosemary and thyme))"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "dried red chili flakes ((optional))"
+      },
+      {
+        "qty": 750,
+        "unit": "g",
+        "name": "/ 1.5lb  chicken thighs, boneless skinless, or breast ((cut in half horizontally))"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "extra virgin olive oil"
+      },
+      {
+        "qty": 2,
+        "unit": "zucchinis",
+        "name": "(, finely sliced into rounds using a mandolin)"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "baby mint leaves (, or 1 tbsp sliced larger mint leaves)"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-jalapeno-popper-dip",
+    "title": "Jalapeno Popper Dip",
+    "source": {
+      "url": "https://www.recipetineats.com/jalapeno-popper-dip/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:21.363Z"
+    },
+    "timeMins": 50,
+    "serves": 8,
+    "tags": [
+      "appetizer",
+      "dip",
+      "party_food"
+    ],
+    "ingredients": [
+      {
+        "qty": 6,
+        "unit": "oz",
+        "name": "/ 180g   Philadelphia cream cheese (, at room temperature)"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "mayonnaise"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "sour cream"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "cumin powder"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "each onion powder and garlic powder ((or 1 tsp of one of these))"
+      },
+      {
+        "qty": 3,
+        "unit": "cup",
+        "name": "grated cheddar cheese ((or tasty, Monterey Jack or other flavoured cheese))"
+      },
+      {
+        "qty": 3,
+        "unit": "cup",
+        "name": "grated Mozzarella Cheese"
+      },
+      {
+        "qty": 3,
+        "name": "- 1 cup canned jalapeños (, drained and finely chopped)"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "salt"
+      },
+      {
+        "name": "Pepper"
+      },
+      {
+        "qty": 1,
+        "unit": "Cob",
+        "name": "Bread ((round loaf 25cm / 10\" diameter) (optional))"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "butter (, melted)"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "panko breadcrumbs"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-lemon-garlic-baked-ricotta",
+    "title": "Lemon Garlic Baked Ricotta",
+    "source": {
+      "url": "https://www.recipetineats.com/lemon-garlic-baked-ricotta/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:47:45.327Z"
+    },
+    "timeMins": 20,
+    "serves": 8,
+    "tags": [
+      "appetiser",
+      "dip",
+      "spread",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 2,
+        "unit": "cups",
+        "name": "of full fat ricotta (, the best you can afford)"
+      },
+      {
+        "qty": 1,
+        "unit": "to",
+        "name": "3 tbsp full fat cream or milk (, optional (only required if you aren't using fresh Italian ricotta))"
+      },
+      {
+        "name": "Zest of 1 lemon"
+      },
+      {
+        "qty": 2,
+        "unit": "medium",
+        "name": "garlic cloves (, minced)"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "salt"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "olive oil"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-lemon-pepper-pork-grilled-vegetable-feta-couscous",
+    "title": "Lemon Pepper Pork",
+    "source": {
+      "url": "https://www.recipetineats.com/lemon-pepper-pork-grilled-vegetable-feta-couscous/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:47:28.907Z"
+    },
+    "timeMins": 15,
+    "serves": 2,
+    "tags": [
+      "dinner",
+      "quick"
+    ],
+    "ingredients": [
+      {
+        "qty": 2,
+        "unit": "pork",
+        "name": "cutlets (, at room temperature (200g/7oz each, bone in) (see notes))"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "lemon pepper ((see notes))"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "olive oil (, separated)"
+      },
+      {
+        "qty": 2,
+        "unit": "zucchinis",
+        "name": "(, sliced)"
+      },
+      {
+        "qty": 1,
+        "unit": "small",
+        "name": "red capsicum ((bell pepper), sliced)"
+      },
+      {
+        "qty": 1,
+        "unit": "small",
+        "name": "red onion ((spanish onion), sliced)"
+      },
+      {
+        "qty": 1,
+        "unit": "small",
+        "name": "lemon"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "mint leaves ((loosely packed))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "couscous"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "boiling water ((or chicken or vegetable stock/broth))"
+      },
+      {
+        "qty": 50,
+        "unit": "g",
+        "name": "/ 1.5 oz g / 1.5 oz   feta cheese"
+      },
+      {
+        "name": "Salt and pepper"
+      },
+      {
+        "name": "Lemon wedges or cheeks (, to serve (optional))"
+      }
+    ],
+    "costPerServeEst": 3.53
+  },
+  {
+    "id": "nagi-meatloaf-cupcakes-mashed-potato",
+    "title": "Meatloaf Cupcakes With Mashed Potato",
+    "source": {
+      "url": "https://www.recipetineats.com/meatloaf-cupcakes-mashed-potato/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:38.923Z"
+    },
+    "timeMins": 40,
+    "serves": 8,
+    "tags": [
+      "beef",
+      "dinner",
+      "quick"
+    ],
+    "ingredients": [
+      {
+        "qty": 1,
+        "unit": "lb",
+        "name": "/ 500g   beef mince ((ground beef))"
+      },
+      {
+        "qty": 1,
+        "unit": "onion",
+        "name": "(, grated (brown, white or yellow))"
+      },
+      {
+        "qty": 2,
+        "unit": "small",
+        "name": "carrots (, grated)"
+      },
+      {
+        "qty": 2,
+        "name": "eggs"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "grated parmesan cheese"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "tomato ketchup ((or tomato sauce))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "panko ((or breadcrumbs))"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "garlic powder"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "dried oregano"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "dried thyme"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "salt"
+      },
+      {
+        "name": "Pepper"
+      },
+      {
+        "qty": 2,
+        "unit": "large",
+        "name": "or 3 medium   potatoes"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "butter ((optional))"
+      },
+      {
+        "qty": 1,
+        "name": "- 1 cup milk"
+      },
+      {
+        "name": "Tomato ketchup or sauce"
+      },
+      {
+        "name": "Parsley (, finely chopped (optional))"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-mexican-couscous-express",
+    "title": "Mexican Couscous Express",
+    "source": {
+      "url": "https://www.recipetineats.com/mexican-couscous-express/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:47:40.306Z"
+    },
+    "timeMins": 10,
+    "serves": 4,
+    "tags": [
+      "meal",
+      "quick"
+    ],
+    "ingredients": [
+      {
+        "qty": 1,
+        "name": "1/2 tsp salt"
+      },
+      {
+        "qty": 2,
+        "unit": "tsp",
+        "name": "cumin powder"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "onion powder"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "couscous"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "boiling water"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "tomato paste"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "diced jalapeño ((fresh is better, but tinned also ok))"
+      },
+      {
+        "qty": 2,
+        "unit": "scallions",
+        "name": "((shallots), roughly sliced (optional))"
+      },
+      {
+        "qty": 1,
+        "unit": "can",
+        "name": "(15 oz / 400 g)  black beans (or red kidney beans)"
+      },
+      {
+        "qty": 1,
+        "unit": "can",
+        "name": "(15 oz / 400 g)  corn kernels"
+      },
+      {
+        "name": "Handful of  coriander / cilantro"
+      },
+      {
+        "qty": 1,
+        "unit": "tomato",
+        "name": "(, deseeded and diced)"
+      },
+      {
+        "qty": 1,
+        "unit": "avocado",
+        "name": "(, diced)"
+      },
+      {
+        "name": "Sour cream"
+      },
+      {
+        "name": "Grated cheese"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-mexican-lasagna-enchilada-stack",
+    "title": "Mexican Lasagna Enchilada Stack",
+    "source": {
+      "url": "https://www.recipetineats.com/mexican-lasagna-enchilada-stack/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:49:27.513Z"
+    },
+    "timeMins": 35,
+    "serves": 4,
+    "tags": [
+      "meals",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 5,
+        "name": "- 6   tortillas"
+      },
+      {
+        "qty": 2,
+        "unit": "cups",
+        "name": "shredded Pork Carnitas ((Mexican Pulled Pork) (see notes))"
+      },
+      {
+        "qty": 1,
+        "unit": "can",
+        "name": "(400g/15oz)   corn"
+      },
+      {
+        "qty": 1,
+        "unit": "can",
+        "name": "(400g/15oz)   black beans ( or red kidney beans)"
+      },
+      {
+        "qty": 1,
+        "unit": "small",
+        "name": "red capsicum ((bell pepper), diced)"
+      },
+      {
+        "qty": 2,
+        "name": "1/4 cups enchilada sauce (, separated (preferably homemade - here's my Easy Classic Enchilada Sauce))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "grated mozzarella cheese ((or any other melting cheese))"
+      },
+      {
+        "name": "Fresh parsley or coriander (, finely chopped (optional - for garnish))"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-mexican-pork-rolls-caramelised-onion",
+    "title": "Mexican Pork Rolls",
+    "source": {
+      "url": "https://www.recipetineats.com/mexican-pork-rolls-caramelised-onion/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:47:11.219Z"
+    },
+    "timeMins": 20,
+    "serves": 4,
+    "tags": [
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 1,
+        "name": "1/2 cups shredded Pork Carnitas ((Mexican Pulled Pork))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "Enchilada Sauce ((preferably homemade - here is my Easy Classic Enchilada Sauce))"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 tbsp butter"
+      },
+      {
+        "qty": 2,
+        "unit": "brown",
+        "name": "onions (, halved and finely sliced)"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 tbsp brown sugar"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "balsamic vinegar"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "salt"
+      },
+      {
+        "name": "Black pepper"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "grated mozzarella cheese ((or any other good melting cheese))"
+      },
+      {
+        "qty": 4,
+        "unit": "soft",
+        "name": "white bread rolls"
+      },
+      {
+        "name": "Fresh parsley (, finely chopped, for garnish (optional))"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-middle-eastern-roasted-vegetables-with-tahini-drizzle",
+    "title": "Middle Eastern Roasted Vegetables with Tahini Sauce",
+    "source": {
+      "url": "https://www.recipetineats.com/middle-eastern-roasted-vegetables-with-tahini-drizzle/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:23.206Z"
+    },
+    "timeMins": 40,
+    "serves": 2,
+    "tags": [
+      "light_meal",
+      "salad",
+      "side",
+      "quick"
+    ],
+    "ingredients": [
+      {
+        "qty": 1,
+        "unit": "red",
+        "name": "onion (, sliced thickly)"
+      },
+      {
+        "qty": 1,
+        "unit": "carrot",
+        "name": "(, cut into thick sticks)"
+      },
+      {
+        "qty": 1,
+        "unit": "zucchini",
+        "name": "(, cut into thick sticks)"
+      },
+      {
+        "qty": 1,
+        "unit": "pumpkin",
+        "name": "(, cut into 2\"/3cm cubes)"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 cups large cauliflower florets"
+      },
+      {
+        "qty": 1,
+        "unit": "beetroot",
+        "name": "(, cut into 1.5\"/2cm cubes)"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "olive oil"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "salt"
+      },
+      {
+        "name": "Black pepper"
+      },
+      {
+        "qty": 3,
+        "unit": "tbsp",
+        "name": "tahini"
+      },
+      {
+        "qty": 3,
+        "unit": "tbsp",
+        "name": "lemon juice"
+      },
+      {
+        "qty": 1,
+        "unit": "small",
+        "name": "garlic clove (, minced (or 1/2 large))"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "salt"
+      },
+      {
+        "name": "Black pepper"
+      },
+      {
+        "name": "Water"
+      },
+      {
+        "qty": 2,
+        "unit": "tsp",
+        "name": "za'atar spice mix ((see notes))"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "pine nuts (, dry roasted)"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "coriander (, chopped (or parsley))"
+      }
+    ],
+    "costPerServeEst": 4.4
+  },
+  {
+    "id": "nagi-one-pan-prosciutto-wrapped-ricotta-chicken-with-scalloped-potatoes",
+    "title": "Prosciutto Wrapped Chicken and Scalloped Potatoes (One Pan!)",
+    "source": {
+      "url": "https://www.recipetineats.com/one-pan-prosciutto-wrapped-ricotta-chicken-with-scalloped-potatoes/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:44.721Z"
+    },
+    "timeMins": 60,
+    "serves": 4,
+    "tags": [
+      "chicken",
+      "dinner"
+    ],
+    "ingredients": [
+      {
+        "qty": 2,
+        "unit": "cup",
+        "name": "ricotta"
+      },
+      {
+        "name": "Zest of 1 small lemon (, or 1/2 large lemon)"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 tsp finely sliced fresh sage leaves ((Note 1))"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "salt"
+      },
+      {
+        "name": "Pepper"
+      },
+      {
+        "qty": 4,
+        "unit": "chicken",
+        "name": "thigh fillets (, skinless and boneless (about 5 - 7 oz / 150 - 200g each))"
+      },
+      {
+        "qty": 4,
+        "unit": "long",
+        "name": "or 8 small   thin slices of prosciutto"
+      },
+      {
+        "qty": 1.5,
+        "unit": "lb",
+        "name": "/ 750 g   potatoes (, peeled and cut into thin slices)"
+      },
+      {
+        "qty": 1,
+        "unit": "garlic",
+        "name": "clove (, crushed (optional))"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 tbsp olive oil + 1/2 tbsp extra olive oil"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "dried thyme leaves"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "freshly grated parmesan"
+      },
+      {
+        "name": "Salt and pepper"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-packet-ramen-makeover",
+    "title": "Packet Ramen Makeover",
+    "source": {
+      "url": "https://www.recipetineats.com/packet-ramen-makeover/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:49:22.906Z"
+    },
+    "timeMins": 15,
+    "serves": 1,
+    "tags": [
+      "noodles",
+      "quick"
+    ],
+    "ingredients": [
+      {
+        "qty": 1,
+        "unit": "packet",
+        "name": "instant ramen ((Note 1))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "Chinese cabbage ((loosely packed), chopped into 2.5cm/1\" pieces)"
+      },
+      {
+        "qty": 1,
+        "unit": "carrot",
+        "name": "(, sliced on the diagonal)"
+      },
+      {
+        "qty": 3,
+        "unit": "mushrooms",
+        "name": "(, sliced (I used shiitake))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "bean sprouts"
+      },
+      {
+        "qty": 1,
+        "name": "shallot/scallion (, finely sliced (for garnish))"
+      },
+      {
+        "qty": 1,
+        "unit": "garlic",
+        "name": "clove (, minced)"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "peanut oil"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "corn flour / cornstarch"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 tsp soy sauce"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 tsp chinese cooking wine ((Note 3))"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "sugar"
+      },
+      {
+        "name": "Dash of sesame oil ((optional))"
+      },
+      {
+        "qty": 3,
+        "unit": "tbsp",
+        "name": "water"
+      }
+    ],
+    "costPerServeEst": 7.4
+  },
+  {
+    "id": "nagi-parmesan-shortbread-biscuit-3-ingredients",
+    "title": "Parmesan Shortbread Biscuits",
+    "source": {
+      "url": "https://www.recipetineats.com/parmesan-shortbread-biscuit-3-ingredients/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:49:36.933Z"
+    },
+    "timeMins": 25,
+    "serves": 25,
+    "tags": [
+      "savoury_biscuits",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 3.5,
+        "unit": "oz",
+        "name": "/ 100g   salted butter (, chopped (Note 1))"
+      },
+      {
+        "qty": 3.5,
+        "unit": "oz",
+        "name": "/ 100g   parmesan cheese (, grated (Note 2))"
+      },
+      {
+        "qty": 3.3,
+        "unit": "oz",
+        "name": "/ 95g   plain flour"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "rosemary leaves (, roughly chopped (or 2 1/2 tsp dried rosemary))"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-pork-tenderloin-with-creamy-marsala-sauce",
+    "title": "Pork Tenderloin with Creamy Marsala Sauce",
+    "source": {
+      "url": "https://www.recipetineats.com/pork-tenderloin-with-creamy-marsala-sauce/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:33.445Z"
+    },
+    "timeMins": 35,
+    "serves": 3,
+    "tags": [
+      "dinner",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "olive oil"
+      },
+      {
+        "qty": 1,
+        "unit": "lb",
+        "name": "/ 500g   pork tenderloin ((Note 1))"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "butter ((salted or unsalted))"
+      },
+      {
+        "qty": 5,
+        "unit": "oz",
+        "name": "/ 150g   mushrooms (, sliced (I used Swiss Brown))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "finely chopped shallots or onion"
+      },
+      {
+        "qty": 1,
+        "unit": "garlic",
+        "name": "clove (, minced)"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 tbsp flour"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "/ 125 ml  marsala ((Note 2))"
+      },
+      {
+        "qty": 2,
+        "unit": "cups",
+        "name": "/ 500 ml  chicken broth (, low sodium)"
+      },
+      {
+        "qty": 5,
+        "unit": "tarragon",
+        "name": "leaves ((optional) (thyme is also lovely) (Note 3))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "/ 65 ml  cream"
+      }
+    ],
+    "costPerServeEst": 2.12
+  },
+  {
+    "id": "nagi-pull-apart-garlic-pizza-bread",
+    "title": "Pull Apart Pizza Bread",
+    "source": {
+      "url": "https://www.recipetineats.com/pull-apart-garlic-pizza-bread/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:42.145Z"
+    },
+    "timeMins": 45,
+    "serves": 8,
+    "tags": [
+      "party_food",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "salted butter"
+      },
+      {
+        "qty": 1,
+        "unit": "garlic",
+        "name": "clove (, minced (or 2 if you like really garlicky))"
+      },
+      {
+        "qty": 1,
+        "unit": "baguette",
+        "name": "/ french (, 60cm / 2 feet long (or multiple short ones))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "pizza sauce"
+      },
+      {
+        "qty": 1,
+        "name": "1/4 to 1 1/2 cups grated mozzarella cheese ((Notes 1 and 2))"
+      },
+      {
+        "qty": 4,
+        "unit": "oz",
+        "name": "/ 120g   pepperoni (, sliced or diced (I used mini pepperoni))"
+      },
+      {
+        "qty": 1,
+        "unit": "red",
+        "name": "onion (, finely diced (optional))"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "fresh parsley (, finely diced (optional))"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-pulled-pork-enchiladas",
+    "title": "Pulled Pork Enchiladas",
+    "source": {
+      "url": "https://www.recipetineats.com/pulled-pork-enchiladas/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:17.881Z"
+    },
+    "timeMins": 40,
+    "serves": 4,
+    "tags": [
+      "baked",
+      "fast",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 2,
+        "unit": "cups",
+        "name": "(packed)  Pork Carnitas (Mexican Pulled Pork) or other shredded meat (see notes)"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "olive oil"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "tinned black beans or red kidney beans (, drained)"
+      },
+      {
+        "qty": 1,
+        "unit": "can",
+        "name": "(15oz / 400g)   corn kernels (, drained)"
+      },
+      {
+        "qty": 2,
+        "unit": "cups",
+        "name": "shredded cheese ((any good melting cheese))"
+      },
+      {
+        "qty": 8,
+        "name": "tortillas"
+      },
+      {
+        "qty": 3,
+        "unit": "cups",
+        "name": "(750ml / 25oz)   Enchilada Sauce  ((homemade or store bought))"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-shepherds-pie-potato-skins",
+    "title": "Shepherd's Pie Potato Skins",
+    "source": {
+      "url": "https://www.recipetineats.com/shepherds-pie-potato-skins/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:47:36.513Z"
+    },
+    "timeMins": 15,
+    "serves": 4,
+    "tags": [
+      "baked",
+      "dinner",
+      "pie",
+      "quick"
+    ],
+    "ingredients": [
+      {
+        "qty": 250,
+        "unit": "g",
+        "name": "/ 8 oz   lamb or beef mince ((ground meat))"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "olive oil"
+      },
+      {
+        "name": "½  onion ((brown, white or yellow), diced)"
+      },
+      {
+        "qty": 1,
+        "unit": "clove",
+        "name": "garlic (, minced)"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 cups frozen mixed vegetables ((pea, corn, carrots) (or fresh))"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "flour"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "beef stock/broth ((or 1 stock / bouillon cube dissolved in hot water))"
+      },
+      {
+        "name": "½ cup water"
+      },
+      {
+        "name": "½ tsp salt"
+      },
+      {
+        "name": "½ tsp dried thyme"
+      },
+      {
+        "name": "½ tsp dried oregano"
+      },
+      {
+        "name": "Black pepper"
+      },
+      {
+        "qty": 4,
+        "unit": "large",
+        "name": "potatoes (, scrubbed clean (about 400g/13oz each))"
+      },
+      {
+        "name": "½ to 1 cup milk ((full or low fat))"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "butter ((optional – but highly recommended))"
+      },
+      {
+        "name": "Salt to taste"
+      }
+    ],
+    "costPerServeEst": 2.03
+  },
+  {
+    "id": "nagi-shrimp-prawn-pad-thai-spice-i-am-restaurant-easy-homestyle",
+    "title": "Shrimp / Prawn Pad Thai (Spice I Am Restaurant Recipe)",
+    "source": {
+      "url": "https://www.recipetineats.com/shrimp-prawn-pad-thai-spice-i-am-restaurant-easy-homestyle/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:49:19.629Z"
+    },
+    "timeMins": 20,
+    "serves": 3,
+    "tags": [
+      "noodles",
+      "stir_fry",
+      "quick"
+    ],
+    "ingredients": [
+      {
+        "qty": 5,
+        "unit": "oz",
+        "name": "/ 150 g   dried Pad Thai rice noodles ((Note 1))"
+      },
+      {
+        "qty": 4,
+        "unit": "tbsp",
+        "name": "vegetable oil"
+      },
+      {
+        "qty": 12,
+        "unit": "raw",
+        "name": "shrimp ((prawns), shelled and deveined (Note 2))"
+      },
+      {
+        "qty": 1,
+        "unit": "small",
+        "name": "red shallot (, finely sliced (Note 3))"
+      },
+      {
+        "qty": 3,
+        "unit": "oz",
+        "name": "/ 80 g   firm tofu (, cut into small matchsticks)"
+      },
+      {
+        "qty": 1.75,
+        "unit": "oz",
+        "name": "/ 50 g   dried shrimp ((Note 4))"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "fish sauce"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "palm sugar ((or brown sugar))"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "tamarind puree ((Note 5))"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "white vinegar"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "+ chili powder (, to taste (Note 6))"
+      },
+      {
+        "qty": 2,
+        "unit": "eggs",
+        "name": "(, lightly beaten)"
+      },
+      {
+        "qty": 1.5,
+        "unit": "oz",
+        "name": "/ 45 g   roasted unsalted peanuts (, finely ground)"
+      },
+      {
+        "qty": 5,
+        "unit": "oz",
+        "name": "/ 150 g   bean sprouts"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "garlic chives (, cut into 3/4\" / 2cm lengths)"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "white sugar"
+      },
+      {
+        "name": "Lime wedges (, to serve)"
+      }
+    ],
+    "costPerServeEst": 2.82
+  },
+  {
+    "id": "nagi-sirloin-steak-pesto-bell-peppers-flatbread",
+    "title": "Sirloin Steak with Pesto, Bell Peppers (Capsicum) &amp; Flatbread",
+    "source": {
+      "url": "https://www.recipetineats.com/sirloin-steak-pesto-bell-peppers-flatbread/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:47:08.058Z"
+    },
+    "timeMins": 15,
+    "serves": 2,
+    "tags": [
+      "grilling",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 2,
+        "unit": "x",
+        "name": "10oz / 300g   sirloin beef steak (, 2.5 cm/ 1 inch thick (the best you can afford))"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "vegetable oil ((or canola), separated)"
+      },
+      {
+        "qty": 1,
+        "unit": "red",
+        "name": "bell pepper ((capsicum), deseed, halved and sliced into strips)"
+      },
+      {
+        "name": "Salt and pepper"
+      },
+      {
+        "name": "Pesto ((preferably homemade - see notes for recipe))"
+      },
+      {
+        "name": "Flatbreads ((see recipe Easy Soft Flatbread (No Yeast)))"
+      }
+    ],
+    "costPerServeEst": 2.3
+  },
+  {
+    "id": "nagi-teriyaki-chicken",
+    "title": "Teriyaki Chicken (With Homemade Teriyaki Sauce)",
+    "source": {
+      "url": "https://www.recipetineats.com/teriyaki-chicken/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:27.426Z"
+    },
+    "timeMins": 15,
+    "serves": 4,
+    "tags": [
+      "bbq",
+      "grilling",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 4,
+        "unit": "tbsp",
+        "name": "Teriyaki Sauce Marinade"
+      },
+      {
+        "qty": 4,
+        "unit": "chicken",
+        "name": "thigh fillets (, skinless and boneless (about 5oz/150g each))"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "oil"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "soy sauce"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "mirin"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "Japanese cooking wine ((sake))"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "water"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-vegetarian-chow-mein",
+    "title": "Vegetarian Chow Mein",
+    "source": {
+      "url": "https://www.recipetineats.com/vegetarian-chow-mein/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:28.941Z"
+    },
+    "timeMins": 15,
+    "serves": 2,
+    "tags": [
+      "noodles",
+      "stir_fry",
+      "vegan",
+      "vegetarian",
+      "quick"
+    ],
+    "ingredients": [
+      {
+        "qty": 6,
+        "unit": "oz",
+        "name": "/ 180 g   fresh chow mein noodles"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "oil"
+      },
+      {
+        "qty": 2,
+        "unit": "garlic",
+        "name": "cloves (, minced)"
+      },
+      {
+        "qty": 2,
+        "unit": "cups",
+        "name": "shredded Chinese cabbage"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "carrot (, julienned)"
+      },
+      {
+        "qty": 2,
+        "name": "scallion/shallot stems (, cut into 2\"/4cm pieces)"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "bean sprouts"
+      },
+      {
+        "qty": 5,
+        "unit": "oz",
+        "name": "/ 150 g   firm tofu (, sliced)"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "soy sauce"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "Chinese cooking wine"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "hoisin sauce"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 tbsp soy sauce"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "chilli garlic sauce or sriracha ((optional))"
+      },
+      {
+        "qty": 2,
+        "unit": "tsp",
+        "name": "sugar"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "sesame oil"
+      },
+      {
+        "qty": 1,
+        "unit": "cup",
+        "name": "water"
+      },
+      {
+        "name": "White pepper"
+      }
+    ],
+    "costPerServeEst": 4.22
+  },
+  {
+    "id": "nagi-vietnamese-pork-cutlet",
+    "title": "Vietnamese Pork Chop",
+    "source": {
+      "url": "https://www.recipetineats.com/vietnamese-pork-cutlet/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:48:11.267Z"
+    },
+    "timeMins": 15,
+    "serves": 4,
+    "tags": [
+      "bbq",
+      "grilling",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 4,
+        "unit": "pork",
+        "name": "cutlets (, around 250g - 300g (8oz - 10oz) each)"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "vegetable or peanut oil ((for cooking))"
+      },
+      {
+        "qty": 1,
+        "unit": "tsp",
+        "name": "chilli sauce ((sriracha, chilli paste) or 1 birds eye chilli, finely chopped)"
+      },
+      {
+        "qty": 2,
+        "unit": "cloves",
+        "name": "minced garlic"
+      },
+      {
+        "name": "Juice of 1 lime"
+      },
+      {
+        "qty": 2,
+        "unit": "tbsp",
+        "name": "fish sauce"
+      },
+      {
+        "qty": 1,
+        "unit": "tbsp",
+        "name": "soy sauce"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 tbsp brown sugar"
+      },
+      {
+        "qty": 1,
+        "unit": "stalk",
+        "name": "lemongrass (, white part only, bruised them sliced into 1cm/0.5\" pieces)"
+      }
+    ],
+    "costPerServeEst": 2
+  },
+  {
+    "id": "nagi-watermelon-salad",
+    "title": "Watermelon Salad",
+    "source": {
+      "url": "https://www.recipetineats.com/watermelon-salad/",
+      "domain": "recipetineats.com",
+      "chef": "recipe_tin_eats",
+      "license": "permitted",
+      "fetchedAt": "2025-10-27T02:47:22.380Z"
+    },
+    "timeMins": 10,
+    "serves": 4,
+    "tags": [
+      "salad",
+      "quick",
+      "simple"
+    ],
+    "ingredients": [
+      {
+        "qty": 1,
+        "unit": "kg",
+        "name": "/ 2 lbs   watermelon"
+      },
+      {
+        "qty": 1,
+        "unit": "small",
+        "name": "Spanish red onion (, finely sliced)"
+      },
+      {
+        "qty": 3,
+        "unit": "tbsp",
+        "name": "red wine vinegar"
+      },
+      {
+        "name": "Salt and pepper"
+      },
+      {
+        "qty": 5,
+        "unit": "tbsp",
+        "name": "extra virgin olive oil"
+      },
+      {
+        "qty": 1,
+        "name": "1/2 tbs fresh mint (, roughly chopped)"
+      },
+      {
+        "qty": 75,
+        "unit": "g",
+        "name": "/ 3 oz   Danish feta cheese (, crumbled into medium size pieces)"
+      },
+      {
+        "name": "Whole mint sprigs (, to garnish)"
+      }
+    ],
+    "costPerServeEst": 2
+  }
+]
