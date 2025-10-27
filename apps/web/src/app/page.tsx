@@ -1,9 +1,15 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { Stack, Typography } from "@common-origin/design-system";
+import { track } from "@/lib/analytics";
 
 export default function HomePage() {
+  useEffect(() => {
+    track('page_view', { page: '/' });
+  }, []);
+
   return (
     <main style={{ padding: 24 }}>
       <Stack direction="column" gap="lg">

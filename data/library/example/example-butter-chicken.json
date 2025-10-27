@@ -1,0 +1,78 @@
+{
+  "id": "example-butter-chicken",
+  "sourceUrl": "https://www.example.com/butter-chicken/",
+  "chef": "example",
+  "domain": "example.com",
+  "indexedAt": "2025-10-27T12:00:00.000Z",
+  "recipe": {
+    "@context": "https://schema.org",
+    "@type": "Recipe",
+    "name": "Butter Chicken",
+    "description": "Creamy, rich butter chicken with tender pieces in a tomato-based curry sauce",
+    "author": {
+      "@type": "Person",
+      "name": "Example Chef"
+    },
+    "datePublished": "2024-01-15",
+    "image": "https://www.example.com/images/butter-chicken.jpg",
+    "recipeYield": "4 servings",
+    "prepTime": "PT20M",
+    "cookTime": "PT30M",
+    "totalTime": "PT50M",
+    "recipeIngredient": [
+      "2 lbs chicken breast, cut into chunks",
+      "1 cup plain yogurt",
+      "2 tbsp garam masala",
+      "1 tsp turmeric",
+      "1 tsp chili powder",
+      "2 tbsp butter",
+      "1 onion, diced",
+      "4 cloves garlic, minced",
+      "1 inch ginger, grated",
+      "1 cup tomato puree",
+      "1 cup heavy cream",
+      "Salt to taste",
+      "Fresh cilantro for garnish"
+    ],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "Marinate chicken in yogurt, garam masala, turmeric, and chili powder for 30 minutes."
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Heat butter in a large pan and sauté onion until golden."
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add garlic and ginger, cook for 1 minute until fragrant."
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add marinated chicken and cook until browned on all sides."
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Stir in tomato puree and simmer for 15 minutes."
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Add heavy cream, season with salt, and simmer for 10 more minutes."
+      },
+      {
+        "@type": "HowToStep",
+        "text": "Garnish with fresh cilantro and serve with rice or naan."
+      }
+    ],
+    "recipeCategory": "Main Course",
+    "recipeCuisine": "Indian",
+    "keywords": "butter chicken, indian curry, chicken curry, creamy chicken",
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "calories": "485 calories",
+      "proteinContent": "35g",
+      "fatContent": "28g",
+      "carbohydrateContent": "18g"
+    }
+  }
+}

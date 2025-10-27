@@ -3,12 +3,12 @@ import MealCard, { type MealCardProps } from "./MealCard";
 
 export type WeekPlannerGridProps = {
   meals: (MealCardProps | null)[];
-  onMealSwap?: (dayIndex: number, meal: MealCardProps | null) => void;
+  onSwapClick?: (dayIndex: number) => void;
 };
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-export default function WeekPlannerGrid({ meals, onMealSwap }: WeekPlannerGridProps) {
+export default function WeekPlannerGrid({ meals, onSwapClick }: WeekPlannerGridProps) {
   return (
     <Stack direction="column" gap="lg">
       <Typography variant="h2">This Week&apos;s Dinners</Typography>
@@ -22,7 +22,10 @@ export default function WeekPlannerGrid({ meals, onMealSwap }: WeekPlannerGridPr
           <Stack key={day} direction="column" gap="sm">
             <Typography variant="h4">{day}</Typography>
             {meals[index] ? (
-              <MealCard {...meals[index]!} />
+              <MealCard 
+                {...meals[index]!} 
+                onSwapClick={onSwapClick ? () => onSwapClick(index) : undefined}
+              />
             ) : (
               <div style={{
                 border: "2px dashed #dee2e6",

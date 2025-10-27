@@ -30,53 +30,67 @@ export const MOCK_CHEFS: Chef[] = [
 
 export const MOCK_MEALS: MealCardProps[] = [
   {
+    recipeId: "spaghetti-bolognese",
     title: "Spaghetti Bolognese",
     chef: "Jamie Oliver",
     timeMins: 45,
     kidsFriendly: true,
-    conflicts: []
+    conflicts: [],
+    reasons: ["family favorite", "kid-friendly"]
   },
   {
+    recipeId: "beef-wellington",
     title: "Beef Wellington",
     chef: "Gordon Ramsay", 
     timeMins: 120,
     kidsFriendly: false,
-    conflicts: ["High cost", "Advanced technique"]
+    conflicts: ["High cost", "Advanced technique"],
+    reasons: ["special occasion"]
   },
   {
+    recipeId: "chicken-tikka-masala",
     title: "Chicken Tikka Masala",
     chef: "Gordon Ramsay",
     timeMins: 60,
     kidsFriendly: true,
-    conflicts: []
+    conflicts: [],
+    reasons: ["bulk cook", "reuses spices"]
   },
   {
+    recipeId: "lemon-drizzle-cake",
     title: "Lemon Drizzle Cake",
     chef: "Nigella Lawson",
     timeMins: 90,
     kidsFriendly: true,
-    conflicts: []
+    conflicts: [],
+    reasons: ["weekend baking", "comfort food"]
   },
   {
+    recipeId: "shakshuka",
     title: "Shakshuka",
     chef: "Yotam Ottolenghi",
     timeMins: 30,
     kidsFriendly: false,
-    conflicts: ["Spicy"]
+    conflicts: ["Spicy"],
+    reasons: ["≤40m", "uses pantry staples"]
   },
   {
+    recipeId: "fish-and-chips",
     title: "Fish and Chips",
     chef: "Gordon Ramsay",
     timeMins: 40,
     kidsFriendly: true,
-    conflicts: []
+    conflicts: [],
+    reasons: ["≤40m", "kid-friendly", "Friday tradition"]
   },
   {
+    recipeId: "veggie-pasta-primavera",
     title: "Veggie Pasta Primavera",
     chef: "Jamie Oliver",
     timeMins: 25,
     kidsFriendly: true,
-    conflicts: []
+    conflicts: [],
+    reasons: ["≤40m", "best value", "uses seasonal veg"]
   }
 ];
 

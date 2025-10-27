@@ -1,12 +1,19 @@
 "use client";
 
-import { Stack, Typography } from "@common-origin/design-system";
+import { useEffect } from "react";
+import { Button, Stack, Typography } from "@common-origin/design-system";
 import { MOCK_SHOPPING_LIST } from "@/lib/mockData";
 import { generateShoppingListCSV, downloadCSV, groupIngredientsByCategory } from "@/lib/csv";
 import { sortCategoriesByAisle, getCategoryInfo } from "@/lib/categories";
+import { track } from "@/lib/analytics";
 
 export default function ShoppingListPage() {
+  useEffect(() => {
+    track('page_view', { page: '/shopping-list' });
+  }, []);
+
   const handleExportCSV = () => {
+    track('export_csv', { itemCount: MOCK_SHOPPING_LIST.length });
     const csvContent = generateShoppingListCSV(MOCK_SHOPPING_LIST);
     downloadCSV(csvContent, "coles-shopping-list.csv");
   };
@@ -19,20 +26,9 @@ export default function ShoppingListPage() {
       <Stack direction="column" gap="lg">
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Typography variant="h1">Shopping List</Typography>
-          <button
-            onClick={handleExportCSV}
-            style={{
-              padding: "12px 24px",
-              backgroundColor: "#28a745",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontSize: "16px"
-            }}
-          >
+          <Button variant="primary" onClick={handleExportCSV}>
             📁 Export CSV
-          </button>
+          </Button>
         </Stack>
         
         <Typography variant="body">

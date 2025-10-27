@@ -5,6 +5,17 @@ export function isSunday8AM(): boolean {
   return now.day() === 0 && now.hour() === 8 && now.minute() < 30;
 }
 
+export function isSaturdayAfter4(): boolean {
+  const now = dayjs();
+  return now.day() === 6 && now.hour() >= 16;
+}
+
+export function nextWeekMondayISO(): string {
+  const now = dayjs();
+  const nextMonday = now.day(1).add(1, "week");
+  return nextMonday.format("YYYY-MM-DD");
+}
+
 export function getNextSunday8AM(): Date {
   const now = dayjs();
   let nextSunday = now.day(0); // This Sunday
