@@ -1,5 +1,5 @@
 import type { Household, WeeklyOverrides, PlanWeek, PlanDay, Recipe } from "./types/recipe";
-import { MockLibrary } from "./library.mock";
+import { RecipeLibrary } from "./library";
 import { nextWeekMondayISO } from "./schedule";
 
 /**
@@ -89,7 +89,7 @@ function selectRecipe(options: {
   }
 
   // Search for candidates
-  let candidates = MockLibrary.search({ 
+  let candidates = RecipeLibrary.search({ 
     tags, 
     maxTime,
     excludeIds: excludedIds 
@@ -97,7 +97,7 @@ function selectRecipe(options: {
 
   if (candidates.length === 0) {
     // Relax constraints if no matches
-    candidates = MockLibrary.search({ 
+    candidates = RecipeLibrary.search({ 
       maxTime: isWeekend ? undefined : 40,
       excludeIds: excludedIds 
     });
@@ -155,7 +155,7 @@ export function getSuggestedSwaps(
   isWeekend: boolean,
   kidFriendly: boolean
 ): Recipe[] {
-  const currentRecipe = MockLibrary.getById(currentRecipeId);
+  const currentRecipe = RecipeLibrary.getById(currentRecipeId);
   if (!currentRecipe) return [];
 
   const tags: string[] = [];
@@ -170,7 +170,7 @@ export function getSuggestedSwaps(
   }
 
   // Get candidates from same chef first
-  let candidates = MockLibrary.search({
+  let candidates = RecipeLibrary.search({
     chef: currentRecipe.source.chef,
     tags,
     maxTime,
@@ -180,7 +180,7 @@ export function getSuggestedSwaps(
 
   // If not enough from same chef, add others
   if (candidates.length < 3) {
-    const others = MockLibrary.search({
+    const others = RecipeLibrary.search({
       tags,
       maxTime,
       excludeIds: [currentRecipeId, ...candidates.map(r => r.id)],

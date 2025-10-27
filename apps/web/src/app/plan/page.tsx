@@ -12,7 +12,7 @@ import { type Recipe } from "@/lib/types/recipe";
 import { scheduleSundayToast, isSaturdayAfter4, nextWeekMondayISO } from "@/lib/schedule";
 import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides } from "@/lib/storage";
 import { composeWeek, getSuggestedSwaps } from "@/lib/compose";
-import { MockLibrary } from "@/lib/library.mock";
+import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -43,7 +43,7 @@ export default function PlanPage() {
     for (let i = 0; i < 7; i++) {
       const planDay = plan.days.find((d, idx) => idx === i);
       if (planDay) {
-        const recipe = MockLibrary.getById(planDay.recipeId);
+        const recipe = RecipeLibrary.getById(planDay.recipeId);
         if (recipe) {
           // Generate reasons for this meal
           const reasons: string[] = [];
@@ -128,7 +128,7 @@ export default function PlanPage() {
     setWeekPlan(newWeekPlan);
     
     // Update budget
-    const oldCost = oldMeal ? (MockLibrary.getById(oldMeal.recipeId)?.costPerServeEst || 0) * 4 : 0;
+    const oldCost = oldMeal ? (RecipeLibrary.getById(oldMeal.recipeId)?.costPerServeEst || 0) * 4 : 0;
     const newCost = (recipe.costPerServeEst || 0) * 4;
     const budgetDiff = newCost - oldCost;
     setBudget(prev => ({ ...prev, current: prev.current + budgetDiff }));
@@ -232,7 +232,7 @@ export default function PlanPage() {
         dayName={swapDayIndex !== null ? DAYS[swapDayIndex] : ""}
         currentRecipe={
           swapDayIndex !== null && weekPlan[swapDayIndex]
-            ? MockLibrary.getById(weekPlan[swapDayIndex]!.recipeId)
+            ? RecipeLibrary.getById(weekPlan[swapDayIndex]!.recipeId)
             : null
         }
         suggestedSwaps={suggestedSwaps}
