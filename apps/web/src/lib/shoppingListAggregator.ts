@@ -43,6 +43,11 @@ const PANTRY_STAPLES = new Set([
  * Removes common variations and standardizes format
  */
 function normalizeIngredientName(name: string): string {
+  // Handle missing or invalid name
+  if (!name || typeof name !== 'string') {
+    return '';
+  }
+  
   return name
     .toLowerCase()
     .trim()
@@ -102,6 +107,11 @@ function categorizeIngredient(name: string): string {
  * Convert ingredient quantity to base unit
  */
 function convertToBaseUnit(qty: number, unit: string): { qty: number; unit: string } {
+  // Handle missing or invalid unit
+  if (!unit || typeof unit !== 'string') {
+    return { qty, unit: unit || '' };
+  }
+  
   const normalized = unit.toLowerCase().trim();
   const conversion = UNIT_CONVERSIONS[normalized];
   
@@ -166,14 +176,23 @@ export function aggregateShoppingList(
     const scaleFactor = day.scaledServings / (recipe.serves || 4);
     
     for (const ingredient of recipe.ingredients) {
+      // Skip ingredients with missing data
+      if (!ingredient || !ingredient.name) continue;
+      
       const normalizedName = normalizeIngredientName(ingredient.name);
+      
+      // Skip empty normalized names
+      if (!normalizedName) continue;
       
       // Check pantry exclusion
       const isStaple = isPantryStaple(ingredient.name);
       if (options.excludePantryStaples && isStaple) continue;
       
-      // Convert to base unit for aggregation
-      const converted = convertToBaseUnit(ingredient.qty * scaleFactor, ingredient.unit);
+      // Convert to base unit for aggregation (handle missing unit)
+      const converted = convertToBaseUnit(
+        ingredient.qty * scaleFactor, 
+        ingredient.unit || ''
+      );
       
       // Check if already exists
       const existing = ingredientMap.get(normalizedName);
