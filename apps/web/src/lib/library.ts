@@ -1,5 +1,5 @@
 import type { Recipe } from "./types/recipe";
-import generatedRecipes from "./recipes.generated.json";
+import { recipes } from "./recipes";
 
 // Library search interface (same as MockLibrary for compatibility)
 export interface LibrarySearchOptions {
@@ -15,7 +15,7 @@ export interface LibrarySearchOptions {
  * Uses pre-generated recipe data from build script
  */
 export class RecipeLibrary {
-  private static recipes: Recipe[] = generatedRecipes as Recipe[];
+  private static recipes: Recipe[] = recipes;
 
   /**
    * Get all recipes

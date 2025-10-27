@@ -104,7 +104,7 @@ function selectRecipe(options: {
   }
 
   // Prioritize favorites
-  const favoriteCandidates = candidates.filter(r => favorites.includes(r.id));
+  const favoriteCandidates = candidates.filter((r: Recipe) => favorites.includes(r.id));
   if (favoriteCandidates.length > 0) {
     candidates = favoriteCandidates;
   }
@@ -115,7 +115,7 @@ function selectRecipe(options: {
     return acc;
   }, {} as Record<string, number>);
 
-  candidates = candidates.filter(recipe => {
+  candidates = candidates.filter((recipe: Recipe) => {
     const protein = getProteinType(recipe);
     if (!protein) return true;
     return (proteinCounts[protein] || 0) < 2;
@@ -183,7 +183,7 @@ export function getSuggestedSwaps(
     const others = RecipeLibrary.search({
       tags,
       maxTime,
-      excludeIds: [currentRecipeId, ...candidates.map(r => r.id)],
+      excludeIds: [currentRecipeId, ...candidates.map((r: Recipe) => r.id)],
       limit: 3 - candidates.length
     });
     candidates = [...candidates, ...others];
