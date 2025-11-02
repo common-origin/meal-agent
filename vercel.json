@@ -1,8 +1,9 @@
 {
   "buildCommand": "cd apps/web && pnpm build",
   "devCommand": "cd apps/web && pnpm dev",
-  "installCommand": "corepack enable && corepack prepare pnpm@10.19.0 --activate && pnpm install",
+  "installCommand": "pnpm install",
   "outputDirectory": "apps/web/.next",
+  "framework": "nextjs",
   "git": {
     "deploymentEnabled": {
       "main": true
