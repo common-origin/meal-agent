@@ -899,16 +899,15 @@ const favorites = loadFavorites(); // Returns [] if none saved
 If you're upgrading from mock data to real recipes:
 
 ```typescript
-// Before (mock)
-import { MockLibrary } from "@/lib/mock";
-const recipes = MockLibrary.getAll();
-
-// After (real)
+// Real recipe library (production)
 import { RecipeLibrary } from "@/lib/library";
 const recipes = RecipeLibrary.getAll();
+
+// Loads 50+ real recipes from RecipeTin Eats
+// Enhanced with tag normalization and smart search
 ```
 
-All method signatures remain the same!
+All recipes are loaded from `recipes.generated.json` with full ingredient data and metadata.
 
 ---
 

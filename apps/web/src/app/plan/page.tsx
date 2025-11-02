@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Stack, Typography, Button } from "@common-origin/design-system";
 import WeekPlannerGrid from "@/components/app/WeekPlannerGrid";
 import BudgetBar from "@/components/app/BudgetBar";

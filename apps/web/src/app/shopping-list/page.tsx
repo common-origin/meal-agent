@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Stack, Typography } from "@common-origin/design-system";
+import styled from "styled-components";
+import { Button, Container, Stack, Typography } from "@common-origin/design-system";
+import { tokens } from "@common-origin/design-system";
 import ShoppingListItem from "@/components/app/ShoppingListItem";
 import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from "@/lib/shoppingListAggregator";
 import { generateShoppingListCSV, downloadCSV } from "@/lib/csv";
@@ -10,6 +12,11 @@ import { composeWeek } from "@/lib/compose";
 import { nextWeekMondayISO } from "@/lib/schedule";
 import { track, type CostOptimizedMeta } from "@/lib/analytics";
 import { estimateIngredientCost } from "@/lib/colesMapping";
+
+const PageLayout = styled.div`
+ max-width: ${tokens.base.breakpoint.md};
+ margin: 0 auto;
+`
 
 export default function ShoppingListPage() {
   const [aggregatedItems, setAggregatedItems] = useState<AggregatedIngredient[]>([]);
@@ -116,9 +123,11 @@ export default function ShoppingListPage() {
 
   return (
     <main style={{ padding: 24 }}>
-      <Stack direction="column" gap="lg">
-        {/* Header */}
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
+      <PageLayout>
+      <Container>
+        <Stack direction="column" gap="lg">
+          {/* Header */}
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Typography variant="h1">Shopping List</Typography>
           <Stack direction="row" gap="md">
             <Button 
@@ -203,6 +212,8 @@ export default function ShoppingListPage() {
           Ready for Coles pickup or delivery
         </Typography>
       </Stack>
+      </Container>
+      </PageLayout>
     </main>
   );
 }

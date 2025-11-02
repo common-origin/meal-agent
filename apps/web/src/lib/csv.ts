@@ -1,6 +1,15 @@
-import { type Ingredient } from "./mockData";
+/**
+ * Legacy ingredient format for CSV export
+ * Matches the output of toLegacyFormat() from shoppingListAggregator
+ */
+type LegacyIngredient = {
+  name: string;
+  quantity: number;
+  unit: string;
+  category: string;
+};
 
-export function groupIngredientsByCategory(ingredients: Ingredient[]): Record<string, Ingredient[]> {
+export function groupIngredientsByCategory(ingredients: LegacyIngredient[]): Record<string, LegacyIngredient[]> {
   return ingredients.reduce((groups, ingredient) => {
     const category = ingredient.category;
     if (!groups[category]) {
@@ -8,10 +17,10 @@ export function groupIngredientsByCategory(ingredients: Ingredient[]): Record<st
     }
     groups[category].push(ingredient);
     return groups;
-  }, {} as Record<string, Ingredient[]>);
+  }, {} as Record<string, LegacyIngredient[]>);
 }
 
-export function generateShoppingListCSV(ingredients: Ingredient[]): string {
+export function generateShoppingListCSV(ingredients: LegacyIngredient[]): string {
   const headers = ["Category", "Qty", "Unit", "Item"];
   const groupedIngredients = groupIngredientsByCategory(ingredients);
   

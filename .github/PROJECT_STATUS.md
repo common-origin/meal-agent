@@ -1,15 +1,15 @@
 # Meal Agent Project Status
 
-**Last Updated**: 27 October 2025  
-**Status**: ✅ Phase 1 Complete - Full Agent Logic Implemented
+**Last Updated**: 2 November 2025  
+**Status**: ✅ Phase 1 Complete - Real Recipes Integrated - Production Ready
 
 ---
 
 ## 📊 Current State
 
-### ✅ Phase 1: Complete (All 10 Work Orders)
+### ✅ Phase 1: Complete (All 10 Work Orders + Recipe Integration)
 
-**Status**: Production-ready intelligent meal planning system with explainability, cost transparency, and analytics.
+**Status**: Production-ready intelligent meal planning system with real RecipeTin Eats recipes, explainability, cost transparency, and analytics.
 
 #### Completed Work Orders
 
@@ -155,7 +155,16 @@
 
 ## 🚀 Next Steps (Phase 2+)
 
-### Potential Enhancements
+### ✅ Recipe Integration - COMPLETE (Nov 2, 2025)
+
+The app now uses **real RecipeTin Eats recipes** instead of mock data:
+- ✅ 50+ real recipes loaded from `recipes.generated.json`
+- ✅ `RecipeLibrary` class replaces `MockLibrary`
+- ✅ All pages (plan, review, shopping list) use real recipe data
+- ✅ Tag normalization and search working with real recipes
+- ✅ Shopping list shows actual ingredients from indexed recipes
+
+### Potential Enhancements (Phase 2)
 
 1. **LLM Integration**
    - Replace rule-based scoring with GPT-4 reasoning
@@ -224,16 +233,17 @@ pnpm analytics
 
 ---
 
-## 📊 Metrics (as of Oct 27, 2025)
+## 📊 Metrics (as of Nov 2, 2025)
 
-- **Recipes**: 50+ indexed from RecipeTin Eats
+- **Recipes**: 50+ real recipes from RecipeTin Eats (integrated and working)
 - **Code Coverage**: Core libraries 100% typed
 - **Accessibility**: WCAG 2.1 AA compliant
-- **Lines of Code**: ~3,000 (Phase 1)
+- **Lines of Code**: ~3,500 (Phase 1 + Integration)
 - **Components**: 10+ React components
 - **Library Functions**: 15+ utilities
 - **Event Types**: 11 analytics events
 - **Coles Mappings**: 30+ ingredients
+- **Design System**: v1.9.6 with proper token types
 
 ---
 
@@ -246,6 +256,9 @@ pnpm analytics
 - ✅ Privacy-first analytics
 - ✅ Accessibility compliance
 - ✅ Mobile-responsive design
+- ✅ Real recipe integration (50+ RecipeTin Eats recipes)
+- ✅ Tag normalization and smart search
+- ✅ Shopping list with actual ingredients
 
 ### Future 🔮
 - 🔮 LLM-powered reasoning
@@ -254,143 +267,11 @@ pnpm analytics
 - 🔮 Social features
 - 🔮 Mobile apps
 
-// Load all recipes from data/library/
-export class RecipeLibrary {
-  private static recipes: Recipe[] | null = null;
-
-  static loadAll(): Recipe[] {
-    if (this.recipes) return this.recipes;
-    
-    const libraryPath = path.join(process.cwd(), "../../data/library");
-    const chefs = fs.readdirSync(libraryPath);
-    
-    this.recipes = chefs.flatMap(chef => {
-      const chefPath = path.join(libraryPath, chef);
-      const files = fs.readdirSync(chefPath).filter(f => f.endsWith('.json'));
-      
-      return files.map(file => {
-        const content = fs.readFileSync(path.join(chefPath, file), 'utf-8');
-        const data = JSON.parse(content);
-        return this.convertToAppFormat(data);
-      });
-    });
-    
-    return this.recipes;
-  }
-
-  private static convertToAppFormat(indexed: any): Recipe {
-    // Convert JSON-LD format to app Recipe type
-    const recipe = indexed.recipe;
-    return {
-      id: indexed.id,
-      title: recipe.name,
-      source: {
-        url: indexed.sourceUrl,
-        domain: indexed.domain,
-        chef: indexed.chef === 'nagi' ? 'recipe_tin_eats' : indexed.chef,
-        license: 'permitted',
-        fetchedAt: indexed.indexedAt
-      },
-      timeMins: parseDuration(recipe.totalTime),
-      serves: recipe.recipeYield ? parseInt(recipe.recipeYield) : 4,
-      tags: extractTags(recipe),
-      ingredients: recipe.recipeIngredient?.map((ing: string) => 
-        parseIngredient(ing)
-      ) || [],
-      costPerServeEst: estimateCost(recipe) // Implement cost estimation
-    };
-  }
-
-  static search(options: LibrarySearchOptions = {}): Recipe[] {
-    // Same search interface as MockLibrary
-    const all = this.loadAll();
-    // ... implement filtering logic
-  }
-
-  static getById(id: string): Recipe | null {
-    return this.loadAll().find(r => r.id === id) || null;
-  }
-}
-```
-
-**Step 2: Update Imports**
-
-Replace in these files:
-- `apps/web/src/lib/compose.ts` - Change `MockLibrary` → `RecipeLibrary`
-- `apps/web/src/app/plan/page.tsx` - Change import
-- Any other files using `MockLibrary`
-
-**Step 3: Helper Functions**
-
-```typescript
-// Parse ISO 8601 duration (PT45M) to minutes
-function parseDuration(duration?: string): number | undefined {
-  if (!duration) return undefined;
-  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
-  if (!match) return undefined;
-  const hours = parseInt(match[1] || "0", 10);
-  const minutes = parseInt(match[2] || "0", 10);
-  return hours * 60 + minutes;
-}
-
-// Extract tags from recipe categories and keywords
-function extractTags(recipe: any): string[] {
-  const tags: string[] = [];
-  
-  // From recipeCategory
-  if (recipe.recipeCategory) {
-    const categories = Array.isArray(recipe.recipeCategory) 
-      ? recipe.recipeCategory 
-      : [recipe.recipeCategory];
-    tags.push(...categories.map(c => c.toLowerCase().replace(/\s+/g, '_')));
-  }
-  
-  // Add kid_friendly if quick and simple
-  const timeMins = parseDuration(recipe.totalTime);
-  if (timeMins && timeMins <= 30) tags.push('quick');
-  if (timeMins && timeMins <= 40) tags.push('kid_friendly');
-  
-  return tags;
-}
-
-// Parse ingredient string "500g chicken breast" to structured object
-function parseIngredient(ingredientStr: string): Ingredient {
-  // Simple regex-based parsing
-  // TODO: Improve with more sophisticated parsing
-  const match = ingredientStr.match(/^(\d+(?:\.\d+)?)\s*([a-z]+)?\s+(.+)$/i);
-  if (match) {
-    return {
-      name: match[3],
-      qty: parseFloat(match[1]),
-      unit: (match[2] || 'unit') as any
-    };
-  }
-  return {
-    name: ingredientStr,
-    qty: 1,
-    unit: 'unit'
-  };
-}
-
-// Estimate cost per serve (placeholder - can be improved)
-function estimateCost(recipe: any): number {
-  // Simple heuristic based on ingredient count and type
-  const ingredientCount = recipe.recipeIngredient?.length || 10;
-  return Math.max(2.5, Math.min(7, ingredientCount * 0.4));
-}
-```
-
-**Step 4: Test**
-
-1. Start dev server: `pnpm dev`
-2. Navigate to `/plan`
-3. Verify real RecipeTin Eats recipes appear
-4. Check recipe details page shows actual data
-5. Test shopping list has real ingredients
-
 ---
 
-## 📁 Project Structure
+## 📚 Documentation
+
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System architecture, data flow
 
 ```
 meal-agent/
@@ -405,10 +286,12 @@ meal-agent/
 │       │   ├── app/                 # Routes (/, /plan, /recipe, etc.)
 │       │   ├── components/          # UI components
 │       │   └── lib/
-│       │       ├── library.mock.ts  # 🔄 TO REPLACE
-│       │       ├── library.ts       # 🎯 TO CREATE
+│       │       ├── library.ts       # ✅ RecipeLibrary (real recipes)
+│       │       ├── recipes.ts       # Auto-generated from build script
+│       │       ├── recipes.generated.json  # 50 real recipes
 │       │       ├── compose.ts       # Meal planning logic
 │       │       ├── storage.ts       # Local storage utils
+│       │       ├── csv.ts           # Shopping list CSV export
 │       │       └── types/           # TypeScript types
 ├── data/
 │   └── library/
@@ -526,15 +409,22 @@ const RECIPE_FILTERS: RecipeFilters = {
 
 ---
 
-## ✅ Definition of Done (Current Phase)
+## ✅ Definition of Done (Phase 1)
 
 - [x] Recipe indexer functional and production-ready
 - [x] 50+ quality recipes indexed
 - [x] Web app UI fully scaffolded
 - [x] All routes rendering correctly
-- [x] Design system integrated
-- [ ] **Real recipes connected to app** ← NEXT STEP
-- [ ] Shopping list uses real ingredients
-- [ ] Deployed to production
+- [x] Design system integrated (v1.9.6)
+- [x] **Real recipes connected to app** ✅ COMPLETE (Nov 2, 2025)
+- [x] Shopping list uses real ingredients
+- [x] All 10 work orders implemented
+- [ ] Deployed to production ← RECOMMENDED NEXT STEP
 
-**Status**: 85% Complete - Ready for recipe integration!
+**Status**: 95% Complete - Ready for production deployment!
+
+**Next Steps:**
+1. Deploy to Vercel production
+2. User testing and feedback collection
+3. Plan Phase 2 enhancements
+
