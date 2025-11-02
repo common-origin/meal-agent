@@ -1,19 +1,17 @@
 # Meal Agent
 
+**Production URL**: https://meal-agent-gvvyzmw1k-commonorigins-projects.vercel.app
+
 A family meal planning application built with Common Origin Design System.
-
-# Meal Agent
-
-Family meal planning application built with Next.js and Common Origin Design System.
 
 ## Features
 
 - 📅 **Weekly Meal Planning** - Plan dinners for the week with an intuitive grid
-- 👨‍🍳 **Chef Integration** - Meals from popular chefs like Gordon Ramsay, Jamie Oliver
-- 💰 **Budget Tracking** - Track spending against your weekly food budget
-- 🛒 **Smart Shopping Lists** - Export CSV lists organized by Coles store aisles
-- ⏰ **Sunday Reminders** - Automatic notifications for weekly meal planning
-- 🔄 **Meal Swapping** - Easy meal swapping and conflict detection
+- 🍳 **Real Recipes** - 50+ recipes from RecipeTin Eats with real ingredients
+- 💰 **Budget Tracking** - Track spending against your weekly food budget with Coles price estimates
+- 🛒 **Smart Shopping Lists** - Aggregated ingredient lists with CSV export
+- 📊 **Analytics** - Privacy-first local analytics tracking
+- 🔄 **Meal Regeneration** - Intelligent meal suggestions with explainability
 
 ## Development
 

@@ -1,7 +1,8 @@
 # Meal Agent Project Status
 
 **Last Updated**: 2 November 2025  
-**Status**: ✅ Phase 1 Complete - Real Recipes Integrated - Production Ready
+**Status**: ✅ Phase 1 Complete - Real Recipes Integrated - **DEPLOYED TO PRODUCTION**  
+**Production URL**: https://meal-agent-gvvyzmw1k-commonorigins-projects.vercel.app
 
 ---
 

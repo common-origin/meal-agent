@@ -2,7 +2,8 @@
 
 **Last Updated**: November 2, 2025  
 **Project**: Meal Agent - Intelligent Meal Planning System  
-**Status**: ✅ Phase 1 Complete + Real Recipes Integrated
+**Status**: ✅ Phase 1 Complete + Real Recipes Integrated + **DEPLOYED TO PRODUCTION**  
+**Production URL**: https://meal-agent-gvvyzmw1k-commonorigins-projects.vercel.app
 
 This folder contains comprehensive documentation for the Meal Agent project. Start here to understand the system, APIs, and implementation details.
 
