@@ -1,7 +1,9 @@
 "use client";
 
-import { Stack, Typography, IconButton, ChipGroup } from "@common-origin/design-system";
+import Link from "next/link";
+import { Stack, Typography, IconButton, ChipGroup, Button } from "@common-origin/design-system";
 import { type Recipe } from "@/lib/types/recipe";
+import { RecipeLibrary } from "@/lib/library";
 
 export type SwapDrawerProps = {
   isOpen: boolean;
@@ -10,6 +12,8 @@ export type SwapDrawerProps = {
   currentRecipe: Recipe | null;
   suggestedSwaps: Recipe[];
   onSelectSwap: (recipe: Recipe) => void;
+  onGenerateAISuggestions?: () => void;
+  isGeneratingAI?: boolean;
 };
 
 export default function SwapDrawer({
@@ -18,7 +22,9 @@ export default function SwapDrawer({
   dayName,
   currentRecipe,
   suggestedSwaps,
-  onSelectSwap
+  onSelectSwap,
+  onGenerateAISuggestions,
+  isGeneratingAI = false
 }: SwapDrawerProps) {
   if (!isOpen) return null;
 
@@ -96,7 +102,19 @@ export default function SwapDrawer({
 
           {/* Suggested Swaps */}
           <Stack direction="column" gap="md">
-            <Typography variant="h4">Suggested alternatives</Typography>
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Typography variant="h4">Suggested alternatives</Typography>
+              {onGenerateAISuggestions && (
+                <Button
+                  variant="primary"
+                  size="small"
+                  onClick={onGenerateAISuggestions}
+                  disabled={isGeneratingAI}
+                >
+                  {isGeneratingAI ? '✨ Generating...' : '✨ Generate AI Suggestions'}
+                </Button>
+              )}
+            </Stack>
             
             {suggestedSwaps.length === 0 ? (
               <div style={{ 
@@ -106,30 +124,21 @@ export default function SwapDrawer({
                 borderRadius: "8px"
               }}>
                 <Typography variant="body">
-                  No alternative recipes available for this day
+                  {onGenerateAISuggestions 
+                    ? 'Click "Generate AI Suggestions" to get personalized recipe alternatives'
+                    : 'No alternative recipes available for this day'
+                  }
                 </Typography>
               </div>
             ) : (
               suggestedSwaps.map((recipe) => (
-                <button
+                <div
                   key={recipe.id}
-                  onClick={() => handleSelectSwap(recipe)}
                   style={{
                     border: "1px solid #dee2e6",
                     borderRadius: "8px",
                     padding: "16px",
-                    backgroundColor: "white",
-                    cursor: "pointer",
-                    textAlign: "left",
-                    transition: "all 0.2s ease"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "#007bff";
-                    e.currentTarget.style.backgroundColor = "#f8f9fa";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "#dee2e6";
-                    e.currentTarget.style.backgroundColor = "white";
+                    backgroundColor: "white"
                   }}
                 >
                   <Stack direction="column" gap="sm">
@@ -137,7 +146,11 @@ export default function SwapDrawer({
                     
                     <Stack direction="row" gap="md" alignItems="center">
                       <Typography variant="small">
-                        {recipe.source.chef === "jamie_oliver" ? "Jamie Oliver" : "RecipeTin Eats"}
+                        {RecipeLibrary.isCustomRecipe(recipe.id) 
+                          ? "AI Generated" 
+                          : recipe.source.chef === "jamie_oliver" 
+                            ? "Jamie Oliver" 
+                            : "RecipeTin Eats"}
                       </Typography>
                       {recipe.timeMins && (
                         <Typography variant="small">
@@ -155,8 +168,29 @@ export default function SwapDrawer({
                       labels={recipe.tags.slice(0, 3).map(tag => tag.replace(/_/g, " "))}
                       variant="default"
                     />
+                    
+                    <Stack direction="row" gap="sm">
+                      <Link href={`/recipe/${recipe.id}`} style={{ flex: 1, textDecoration: 'none' }}>
+                        <Button
+                          variant="secondary"
+                          size="small"
+                          purpose="button"
+                          style={{ width: '100%' }}
+                        >
+                          View Recipe
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="primary"
+                        size="small"
+                        onClick={() => handleSelectSwap(recipe)}
+                        style={{ flex: 1 }}
+                      >
+                        Select This
+                      </Button>
+                    </Stack>
                   </Stack>
-                </button>
+                </div>
               ))
             )}
           </Stack>

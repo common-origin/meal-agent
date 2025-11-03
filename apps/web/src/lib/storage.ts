@@ -1,4 +1,7 @@
 // Simple localStorage wrapper with error handling
+import type { FamilySettings } from "./types/settings";
+import { DEFAULT_FAMILY_SETTINGS } from "./types/settings";
+
 export class Storage {
   static get<T>(key: string, defaultValue: T): T {
     if (typeof window === "undefined") {
@@ -125,4 +128,100 @@ export function isFavorite(recipeId: string): boolean {
 export function getFavorites(): string[] {
   const household = loadHousehold() || getDefaultHousehold();
   return household.favorites;
+}
+
+// ============================================
+// Family Settings (for AI meal generation)
+// ============================================
+
+const FAMILY_SETTINGS_KEY = "meal-agent:family-settings:v1";
+
+/**
+ * Save family settings to localStorage
+ */
+export function saveFamilySettings(settings: FamilySettings): boolean {
+  return Storage.set(FAMILY_SETTINGS_KEY, {
+    ...settings,
+    lastUpdated: new Date().toISOString(),
+  });
+}
+
+/**
+ * Load family settings from localStorage
+ */
+export function loadFamilySettings(): FamilySettings | null {
+  const settings = Storage.get<FamilySettings | null>(FAMILY_SETTINGS_KEY, null);
+  return settings;
+}
+
+/**
+ * Get family settings with defaults if not set
+ */
+export function getFamilySettings(): FamilySettings {
+  return loadFamilySettings() || DEFAULT_FAMILY_SETTINGS;
+}
+
+/**
+ * Reset family settings to defaults
+ */
+export function resetFamilySettings(): boolean {
+  return saveFamilySettings(DEFAULT_FAMILY_SETTINGS);
+}
+
+/**
+ * Update specific family settings fields
+ */
+export function updateFamilySettings(partial: Partial<FamilySettings>): boolean {
+  const current = getFamilySettings();
+  const updated = {
+    ...current,
+    ...partial,
+    lastUpdated: new Date().toISOString(),
+  };
+  return saveFamilySettings(updated);
+}
+
+// ============================================
+// Current Week Plan Storage
+// ============================================
+
+const CURRENT_WEEK_PLAN_KEY = "meal-agent:current-week-plan:v1";
+
+export interface StoredWeekPlan {
+  recipeIds: string[]; // 7 recipe IDs (or empty string for null)
+  weekOfISO: string;
+  createdAt: string;
+}
+
+/**
+ * Save current week plan (from plan page)
+ */
+export function saveCurrentWeekPlan(recipeIds: string[], weekOfISO: string): boolean {
+  const plan: StoredWeekPlan = {
+    recipeIds,
+    weekOfISO,
+    createdAt: new Date().toISOString(),
+  };
+  return Storage.set(CURRENT_WEEK_PLAN_KEY, plan);
+}
+
+/**
+ * Load current week plan
+ */
+export function loadCurrentWeekPlan(weekOfISO: string): StoredWeekPlan | null {
+  const plan = Storage.get<StoredWeekPlan | null>(CURRENT_WEEK_PLAN_KEY, null);
+  
+  // Only return if it's for the same week
+  if (plan && plan.weekOfISO === weekOfISO) {
+    return plan;
+  }
+  
+  return null;
+}
+
+/**
+ * Clear current week plan
+ */
+export function clearCurrentWeekPlan(): boolean {
+  return Storage.remove(CURRENT_WEEK_PLAN_KEY);
 }

@@ -2,16 +2,17 @@
 
 import { useEffect, useState } from "react";
 import styled from "styled-components";
-import { Button, Container, Stack, Typography } from "@common-origin/design-system";
+import { Box, Button, Chip, Container, ResponsiveGrid, Stack, Typography } from "@common-origin/design-system";
 import { tokens } from "@common-origin/design-system";
 import ShoppingListItem from "@/components/app/ShoppingListItem";
 import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from "@/lib/shoppingListAggregator";
 import { generateShoppingListCSV, downloadCSV } from "@/lib/csv";
-import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides } from "@/lib/storage";
+import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides, loadCurrentWeekPlan } from "@/lib/storage";
 import { composeWeek } from "@/lib/compose";
 import { nextWeekMondayISO } from "@/lib/schedule";
 import { track, type CostOptimizedMeta } from "@/lib/analytics";
 import { estimateIngredientCost } from "@/lib/colesMapping";
+import { RecipeLibrary } from "@/lib/library";
 
 const PageLayout = styled.div`
  max-width: ${tokens.base.breakpoint.md};
@@ -29,8 +30,58 @@ export default function ShoppingListPage() {
     // Get current plan
     const household = loadHousehold() || getDefaultHousehold();
     const nextWeekISO = nextWeekMondayISO();
-    const overrides = loadWeeklyOverrides(nextWeekISO);
-    const plan = composeWeek(household, overrides || undefined);
+    
+    // Check if user has a saved week plan (from AI generation or manual selection)
+    const savedPlan = loadCurrentWeekPlan(nextWeekISO);
+    
+    let plan;
+    if (savedPlan) {
+      // Use the saved plan - build PlanWeek from saved recipe IDs
+      console.log('📋 Using saved week plan:', savedPlan.recipeIds);
+      
+      // Calculate dates for the week (Monday through Sunday)
+      const startDate = new Date(nextWeekISO);
+      
+      const days = savedPlan.recipeIds.map((recipeId, index) => {
+        if (!recipeId) return null;
+        
+        const recipe = RecipeLibrary.getById(recipeId);
+        if (!recipe) {
+          console.warn(`Recipe ${recipeId} not found in library`);
+          return null;
+        }
+        
+        // Calculate date for this day
+        const dayDate = new Date(startDate);
+        dayDate.setDate(dayDate.getDate() + index);
+        
+        return {
+          dateISO: dayDate.toISOString().split('T')[0],
+          recipeId: recipe.id,
+          scaledServings: recipe.serves || 4,
+        };
+      }).filter((day): day is { dateISO: string; recipeId: string; scaledServings: number } => day !== null);
+      
+      // Calculate cost estimate
+      const costEstimate = days.reduce((sum, day) => {
+        const recipe = RecipeLibrary.getById(day.recipeId);
+        return sum + ((recipe?.costPerServeEst || 0) * day.scaledServings);
+      }, 0);
+      
+      plan = {
+        startISO: nextWeekISO,
+        days,
+        costEstimate,
+        conflicts: [],
+      };
+      
+      console.log('✅ Built plan from saved recipe IDs:', days.length, 'meals');
+    } else {
+      // Fall back to auto-composition from library
+      console.log('🔄 No saved plan found, composing from library...');
+      const overrides = loadWeeklyOverrides(nextWeekISO);
+      plan = composeWeek(household, overrides || undefined);
+    }
     
     // Aggregate ingredients
     const items = aggregateShoppingList(plan, {
@@ -128,68 +179,67 @@ export default function ShoppingListPage() {
         <Stack direction="column" gap="lg">
           {/* Header */}
           <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Typography variant="h1">Shopping List</Typography>
-          <Stack direction="row" gap="md">
-            <Button 
-              variant="secondary" 
-              size="medium"
-              onClick={handleTogglePantry}
-            >
-              {excludePantry ? "Show Pantry Items" : "Hide Pantry Items"}
-            </Button>
-            <Button variant="primary" size="medium" onClick={handleExportCSV}>
-              📁 Export CSV
-            </Button>
+            <Typography variant="h1">Shopping List</Typography>
+            <Stack direction="row" gap="md">
+              <Button 
+                variant="secondary" 
+                size="medium"
+                onClick={handleTogglePantry}
+              >
+                {excludePantry ? "Show Pantry Items" : "Hide Pantry Items"}
+              </Button>
+              <Button variant="primary" size="medium" onClick={handleExportCSV}>
+                Export CSV
+              </Button>
+            </Stack>
           </Stack>
-        </Stack>
         
-        <Typography variant="body">
-          Aggregated from your meal plan with de-duplicated ingredients.
-        </Typography>
+          <Typography variant="body">
+            Aggregated from your meal plan with de-duplicated ingredients.
+          </Typography>
 
         {/* Summary Stats */}
-        <div style={{
-          padding: "16px",
-          backgroundColor: "#f8f9fa",
-          borderRadius: "8px",
-          border: "1px solid #dee2e6"
-        }}>
-          <Stack direction="row" gap="xl">
-            <div>
-              <Typography variant="h4">Total Items</Typography>
-              <Typography variant="h2">{totalItems}</Typography>
-            </div>
-            <div>
-              <Typography variant="h4">Pantry Staples</Typography>
-              <Typography variant="h2">{pantryItems}</Typography>
-            </div>
-            <div>
-              <Typography variant="h4">Categories</Typography>
-              <Typography variant="h2">{categories.length}</Typography>
-            </div>
-            <div>
-              <Typography variant="h4">Est. Coles Cost</Typography>
-              <Typography variant="h2">${totalEstimatedCost.toFixed(2)}</Typography>
-              <Typography variant="small">{mappingCoverage}% mapped</Typography>
-            </div>
-          </Stack>
-        </div>
+        <ResponsiveGrid 
+          cols={1} 
+          colsSm={2} 
+          colsMd={4} 
+          gap={2}
+        >
+          <Box bg="surface" borderRadius={3} p="md">
+            <Typography variant="subtitle" color="subdued">Total Items</Typography>
+            <Typography variant="h2">{totalItems}</Typography>
+          </Box>
+          <Box bg="surface" borderRadius={3} p="md">
+            <Typography variant="subtitle" color="subdued">Pantry Staples</Typography>
+            <Typography variant="h2">{pantryItems}</Typography>
+          </Box>
+          <Box bg="surface" borderRadius={3} p="md">
+            <Typography variant="subtitle" color="subdued">Categories</Typography>
+            <Typography variant="h2">{categories.length}</Typography>
+          </Box>
+          <Box bg="surface" borderRadius={3} p="md">
+            <Typography variant="subtitle" color="subdued">Est. Coles Cost</Typography>
+            <Typography variant="h2">${totalEstimatedCost.toFixed(2)}</Typography>
+            <Typography variant="small">{mappingCoverage}% mapped</Typography>
+          </Box>
+        </ResponsiveGrid>
 
         {/* Items by Category */}
         {categories.map((category) => {
           const items = grouped[category];
           
           return (
-            <div key={category} style={{
-              border: "1px solid #dee2e6",
-              borderRadius: "8px",
-              padding: "16px",
-              backgroundColor: "#ffffff"
-            }}>
+            <Box 
+              key={category}
+              border="default"
+              borderRadius={4}
+              p="md"
+              bg="subtle"
+            >
               <Stack direction="column" gap="md">
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                   <Typography variant="h3">{category}</Typography>
-                  <Typography variant="small">{items.length} items</Typography>
+                  <Chip variant="dark">{items.length} items</Chip>
                 </Stack>
                 
                 <Stack direction="column" gap="xs">
@@ -202,7 +252,7 @@ export default function ShoppingListPage() {
                   ))}
                 </Stack>
               </Stack>
-            </div>
+            </Box>
           );
         })}
         

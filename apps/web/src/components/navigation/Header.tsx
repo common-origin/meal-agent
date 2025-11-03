@@ -76,7 +76,7 @@ export default function Header() {
           <NavLink href="/shopping-list" isActive={pathname === "/shopping-list"}>
             Shopping List
           </NavLink>
-          <NavLink href="/onboarding" isActive={pathname === "/onboarding"}>
+          <NavLink href="/settings" isActive={pathname === "/settings"}>
             Settings
           </NavLink>
         </Stack>

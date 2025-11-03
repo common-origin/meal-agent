@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { Stack, Typography, Button } from "@common-origin/design-system";
 import WeekPlannerGrid from "@/components/app/WeekPlannerGrid";
 import BudgetBar from "@/components/app/BudgetBar";
@@ -10,7 +9,7 @@ import SwapDrawer from "@/components/app/SwapDrawer";
 import { type MealCardProps } from "@/components/app/MealCard";
 import { type Recipe } from "@/lib/types/recipe";
 import { scheduleSundayToast, isSaturdayAfter4, nextWeekMondayISO } from "@/lib/schedule";
-import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides } from "@/lib/storage";
+import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides, getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan } from "@/lib/storage";
 import { composeWeek, getSuggestedSwaps } from "@/lib/compose";
 import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
@@ -25,53 +24,120 @@ export default function PlanPage() {
   const [budget, setBudget] = useState({ current: 0, total: 120 });
   const [swapDayIndex, setSwapDayIndex] = useState<number | null>(null);
   const [suggestedSwaps, setSuggestedSwaps] = useState<Recipe[]>([]);
+  const [isGeneratingAISwaps, setIsGeneratingAISwaps] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [generatingDayIndex, setGeneratingDayIndex] = useState<number | null>(null);
 
   useEffect(() => {
     track('page_view', { page: '/plan' });
     scheduleSundayToast();
     
-    // Generate week plan using composeWeek
     const household = loadHousehold() || getDefaultHousehold();
     const nextWeekISO = nextWeekMondayISO();
-    const overrides = loadWeeklyOverrides(nextWeekISO);
     
-    const plan = composeWeek(household, overrides || undefined);
+    // Check if there's a saved week plan first
+    const savedPlan = loadCurrentWeekPlan(nextWeekISO);
     
-    // Convert PlanWeek to MealCardProps array
-    const meals: (MealCardProps | null)[] = [];
-    
-    for (let i = 0; i < 7; i++) {
-      const planDay = plan.days.find((d, idx) => idx === i);
-      if (planDay) {
-        const recipe = RecipeLibrary.getById(planDay.recipeId);
-        if (recipe) {
-          // Generate reasons for this meal
-          const reasons: string[] = [];
-          if (recipe.timeMins && recipe.timeMins <= 40) reasons.push("≤40m");
-          if (recipe.tags.includes("kid_friendly")) reasons.push("kid-friendly");
-          if (recipe.tags.includes("bulk_cook")) reasons.push("bulk cook");
-          if (household.favorites.includes(recipe.id)) reasons.push("favorite");
-          if (recipe.costPerServeEst && recipe.costPerServeEst < 4) reasons.push("best value");
-          
-          meals.push({
-            recipeId: recipe.id,
-            title: recipe.title,
-            chef: recipe.source.chef === "jamie_oliver" ? "Jamie Oliver" : "RecipeTin Eats",
-            timeMins: recipe.timeMins || 0,
-            kidsFriendly: recipe.tags.includes("kid_friendly"),
-            conflicts: [],
-            reasons
-          });
+    if (savedPlan && savedPlan.recipeIds.length > 0) {
+      // Use the saved plan
+      console.log('📋 Plan page: Loading saved week plan');
+      
+      const meals: (MealCardProps | null)[] = savedPlan.recipeIds.map(recipeId => {
+        if (!recipeId) return null;
+        
+        const recipe = RecipeLibrary.getById(recipeId);
+        if (!recipe) {
+          console.warn(`Recipe ${recipeId} not found in library`);
+          return null;
+        }
+        
+        // Generate reasons for this meal
+        const reasons: string[] = [];
+        if (recipe.timeMins && recipe.timeMins <= 40) reasons.push("≤40m");
+        if (recipe.tags.includes("kid_friendly")) reasons.push("kid-friendly");
+        if (recipe.tags.includes("bulk_cook")) reasons.push("bulk cook");
+        if (household.favorites.includes(recipe.id)) reasons.push("favorite");
+        if (recipe.costPerServeEst && recipe.costPerServeEst < 4) reasons.push("best value");
+        
+        return {
+          recipeId: recipe.id,
+          title: recipe.title,
+          chef: recipe.source.chef === "jamie_oliver" ? "Jamie Oliver" : 
+                RecipeLibrary.isCustomRecipe(recipe.id) ? "AI Generated" : "RecipeTin Eats",
+          timeMins: recipe.timeMins || 0,
+          kidsFriendly: recipe.tags.includes("kid_friendly"),
+          conflicts: [],
+          reasons
+        };
+      });
+      
+      // Calculate budget from saved recipes
+      const totalCost = savedPlan.recipeIds.reduce((sum, recipeId) => {
+        if (!recipeId) return sum;
+        const recipe = RecipeLibrary.getById(recipeId);
+        return sum + ((recipe?.costPerServeEst || 0) * (recipe?.serves || 4));
+      }, 0);
+      
+      setWeekPlan(meals);
+      setBudget({ current: totalCost, total: 120 });
+      console.log('✅ Loaded saved week plan with', meals.filter(m => m !== null).length, 'meals');
+      
+    } else {
+      // No saved plan - generate a new one
+      console.log('🔄 Plan page: No saved plan, composing new week');
+      
+      const overrides = loadWeeklyOverrides(nextWeekISO);
+      const plan = composeWeek(household, overrides || undefined);
+      
+      // Convert PlanWeek to MealCardProps array
+      const meals: (MealCardProps | null)[] = [];
+      const recipeIds: string[] = [];
+      
+      for (let i = 0; i < 7; i++) {
+        const planDay = plan.days.find((d, idx) => idx === i);
+        if (planDay) {
+          const recipe = RecipeLibrary.getById(planDay.recipeId);
+          if (recipe) {
+            recipeIds.push(recipe.id);
+            
+            // Generate reasons for this meal
+            const reasons: string[] = [];
+            if (recipe.timeMins && recipe.timeMins <= 40) reasons.push("≤40m");
+            if (recipe.tags.includes("kid_friendly")) reasons.push("kid-friendly");
+            if (recipe.tags.includes("bulk_cook")) reasons.push("bulk cook");
+            if (household.favorites.includes(recipe.id)) reasons.push("favorite");
+            if (recipe.costPerServeEst && recipe.costPerServeEst < 4) reasons.push("best value");
+            
+            meals.push({
+              recipeId: recipe.id,
+              title: recipe.title,
+              chef: recipe.source.chef === "jamie_oliver" ? "Jamie Oliver" : "RecipeTin Eats",
+              timeMins: recipe.timeMins || 0,
+              kidsFriendly: recipe.tags.includes("kid_friendly"),
+              conflicts: [],
+              reasons
+            });
+          } else {
+            recipeIds.push("");
+            meals.push(null);
+          }
         } else {
+          recipeIds.push("");
           meals.push(null);
         }
-      } else {
-        meals.push(null);
+      }
+      
+      setWeekPlan(meals);
+      setBudget({ current: plan.costEstimate, total: 120 });
+      
+      // Save the newly composed week plan
+      const planSaved = saveCurrentWeekPlan(recipeIds, nextWeekISO);
+      if (planSaved) {
+        console.log('✅ New week plan composed and saved');
       }
     }
-    
-    setWeekPlan(meals);
-    setBudget({ current: plan.costEstimate, total: 120 });
   }, []);
 
   const handleOverridesSuccess = () => {
@@ -90,6 +156,71 @@ export default function PlanPage() {
     const swaps = getSuggestedSwaps(meal.recipeId, isWeekend, kidFriendly);
     setSuggestedSwaps(swaps);
     setSwapDayIndex(dayIndex);
+  };
+
+  const handleGenerateAISwaps = async () => {
+    if (swapDayIndex === null) return;
+    
+    setIsGeneratingAISwaps(true);
+
+    try {
+      const dayName = DAYS[swapDayIndex];
+      console.log(`🤖 Generating AI swap suggestions for ${dayName}...`);
+      
+      const familySettings = getFamilySettings();
+      const dayType = swapDayIndex >= 5 ? 'weekend' : 'weeknight';
+      
+      // Get existing recipe IDs to avoid duplicates
+      const existingRecipeIds = weekPlan
+        .filter(meal => meal !== null)
+        .map(meal => meal!.recipeId);
+      
+      console.log('📡 Calling API for 3 swap suggestions...');
+      const response = await fetch('/api/generate-recipes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          familySettings,
+          numberOfRecipes: 3,
+          excludeRecipeIds: existingRecipeIds,
+          specificDays: [{ index: swapDayIndex, type: dayType }],
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        console.error('❌ API error:', data);
+        throw new Error(data.error || data.details || `HTTP ${response.status}`);
+      }
+
+      if (!data.recipes || data.recipes.length === 0) {
+        throw new Error('No recipes generated');
+      }
+
+      console.log('✅ Generated', data.recipes.length, 'AI swap suggestions');
+
+      // Save to library
+      RecipeLibrary.addCustomRecipes(data.recipes);
+      console.log('✅ AI swaps saved to library');
+
+      // Update suggested swaps
+      setSuggestedSwaps(data.recipes);
+
+      track('swap', {
+        day: dayName,
+        oldRecipeId: weekPlan[swapDayIndex]?.recipeId || 'unknown',
+        newRecipeId: 'ai_suggestions_generated',
+      });
+
+    } catch (error) {
+      console.error('❌ Error generating AI swaps:', error);
+      setGenerationError(error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setIsGeneratingAISwaps(false);
+    }
   };
 
   const handleSelectSwap = (recipe: Recipe) => {
@@ -133,14 +264,345 @@ export default function PlanPage() {
     const budgetDiff = newCost - oldCost;
     setBudget(prev => ({ ...prev, current: prev.current + budgetDiff }));
     
+    // Save updated week plan
+    const nextWeekISO = nextWeekMondayISO();
+    const recipeIds = newWeekPlan.map(meal => meal?.recipeId || "");
+    saveCurrentWeekPlan(recipeIds, nextWeekISO);
+    console.log('✅ Week plan updated after swap');
+    
     // Close drawer
     setSwapDayIndex(null);
+  };
+
+  const handleDeleteMeal = (dayIndex: number) => {
+    const meal = weekPlan[dayIndex];
+    if (!meal) return;
+    
+    console.log(`🗑️ Deleting meal for ${DAYS[dayIndex]}`);
+    
+    // Remove the meal from the plan
+    const newWeekPlan = [...weekPlan];
+    newWeekPlan[dayIndex] = null;
+    setWeekPlan(newWeekPlan);
+    
+    // Update budget
+    const recipe = RecipeLibrary.getById(meal.recipeId);
+    const costToRemove = recipe ? (recipe.costPerServeEst || 0) * (recipe.serves || 4) : 0;
+    setBudget(prev => ({ ...prev, current: prev.current - costToRemove }));
+    
+    // Save updated week plan
+    const nextWeekISO = nextWeekMondayISO();
+    const recipeIds = newWeekPlan.map(m => m?.recipeId || "");
+    saveCurrentWeekPlan(recipeIds, nextWeekISO);
+    console.log('✅ Week plan updated after deletion');
+    
+    track('swap', {
+      day: DAYS[dayIndex],
+      oldRecipeId: meal.recipeId,
+      newRecipeId: 'deleted',
+    });
+  };
+
+  const handleGenerateWithAI = async () => {
+    setIsGenerating(true);
+    setGenerationError(null);
+
+    try {
+      console.log('🤖 [1/5] Starting AI meal plan generation...');
+      
+      const familySettings = getFamilySettings();
+      console.log('✅ [2/5] Family settings loaded:', {
+        servings: familySettings.totalServings,
+        cuisines: familySettings.cuisines,
+        budgetRange: `$${familySettings.budgetPerMeal.min}-${familySettings.budgetPerMeal.max}`,
+      });
+      
+      console.log('📡 [3/5] Calling API...');
+      const response = await fetch('/api/generate-recipes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          familySettings,
+          numberOfRecipes: 5, // Start with 5 to avoid timeout/truncation
+        }),
+      });
+
+      console.log('📥 [4/5] API response status:', response.status, response.statusText);
+      
+      const data = await response.json();
+      console.log('📦 [4/5] API response data:', data);
+
+      if (!response.ok || data.error) {
+        console.error('❌ API error:', data);
+        throw new Error(data.error || data.details || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      if (!data.recipes || !Array.isArray(data.recipes)) {
+        console.error('❌ Invalid response format:', data);
+        throw new Error('Invalid response format: missing recipes array');
+      }
+
+      console.log('✅ [5/5] Generated recipes:', data.recipes.length, 'recipes');
+      console.log('Recipe titles:', data.recipes.map((r: Recipe) => r.title));
+
+      // Save AI recipes to library for persistence
+      console.log('💾 Saving AI recipes to library...');
+      const saved = RecipeLibrary.addCustomRecipes(data.recipes);
+      if (saved) {
+        console.log('✅ Recipes saved to library and will persist across sessions');
+      } else {
+        console.warn('⚠️ Failed to save recipes to library (localStorage issue?)');
+      }
+
+      // Convert AI recipes to meal plan
+      const aiMeals: (MealCardProps | null)[] = data.recipes.map((recipe: Recipe) => ({
+        recipeId: recipe.id,
+        title: recipe.title,
+        chef: "AI Generated",
+        timeMins: recipe.timeMins || 30,
+        kidsFriendly: recipe.tags?.includes("kid_friendly") ?? true,
+        conflicts: [],
+        reasons: ["AI suggested", "✨ personalized"]
+      }));
+
+      setWeekPlan(aiMeals);
+      
+      // Save week plan to storage for shopping list
+      const nextWeekISO = nextWeekMondayISO();
+      const recipeIds = data.recipes.map((r: Recipe) => r.id);
+      const planSaved = saveCurrentWeekPlan(recipeIds, nextWeekISO);
+      if (planSaved) {
+        console.log('✅ Week plan saved for shopping list');
+      } else {
+        console.warn('⚠️ Failed to save week plan');
+      }
+      
+      // Update budget estimate
+      const totalCost = data.recipes.reduce((sum: number, r: Recipe) => {
+        return sum + ((r.costPerServeEst || 0) * (r.serves || 4));
+      }, 0);
+      setBudget({ current: totalCost, total: 120 });
+
+      console.log('🎉 AI generation complete! Total cost:', totalCost);
+
+      track('plan_composed', {
+        dayCount: 7,
+        cost: totalCost,
+        conflicts: 0,
+        leftoverDays: 0,
+        proteinVariety: 0,
+      });
+
+    } catch (error) {
+      console.error('❌ Error generating AI plan:', error);
+      setGenerationError(error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateSingleRecipe = async (dayIndex: number) => {
+    setGeneratingDayIndex(dayIndex);
+    setGenerationError(null);
+
+    try {
+      const dayName = DAYS[dayIndex];
+      console.log(`🤖 Generating single recipe for ${dayName}...`);
+      
+      const familySettings = getFamilySettings();
+      
+      // Determine if it's a weekend or weeknight
+      const dayType = dayIndex >= 5 ? 'weekend' : 'weeknight';
+      
+      // Get existing recipe IDs to avoid duplicates
+      const existingRecipeIds = weekPlan
+        .filter(meal => meal !== null)
+        .map(meal => meal!.recipeId);
+      
+      console.log('📡 Calling API for single recipe...');
+      const response = await fetch('/api/generate-recipes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          familySettings,
+          numberOfRecipes: 1,
+          excludeRecipeIds: existingRecipeIds,
+          specificDays: [{ index: dayIndex, type: dayType }],
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        console.error('❌ API error:', data);
+        throw new Error(data.error || data.details || `HTTP ${response.status}`);
+      }
+
+      if (!data.recipes || data.recipes.length === 0) {
+        throw new Error('No recipe generated');
+      }
+
+      const recipe: Recipe = data.recipes[0];
+      console.log('✅ Generated recipe:', recipe.title);
+
+      // Save to library
+      RecipeLibrary.addCustomRecipes([recipe]);
+      console.log('✅ Recipe saved to library');
+
+      // Create meal card
+      const household = loadHousehold() || getDefaultHousehold();
+      const reasons: string[] = [];
+      if (recipe.timeMins && recipe.timeMins <= 40) reasons.push("≤40m");
+      if (recipe.tags?.includes("kid_friendly")) reasons.push("kid-friendly");
+      if (household.favorites.includes(recipe.id)) reasons.push("favorite");
+      
+      const newMeal: MealCardProps = {
+        recipeId: recipe.id,
+        title: recipe.title,
+        chef: "AI Generated",
+        timeMins: recipe.timeMins || 30,
+        kidsFriendly: recipe.tags?.includes("kid_friendly") ?? true,
+        conflicts: [],
+        reasons: ["AI suggested", "✨ personalized", ...reasons]
+      };
+
+      // Update the week plan
+      const newWeekPlan = [...weekPlan];
+      newWeekPlan[dayIndex] = newMeal;
+      setWeekPlan(newWeekPlan);
+
+      // Update budget
+      const newCost = (recipe.costPerServeEst || 0) * (recipe.serves || 4);
+      setBudget(prev => ({ ...prev, current: prev.current + newCost }));
+
+      // Save updated week plan
+      const nextWeekISO = nextWeekMondayISO();
+      const recipeIds = newWeekPlan.map(meal => meal?.recipeId || "");
+      saveCurrentWeekPlan(recipeIds, nextWeekISO);
+      console.log('✅ Week plan updated');
+
+      track('swap', {
+        day: dayName,
+        oldRecipeId: 'empty',
+        newRecipeId: recipe.id,
+      });
+
+    } catch (error) {
+      console.error('❌ Error generating recipe:', error);
+      setGenerationError(error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setGeneratingDayIndex(null);
+    }
+  };
+
+  const handleRegenerateFromLibrary = () => {
+    setIsRegenerating(true);
+    
+    console.log('🔄 Regenerating week plan from library...');
+    
+    const household = loadHousehold() || getDefaultHousehold();
+    const nextWeekISO = nextWeekMondayISO();
+    const overrides = loadWeeklyOverrides(nextWeekISO);
+    
+    // Compose a fresh plan
+    const plan = composeWeek(household, overrides || undefined);
+    
+    // Convert PlanWeek to MealCardProps array
+    const meals: (MealCardProps | null)[] = [];
+    const recipeIds: string[] = [];
+    
+    for (let i = 0; i < 7; i++) {
+      const planDay = plan.days.find((d, idx) => idx === i);
+      if (planDay) {
+        const recipe = RecipeLibrary.getById(planDay.recipeId);
+        if (recipe) {
+          recipeIds.push(recipe.id);
+          
+          // Generate reasons for this meal
+          const reasons: string[] = [];
+          if (recipe.timeMins && recipe.timeMins <= 40) reasons.push("≤40m");
+          if (recipe.tags.includes("kid_friendly")) reasons.push("kid-friendly");
+          if (recipe.tags.includes("bulk_cook")) reasons.push("bulk cook");
+          if (household.favorites.includes(recipe.id)) reasons.push("favorite");
+          if (recipe.costPerServeEst && recipe.costPerServeEst < 4) reasons.push("best value");
+          
+          meals.push({
+            recipeId: recipe.id,
+            title: recipe.title,
+            chef: recipe.source.chef === "jamie_oliver" ? "Jamie Oliver" : 
+                  RecipeLibrary.isCustomRecipe(recipe.id) ? "AI Generated" : "RecipeTin Eats",
+            timeMins: recipe.timeMins || 0,
+            kidsFriendly: recipe.tags.includes("kid_friendly"),
+            conflicts: [],
+            reasons
+          });
+        } else {
+          recipeIds.push("");
+          meals.push(null);
+        }
+      } else {
+        recipeIds.push("");
+        meals.push(null);
+      }
+    }
+    
+    setWeekPlan(meals);
+    setBudget({ current: plan.costEstimate, total: 120 });
+    
+    // Save the regenerated week plan
+    saveCurrentWeekPlan(recipeIds, nextWeekISO);
+    console.log('✅ Week plan regenerated and saved');
+    
+    track('plan_regenerated', {
+      method: 'library',
+      dayCount: meals.filter(m => m !== null).length,
+    });
+    
+    setIsRegenerating(false);
   };
 
   return (
     <main style={{ padding: 24 }}>
       <Stack direction="column" gap="xl">
-        <Typography variant="h1">Weekly Meal Plan</Typography>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Typography variant="h1">Weekly Meal Plan</Typography>
+          <Stack direction="row" gap="md">
+            <Button
+              variant="secondary"
+              size="medium"
+              onClick={handleRegenerateFromLibrary}
+              disabled={isGenerating || isRegenerating}
+            >
+              {isRegenerating ? '🔄 Regenerating...' : '🔄 Regenerate from Library'}
+            </Button>
+            <Button
+              variant="primary"
+              size="medium"
+              onClick={handleGenerateWithAI}
+              disabled={isGenerating || isRegenerating}
+            >
+              {isGenerating ? '✨ Generating...' : '✨ Generate with AI'}
+            </Button>
+          </Stack>
+        </Stack>
+
+        {/* Error Message */}
+        {generationError && (
+          <div style={{
+            padding: "16px",
+            backgroundColor: "#f8d7da",
+            border: "1px solid #dc3545",
+            borderRadius: "8px"
+          }}>
+            <Typography variant="body" color="error">
+              ❌ {generationError}
+            </Typography>
+          </div>
+        )}
 
         {/* Saturday Banner for Weekly Overrides */}
         {showSaturdayBanner && (
@@ -201,6 +663,9 @@ export default function PlanPage() {
         <WeekPlannerGrid 
           meals={weekPlan} 
           onSwapClick={handleSwapClick}
+          onGenerateClick={handleGenerateSingleRecipe}
+          generatingDayIndex={generatingDayIndex}
+          onDeleteClick={handleDeleteMeal}
         />
         
         <Stack direction="row" gap="md">
@@ -232,6 +697,8 @@ export default function PlanPage() {
         }
         suggestedSwaps={suggestedSwaps}
         onSelectSwap={handleSelectSwap}
+        onGenerateAISuggestions={handleGenerateAISwaps}
+        isGeneratingAI={isGeneratingAISwaps}
       />
     </main>
   );

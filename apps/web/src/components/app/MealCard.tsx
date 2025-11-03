@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Stack, Typography, Avatar, Box, Button, ChipGroup, IconButton } from "@common-origin/design-system";
 import { toggleFavorite, isFavorite } from "@/lib/storage";
 import { track } from "@/lib/analytics";
@@ -15,6 +16,7 @@ export type MealCardProps = {
   conflicts?: string[];
   reasons?: string[];
   onSwapClick?: () => void;
+  onDeleteClick?: () => void;
 };
 
 export default function MealCard({ 
@@ -25,9 +27,11 @@ export default function MealCard({
   kidsFriendly = false, 
   conflicts = [],
   reasons = [],
-  onSwapClick
+  onSwapClick,
+  onDeleteClick
 }: MealCardProps) {
   const [favorited, setFavorited] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     setFavorited(isFavorite(recipeId));
@@ -54,13 +58,88 @@ export default function MealCard({
       borderRadius={3}
       p="md"
       border="default"
+      style={{ position: 'relative' }}
     >
-      {/* Heart toggle button */}
-      <div style={{ position: "absolute", top: "12px", right: "12px" }}>
+      {/* Top right buttons */}
+      <div style={{ position: "absolute", top: "12px", right: "12px", display: 'flex', gap: '8px', alignItems: 'center' }}>
+        {/* Menu button */}
+        <div style={{ position: 'relative' }}>
+          <IconButton
+            variant="secondary"
+            iconName="menu"
+            size="small"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="More options"
+          />
+          
+          {/* Dropdown menu */}
+          {menuOpen && (
+            <>
+              {/* Backdrop to close menu */}
+              <div
+                onClick={() => setMenuOpen(false)}
+                style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  zIndex: 998
+                }}
+              />
+              
+              {/* Menu */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '4px',
+                  backgroundColor: 'white',
+                  border: '1px solid #dee2e6',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  zIndex: 999,
+                  minWidth: '160px'
+                }}
+              >
+                {onDeleteClick && (
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onDeleteClick();
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      color: '#dc3545',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#f8f9fa';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    🗑️ Remove from plan
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+        
+        {/* Favorite button */}
         <IconButton
           variant={favorited ? "primary" : "secondary"}
           iconName={favorited ? "close" : "add"}
-          size="medium"
+          size="small"
           onClick={handleFavoriteClick}
           aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
         />
@@ -76,17 +155,10 @@ export default function MealCard({
         
         <Stack direction="row" gap="md" alignItems="center">
           <Typography variant="small">{timeMins} mins</Typography>
-          {kidsFriendly && (
-            <Typography variant="small">
-              👶 Kid-friendly
-            </Typography>
+          {chipLabels.length > 0 && (
+            <ChipGroup labels={chipLabels} variant="default" />
           )}
         </Stack>
-
-        {/* Reason chips */}
-        {chipLabels.length > 0 && (
-          <ChipGroup labels={chipLabels} variant="default" />
-        )}
         
         {conflicts.length > 0 && (
           <Stack direction="column" gap="xs">
@@ -101,19 +173,33 @@ export default function MealCard({
           </Stack>
         )}
         
-        {/* Swap button */}
-        {onSwapClick && (
-          <Button
-            variant="secondary"
-            size="medium"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSwapClick();
-            }}
-          >
-            Swap meal
-          </Button>
-        )}
+        {/* Action buttons */}
+        <Stack direction="row" gap="sm">
+          <Link href={`/recipe/${recipeId}`} style={{ flex: 1, textDecoration: 'none' }}>
+            <Button
+              variant="secondary"
+              size="medium"
+              purpose="button"
+              style={{ width: '100%' }}
+            >
+              View Recipe
+            </Button>
+          </Link>
+          
+          {onSwapClick && (
+            <Button
+              variant="naked"
+              size="medium"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSwapClick();
+              }}
+              style={{ flex: 1 }}
+            >
+              Swap meal
+            </Button>
+          )}
+        </Stack>
       </Stack>
     </Box>
   );

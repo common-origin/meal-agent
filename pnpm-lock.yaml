@@ -30,8 +30,11 @@ importers:
   apps/web:
     dependencies:
       '@common-origin/design-system':
-        specifier: ^1.9.6
-        version: 1.9.6(@babel/core@7.28.5)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(styled-components@6.1.19(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
+        specifier: ^1.9.7
+        version: 1.9.7(@babel/core@7.28.5)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(styled-components@6.1.19(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
+      '@google/generative-ai':
+        specifier: ^0.24.1
+        version: 0.24.1
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
@@ -183,8 +186,8 @@ packages:
     resolution: {integrity: sha512-qQ5m48eI/MFLQ5PxQj4PFaprjyCTLI37ElWMmNs0K8Lk3dVeOdNpB3ks8jc7yM5CDmVC73eMVk/trk3fgmrUpA==}
     engines: {node: '>=6.9.0'}
 
-  '@common-origin/design-system@1.9.6':
-    resolution: {integrity: sha512-ViF3xTbczbQzNclQeUNUyQisOp6H20KWnmEKM5EE2+0pIkyacSrUUAB7/CpLiF4mo9Ixs8juKp22dbM26Z6Udw==}
+  '@common-origin/design-system@1.9.7':
+    resolution: {integrity: sha512-PiGlSQXAqcFEDRCkVVMqMCVyMKtRbEqOSDii+bZertqgBbsjok04SSxx7tedFlXgr75dp2Sypvc+voF4RcTCkQ==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
@@ -401,6 +404,10 @@ packages:
   '@eslint/plugin-kit@0.4.0':
     resolution: {integrity: sha512-sB5uyeq+dwCWyPi31B2gQlVlo+j5brPlWx4yZBrEaRo/nhdDE8Xke1gsGgtiBdaBTxuTkceLVuVt/pclrasb0A==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@google/generative-ai@0.24.1':
+    resolution: {integrity: sha512-MqO+MLfM6kjxcKoy0p1wRzG3b4ZZXtPI+z2IE26UogS2Cm/XHO+7gGRBh6gcJsOiIVoH93UwKvW4HdgiOZCy9Q==}
+    engines: {node: '>=18.0.0'}
 
   '@hotjar/browser@1.0.9':
     resolution: {integrity: sha512-n9akDMod8BLGpYEQCrHwlYWWd63c1HlhUSXNIDfClZtKYXbUjIUOFlNZNNcUxgHTCsi4l2i+SWKsGsO0t93S8w==}
@@ -2902,7 +2909,7 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
 
-  '@common-origin/design-system@1.9.6(@babel/core@7.28.5)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(styled-components@6.1.19(react-dom@19.2.0(react@19.2.0))(react@19.2.0))':
+  '@common-origin/design-system@1.9.7(@babel/core@7.28.5)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(styled-components@6.1.19(react-dom@19.2.0(react@19.2.0))(react@19.2.0))':
     dependencies:
       '@hotjar/browser': 1.0.9
       date-fns: 4.1.0
@@ -3071,6 +3078,8 @@ snapshots:
     dependencies:
       '@eslint/core': 0.16.0
       levn: 0.4.1
+
+  '@google/generative-ai@0.24.1': {}
 
   '@hotjar/browser@1.0.9': {}
 

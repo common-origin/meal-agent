@@ -1,14 +1,17 @@
-import { Stack, Typography } from "@common-origin/design-system";
+import { Stack, Typography, Button } from "@common-origin/design-system";
 import MealCard, { type MealCardProps } from "./MealCard";
 
 export type WeekPlannerGridProps = {
   meals: (MealCardProps | null)[];
   onSwapClick?: (dayIndex: number) => void;
+  onGenerateClick?: (dayIndex: number) => void;
+  generatingDayIndex?: number | null;
+  onDeleteClick?: (dayIndex: number) => void;
 };
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-export default function WeekPlannerGrid({ meals, onSwapClick }: WeekPlannerGridProps) {
+export default function WeekPlannerGrid({ meals, onSwapClick, onGenerateClick, generatingDayIndex, onDeleteClick }: WeekPlannerGridProps) {
   return (
     <Stack direction="column" gap="lg">
       <Typography variant="h2">This Week&apos;s Dinners</Typography>
@@ -25,6 +28,7 @@ export default function WeekPlannerGrid({ meals, onSwapClick }: WeekPlannerGridP
               <MealCard 
                 {...meals[index]!} 
                 onSwapClick={onSwapClick ? () => onSwapClick(index) : undefined}
+                onDeleteClick={onDeleteClick ? () => onDeleteClick(index) : undefined}
               />
             ) : (
               <div style={{
@@ -32,11 +36,25 @@ export default function WeekPlannerGrid({ meals, onSwapClick }: WeekPlannerGridP
                 borderRadius: "8px",
                 padding: "32px",
                 textAlign: "center",
-                backgroundColor: "#f8f9fa"
+                backgroundColor: "#f8f9fa",
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px",
+                alignItems: "center"
               }}>
-                <Typography variant="body">
+                <Typography variant="body" color="subdued">
                   No meal planned
                 </Typography>
+                {onGenerateClick && (
+                  <Button
+                    variant="primary"
+                    size="small"
+                    onClick={() => onGenerateClick(index)}
+                    disabled={generatingDayIndex === index}
+                  >
+                    {generatingDayIndex === index ? '✨ Generating...' : '✨ Generate Recipe'}
+                  </Button>
+                )}
               </div>
             )}
           </Stack>

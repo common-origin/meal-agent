@@ -8,7 +8,7 @@ import LeftoverCard from "@/components/app/LeftoverCard";
 import RegenerateDrawer from "@/components/app/RegenerateDrawer";
 import { type PlanWeek } from "@/lib/types/recipe";
 import { type MealCardProps } from "@/components/app/MealCard";
-import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides } from "@/lib/storage";
+import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides, loadCurrentWeekPlan } from "@/lib/storage";
 import { composeWeek } from "@/lib/compose";
 import { RecipeLibrary } from "@/lib/library";
 import { nextWeekMondayISO } from "@/lib/schedule";
@@ -38,10 +38,69 @@ export default function PlanReviewPage() {
     
     const household = loadHousehold() || getDefaultHousehold();
     const nextWeekISO = nextWeekMondayISO();
-    const overrides = loadWeeklyOverrides(nextWeekISO);
     
-    // Generate plan
-    const newPlan = composeWeek(household, overrides || undefined);
+    // Check if user has a saved week plan (from AI generation or manual selection)
+    const savedPlan = loadCurrentWeekPlan(nextWeekISO);
+    
+    let newPlan: PlanWeek;
+    
+    if (savedPlan) {
+      // Use the saved plan - build PlanWeek from saved recipe IDs
+      console.log('📋 Review page: Using saved week plan:', savedPlan.recipeIds);
+      
+      // Calculate dates for the week (Monday through Sunday)
+      const startDate = new Date(nextWeekISO);
+      
+      const days = savedPlan.recipeIds.map((recipeId, index) => {
+        if (!recipeId) return null;
+        
+        const recipe = RecipeLibrary.getById(recipeId);
+        if (!recipe) {
+          console.warn(`Recipe ${recipeId} not found in library`);
+          return null;
+        }
+        
+        // Calculate date for this day
+        const dayDate = new Date(startDate);
+        dayDate.setDate(dayDate.getDate() + index);
+        
+        // Generate reasons for this meal
+        const reasons: string[] = [];
+        if (recipe.timeMins && recipe.timeMins <= 40) reasons.push("≤40m");
+        if (recipe.tags.includes("kid_friendly")) reasons.push("kid-friendly");
+        if (recipe.tags.includes("bulk_cook")) reasons.push("bulk cook");
+        if (household.favorites.includes(recipe.id)) reasons.push("favorite");
+        if (recipe.costPerServeEst && recipe.costPerServeEst < 4) reasons.push("best value");
+        
+        return {
+          dateISO: dayDate.toISOString().split('T')[0],
+          recipeId: recipe.id,
+          scaledServings: recipe.serves || 4,
+          reasons,
+        };
+      }).filter((day): day is { dateISO: string; recipeId: string; scaledServings: number; reasons: string[] } => day !== null);
+      
+      // Calculate cost estimate
+      const costEstimate = days.reduce((sum, day) => {
+        const recipe = RecipeLibrary.getById(day.recipeId);
+        return sum + ((recipe?.costPerServeEst || 0) * day.scaledServings);
+      }, 0);
+      
+      newPlan = {
+        startISO: nextWeekISO,
+        days,
+        costEstimate,
+        conflicts: [],
+      };
+      
+      console.log('✅ Review page: Built plan from saved recipe IDs:', days.length, 'meals');
+    } else {
+      // Fall back to auto-composition from library
+      console.log('🔄 Review page: No saved plan found, composing from library...');
+      const overrides = loadWeeklyOverrides(nextWeekISO);
+      newPlan = composeWeek(household, overrides || undefined);
+    }
+    
     setPlan(newPlan);
     
     // Convert to MealCardProps

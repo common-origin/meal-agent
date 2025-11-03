@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Typography, Stack } from "@common-origin/design-system";
+import { Typography, Stack, Tag, tokens } from "@common-origin/design-system";
 import type { AggregatedIngredient } from "@/lib/shoppingListAggregator";
 import { estimateIngredientCost } from "@/lib/colesMapping";
 
@@ -42,59 +42,47 @@ export default function ShoppingListItem({
       }
       tabIndex={hasMultipleSources ? 0 : -1}
       style={{
-        padding: "12px",
+        padding: "8px 12px",
         minHeight: "44px",
-        borderRadius: "4px",
-        backgroundColor: item.isPantryStaple && showPantryBadge ? "#fff3cd" : "white",
+        borderRadius: tokens.base.border.radius[2],
+        backgroundColor: item.isPantryStaple && showPantryBadge ? tokens.semantic.color.background["interactive-subtle"] : tokens.semantic.color.background.default,
         cursor: hasMultipleSources ? "pointer" : "default",
         transition: "background-color 0.2s",
-        border: colesInfo?.mapped ? "1px solid #d4edda" : "1px solid transparent"
+        border: colesInfo?.mapped ? `1px solid ${tokens.semantic.color.border.default}` : "1px solid transparent"
       }}
     >
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         <Stack direction="row" gap="sm" alignItems="center">
           <Typography variant="body">{item.name}</Typography>
           {item.isPantryStaple && showPantryBadge && (
-            <span 
+            <Tag 
+              variant="interactive"
               aria-label="Pantry staple item"
-              style={{
-                fontSize: "11px",
-                padding: "2px 6px",
-                backgroundColor: "#856404",
-                color: "white",
-                borderRadius: "3px"
-              }}
             >
               Pantry
-            </span>
+            </Tag>
           )}
           {colesInfo?.mapped && (
-            <span 
+            <Tag 
+              variant={colesInfo.confidence === 'high' ? "success" : "warning"}
               aria-label={colesInfo.requiresChoice ? "Multiple options available" : "Matched to Coles product"}
-              style={{
-                fontSize: "11px",
-                padding: "2px 6px",
-                backgroundColor: colesInfo.confidence === 'high' ? "#28a745" : "#ffc107",
-                color: colesInfo.confidence === 'high' ? "white" : "#000",
-                borderRadius: "3px"
-              }}
             >
-              {colesInfo.requiresChoice ? "? Choice" : "✓ Mapped"}
-            </span>
+              {colesInfo.requiresChoice ? "Choice" : "Mapped"}
+            </Tag>
           )}
         </Stack>
         
         <Stack direction="row" gap="sm" alignItems="center">
-          <Typography variant="small">
-            {item.totalQty} {item.unit}
+          <Typography>
+            <strong>{item.totalQty} {item.unit}</strong>
           </Typography>
           {colesInfo?.mapped && (
-            <span 
+            <Typography 
+              color="success"
               aria-label={`Estimated cost ${colesInfo.estimatedCost.toFixed(2)} dollars`}
-              style={{ fontSize: "13px", color: "#28a745", fontWeight: "600" }}
             >
-              ~${colesInfo.estimatedCost.toFixed(2)}
-            </span>
+              <strong>~${colesInfo.estimatedCost.toFixed(2)}</strong>
+            </Typography>
           )}
           {hasMultipleSources && (
             <span 
@@ -144,13 +132,13 @@ export default function ShoppingListItem({
           }}
         >
           <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <div style={{ fontSize: "12px", color: "#666" }}>
+            <Typography variant="small" color="subdued">
               <strong>Coles:</strong> {colesInfo.product.name}
               {colesInfo.product.brand && ` (${colesInfo.product.brand})`}
-            </div>
-            <div style={{ fontSize: "12px", color: "#666" }}>
+            </Typography>
+            <Typography variant="small" color="subdued">
               {colesInfo.packsNeeded}x {colesInfo.product.packSize}{colesInfo.product.packUnit} @ ${colesInfo.product.price}
-            </div>
+            </Typography>
           </Stack>
           {colesInfo.requiresChoice && (
             <div 
