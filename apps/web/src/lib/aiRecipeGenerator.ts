@@ -207,6 +207,9 @@ function validateRecipes(recipes: unknown[]): Recipe[] {
           qty: Number(ing.qty) || 1,
           unit: (String(ing.unit) || 'unit') as 'g'|'ml'|'tsp'|'tbsp'|'unit',
         })) : [],
+        instructions: Array.isArray(r.instructions) 
+          ? (r.instructions as Array<unknown>).map(step => String(step))
+          : undefined,
         costPerServeEst: Number(r.estimatedCost) ? Number(r.estimatedCost) / (Number(r.servings) || 4) : undefined,
       };
 

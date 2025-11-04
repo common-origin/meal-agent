@@ -23,6 +23,15 @@ export interface BatchCookingPreferences {
   preferredDay: 'sunday' | 'saturday' | 'friday';
 }
 
+export interface GitHubSyncSettings {
+  enabled: boolean;
+  token: string; // GitHub Personal Access Token
+  owner: string; // GitHub username
+  repo: string; // Repository name (without owner)
+  lastSynced?: string; // ISO timestamp
+  autoSync: boolean; // Auto-sync on changes
+}
+
 export interface FamilySettings {
   // Household
   adults: number;
@@ -32,6 +41,7 @@ export interface FamilySettings {
   // Cuisine preferences
   cuisines: string[];
   customCuisines?: string[];
+  preferredChef?: string; // e.g., "Jamie Oliver", "Ottolenghi", "Nagi Maehashi"
   
   // Dietary
   glutenFreePreference: boolean; // Prefer but not strict
@@ -48,6 +58,9 @@ export interface FamilySettings {
   batchCooking: BatchCookingPreferences;
   varietyLevel: number; // 1-5, 3 = balanced
   leftoverFriendly: boolean;
+  
+  // GitHub Sync (optional)
+  github?: GitHubSyncSettings;
   
   // Metadata
   lastUpdated: string; // ISO date
@@ -85,6 +98,7 @@ export const DEFAULT_FAMILY_SETTINGS: FamilySettings = {
   
   cuisines: ['mexican', 'australian', 'italian', 'indian', 'asian'],
   customCuisines: [],
+  preferredChef: undefined,
   
   glutenFreePreference: true,
   proteinFocus: true,

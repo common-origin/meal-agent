@@ -40,6 +40,7 @@ export type Recipe = {
   timeMins?: number; 
   tags: string[]; 
   ingredients: Ingredient[]; 
+  instructions?: string[]; // Step-by-step cooking instructions
   serves?: number; 
   costPerServeEst?: number 
 };

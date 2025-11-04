@@ -13,6 +13,7 @@ import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides, getFamilySetti
 import { composeWeek, getSuggestedSwaps } from "@/lib/compose";
 import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
+import { addToRecipeHistory, getRecipeIdsToExclude } from "@/lib/recipeHistory";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -175,6 +176,11 @@ export default function PlanPage() {
         .filter(meal => meal !== null)
         .map(meal => meal!.recipeId);
       
+      // Combine with recipe history to avoid repetition
+      const historyIds = getRecipeIdsToExclude();
+      const excludeRecipeIds = [...new Set([...existingRecipeIds, ...historyIds])];
+      console.log('📚 Excluding', excludeRecipeIds.length, 'recipes from swap generation');
+      
       console.log('📡 Calling API for 3 swap suggestions...');
       const response = await fetch('/api/generate-recipes', {
         method: 'POST',
@@ -184,7 +190,7 @@ export default function PlanPage() {
         body: JSON.stringify({
           familySettings,
           numberOfRecipes: 3,
-          excludeRecipeIds: existingRecipeIds,
+          excludeRecipeIds,
           specificDays: [{ index: swapDayIndex, type: dayType }],
         }),
       });
@@ -205,6 +211,11 @@ export default function PlanPage() {
       // Save to library
       RecipeLibrary.addCustomRecipes(data.recipes);
       console.log('✅ AI swaps saved to library');
+      
+      // Add to recipe history
+      const newRecipeIds = data.recipes.map((r: Recipe) => r.id);
+      addToRecipeHistory(newRecipeIds, 'ai-generated');
+      console.log('✅ Swap suggestions added to history tracking');
 
       // Update suggested swaps
       setSuggestedSwaps(data.recipes);
@@ -308,16 +319,20 @@ export default function PlanPage() {
     setGenerationError(null);
 
     try {
-      console.log('🤖 [1/5] Starting AI meal plan generation...');
+      console.log('🤖 [1/6] Starting AI meal plan generation...');
       
       const familySettings = getFamilySettings();
-      console.log('✅ [2/5] Family settings loaded:', {
+      console.log('✅ [2/6] Family settings loaded:', {
         servings: familySettings.totalServings,
         cuisines: familySettings.cuisines,
         budgetRange: `$${familySettings.budgetPerMeal.min}-${familySettings.budgetPerMeal.max}`,
       });
       
-      console.log('📡 [3/5] Calling API...');
+      // Get recipe IDs to exclude from history
+      const excludeRecipeIds = getRecipeIdsToExclude();
+      console.log('� [3/6] Recipe history loaded:', excludeRecipeIds.length, 'recipes to avoid');
+      
+      console.log('📡 [4/6] Calling API...');
       const response = await fetch('/api/generate-recipes', {
         method: 'POST',
         headers: {
@@ -326,13 +341,14 @@ export default function PlanPage() {
         body: JSON.stringify({
           familySettings,
           numberOfRecipes: 5, // Start with 5 to avoid timeout/truncation
+          excludeRecipeIds, // Pass recipe history to avoid repetition
         }),
       });
 
-      console.log('📥 [4/5] API response status:', response.status, response.statusText);
+      console.log('📥 [5/6] API response status:', response.status, response.statusText);
       
       const data = await response.json();
-      console.log('📦 [4/5] API response data:', data);
+      console.log('📦 [5/6] API response data:', data);
 
       if (!response.ok || data.error) {
         console.error('❌ API error:', data);
@@ -344,7 +360,7 @@ export default function PlanPage() {
         throw new Error('Invalid response format: missing recipes array');
       }
 
-      console.log('✅ [5/5] Generated recipes:', data.recipes.length, 'recipes');
+      console.log('✅ [6/6] Generated recipes:', data.recipes.length, 'recipes');
       console.log('Recipe titles:', data.recipes.map((r: Recipe) => r.title));
 
       // Save AI recipes to library for persistence
@@ -354,6 +370,13 @@ export default function PlanPage() {
         console.log('✅ Recipes saved to library and will persist across sessions');
       } else {
         console.warn('⚠️ Failed to save recipes to library (localStorage issue?)');
+      }
+      
+      // Add to recipe history to avoid repetition
+      const newRecipeIds = data.recipes.map((r: Recipe) => r.id);
+      const historyAdded = addToRecipeHistory(newRecipeIds, 'ai-generated');
+      if (historyAdded) {
+        console.log('✅ Recipes added to history tracking');
       }
 
       // Convert AI recipes to meal plan
@@ -421,6 +444,11 @@ export default function PlanPage() {
         .filter(meal => meal !== null)
         .map(meal => meal!.recipeId);
       
+      // Combine with recipe history to avoid repetition
+      const historyIds = getRecipeIdsToExclude();
+      const excludeRecipeIds = [...new Set([...existingRecipeIds, ...historyIds])];
+      console.log('📚 Excluding', excludeRecipeIds.length, 'recipes from generation');
+      
       console.log('📡 Calling API for single recipe...');
       const response = await fetch('/api/generate-recipes', {
         method: 'POST',
@@ -430,7 +458,7 @@ export default function PlanPage() {
         body: JSON.stringify({
           familySettings,
           numberOfRecipes: 1,
-          excludeRecipeIds: existingRecipeIds,
+          excludeRecipeIds,
           specificDays: [{ index: dayIndex, type: dayType }],
         }),
       });
@@ -452,6 +480,10 @@ export default function PlanPage() {
       // Save to library
       RecipeLibrary.addCustomRecipes([recipe]);
       console.log('✅ Recipe saved to library');
+      
+      // Add to recipe history
+      addToRecipeHistory([recipe.id], 'ai-generated');
+      console.log('✅ Recipe added to history tracking');
 
       // Create meal card
       const household = loadHousehold() || getDefaultHousehold();

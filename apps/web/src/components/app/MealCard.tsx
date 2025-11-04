@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Stack, Typography, Avatar, Box, Button, ChipGroup, IconButton } from "@common-origin/design-system";
+import { Stack, Typography, Avatar, Box, Button, ChipGroup, IconButton, Divider } from "@common-origin/design-system";
 import { toggleFavorite, isFavorite } from "@/lib/storage";
 import { track } from "@/lib/analytics";
 import { explainReasons } from "@/lib/explainer";
@@ -55,7 +55,7 @@ export default function MealCard({
   return (
     <Box 
       bg="default"
-      borderRadius={3}
+      borderRadius="3"
       p="md"
       border="default"
       style={{ position: 'relative' }}
@@ -127,30 +127,22 @@ export default function MealCard({
                       e.currentTarget.style.backgroundColor = 'transparent';
                     }}
                   >
-                    🗑️ Remove from plan
+                    Remove from plan
                   </button>
                 )}
               </div>
             </>
           )}
         </div>
-        
-        {/* Favorite button */}
-        <IconButton
-          variant={favorited ? "primary" : "secondary"}
-          iconName={favorited ? "close" : "add"}
-          size="small"
-          onClick={handleFavoriteClick}
-          aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
-        />
       </div>
 
       <Stack direction="column" gap="md">
-        <Typography variant="h3">{title}</Typography>
-        
+        <Box pr="8xl">
+          <Typography variant="h3">{title}</Typography>
+        </Box>
         <Stack direction="row" gap="sm" alignItems="center">
           <Avatar name={chef} size="sm" />
-          <Typography variant="body">{chef}</Typography>
+          <Typography variant="caption">{chef}</Typography>
         </Stack>
         
         <Stack direction="row" gap="md" alignItems="center">
@@ -174,8 +166,9 @@ export default function MealCard({
         )}
         
         {/* Action buttons */}
+        <Divider size="small" />
         <Stack direction="row" gap="sm">
-          <Link href={`/recipe/${recipeId}`} style={{ flex: 1, textDecoration: 'none' }}>
+          <Link href={`/recipe/${recipeId}`} style={{ textDecoration: 'none' }}>
             <Button
               variant="secondary"
               size="medium"
@@ -188,17 +181,23 @@ export default function MealCard({
           
           {onSwapClick && (
             <Button
-              variant="naked"
+              variant="secondary"
               size="medium"
               onClick={(e) => {
                 e.stopPropagation();
                 onSwapClick();
               }}
-              style={{ flex: 1 }}
             >
               Swap meal
             </Button>
           )}
+          {/* Favorite button */}
+          <IconButton
+            variant={favorited ? "primary" : "secondary"}
+            iconName={favorited ? "close" : "add"}
+            onClick={handleFavoriteClick}
+            aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
+          />
         </Stack>
       </Stack>
     </Box>

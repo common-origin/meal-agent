@@ -2,6 +2,8 @@ import type { Recipe } from "./types/recipe";
 import { recipes } from "./recipes";
 import { enhanceRecipeWithTags } from "./tagNormalizer";
 import { Storage } from "./storage";
+import { GitHubClient } from "./github/client";
+import { getFamilySettings } from "./storage";
 
 // Library search interface (same as MockLibrary for compatibility)
 export interface LibrarySearchOptions {
@@ -20,10 +22,13 @@ const CUSTOM_RECIPES_KEY = "meal-agent:custom-recipes:v1";
  * Uses pre-generated recipe data from build script
  * Enhanced with tag normalization and smart search
  * Supports custom recipes (AI-generated, user-added)
+ * Syncs with GitHub for backup and cross-device access
  */
 export class RecipeLibrary {
   private static recipes: Recipe[] | null = null;
   private static customRecipes: Recipe[] | null = null;
+  private static githubClient: GitHubClient | null = null;
+  private static syncInProgress = false;
 
   /**
    * Load custom recipes from localStorage
@@ -159,6 +164,12 @@ export class RecipeLibrary {
     const success = this.saveCustomRecipes(allCustom);
     
     console.log(`✅ Added ${recipesToAdd.length} custom recipes to library`);
+
+    // Auto-sync to GitHub if enabled (fire and forget)
+    this.saveToGitHub().catch(error => {
+      console.warn('Failed to sync to GitHub:', error);
+    });
+
     return success;
   }
 
@@ -174,7 +185,14 @@ export class RecipeLibrary {
       return false;
     }
     
-    return this.saveCustomRecipes(filtered);
+    const success = this.saveCustomRecipes(filtered);
+
+    // Auto-sync to GitHub if enabled (fire and forget)
+    this.saveToGitHub().catch(error => {
+      console.warn('Failed to sync to GitHub:', error);
+    });
+
+    return success;
   }
 
   /**
@@ -197,5 +215,216 @@ export class RecipeLibrary {
   static isCustomRecipe(id: string): boolean {
     const customRecipes = this.loadCustomRecipes();
     return customRecipes.some(r => r.id === id);
+  }
+
+  /**
+   * Initialize GitHub client from settings
+   */
+  private static getGitHubClient(): GitHubClient | null {
+    const settings = getFamilySettings();
+    
+    if (!settings.github?.enabled || !settings.github.token || !settings.github.owner || !settings.github.repo) {
+      return null;
+    }
+
+    if (!this.githubClient) {
+      this.githubClient = new GitHubClient(
+        settings.github.token,
+        settings.github.owner,
+        settings.github.repo
+      );
+    }
+
+    return this.githubClient;
+  }
+
+  /**
+   * Load recipes from GitHub (called on app startup)
+   */
+  static async loadFromGitHub(): Promise<{ success: boolean; count?: number; error?: string }> {
+    const client = this.getGitHubClient();
+    
+    if (!client) {
+      // GitHub not configured, use localStorage only
+      return { success: true, count: this.loadCustomRecipes().length };
+    }
+
+    try {
+      console.log('📥 Loading recipes from GitHub...');
+      const result = await client.getRecipes();
+
+      if (result.error) {
+        console.error('Failed to load from GitHub:', result.error);
+        // Fallback to localStorage
+        return { success: false, error: result.error };
+      }
+
+      // Update localStorage cache with GitHub data
+      if (result.recipes.length > 0) {
+        this.saveCustomRecipes(result.recipes);
+        console.log(`✅ Loaded ${result.recipes.length} recipes from GitHub`);
+      }
+
+      return { success: true, count: result.recipes.length };
+    } catch (error) {
+      console.error('Error loading from GitHub:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      };
+    }
+  }
+
+  /**
+   * Save recipes to GitHub (called after adding/removing recipes)
+   */
+  static async saveToGitHub(): Promise<{ success: boolean; error?: string }> {
+    const client = this.getGitHubClient();
+    
+    if (!client) {
+      // GitHub not configured, skip sync
+      return { success: true };
+    }
+
+    const settings = getFamilySettings();
+    if (!settings.github?.autoSync) {
+      // Auto-sync disabled, queue for manual sync
+      return { success: true };
+    }
+
+    if (this.syncInProgress) {
+      console.log('⏳ Sync already in progress, skipping...');
+      return { success: true };
+    }
+
+    try {
+      this.syncInProgress = true;
+      console.log('📤 Saving recipes to GitHub...');
+
+      const customRecipes = this.loadCustomRecipes();
+
+      // Get current SHA (needed to update file)
+      const currentState = await client.getRecipes();
+      
+      const result = await client.saveRecipes(customRecipes, currentState.sha);
+
+      if (result.success) {
+        console.log(`✅ Saved ${customRecipes.length} recipes to GitHub`);
+      } else {
+        console.error('Failed to save to GitHub:', result.error);
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error saving to GitHub:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      };
+    } finally {
+      this.syncInProgress = false;
+    }
+  }
+
+  /**
+   * Manual sync: merge local and remote recipes
+   */
+  static async syncWithGitHub(): Promise<{ 
+    success: boolean; 
+    added?: number; 
+    updated?: number;
+    error?: string 
+  }> {
+    const client = this.getGitHubClient();
+    
+    if (!client) {
+      return { success: false, error: 'GitHub not configured' };
+    }
+
+    try {
+      console.log('🔄 Syncing with GitHub...');
+
+      // Get local recipes
+      const localRecipes = this.loadCustomRecipes();
+      const localIds = new Set(localRecipes.map(r => r.id));
+
+      // Get remote recipes
+      const remoteResult = await client.getRecipes();
+      if (remoteResult.error) {
+        return { success: false, error: remoteResult.error };
+      }
+
+      const remoteRecipes = remoteResult.recipes;
+
+      // Merge: local recipes take precedence (last write wins)
+      const mergedRecipes = [...localRecipes];
+      let added = 0;
+
+      for (const remoteRecipe of remoteRecipes) {
+        if (!localIds.has(remoteRecipe.id)) {
+          mergedRecipes.push(remoteRecipe);
+          added++;
+        }
+      }
+
+      // Save merged recipes locally
+      this.saveCustomRecipes(mergedRecipes);
+
+      // Push merged recipes to GitHub
+      const saveResult = await client.saveRecipes(mergedRecipes, remoteResult.sha);
+      
+      if (!saveResult.success) {
+        return { success: false, error: saveResult.error };
+      }
+
+      console.log(`✅ Sync complete: ${added} recipes added from GitHub`);
+
+      return { success: true, added, updated: localRecipes.length };
+    } catch (error) {
+      console.error('Error syncing with GitHub:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      };
+    }
+  }
+
+  /**
+   * Migrate existing localStorage recipes to GitHub (one-time setup)
+   */
+  static async migrateToGitHub(): Promise<{ success: boolean; count?: number; error?: string }> {
+    const client = this.getGitHubClient();
+    
+    if (!client) {
+      return { success: false, error: 'GitHub not configured' };
+    }
+
+    try {
+      const localRecipes = this.loadCustomRecipes();
+      
+      if (localRecipes.length === 0) {
+        return { success: true, count: 0 };
+      }
+
+      console.log(`📤 Migrating ${localRecipes.length} recipes to GitHub...`);
+
+      // Check if recipes already exist on GitHub
+      const remoteResult = await client.getRecipes();
+      
+      const result = await client.saveRecipes(localRecipes, remoteResult.sha);
+
+      if (result.success) {
+        console.log(`✅ Migrated ${localRecipes.length} recipes to GitHub`);
+        return { success: true, count: localRecipes.length };
+      } else {
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      console.error('Error migrating to GitHub:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      };
+    }
   }
 }

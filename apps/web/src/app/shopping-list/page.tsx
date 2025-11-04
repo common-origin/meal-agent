@@ -205,19 +205,19 @@ export default function ShoppingListPage() {
           colsMd={4} 
           gap={2}
         >
-          <Box bg="surface" borderRadius={3} p="md">
+          <Box bg="surface" borderRadius="3" p="md">
             <Typography variant="subtitle" color="subdued">Total Items</Typography>
             <Typography variant="h2">{totalItems}</Typography>
           </Box>
-          <Box bg="surface" borderRadius={3} p="md">
+          <Box bg="surface" borderRadius="3" p="md">
             <Typography variant="subtitle" color="subdued">Pantry Staples</Typography>
             <Typography variant="h2">{pantryItems}</Typography>
           </Box>
-          <Box bg="surface" borderRadius={3} p="md">
+          <Box bg="surface" borderRadius="3" p="md">
             <Typography variant="subtitle" color="subdued">Categories</Typography>
             <Typography variant="h2">{categories.length}</Typography>
           </Box>
-          <Box bg="surface" borderRadius={3} p="md">
+          <Box bg="surface" borderRadius="3" p="md">
             <Typography variant="subtitle" color="subdued">Est. Coles Cost</Typography>
             <Typography variant="h2">${totalEstimatedCost.toFixed(2)}</Typography>
             <Typography variant="small">{mappingCoverage}% mapped</Typography>
@@ -232,7 +232,7 @@ export default function ShoppingListPage() {
             <Box 
               key={category}
               border="default"
-              borderRadius={4}
+              borderRadius="4"
               p="md"
               bg="subtle"
             >

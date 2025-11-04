@@ -73,6 +73,9 @@ export default function Header() {
           <NavLink href="/plan" isActive={pathname === "/plan"}>
             Plan
           </NavLink>
+          <NavLink href="/recipes/add" isActive={pathname === "/recipes/add"}>
+            Add Recipe
+          </NavLink>
           <NavLink href="/shopping-list" isActive={pathname === "/shopping-list"}>
             Shopping List
           </NavLink>

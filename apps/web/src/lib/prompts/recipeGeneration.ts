@@ -73,9 +73,13 @@ FAMILY DETAILS:
 - Servings needed: ${familySettings.totalServings} (${familySettings.adults} adults, ${familySettings.children.length} children aged ${familySettings.children.map(c => c.age).join(', ')})
 
 CUISINE PREFERENCES:
-- Preferred cuisines: ${cuisineList}
+- Preferred cuisines: ${cuisineList}`;
 
-DIETARY REQUIREMENTS:`;
+  if (familySettings.preferredChef) {
+    prompt += `\n- Recipe inspiration: Generate recipes in the style of ${familySettings.preferredChef}`;
+  }
+
+  prompt += `\n\nDIETARY REQUIREMENTS:`;
 
   if (familySettings.glutenFreePreference) {
     prompt += `\n- Prefer gluten-free options when possible`;
