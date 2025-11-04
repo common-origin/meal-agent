@@ -18,7 +18,7 @@ export default function LeftoverCard({
   return (
     <Box 
       bg="default"
-      borderRadius={3}
+      borderRadius="3"
       p="md"
       border="default"
     >
