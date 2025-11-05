@@ -10,11 +10,12 @@ import { useRouter } from "next/navigation";
 
 export default function AddRecipePage() {
   const router = useRouter();
-  const [mode, setMode] = useState<'choice' | 'image' | 'manual'>('choice');
+  const [mode, setMode] = useState<'choice' | 'image' | 'url' | 'manual'>('choice');
   const [imagePreview, setImagePreview] = useState<string>('');
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
   
+  const [recipeUrl, setRecipeUrl] = useState('');
   const [title, setTitle] = useState('');
   const [timeMins, setTimeMins] = useState('');
   const [serves, setServes] = useState('4');
@@ -66,6 +67,40 @@ export default function AddRecipePage() {
       track('page_view', { page: 'recipe_extraction_success' });
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Failed to extract recipe');
+    } finally {
+      setExtracting(false);
+    }
+  };
+
+  const handleExtractFromUrl = async () => {
+    if (!recipeUrl) return;
+
+    setExtracting(true);
+    
+    try {
+      const response = await fetch('/api/extract-recipe-from-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: recipeUrl }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to extract recipe');
+      }
+
+      const recipe = data.recipe;
+      setTitle(recipe.title || '');
+      setTimeMins(recipe.timeMins?.toString() || '');
+      setServes(recipe.serves?.toString() || '4');
+      setIngredients(recipe.ingredients || []);
+      setInstructions(recipe.instructions || []);
+      setSourceUrl(recipeUrl);
+
+      track('page_view', { page: 'recipe_url_extraction_success' });
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to extract recipe from URL');
     } finally {
       setExtracting(false);
     }
@@ -182,9 +217,26 @@ export default function AddRecipePage() {
                 textAlign: 'left',
               }}
             >
-              <Typography variant="h3">📸 Upload Photo</Typography>
+              <Typography variant="h3">Upload Photo</Typography>
               <Typography variant="body">
                 Take a photo of a recipe from a cookbook or magazine. AI will extract the recipe details for you.
+              </Typography>
+            </button>
+
+            <button
+              onClick={() => setMode('url')}
+              style={{
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                padding: '24px',
+                backgroundColor: 'white',
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <Typography variant="h3">Import from URL</Typography>
+              <Typography variant="body">
+                Paste a recipe URL from any website. AI will scrape and extract the recipe details.
               </Typography>
             </button>
 
@@ -199,7 +251,7 @@ export default function AddRecipePage() {
                 textAlign: 'left',
               }}
             >
-              <Typography variant="h3">✍️ Enter Manually</Typography>
+              <Typography variant="h3">Enter Manually</Typography>
               <Typography variant="body">
                 Type in the recipe details yourself.
               </Typography>
@@ -296,7 +348,76 @@ export default function AddRecipePage() {
     );
   }
 
-  // Manual entry mode
+  if (mode === 'url') {
+    return (
+      <main style={{ padding: 24, maxWidth: '800px', margin: '0 auto' }}>
+        <Stack direction="column" gap="xl">
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Typography variant="h1">Import from URL</Typography>
+            <Button variant="secondary" size="small" onClick={() => setMode('choice')}>
+              Back
+            </Button>
+          </Stack>
+
+          <Box border="default" borderRadius="3" p="lg" bg="surface">
+            <Stack direction="column" gap="md">
+              <div>
+                <label style={labelStyle}>Recipe URL</label>
+                <input
+                  type="url"
+                  placeholder="https://example.com/recipe"
+                  value={recipeUrl}
+                  onChange={(e) => setRecipeUrl(e.target.value)}
+                  style={inputStyle}
+                />
+              </div>
+
+              <Button 
+                variant="primary" 
+                onClick={handleExtractFromUrl}
+                disabled={extracting || !recipeUrl}
+              >
+                {extracting ? 'Extracting...' : '🤖 Extract Recipe from URL'}
+              </Button>
+            </Stack>
+          </Box>
+
+          {title && (
+            <RecipeForm 
+              title={title}
+              setTitle={setTitle}
+              timeMins={timeMins}
+              setTimeMins={setTimeMins}
+              serves={serves}
+              setServes={setServes}
+              sourceUrl={sourceUrl}
+              setSourceUrl={setSourceUrl}
+              ingredients={ingredients}
+              instructions={instructions}
+              ingredientName={ingredientName}
+              setIngredientName={setIngredientName}
+              ingredientQty={ingredientQty}
+              setIngredientQty={setIngredientQty}
+              ingredientUnit={ingredientUnit}
+              setIngredientUnit={setIngredientUnit}
+              instructionInput={instructionInput}
+              setInstructionInput={setInstructionInput}
+              onAddIngredient={handleAddIngredient}
+              onRemoveIngredient={handleRemoveIngredient}
+              onAddInstruction={handleAddInstruction}
+              onRemoveInstruction={handleRemoveInstruction}
+              onSave={handleSaveRecipe}
+              saving={saving}
+              inputStyle={inputStyle}
+              labelStyle={labelStyle}
+            />
+          )}
+        </Stack>
+      </main>
+    );
+  }
+
+  // Manual mode
   return (
     <main style={{ padding: 24, maxWidth: '800px', margin: '0 auto' }}>
       <Stack direction="column" gap="xl">

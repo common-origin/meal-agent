@@ -1,4 +1,4 @@
-import { Stack, Typography, Button } from "@common-origin/design-system";
+import { Stack, Typography, Button, ResponsiveGrid, Box } from "@common-origin/design-system";
 import MealCard, { type MealCardProps } from "./MealCard";
 
 export type WeekPlannerGridProps = {
@@ -16,50 +16,59 @@ export default function WeekPlannerGrid({ meals, onSwapClick, onGenerateClick, g
     <Stack direction="column" gap="lg">
       <Typography variant="h2">This Week&apos;s Dinners</Typography>
       
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-        gap: "16px"
-      }}>
+      <ResponsiveGrid 
+        cols={1} 
+        colsSm={2} 
+        colsMd={3} 
+        colsLg={4}
+        gapX={4}
+        gapY={8}
+      >
         {DAYS.map((day, index) => (
-          <Stack key={day} direction="column" gap="sm">
+          <div key={day} style={{ display: "flex", flexDirection: "column", gap: "8px", height: "100%" }}>
             <Typography variant="h4">{day}</Typography>
-            {meals[index] ? (
-              <MealCard 
-                {...meals[index]!} 
-                onSwapClick={onSwapClick ? () => onSwapClick(index) : undefined}
-                onDeleteClick={onDeleteClick ? () => onDeleteClick(index) : undefined}
-              />
-            ) : (
-              <div style={{
-                border: "2px dashed #dee2e6",
-                borderRadius: "8px",
-                padding: "32px",
-                textAlign: "center",
-                backgroundColor: "#f8f9fa",
-                display: "flex",
-                flexDirection: "column",
-                gap: "16px",
-                alignItems: "center"
-              }}>
-                <Typography variant="body" color="subdued">
-                  No meal planned
-                </Typography>
-                {onGenerateClick && (
-                  <Button
-                    variant="primary"
-                    size="small"
-                    onClick={() => onGenerateClick(index)}
-                    disabled={generatingDayIndex === index}
-                  >
-                    {generatingDayIndex === index ? '✨ Generating...' : '✨ Generate Recipe'}
-                  </Button>
-                )}
-              </div>
-            )}
-          </Stack>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+              {meals[index] ? (
+                <MealCard 
+                  {...meals[index]!} 
+                  onSwapClick={onSwapClick ? () => onSwapClick(index) : undefined}
+                  onDeleteClick={onDeleteClick ? () => onDeleteClick(index) : undefined}
+                />
+              ) : (
+                <Box 
+                  borderRadius="3"
+                  p="xl"
+                  bg="surface"
+                  style={{
+                    border: "1px dashed #a7a8a8ff",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "16px",
+                    alignItems: "center",
+                    flex: 1,
+                    justifyContent: "center",
+                    textAlign: "center"
+                  }}
+                >
+                  <Typography variant="label" color="subdued">
+                    No meal planned
+                  </Typography>
+                  {onGenerateClick && (
+                    <Button
+                      variant="primary"
+                      size="medium"
+                      onClick={() => onGenerateClick(index)}
+                      disabled={generatingDayIndex === index}
+                    >
+                      {generatingDayIndex === index ? 'Generating...' : 'Generate recipe'}
+                    </Button>
+                  )}
+                </Box>
+              )}
+            </div>
+          </div>
         ))}
-      </div>
+      </ResponsiveGrid>
     </Stack>
   );
 }

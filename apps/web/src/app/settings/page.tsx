@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import styled from "styled-components";
-import { Box, Button, Checkbox, Chip, Container, Divider, Dropdown, IconButton, NumberInput, Stack, TextField, Typography } from "@common-origin/design-system";
+import { Box, Button, Checkbox, Chip, Container, Divider, Dropdown, NumberInput, Stack, TextField, Typography } from "@common-origin/design-system";
 import { tokens } from "@common-origin/design-system";
 import { 
   getFamilySettings, 
@@ -10,7 +10,7 @@ import {
   resetFamilySettings 
 } from "@/lib/storage";
 import type { FamilySettings } from "@/lib/types/settings";
-import { CUISINE_OPTIONS, validateFamilySettings } from "@/lib/types/settings";
+import { validateFamilySettings } from "@/lib/types/settings";
 import { track } from "@/lib/analytics";
 import { GitHubClient } from "@/lib/github/client";
 import { RecipeLibrary } from "@/lib/library";
@@ -66,15 +66,6 @@ export default function SettingsPage() {
       setSettings(getFamilySettings());
       track('override_saved', { reset: true });
     }
-  };
-
-  const toggleCuisine = (cuisineId: string) => {
-    setSettings(prev => ({
-      ...prev,
-      cuisines: prev.cuisines.includes(cuisineId)
-        ? prev.cuisines.filter(c => c !== cuisineId)
-        : [...prev.cuisines, cuisineId]
-    }));
   };
 
   const addChild = () => {
@@ -336,68 +327,6 @@ export default function SettingsPage() {
 										</Chip>
 									</Stack>
 								</Box>
-							</Stack>
-						</Box>
-
-						{/* Cuisine Preferences */}
-						<Box border="default" borderRadius="4" p="lg" bg="default">
-							<Stack direction="column" gap="md">
-								<Typography variant="h3">Cuisine Preferences</Typography>
-								<Typography variant="small">
-									Select your favorite cuisines ({settings.cuisines.length} selected)
-								</Typography>
-
-								<Stack direction="column" gap="lg">
-									<div style={{
-										display: 'grid',
-										gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-										gap: '12px'
-									}}>
-										{CUISINE_OPTIONS.map((cuisine) => (
-											<button
-												key={cuisine.id}
-												onClick={() => toggleCuisine(cuisine.id)}
-												style={{
-													padding: '12px',
-													borderRadius: '8px',
-													border: settings.cuisines.includes(cuisine.id)
-														? '2px solid #007bff'
-														: '1px solid #ccc',
-													backgroundColor: settings.cuisines.includes(cuisine.id)
-														? '#e7f3ff'
-														: 'white',
-													cursor: 'pointer',
-													fontSize: '14px',
-													textAlign: 'center',
-													transition: 'all 0.2s'
-												}}
-											>
-												<div style={{ fontSize: '24px', marginBottom: '4px' }}>
-													{cuisine.emoji}
-												</div>
-												{cuisine.label}
-											</button>
-										))}
-									</div>
-
-
-									<TextField
-										label="Preferred Chef or Recipe Source (optional)"
-										helperText="e.g., Jamie Oliver, Ottolenghi, Nagi Maehashi, RecipeTin Eats"
-										id="preferredChef"
-										type="text"
-										value={settings.preferredChef || ''}
-										onChange={(e) => setSettings(prev => ({
-											...prev,
-											preferredChef: e.target.value
-										}))}
-										placeholder="Enter chef or recipe site name"
-										style={{
-											width: '100%',
-											maxWidth: '400px'
-										}}
-									/>
-								</Stack>
 							</Stack>
 						</Box>
 

@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Stack, Typography, Button, Box, TextField } from "@common-origin/design-system";
+import { Badge, Stack, Typography, Button } from "@common-origin/design-system";
 import WeekPlannerGrid from "@/components/app/WeekPlannerGrid";
 import BudgetBar from "@/components/app/BudgetBar";
 import WeeklyOverridesSheet from "@/components/app/WeeklyOverridesSheet";
 import SwapDrawer from "@/components/app/SwapDrawer";
+import WeeklyPlanWizard, { type WeeklyPlanData } from "@/components/app/WeeklyPlanWizard";
+import PantrySheet from "@/components/app/PantrySheet";
 import { type MealCardProps } from "@/components/app/MealCard";
 import { type Recipe } from "@/lib/types/recipe";
 import { scheduleSundayToast, isSaturdayAfter4, nextWeekMondayISO } from "@/lib/schedule";
-import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides, getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan } from "@/lib/storage";
-import { composeWeek, getSuggestedSwaps } from "@/lib/compose";
+import { loadHousehold, getDefaultHousehold, getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan } from "@/lib/storage";
+import { getSuggestedSwaps } from "@/lib/compose";
 import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
 import { addToRecipeHistory, getRecipeIdsToExclude } from "@/lib/recipeHistory";
@@ -18,7 +20,9 @@ import { addToRecipeHistory, getRecipeIdsToExclude } from "@/lib/recipeHistory";
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export default function PlanPage() {
+  const [showWizard, setShowWizard] = useState(false);
   const [showOverridesSheet, setShowOverridesSheet] = useState(false);
+  const [showPantrySheet, setShowPantrySheet] = useState(false);
   const [showSaturdayBanner] = useState(() => isSaturdayAfter4());
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [weekPlan, setWeekPlan] = useState<(MealCardProps | null)[]>([]);
@@ -28,12 +32,10 @@ export default function PlanPage() {
   const [isGeneratingAISwaps, setIsGeneratingAISwaps] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
-  const [isRegenerating, setIsRegenerating] = useState(false);
   const [generatingDayIndex, setGeneratingDayIndex] = useState<number | null>(null);
   
   // Pantry items state
   const [pantryItems, setPantryItems] = useState<string[]>([]);
-  const [newPantryItem, setNewPantryItem] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
 
@@ -50,6 +52,7 @@ export default function PlanPage() {
     if (savedPlan && savedPlan.recipeIds.length > 0) {
       // Use the saved plan
       console.log('📋 Plan page: Loading saved week plan');
+      setShowWizard(false);
       
       const meals: (MealCardProps | null)[] = savedPlan.recipeIds.map(recipeId => {
         if (!recipeId) return null;
@@ -91,61 +94,29 @@ export default function PlanPage() {
       setBudget({ current: totalCost, total: 120 });
       console.log('✅ Loaded saved week plan with', meals.filter(m => m !== null).length, 'meals');
       
+      // Load pantry items if available
+      if (savedPlan.pantryItems) {
+        setPantryItems(savedPlan.pantryItems);
+        console.log('✅ Loaded', savedPlan.pantryItems.length, 'pantry items');
+      }
+      
     } else {
-      // No saved plan - generate a new one
-      console.log('🔄 Plan page: No saved plan, composing new week');
-      
-      const overrides = loadWeeklyOverrides(nextWeekISO);
-      const plan = composeWeek(household, overrides || undefined);
-      
-      // Convert PlanWeek to MealCardProps array
-      const meals: (MealCardProps | null)[] = [];
-      const recipeIds: string[] = [];
-      
-      for (let i = 0; i < 7; i++) {
-        const planDay = plan.days.find((d, idx) => idx === i);
-        if (planDay) {
-          const recipe = RecipeLibrary.getById(planDay.recipeId);
-          if (recipe) {
-            recipeIds.push(recipe.id);
-            
-            // Generate reasons for this meal
-            const reasons: string[] = [];
-            if (recipe.timeMins && recipe.timeMins <= 40) reasons.push("≤40m");
-            if (recipe.tags.includes("kid_friendly")) reasons.push("kid-friendly");
-            if (recipe.tags.includes("bulk_cook")) reasons.push("bulk cook");
-            if (household.favorites.includes(recipe.id)) reasons.push("favorite");
-            if (recipe.costPerServeEst && recipe.costPerServeEst < 4) reasons.push("best value");
-            
-            meals.push({
-              recipeId: recipe.id,
-              title: recipe.title,
-              chef: recipe.source.chef === "jamie_oliver" ? "Jamie Oliver" : "RecipeTin Eats",
-              timeMins: recipe.timeMins || 0,
-              kidsFriendly: recipe.tags.includes("kid_friendly"),
-              conflicts: [],
-              reasons
-            });
-          } else {
-            recipeIds.push("");
-            meals.push(null);
-          }
-        } else {
-          recipeIds.push("");
-          meals.push(null);
-        }
-      }
-      
-      setWeekPlan(meals);
-      setBudget({ current: plan.costEstimate, total: 120 });
-      
-      // Save the newly composed week plan
-      const planSaved = saveCurrentWeekPlan(recipeIds, nextWeekISO);
-      if (planSaved) {
-        console.log('✅ New week plan composed and saved');
-      }
+      // No saved plan - show wizard instead of auto-generating
+      console.log('🧙 Plan page: No saved plan, showing wizard');
+      setShowWizard(true);
     }
   }, []);
+
+  // Handler for updating pantry items
+  const handleUpdatePantryItems = (items: string[]) => {
+    setPantryItems(items);
+    
+    // Save updated pantry items to storage
+    const nextWeekISO = nextWeekMondayISO();
+    const recipeIds = weekPlan.map(m => m?.recipeId || "");
+    saveCurrentWeekPlan(recipeIds, nextWeekISO, items);
+    console.log('✅ Pantry items updated and saved');
+  };
 
   const handleOverridesSuccess = () => {
     setShowSuccessToast(true);
@@ -284,7 +255,7 @@ export default function PlanPage() {
     // Save updated week plan
     const nextWeekISO = nextWeekMondayISO();
     const recipeIds = newWeekPlan.map(meal => meal?.recipeId || "");
-    saveCurrentWeekPlan(recipeIds, nextWeekISO);
+    saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
     console.log('✅ Week plan updated after swap');
     
     // Close drawer
@@ -310,7 +281,7 @@ export default function PlanPage() {
     // Save updated week plan
     const nextWeekISO = nextWeekMondayISO();
     const recipeIds = newWeekPlan.map(m => m?.recipeId || "");
-    saveCurrentWeekPlan(recipeIds, nextWeekISO);
+    saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
     console.log('✅ Week plan updated after deletion');
     
     track('swap', {
@@ -319,6 +290,131 @@ export default function PlanPage() {
       newRecipeId: 'deleted',
     });
   };
+
+  const handleWizardComplete = async (wizardData: WeeklyPlanData) => {
+    console.log('🧙 Wizard completed with data:', wizardData);
+    
+    // Set pantry items from wizard
+    setPantryItems(wizardData.pantryItems);
+    
+    // Hide wizard and show plan view
+    setShowWizard(false);
+    
+    // Generate plan using wizard data
+    setIsGenerating(true);
+    setGenerationError(null);
+
+    try {
+      console.log('🤖 [1/6] Starting AI meal plan generation from wizard...');
+      
+      const familySettings = getFamilySettings();
+      
+      // Override cuisines with wizard selection for this week only
+      const weeklySettings = {
+        ...familySettings,
+        cuisines: wizardData.cuisines.length > 0 ? wizardData.cuisines : familySettings.cuisines,
+        preferredChef: wizardData.preferredChef || familySettings.preferredChef
+      };
+      
+      console.log('✅ [2/6] Family settings loaded:', {
+        servings: weeklySettings.totalServings,
+        cuisines: weeklySettings.cuisines,
+        preferredChef: weeklySettings.preferredChef,
+        budgetRange: `$${weeklySettings.budgetPerMeal.min}-${weeklySettings.budgetPerMeal.max}`,
+        pantryPreference: weeklySettings.pantryPreference,
+        pantryItemsCount: wizardData.pantryItems.length,
+      });
+      
+      // Get recipe IDs to exclude from history
+      const excludeRecipeIds = getRecipeIdsToExclude();
+      console.log('📜 [3/6] Recipe history loaded:', excludeRecipeIds.length, 'recipes to avoid');
+      
+      console.log('📡 [4/6] Calling API...');
+      const response = await fetch('/api/generate-recipes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          familySettings: weeklySettings,
+          numberOfRecipes: 5,
+          excludeRecipeIds,
+          pantryItems: wizardData.pantryItems,
+        }),
+      });
+
+      console.log('📥 [5/6] API response status:', response.status, response.statusText);
+      
+      const data = await response.json();
+      console.log('📦 [5/6] API response data:', data);
+
+      if (!response.ok || data.error) {
+        console.error('❌ API error:', data);
+        throw new Error(data.error || data.details || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      if (!data.recipes || !Array.isArray(data.recipes)) {
+        console.error('❌ Invalid response format:', data);
+        throw new Error('Invalid response format: missing recipes array');
+      }
+
+      console.log('✅ [6/6] Generated recipes:', data.recipes.length, 'recipes');
+
+      // Save AI recipes to library
+      const saved = RecipeLibrary.addCustomRecipes(data.recipes);
+      if (saved) {
+        console.log('✅ Recipes saved to library');
+      }
+      
+      // Add to recipe history
+      const newRecipeIds = data.recipes.map((r: Recipe) => r.id);
+      addToRecipeHistory(newRecipeIds, 'ai-generated');
+
+      // Convert to meal plan
+      const aiMeals: (MealCardProps | null)[] = data.recipes.map((recipe: Recipe) => ({
+        recipeId: recipe.id,
+        title: recipe.title,
+        chef: "AI Generated",
+        timeMins: recipe.timeMins || 30,
+        kidsFriendly: recipe.tags?.includes("kid_friendly") ?? true,
+        conflicts: [],
+        reasons: ["AI suggested", "✨ personalized"]
+      }));
+
+      setWeekPlan(aiMeals);
+      
+      // Save week plan
+      const nextWeekISO = nextWeekMondayISO();
+      const recipeIds = data.recipes.map((r: Recipe) => r.id);
+      saveCurrentWeekPlan(recipeIds, nextWeekISO, wizardData.pantryItems);
+      
+      // Update budget
+      const totalCost = data.recipes.reduce((sum: number, r: Recipe) => {
+        return sum + ((r.costPerServeEst || 0) * (r.serves || 4));
+      }, 0);
+      setBudget({ current: totalCost, total: 120 });
+
+      console.log('🎉 Wizard-based generation complete!');
+
+      track('plan_composed', {
+        dayCount: 7,
+        pantryItemCount: wizardData.pantryItems.length,
+        cuisineCount: wizardData.cuisines.length,
+        cost: totalCost,
+        conflicts: 0,
+        leftoverDays: 0,
+        proteinVariety: 0,
+      });
+
+    } catch (error) {
+      console.error('❌ Error generating plan from wizard:', error);
+      setGenerationError(error instanceof Error ? error.message : 'Unknown error');
+      setShowWizard(true); // Show wizard again on error
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
 
   const handleScanPantryImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -450,7 +546,7 @@ export default function PlanPage() {
       // Save week plan to storage for shopping list
       const nextWeekISO = nextWeekMondayISO();
       const recipeIds = data.recipes.map((r: Recipe) => r.id);
-      const planSaved = saveCurrentWeekPlan(recipeIds, nextWeekISO);
+      const planSaved = saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
       if (planSaved) {
         console.log('✅ Week plan saved for shopping list');
       } else {
@@ -569,7 +665,7 @@ export default function PlanPage() {
       // Save updated week plan
       const nextWeekISO = nextWeekMondayISO();
       const recipeIds = newWeekPlan.map(meal => meal?.recipeId || "");
-      saveCurrentWeekPlan(recipeIds, nextWeekISO);
+      saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
       console.log('✅ Week plan updated');
 
       track('swap', {
@@ -586,200 +682,48 @@ export default function PlanPage() {
     }
   };
 
-  const handleRegenerateFromLibrary = () => {
-    setIsRegenerating(true);
-    
-    console.log('🔄 Regenerating week plan from library...');
-    
-    const household = loadHousehold() || getDefaultHousehold();
-    const nextWeekISO = nextWeekMondayISO();
-    const overrides = loadWeeklyOverrides(nextWeekISO);
-    
-    // Compose a fresh plan
-    const plan = composeWeek(household, overrides || undefined);
-    
-    // Convert PlanWeek to MealCardProps array
-    const meals: (MealCardProps | null)[] = [];
-    const recipeIds: string[] = [];
-    
-    for (let i = 0; i < 7; i++) {
-      const planDay = plan.days.find((d, idx) => idx === i);
-      if (planDay) {
-        const recipe = RecipeLibrary.getById(planDay.recipeId);
-        if (recipe) {
-          recipeIds.push(recipe.id);
-          
-          // Generate reasons for this meal
-          const reasons: string[] = [];
-          if (recipe.timeMins && recipe.timeMins <= 40) reasons.push("≤40m");
-          if (recipe.tags.includes("kid_friendly")) reasons.push("kid-friendly");
-          if (recipe.tags.includes("bulk_cook")) reasons.push("bulk cook");
-          if (household.favorites.includes(recipe.id)) reasons.push("favorite");
-          if (recipe.costPerServeEst && recipe.costPerServeEst < 4) reasons.push("best value");
-          
-          meals.push({
-            recipeId: recipe.id,
-            title: recipe.title,
-            chef: recipe.source.chef === "jamie_oliver" ? "Jamie Oliver" : 
-                  RecipeLibrary.isCustomRecipe(recipe.id) ? "AI Generated" : "RecipeTin Eats",
-            timeMins: recipe.timeMins || 0,
-            kidsFriendly: recipe.tags.includes("kid_friendly"),
-            conflicts: [],
-            reasons
-          });
-        } else {
-          recipeIds.push("");
-          meals.push(null);
-        }
-      } else {
-        recipeIds.push("");
-        meals.push(null);
-      }
-    }
-    
-    setWeekPlan(meals);
-    setBudget({ current: plan.costEstimate, total: 120 });
-    
-    // Save the regenerated week plan
-    saveCurrentWeekPlan(recipeIds, nextWeekISO);
-    console.log('✅ Week plan regenerated and saved');
-    
-    track('plan_regenerated', {
-      method: 'library',
-      dayCount: meals.filter(m => m !== null).length,
-    });
-    
-    setIsRegenerating(false);
-  };
-
   return (
     <main style={{ padding: 24 }}>
-      <Stack direction="column" gap="xl">
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Typography variant="h1">Weekly Meal Plan</Typography>
-          <Stack direction="row" gap="md">
-            <Button
-              variant="secondary"
-              size="medium"
-              onClick={handleRegenerateFromLibrary}
-              disabled={isGenerating || isRegenerating}
-            >
-              {isRegenerating ? '🔄 Regenerating...' : '🔄 Regenerate from Library'}
-            </Button>
-            <Button
-              variant="primary"
-              size="medium"
-              onClick={handleGenerateWithAI}
-              disabled={isGenerating || isRegenerating}
-            >
-              {isGenerating ? '✨ Generating...' : '✨ Generate with AI'}
-            </Button>
-          </Stack>
-        </Stack>
-
-        {/* Pantry Items Section */}
-        <Box border="default" borderRadius="4" p="lg" bg="surface">
-          <Stack direction="column" gap="lg">
-            <Stack direction="column" alignItems="flex-start">
-              <Typography variant="h3">In the pantry/fridge</Typography>
-              <Typography variant="body">
-                Add ingredients you already have to reduce waste and save money. The AI will prioritize recipes using these items.
-              </Typography>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handleScanPantryImage}
-                style={{ display: 'none' }}
-                id="pantry-image-upload"
-              />
+      {showWizard ? (
+        <WeeklyPlanWizard
+          onComplete={handleWizardComplete}
+          onCancel={() => {
+            // If user cancels, generate a basic plan instead
+            setShowWizard(false);
+            handleGenerateWithAI();
+          }}
+        />
+      ) : (
+        <Stack direction="column" gap="xl">
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Typography variant="h1">Weekly Meal Plan</Typography>
+            <Stack direction="row" gap="md">
               <Button
-                variant="primary"
-                size="medium"
-                onClick={() => document.getElementById('pantry-image-upload')?.click()}
-                disabled={isScanning}
+                variant="secondary"
+                size="large"
+                onClick={() => setShowWizard(true)}
               >
-                {isScanning ? 'Scanning...' : 'Scan Fridge/Pantry'}
+                Start new week
               </Button>
-            </Stack>
-
-            {scanError && (
-              <div style={{
-                padding: "12px",
-                backgroundColor: "#f8d7da",
-                border: "1px solid #dc3545",
-                borderRadius: "8px"
-              }}>
-                <Typography variant="small">
-                  ❌ {scanError}
-                </Typography>
-              </div>
-            )}
-
-            <Stack direction="row" gap="sm" alignItems="flex-end">
-              <TextField
-                label="Add ingredient"
-                value={newPantryItem}
-                onChange={(e) => setNewPantryItem(e.target.value)}
-                placeholder="e.g., chicken breast, tomatoes, rice"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && newPantryItem.trim()) {
-                    setPantryItems([...pantryItems, newPantryItem.trim()]);
-                    setNewPantryItem('');
-                  }
-                }}
-                style={{ flex: 1 }}
-              />
+              <Badge count={pantryItems.length}>
+                <Button
+                  variant="secondary"
+                  size="large"
+                  onClick={() => setShowPantrySheet(true)}
+                >
+                  View pantry items
+                </Button>
+              </Badge>
               <Button
                 variant="primary"
                 size="large"
-                onClick={() => {
-                  if (newPantryItem.trim()) {
-                    setPantryItems([...pantryItems, newPantryItem.trim()]);
-                    setNewPantryItem('');
-                  }
-                }}
-                disabled={!newPantryItem.trim()}
+                onClick={handleGenerateWithAI}
+                disabled={isGenerating}
               >
-                Add Item
+                {isGenerating ? 'Generating...' : 'Generate new plan'}
               </Button>
             </Stack>
-
-            {pantryItems.length > 0 && (
-              <Stack direction="column" gap="xs">
-                {pantryItems.map((item, idx) => (
-                  <Box 
-                    key={idx} 
-                    p="sm"
-                    bg="subtle"
-                    borderRadius="2"
-                  >
-                    <Stack 
-                      direction="row" 
-                      justifyContent="space-between" 
-                      alignItems="center"
-                    >
-                      <Typography variant="body">• {item}</Typography>
-                      <Button
-                        variant="secondary"
-                        size="small"
-                        onClick={() => setPantryItems(items => items.filter((_, i) => i !== idx))}
-                      >
-                        Remove
-                      </Button>
-                    </Stack>
-                  </Box>
-                ))}
-              </Stack>
-            )}
-
-            {pantryItems.length === 0 && (
-              <Typography variant="small">
-                💡 No items added yet. Add ingredients above or scan your fridge/pantry!
-              </Typography>
-            )}
           </Stack>
-        </Box>
 
         {/* Error Message */}
         {generationError && (
@@ -869,7 +813,8 @@ export default function PlanPage() {
             Review Plan →
           </Button>
         </Stack>
-      </Stack>
+        </Stack>
+      )}
 
       <WeeklyOverridesSheet
         isOpen={showOverridesSheet}
@@ -890,6 +835,16 @@ export default function PlanPage() {
         onSelectSwap={handleSelectSwap}
         onGenerateAISuggestions={handleGenerateAISwaps}
         isGeneratingAI={isGeneratingAISwaps}
+      />
+
+      <PantrySheet
+        isOpen={showPantrySheet}
+        onClose={() => setShowPantrySheet(false)}
+        pantryItems={pantryItems}
+        onUpdatePantryItems={handleUpdatePantryItems}
+        onScanImage={handleScanPantryImage}
+        isScanning={isScanning}
+        scanError={scanError}
       />
     </main>
   );

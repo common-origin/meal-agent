@@ -56,9 +56,9 @@ export default function MealCard({
     <Box 
       bg="default"
       borderRadius="3"
-      p="md"
+      p="lg"
       border="default"
-      style={{ position: 'relative' }}
+      style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}
     >
       {/* Top right buttons */}
       <div style={{ position: "absolute", top: "12px", right: "12px", display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -66,7 +66,7 @@ export default function MealCard({
         <div style={{ position: 'relative' }}>
           <IconButton
             variant="secondary"
-            iconName="menu"
+            iconName="close"
             size="small"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="More options"
@@ -136,70 +136,78 @@ export default function MealCard({
         </div>
       </div>
 
-      <Stack direction="column" gap="md">
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '16px' }}>
+        {/* Top section - Title and Chef */}
         <Box pr="8xl">
           <Typography variant="h3">{title}</Typography>
         </Box>
-        <Stack direction="row" gap="sm" alignItems="center">
-          <Avatar name={chef} size="sm" />
-          <Typography variant="caption">{chef}</Typography>
-        </Stack>
+
+        {/* Spacer to push buttons to bottom */}
+        <div style={{ flex: 1 }} />
         
-        <Stack direction="row" gap="md" alignItems="center">
-          <Typography variant="small">{timeMins} mins</Typography>
-          {chipLabels.length > 0 && (
-            <ChipGroup labels={chipLabels} variant="default" />
-          )}
-        </Stack>
-        
-        {conflicts.length > 0 && (
-          <Stack direction="column" gap="xs">
-            <Typography variant="small">
-              Conflicts:
-            </Typography>
-            {conflicts.map((conflict, index) => (
-              <Typography key={index} variant="small">
-                • {conflict}
-              </Typography>
-            ))}
+        <div>
+          <Box mb="lg">
+            <Stack direction="row" gap="sm" alignItems="center">
+              <Avatar name={chef} size="sm" />
+              <Typography variant="label">{chef}</Typography>
+            </Stack>
+          </Box>
+          {/* Middle section - Time and Chips */}
+          <Stack direction="row" gap="md" alignItems="center">
+            <Typography variant="small">{timeMins} mins</Typography>
+            {chipLabels.length > 0 && (
+              <ChipGroup labels={chipLabels} variant="default" />
+            )}
           </Stack>
-        )}
-        
-        {/* Action buttons */}
-        <Divider size="small" />
-        <Stack direction="row" gap="sm">
-          <Link href={`/recipe/${recipeId}`} style={{ textDecoration: 'none' }}>
-            <Button
-              variant="secondary"
-              size="medium"
-              purpose="button"
-              style={{ width: '100%' }}
-            >
-              View Recipe
-            </Button>
-          </Link>
-          
-          {onSwapClick && (
-            <Button
-              variant="secondary"
-              size="medium"
-              onClick={(e) => {
-                e.stopPropagation();
-                onSwapClick();
-              }}
-            >
-              Swap meal
-            </Button>
+          {/* Conflicts section (optional) */}
+          {conflicts.length > 0 && (
+            <Stack direction="column" gap="xs">
+              <Typography variant="small">
+                Conflicts:
+              </Typography>
+              {conflicts.map((conflict, index) => (
+                <Typography key={index} variant="small">
+                  • {conflict}
+                </Typography>
+              ))}
+            </Stack>
           )}
-          {/* Favorite button */}
-          <IconButton
-            variant={favorited ? "primary" : "secondary"}
-            iconName={favorited ? "close" : "add"}
-            onClick={handleFavoriteClick}
-            aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
-          />
-        </Stack>
-      </Stack>
+          {/* Bottom section - Action buttons */}
+          <Divider size="small" />
+          <Stack direction="row" gap="sm">
+            <Link href={`/recipe/${recipeId}`} style={{ textDecoration: 'none' }}>
+              <Button
+                variant="secondary"
+                size="medium"
+                purpose="button"
+                style={{ width: '100%' }}
+              >
+                View Recipe
+              </Button>
+            </Link>
+            
+            {onSwapClick && (
+              <Button
+                variant="secondary"
+                size="medium"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSwapClick();
+                }}
+              >
+                Swap meal
+              </Button>
+            )}
+            {/* Favorite button */}
+            <IconButton
+              variant={favorited ? "secondary" : "naked"}
+              iconName={favorited ? "starFilled" : "star"}
+              onClick={handleFavoriteClick}
+              aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
+            />
+          </Stack>
+        </div>
+      </div>
     </Box>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Stack, Typography, IconButton, ChipGroup, Button } from "@common-origin/design-system";
+import { Stack, Typography, IconButton, ChipGroup, Button, Divider } from "@common-origin/design-system";
 import { type Recipe } from "@/lib/types/recipe";
 import { RecipeLibrary } from "@/lib/library";
 
@@ -35,7 +35,7 @@ export default function SwapDrawer({
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Overlay */}
       <div
         onClick={onClose}
         style={{
@@ -46,72 +46,71 @@ export default function SwapDrawer({
           bottom: 0,
           backgroundColor: "rgba(0, 0, 0, 0.5)",
           zIndex: 999,
-          opacity: isOpen ? 1 : 0,
-          transition: "opacity 0.3s ease"
         }}
         aria-hidden="true"
       />
 
-      {/* Drawer */}
+      {/* Side Sheet */}
       <div
         role="dialog"
         aria-labelledby="swap-drawer-title"
         aria-modal="true"
         style={{
           position: "fixed",
-          bottom: 0,
-          left: 0,
+          top: 0,
           right: 0,
+          bottom: 0,
+          width: "600px",
+          maxWidth: "90vw",
           backgroundColor: "white",
-          borderTopLeftRadius: "16px",
-          borderTopRightRadius: "16px",
-          boxShadow: "0 -4px 12px rgba(0, 0, 0, 0.15)",
+          boxShadow: "-4px 0 12px rgba(0, 0, 0, 0.15)",
           zIndex: 1000,
-          maxHeight: "80vh",
           overflowY: "auto",
-          transform: isOpen ? "translateY(0)" : "translateY(100%)",
-          transition: "transform 0.3s ease"
+          padding: "24px"
         }}
       >
-        <div style={{ padding: "24px" }}>
-          {/* Header */}
-          <div style={{ marginBottom: "24px" }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <div id="swap-drawer-title">
-                <Typography variant="h2">
-                  Swap {dayName} meal
-                </Typography>
-              </div>
-              <IconButton
-                variant="naked"
-                iconName="close"
-                size="medium"
-                onClick={onClose}
-                aria-label="Close swap drawer"
-              />
-            </Stack>
-            
-            {currentRecipe && (
-              <div style={{ marginTop: "8px" }}>
-                <Typography variant="body">
-                  Current: <strong>{currentRecipe.title}</strong>
-                </Typography>
-              </div>
-            )}
-          </div>
+        {/* Header */}
+        <Stack direction="column" gap="xl">
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <div id="swap-drawer-title">
+              <Typography variant="h2">
+                Swap {dayName} meal
+              </Typography>
+            </div>
+            <IconButton
+              variant="naked"
+              iconName="close"
+              size="medium"
+              onClick={onClose}
+              aria-label="Close swap drawer"
+            />
+          </Stack>
+          
+          {currentRecipe && (
+            <div style={{ 
+              padding: "12px 16px",
+              backgroundColor: "#f8f9fa",
+              borderRadius: "8px",
+              borderLeft: "4px solid #007bff"
+            }}>
+              <Typography variant="body">
+                Current: <strong>{currentRecipe.title}</strong>
+              </Typography>
+            </div>
+          )}
 
           {/* Suggested Swaps */}
           <Stack direction="column" gap="md">
             <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <Typography variant="h4">Suggested alternatives</Typography>
+              <Typography variant="h3">Suggested alternatives</Typography>
               {onGenerateAISuggestions && (
                 <Button
                   variant="primary"
-                  size="small"
+                  size="medium"
                   onClick={onGenerateAISuggestions}
                   disabled={isGeneratingAI}
                 >
-                  {isGeneratingAI ? '✨ Generating...' : '✨ Generate AI Suggestions'}
+                  {isGeneratingAI ? 'Generating...' : 'AI suggestions'}
                 </Button>
               )}
             </Stack>
@@ -125,7 +124,7 @@ export default function SwapDrawer({
               }}>
                 <Typography variant="body">
                   {onGenerateAISuggestions 
-                    ? 'Click "Generate AI Suggestions" to get personalized recipe alternatives'
+                    ? 'Click "AI Suggestions" to get personalized recipe alternatives'
                     : 'No alternative recipes available for this day'
                   }
                 </Typography>
@@ -168,25 +167,23 @@ export default function SwapDrawer({
                       labels={recipe.tags.slice(0, 3).map(tag => tag.replace(/_/g, " "))}
                       variant="default"
                     />
-                    
+                    <Divider size="small" />
                     <Stack direction="row" gap="sm">
-                      <Link href={`/recipe/${recipe.id}`} style={{ flex: 1, textDecoration: 'none' }}>
+                      <Link href={`/recipe/${recipe.id}`} style={{ textDecoration: 'none' }}>
                         <Button
                           variant="secondary"
-                          size="small"
+                          size="medium"
                           purpose="button"
-                          style={{ width: '100%' }}
                         >
-                          View Recipe
+                          View recipe
                         </Button>
                       </Link>
                       <Button
                         variant="primary"
-                        size="small"
+                        size="medium"
                         onClick={() => handleSelectSwap(recipe)}
-                        style={{ flex: 1 }}
                       >
-                        Select This
+                        Select
                       </Button>
                     </Stack>
                   </Stack>
@@ -194,7 +191,7 @@ export default function SwapDrawer({
               ))
             )}
           </Stack>
-        </div>
+        </Stack>
       </div>
     </>
   );

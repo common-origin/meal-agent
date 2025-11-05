@@ -12,6 +12,7 @@ interface WeeklyPlanWizardProps {
 export interface WeeklyPlanData {
   pantryItems: string[];
   cuisines: string[];
+  preferredChef?: string;
 }
 
 export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWizardProps) {
@@ -21,6 +22,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
   const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
+  const [preferredChef, setPreferredChef] = useState('');
 
   const totalSteps = 3;
 
@@ -92,6 +94,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
       onComplete({
         pantryItems,
         cuisines: selectedCuisines,
+        preferredChef: preferredChef.trim() || undefined,
       });
     }
   };
@@ -300,6 +303,16 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
                 ✓ {selectedCuisines.length} cuisine{selectedCuisines.length > 1 ? 's' : ''} selected
               </div>
             )}
+
+            <Box mt="md">
+              <TextField
+                label="Preferred Chef or Recipe Source (optional)"
+                value={preferredChef}
+                onChange={(e) => setPreferredChef(e.target.value)}
+                placeholder="e.g., Jamie Oliver, Ottolenghi, RecipeTin Eats"
+                helperText="The AI will try to match the style of recipes from your preferred chef or recipe source"
+              />
+            </Box>
           </Stack>
         </Box>
       )}

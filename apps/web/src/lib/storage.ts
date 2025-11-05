@@ -191,16 +191,18 @@ export interface StoredWeekPlan {
   recipeIds: string[]; // 7 recipe IDs (or empty string for null)
   weekOfISO: string;
   createdAt: string;
+  pantryItems?: string[]; // Items in pantry/fridge for this week
 }
 
 /**
  * Save current week plan (from plan page)
  */
-export function saveCurrentWeekPlan(recipeIds: string[], weekOfISO: string): boolean {
+export function saveCurrentWeekPlan(recipeIds: string[], weekOfISO: string, pantryItems?: string[]): boolean {
   const plan: StoredWeekPlan = {
     recipeIds,
     weekOfISO,
     createdAt: new Date().toISOString(),
+    pantryItems,
   };
   return Storage.set(CURRENT_WEEK_PLAN_KEY, plan);
 }
