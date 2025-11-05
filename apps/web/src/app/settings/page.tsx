@@ -583,6 +583,78 @@ export default function SettingsPage() {
 							</Stack>
 						</Box>
 
+						{/* Pantry Preference */}
+						<Box border="default" borderRadius="4" p="lg" bg="surface">
+							<Stack direction="column" gap="md">
+								<Typography variant="h3">Pantry Ingredients Priority</Typography>
+								<Typography variant="body">
+									Control how the AI prioritizes ingredients you already have in your pantry/fridge when generating meal plans.
+								</Typography>
+								
+								<Dropdown
+									label="Priority Level"
+									value={settings.pantryPreference}
+									onChange={(value) => setSettings(prev => ({
+										...prev,
+										pantryPreference: value as 'hard' | 'soft'
+									}))}
+									options={[
+										{ id: 'hard', label: 'High Priority - Strongly prefer recipes using these ingredients' },
+										{ id: 'soft', label: 'Low Priority - Consider these ingredients if suitable' }
+									]}
+								/>
+
+								<Typography variant="small">
+									💡 Note: Perishable items you add to your pantry list will automatically be prioritized regardless of this setting to help reduce food waste.
+								</Typography>
+							</Stack>
+						</Box>
+
+						{/* Weekly Planning Reminder */}
+						<Box border="default" borderRadius="4" p="lg" bg="surface">
+							<Stack direction="column" gap="md">
+								<Typography variant="h3">Weekly Planning Reminder</Typography>
+								<Typography variant="body">
+									Set when you&apos;d like to be reminded to plan your weekly meals and create your shopping list.
+								</Typography>
+								
+								<Stack direction="row" gap="md">
+									<Dropdown
+										label="Reminder Day"
+										value={settings.weeklyReminderDay || 'saturday'}
+										onChange={(value) => setSettings(prev => ({
+											...prev,
+											weeklyReminderDay: value as 'saturday' | 'sunday' | 'monday'
+										}))}
+										options={[
+											{ id: 'saturday', label: 'Saturday' },
+											{ id: 'sunday', label: 'Sunday' },
+											{ id: 'monday', label: 'Monday' }
+										]}
+									/>
+
+									<input
+										type="time"
+										value={settings.weeklyReminderTime || '18:00'}
+										onChange={(e) => setSettings(prev => ({
+											...prev,
+											weeklyReminderTime: e.target.value
+										}))}
+										style={{
+											padding: '8px 12px',
+											border: '1px solid #ccc',
+											borderRadius: '4px',
+											fontSize: '14px',
+										}}
+									/>
+								</Stack>
+
+								<Typography variant="small">
+									💡 This will be used for future email/SMS notifications to help you stay on track with your meal planning routine.
+								</Typography>
+							</Stack>
+						</Box>
+
 						{/* GitHub Recipe Sync */}
 						<Box border="default" borderRadius="3" p="xl" bg="default">
 							<Stack direction="column" gap="md">

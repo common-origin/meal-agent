@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Stack, Typography, Button } from "@common-origin/design-system";
+import { Stack, Typography, Button, Box, TextField } from "@common-origin/design-system";
 import WeekPlannerGrid from "@/components/app/WeekPlannerGrid";
 import BudgetBar from "@/components/app/BudgetBar";
 import WeeklyOverridesSheet from "@/components/app/WeeklyOverridesSheet";
@@ -30,6 +30,12 @@ export default function PlanPage() {
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [generatingDayIndex, setGeneratingDayIndex] = useState<number | null>(null);
+  
+  // Pantry items state
+  const [pantryItems, setPantryItems] = useState<string[]>([]);
+  const [newPantryItem, setNewPantryItem] = useState('');
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
 
   useEffect(() => {
     track('page_view', { page: '/plan' });
@@ -314,6 +320,52 @@ export default function PlanPage() {
     });
   };
 
+  const handleScanPantryImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsScanning(true);
+    setScanError(null);
+
+    try {
+      console.log('📸 Scanning pantry image:', file.name);
+
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch('/api/scan-pantry-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        throw new Error(data.error || data.details || 'Failed to scan image');
+      }
+
+      console.log('✅ Ingredients detected:', data.ingredients);
+
+      // Add detected ingredients to pantry items (avoiding duplicates)
+      const newIngredients = data.ingredients.filter(
+        (item: string) => !pantryItems.some(existing => existing.toLowerCase() === item.toLowerCase())
+      );
+
+      if (newIngredients.length > 0) {
+        setPantryItems([...pantryItems, ...newIngredients]);
+      }
+
+      // Reset file input
+      event.target.value = '';
+
+    } catch (error) {
+      console.error('❌ Error scanning image:', error);
+      setScanError(error instanceof Error ? error.message : 'Failed to scan image');
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
   const handleGenerateWithAI = async () => {
     setIsGenerating(true);
     setGenerationError(null);
@@ -326,6 +378,8 @@ export default function PlanPage() {
         servings: familySettings.totalServings,
         cuisines: familySettings.cuisines,
         budgetRange: `$${familySettings.budgetPerMeal.min}-${familySettings.budgetPerMeal.max}`,
+        pantryPreference: familySettings.pantryPreference,
+        pantryItemsCount: pantryItems.length,
       });
       
       // Get recipe IDs to exclude from history
@@ -342,6 +396,7 @@ export default function PlanPage() {
           familySettings,
           numberOfRecipes: 5, // Start with 5 to avoid timeout/truncation
           excludeRecipeIds, // Pass recipe history to avoid repetition
+          pantryItems, // Pass pantry items for AI to prioritize
         }),
       });
 
@@ -621,6 +676,110 @@ export default function PlanPage() {
             </Button>
           </Stack>
         </Stack>
+
+        {/* Pantry Items Section */}
+        <Box border="default" borderRadius="4" p="lg" bg="surface">
+          <Stack direction="column" gap="lg">
+            <Stack direction="column" alignItems="flex-start">
+              <Typography variant="h3">In the pantry/fridge</Typography>
+              <Typography variant="body">
+                Add ingredients you already have to reduce waste and save money. The AI will prioritize recipes using these items.
+              </Typography>
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleScanPantryImage}
+                style={{ display: 'none' }}
+                id="pantry-image-upload"
+              />
+              <Button
+                variant="primary"
+                size="medium"
+                onClick={() => document.getElementById('pantry-image-upload')?.click()}
+                disabled={isScanning}
+              >
+                {isScanning ? 'Scanning...' : 'Scan Fridge/Pantry'}
+              </Button>
+            </Stack>
+
+            {scanError && (
+              <div style={{
+                padding: "12px",
+                backgroundColor: "#f8d7da",
+                border: "1px solid #dc3545",
+                borderRadius: "8px"
+              }}>
+                <Typography variant="small">
+                  ❌ {scanError}
+                </Typography>
+              </div>
+            )}
+
+            <Stack direction="row" gap="sm" alignItems="flex-end">
+              <TextField
+                label="Add ingredient"
+                value={newPantryItem}
+                onChange={(e) => setNewPantryItem(e.target.value)}
+                placeholder="e.g., chicken breast, tomatoes, rice"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && newPantryItem.trim()) {
+                    setPantryItems([...pantryItems, newPantryItem.trim()]);
+                    setNewPantryItem('');
+                  }
+                }}
+                style={{ flex: 1 }}
+              />
+              <Button
+                variant="primary"
+                size="large"
+                onClick={() => {
+                  if (newPantryItem.trim()) {
+                    setPantryItems([...pantryItems, newPantryItem.trim()]);
+                    setNewPantryItem('');
+                  }
+                }}
+                disabled={!newPantryItem.trim()}
+              >
+                Add Item
+              </Button>
+            </Stack>
+
+            {pantryItems.length > 0 && (
+              <Stack direction="column" gap="xs">
+                {pantryItems.map((item, idx) => (
+                  <Box 
+                    key={idx} 
+                    p="sm"
+                    bg="subtle"
+                    borderRadius="2"
+                  >
+                    <Stack 
+                      direction="row" 
+                      justifyContent="space-between" 
+                      alignItems="center"
+                    >
+                      <Typography variant="body">• {item}</Typography>
+                      <Button
+                        variant="secondary"
+                        size="small"
+                        onClick={() => setPantryItems(items => items.filter((_, i) => i !== idx))}
+                      >
+                        Remove
+                      </Button>
+                    </Stack>
+                  </Box>
+                ))}
+              </Stack>
+            )}
+
+            {pantryItems.length === 0 && (
+              <Typography variant="small">
+                💡 No items added yet. Add ingredients above or scan your fridge/pantry!
+              </Typography>
+            )}
+          </Stack>
+        </Box>
 
         {/* Error Message */}
         {generationError && (

@@ -12,6 +12,7 @@ export interface RecipeGenerationRequest {
   numberOfRecipes: number;
   excludeRecipeIds?: string[]; // Recipes to avoid (for variety)
   specificDays?: ('weeknight' | 'weekend')[]; // If generating specific days
+  pantryItems?: string[]; // Ingredients already available
 }
 
 /**
@@ -53,7 +54,7 @@ CRITICAL RULES:
  * Build the user prompt with specific family requirements
  */
 export function buildRecipeGenerationPrompt(request: RecipeGenerationRequest): string {
-  const { familySettings, numberOfRecipes, excludeRecipeIds, specificDays } = request;
+  const { familySettings, numberOfRecipes, excludeRecipeIds, specificDays, pantryItems } = request;
   
   const cuisineList = familySettings.cuisines.length > 0 
     ? familySettings.cuisines.join(', ')
@@ -99,6 +100,23 @@ CUISINE PREFERENCES:
 
   if (familySettings.favoriteIngredients.length > 0) {
     prompt += `\n- Try to include: ${familySettings.favoriteIngredients.join(', ')}`;
+  }
+
+  // Add pantry items section with priority based on preference
+  if (pantryItems && pantryItems.length > 0) {
+    const preferenceLevel = familySettings.pantryPreference || 'hard';
+    
+    if (preferenceLevel === 'hard') {
+      prompt += `\n\nPANTRY/FRIDGE ITEMS (HIGH PRIORITY - MUST USE):
+- The following ingredients are already available: ${pantryItems.join(', ')}
+- PRIORITIZE recipes that use these ingredients to reduce waste
+- Try to incorporate as many of these items as possible into the weekly plan`;
+    } else {
+      prompt += `\n\nPANTRY/FRIDGE ITEMS (LOW PRIORITY - CONSIDER IF SUITABLE):
+- Available ingredients: ${pantryItems.join(', ')}
+- Consider using these if they fit well with the meal plan
+- Don't force them if they don't suit the cuisine or preferences`;
+    }
   }
 
   prompt += `\n\nTIME & BUDGET CONSTRAINTS:

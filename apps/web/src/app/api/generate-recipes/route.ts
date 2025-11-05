@@ -71,12 +71,14 @@ export async function POST(request: NextRequest) {
       numberOfRecipes: body.numberOfRecipes || 7, // Default to 7 for a week
       excludeRecipeIds: body.excludeRecipeIds || [],
       specificDays: body.specificDays || undefined,
+      pantryItems: body.pantryItems || [], // Pass pantry items to AI
     };
 
     console.log('📥 Recipe generation request:', {
       numberOfRecipes: generationRequest.numberOfRecipes,
       cuisines: generationRequest.familySettings.cuisines,
       servings: generationRequest.familySettings.totalServings,
+      pantryItemsCount: generationRequest.pantryItems?.length || 0,
     });
 
     // Generate recipes with AI
