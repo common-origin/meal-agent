@@ -1,8 +1,8 @@
 # Documentation Index
 
-**Last Updated**: November 2, 2025  
-**Project**: Meal Agent - Intelligent Meal Planning System  
-**Status**: ✅ Phase 1 Complete + Real Recipes Integrated + **DEPLOYED TO PRODUCTION**  
+**Last Updated**: 6 November 2025  
+**Project**: Meal Agent - AI-Powered Meal Planning System  
+**Status**: ✅ **Phase 1 & 2 Complete** - **DEPLOYED TO PRODUCTION**  
 **Production URL**: https://meal-agent-gvvyzmw1k-commonorigins-projects.vercel.app
 
 This folder contains comprehensive documentation for the Meal Agent project. Start here to understand the system, APIs, and implementation details.
@@ -22,45 +22,39 @@ Start with these documents in order:
    - **Start here!**
 
 2. **[PROJECT_STATUS.md](./PROJECT_STATUS.md)** 📊 (5 min read)
-   - Current project status (Phase 1 complete + real recipes integrated!)
+   - Current project status (Phase 1 & 2 complete with AI features!)
    - System capabilities overview
    - Key files and metrics
-   - Next steps roadmap
+   - Completed features
 
 3. **[ARCHITECTURE.md](./ARCHITECTURE.md)** 🏗️ (15 min read)
    - High-level system design
    - Data flow diagrams
    - Component architecture
+   - AI integration
    - Technology stack
 
 ---
 
-### **For Implementation Details** 🔧
+### **For Implementation Reference** �
 
-Deep dives into Phase 1 work:
-
-4. **[PHASE_1_IMPLEMENTATION.md](./PHASE_1_IMPLEMENTATION.md)** 📝 (30 min read)
-   - All 10 work orders explained
-   - Implementation patterns
-   - Code examples
-   - Lessons learned
-   - **Most comprehensive guide**
-
-5. **[API_REFERENCE.md](./API_REFERENCE.md)** 📖 (20 min read)
+4. **[API_REFERENCE.md](./API_REFERENCE.md)** 📖 (20 min read)
    - Complete API documentation
    - Function signatures
    - Parameters and return types
    - Usage examples
    - **Essential for coding**
 
----
+5. **[AI_SETUP.md](./AI_SETUP.md)** 🤖 (5 min read)
+   - Google Gemini API setup
+   - Environment configuration
+   - AI feature usage
+   - Troubleshooting
 
-### **For Project Management** 📋
-
-6. **[WORK_ORDERS_AGENT_V1 — Phase 1.md](./WORK_ORDERS_AGENT_V1%20—%20Phase%201%20(Agent%20logic,%20library%20search,%20plan%20review,%20Coles%20mapping%20v0).md)** 📋
-   - Original work order specifications
-   - Acceptance criteria
-   - Planning document
+6. **[DEBUGGING_AI.md](./DEBUGGING_AI.md)** 🐛 (10 min read)
+   - AI troubleshooting guide
+   - Common issues and solutions
+   - Error handling
 
 ---
 
@@ -72,15 +66,45 @@ Deep dives into Phase 1 work:
    - Build commands
    - Troubleshooting
 
+8. **[COPILOT_BUILD.md](./COPILOT_BUILD.md)** �
+   - Fresh project setup guide
+   - Design system integration
+   - Workspace configuration
+   - Useful for new similar projects
+
+9. **[DESIGN_SYSTEM_MIGRATION.md](./DESIGN_SYSTEM_MIGRATION.md)** 🎨
+   - Component migration tracker
+   - Design system v1.14.0 components
+   - Migration metrics and history
+
 ---
 
-### **Historical/Planning Documents** 📜
+### **For AI Assistants & Onboarding** 🤖
 
-These are older planning docs (pre-Phase 1):
+10. **[PROJECT_INSTRUCTIONS.md](./PROJECT_INSTRUCTIONS.md)** 📋
+    - Project overview for AI assistants
+    - Component inventory
+    - Success criteria
+    - Development guidelines
 
-- **[COPILOT_BUILD.md](./COPILOT_BUILD.md)** - Original build planning
-- **[PROJECT_INSTRUCTIONS.md](./PROJECT_INSTRUCTIONS.md)** - Project guidelines
-- **[INDEXER_ENHANCEMENT_PLAN.md](./INDEXER_ENHANCEMENT_PLAN.md)** - Recipe indexer planning
+---
+
+## 📁 Folder Structure
+
+### `workorders/`
+- **`completed/`** - Finished work orders (WO11: Family Settings)
+- **`active/`** - Current or upcoming work orders
+
+### `archive/`
+Historical planning documents (completed phases):
+- **PHASE_1_IMPLEMENTATION.md** - Phase 1 implementation details
+- **PHASE_2_AI_PLAN.md** - Phase 2 AI planning and completion
+- **PHASE_2_KICKOFF.md** - Phase 2 kickoff notes
+- **PHASE_2_PLANNING.md** - Phase 2 planning decisions
+- **INDEXER_ENHANCEMENT_PLAN.md** - Recipe indexer planning
+- **WORK_ORDERS_AGENT_V1.md** - Original Phase 1 work orders
+
+*These docs preserve decision history but are not needed for active development.*
 
 ---
 
@@ -88,13 +112,21 @@ These are older planning docs (pre-Phase 1):
 
 ### I'm a **Frontend Developer**
 1. Read [QUICK_START.md](./QUICK_START.md)
-2. Check [API_REFERENCE.md](./API_REFERENCE.md) for UI component APIs
-3. Look at [ARCHITECTURE.md](./ARCHITECTURE.md) - Component Architecture section
+2. Check [API_REFERENCE.md](./API_REFERENCE.md) for component APIs
+3. Review [DESIGN_SYSTEM_MIGRATION.md](./DESIGN_SYSTEM_MIGRATION.md) for available components
+4. Look at [ARCHITECTURE.md](./ARCHITECTURE.md) - UI Layer section
 
 ### I'm a **Backend/Logic Developer**
 1. Read [QUICK_START.md](./QUICK_START.md)
 2. Study [API_REFERENCE.md](./API_REFERENCE.md) - Core Libraries section
-3. Deep dive [PHASE_1_IMPLEMENTATION.md](./PHASE_1_IMPLEMENTATION.md) - Work Orders 2-3
+3. Check [ARCHITECTURE.md](./ARCHITECTURE.md) - AI Layer & Logic Layer sections
+4. Review historical implementation in [archive/PHASE_1_IMPLEMENTATION.md](./archive/PHASE_1_IMPLEMENTATION.md)
+
+### I'm working with **AI Features**
+1. Read [AI_SETUP.md](./AI_SETUP.md) for Gemini API setup
+2. Check [DEBUGGING_AI.md](./DEBUGGING_AI.md) for troubleshooting
+3. Review [ARCHITECTURE.md](./ARCHITECTURE.md) - AI Layer section
+4. See [archive/PHASE_2_AI_PLAN.md](./archive/PHASE_2_AI_PLAN.md) for implementation history
 
 ### I'm a **Product Manager**
 1. Read [PROJECT_STATUS.md](./PROJECT_STATUS.md)
