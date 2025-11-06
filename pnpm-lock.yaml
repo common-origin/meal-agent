@@ -30,8 +30,8 @@ importers:
   apps/web:
     dependencies:
       '@common-origin/design-system':
-        specifier: ^1.12.1
-        version: 1.12.1(@babel/core@7.28.5)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(styled-components@6.1.19(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
+        specifier: ^1.14.0
+        version: 1.14.0(@babel/core@7.28.5)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(styled-components@6.1.19(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
       '@google/generative-ai':
         specifier: ^0.24.1
         version: 0.24.1
@@ -186,8 +186,8 @@ packages:
     resolution: {integrity: sha512-qQ5m48eI/MFLQ5PxQj4PFaprjyCTLI37ElWMmNs0K8Lk3dVeOdNpB3ks8jc7yM5CDmVC73eMVk/trk3fgmrUpA==}
     engines: {node: '>=6.9.0'}
 
-  '@common-origin/design-system@1.12.1':
-    resolution: {integrity: sha512-9x0kTXXcCOywDFxfFP3wi+lXbyf1WwgU44boOgPgKwR6fOvSgmFLKkThBFFOoCuh9g8Fhmsc6Jb47rRzTdkgiw==}
+  '@common-origin/design-system@1.14.0':
+    resolution: {integrity: sha512-JoRAWVeLAWwQaa/BtEIBXfEY6Q68zIyAkNg+hMh9M5fFAUmhbBb4sD42gg6fxeE+XmBwhM2nOHlK8thsjOQY1g==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
@@ -2909,7 +2909,7 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
 
-  '@common-origin/design-system@1.12.1(@babel/core@7.28.5)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(styled-components@6.1.19(react-dom@19.2.0(react@19.2.0))(react@19.2.0))':
+  '@common-origin/design-system@1.14.0(@babel/core@7.28.5)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(styled-components@6.1.19(react-dom@19.2.0(react@19.2.0))(react@19.2.0))':
     dependencies:
       '@hotjar/browser': 1.0.9
       date-fns: 4.1.0

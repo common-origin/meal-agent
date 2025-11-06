@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Stack, Typography, Button } from "@common-origin/design-system";
+import { Stack, Typography, Button, Slider, Sheet, IconButton } from "@common-origin/design-system";
 import { type PlanWeek } from "@/lib/types/recipe";
 
 interface RegenerateDrawerProps {
@@ -66,66 +66,27 @@ export default function RegenerateDrawer({
   };
 
   return (
-    <>
-      {/* Overlay */}
-      <div
-        onClick={onClose}
-        aria-hidden="true"
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.5)",
-          zIndex: 999
-        }}
-      />
+    <Sheet
+      isOpen={isOpen}
+      onClose={onClose}
+      position="right"
+      width="400px"
+      title="Regenerate Plan"
+    >
+      <Stack direction="column" gap="xl">
+        {/* Header */}
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Typography variant="h3">Regenerate Plan</Typography>
+          <IconButton
+            variant="naked"
+            iconName="close"
+            size="medium"
+            onClick={onClose}
+            aria-label="Close regenerate drawer"
+          />
+        </Stack>
 
-      {/* Drawer */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Regenerate meal plan"
-        style={{
-          position: "fixed",
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: "400px",
-          maxWidth: "90vw",
-          backgroundColor: "white",
-          zIndex: 1000,
-          padding: "24px",
-          overflowY: "auto",
-          boxShadow: "-2px 0 8px rgba(0, 0, 0, 0.1)"
-        }}
-      >
-        <Stack direction="column" gap="xl">
-          {/* Header */}
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="h3">Regenerate Plan</Typography>
-            <button
-              onClick={onClose}
-              aria-label="Close regenerate drawer"
-              style={{
-                border: "none",
-                background: "transparent",
-                fontSize: "24px",
-                cursor: "pointer",
-                padding: "8px",
-                minWidth: "44px",
-                minHeight: "44px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
-              }}
-            >
-              ✕
-            </button>
-          </Stack>
-
-          {/* Pin Days Section */}
+        {/* Pin Days Section */}
           <div role="group" aria-label="Pin specific days to keep their meals">
             <Typography variant="h4">Pin Days</Typography>
             <Typography variant="small">
@@ -179,25 +140,13 @@ export default function RegenerateDrawer({
               Current: ${currentPlan.costEstimate.toFixed(2)}
             </Typography>
             <div style={{ marginTop: "8px" }}>
-              <label htmlFor="budget-slider" style={{ display: "block", marginBottom: "8px" }}>
-                <input
-                  id="budget-slider"
-                  type="range"
-                  min={Math.floor(currentPlan.costEstimate * 0.7)}
-                  max={Math.floor(currentPlan.costEstimate * 1.3)}
-                  value={maxCost}
-                  onChange={(e) => setMaxCost(Number(e.target.value))}
-                  style={{ width: "100%", height: "44px", cursor: "pointer" }}
-                  aria-label="Budget target slider"
-                  aria-valuemin={Math.floor(currentPlan.costEstimate * 0.7)}
-                  aria-valuemax={Math.floor(currentPlan.costEstimate * 1.3)}
-                  aria-valuenow={maxCost}
-                  aria-valuetext={`$${maxCost.toFixed(2)}`}
-                />
-              </label>
-              <Typography variant="body" aria-live="polite">
-                Target: ${maxCost.toFixed(2)}
-              </Typography>
+              <Slider
+                label={`Target: $${maxCost.toFixed(2)}`}
+                min={Math.floor(currentPlan.costEstimate * 0.7)}
+                max={Math.floor(currentPlan.costEstimate * 1.3)}
+                value={maxCost}
+                onChange={(value: number) => setMaxCost(value)}
+              />
             </div>
           </div>
 
@@ -289,7 +238,6 @@ export default function RegenerateDrawer({
             </Button>
           </Stack>
         </Stack>
-      </div>
-    </>
+    </Sheet>
   );
 }

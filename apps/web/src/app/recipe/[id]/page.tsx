@@ -1,18 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Stack, Typography, Box, Button, ChipGroup, IconButton } from "@common-origin/design-system";
 import { toggleFavorite, isFavorite } from "@/lib/storage";
 import { RecipeLibrary } from "@/lib/library";
 import { type Recipe } from "@/lib/types/recipe";
 import { track } from "@/lib/analytics";
-import Link from "next/link";
 
 type RecipePageProps = {
   params: Promise<{ id: string }>;
 };
 
 export default function RecipePage({ params }: RecipePageProps) {
+  const router = useRouter();
   const [id, setId] = useState<string>("");
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [favorited, setFavorited] = useState(false);
@@ -47,11 +48,13 @@ export default function RecipePage({ params }: RecipePageProps) {
     return (
       <main style={{ padding: 24 }}>
         <Stack direction="column" gap="lg">
-          <Link href="/plan" style={{ textDecoration: 'none' }}>
-            <Button variant="secondary" size="large">
-              ← Back to Plan
-            </Button>
-          </Link>
+          <Button 
+            variant="secondary" 
+            size="large"
+            onClick={() => router.back()}
+          >
+            Back
+          </Button>
           <Typography variant="h1">Recipe not found</Typography>
           <Typography variant="body">
             The recipe with ID &quot;{id}&quot; could not be found.
@@ -73,11 +76,13 @@ export default function RecipePage({ params }: RecipePageProps) {
       <Stack direction="column" gap="xl">
         {/* Back button and favorite */}
         <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Link href="/plan" style={{ textDecoration: 'none' }}>
-            <Button variant="secondary" size="large">
-              ← Back to Plan
-            </Button>
-          </Link>
+          <Button 
+            variant="secondary" 
+            size="large"
+            onClick={() => router.back()}
+          >
+            Back
+          </Button>
           
           <IconButton
             variant={favorited ? "primary" : "secondary"}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Stack, Typography, Button, ProgressBar } from "@common-origin/design-system";
+import { Stack, Typography, Button, ProgressBar, ResponsiveGrid } from "@common-origin/design-system";
 import MealCard from "@/components/app/MealCard";
 import LeftoverCard from "@/components/app/LeftoverCard";
 import RegenerateDrawer from "@/components/app/RegenerateDrawer";
@@ -224,14 +224,14 @@ export default function PlanReviewPage() {
       <Stack direction="column" gap="xl">
         {/* Header */}
         <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Typography variant="h1">Review Your Meal Plan</Typography>
+          <Typography variant="h1">Review your Meal Plan</Typography>
           <Button
             variant="secondary"
             size="medium"
             onClick={() => router.push('/plan')}
             aria-label="Go back to plan overview page"
           >
-            ← Back to Plan
+            Back to Plan
           </Button>
         </Stack>
 
@@ -258,7 +258,7 @@ export default function PlanReviewPage() {
               backgroundColor: "#f9f9f9"
             }}
           >
-            <Typography variant="h4">Total Cost</Typography>
+            <Typography variant="h4">Total cost</Typography>
             <Typography variant="h2">${plan.costEstimate.toFixed(2)}</Typography>
             <Typography variant="small">
               ${(plan.costEstimate / plan.days.length).toFixed(2)} per meal
@@ -277,7 +277,7 @@ export default function PlanReviewPage() {
               backgroundColor: "#f9f9f9"
             }}
           >
-            <Typography variant="h4">Weeknight Constraint</Typography>
+            <Typography variant="h4">Weeknight constraint</Typography>
             <Typography variant="h2">
               {weeknightsMeetConstraint}/{weeknightCount}
             </Typography>
@@ -296,7 +296,7 @@ export default function PlanReviewPage() {
               backgroundColor: "#f9f9f9"
             }}
           >
-            <Typography variant="h4">Kid-Friendly</Typography>
+            <Typography variant="h4">Kid-friendly</Typography>
             <Typography variant="h2">
               {kidFriendlyCount}/{totalDays}
             </Typography>
@@ -315,7 +315,7 @@ export default function PlanReviewPage() {
               backgroundColor: "#f9f9f9"
             }}
           >
-            <Typography variant="h4">Ingredient Reuse</Typography>
+            <Typography variant="h4">Ingredient reuse</Typography>
             <Typography variant="h2">{reusedIngredients}</Typography>
             <Typography variant="small">Ingredients used 2+ times</Typography>
           </div>
@@ -334,7 +334,7 @@ export default function PlanReviewPage() {
             }}
           >
             <Typography variant="h4">
-              <span role="img" aria-label="Warning">⚠️</span> Plan Conflicts
+              <span role="img" aria-label="Warning">⚠️</span> Plan conflicts
             </Typography>
             <Stack direction="column" gap="xs">
               {plan.conflicts.map((conflict, idx) => (
@@ -356,19 +356,18 @@ export default function PlanReviewPage() {
               onClick={() => setShowRegenerateDrawer(true)}
               aria-label="Open regenerate drawer to customize meal plan with constraints"
             >
-              <span role="img" aria-label="Settings">⚙️</span> Regenerate with Constraints
+              <span role="img" aria-label="Settings">⚙️</span> Regenerate with constraints
             </Button>
           </Stack>
         </div>
 
-        <div 
-          role="region"
-          aria-label="7-day meal grid"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-            gap: "16px"
-          }}
+        <ResponsiveGrid 
+          cols={1} 
+          colsSm={2} 
+          colsMd={3} 
+          colsLg={4}
+          gapX={4}
+          gapY={8}
         >
           {meals.map((meal, index) => {
             if (!meal) return null;
@@ -379,32 +378,27 @@ export default function PlanReviewPage() {
             if (isLeftover && index > 0) {
               const prevMeal = meals[index - 1];
               return (
-                <article key={index} aria-label={`${DAYS[index]}: Leftovers meal`}>
-                  <div style={{ marginBottom: "8px" }}>
-                    <Typography variant="small">
-                      <strong>{DAYS[index]}</strong>
-                    </Typography>
-                  </div>
+                <div key={index} style={{ display: "flex", flexDirection: "column", gap: "8px", height: "100%" }}>
+                  <Typography variant="h4">{DAYS[index]}</Typography>
                   <LeftoverCard
                     originalRecipeTitle={prevMeal?.title || ""}
                     originalDay={DAYS[index - 1]}
                   />
-                </article>
+                </div>
               );
             }
             
             return (
-              <article key={index} aria-label={`${DAYS[index]}: ${meal.title}`}>
-                <div style={{ marginBottom: "8px" }}>
-                  <Typography variant="small">
-                    <strong>{DAYS[index]}</strong>
-                  </Typography>
-                </div>
-                <MealCard {...meal} />
-              </article>
+              <div key={index} style={{ display: "flex", flexDirection: "column", gap: "8px", height: "100%" }}>
+                <Typography variant="h4">{DAYS[index]}</Typography>
+                <MealCard 
+                  {...meal}
+                  showMenu={false}
+                />
+              </div>
             );
           })}
-        </div>
+        </ResponsiveGrid>
 
         {/* Actions */}
         <Stack direction="row" gap="md" justifyContent="flex-end">
@@ -414,7 +408,7 @@ export default function PlanReviewPage() {
             onClick={() => setShowRegenerateDrawer(true)}
             aria-label="Regenerate meal plan with different constraints"
           >
-            Regenerate Plan
+            Regenerate plan
           </Button>
           <Button
             variant="primary"
@@ -424,7 +418,7 @@ export default function PlanReviewPage() {
             onClick={handleConfirm}
             aria-label="Confirm meal plan and view shopping list"
           >
-            Confirm & View Shopping List →
+            Confirm & view Shopping List
           </Button>
         </Stack>
       </Stack>

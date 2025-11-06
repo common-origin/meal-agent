@@ -267,7 +267,7 @@ export default function AddRecipePage() {
       <main style={{ padding: 24, maxWidth: '800px', margin: '0 auto' }}>
         <Stack direction="column" gap="xl">
           <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="h1">Upload Recipe Photo</Typography>
+            <Typography variant="h1">Upload recipe photo</Typography>
             <Button variant="secondary" size="small" onClick={() => setMode('choice')}>
               Back
             </Button>
@@ -301,13 +301,13 @@ export default function AddRecipePage() {
                   onClick={handleExtractFromImage}
                   disabled={extracting}
                 >
-                  {extracting ? 'Extracting...' : '🤖 Extract Recipe with AI'}
+                  {extracting ? 'Extracting...' : 'Extract Recipe with AI'}
                 </Button>
                 <Button 
                   variant="secondary" 
                   onClick={() => setImagePreview('')}
                 >
-                  Choose Different Image
+                  Choose different image
                 </Button>
               </Stack>
 
@@ -377,7 +377,7 @@ export default function AddRecipePage() {
                 onClick={handleExtractFromUrl}
                 disabled={extracting || !recipeUrl}
               >
-                {extracting ? 'Extracting...' : '🤖 Extract Recipe from URL'}
+                {extracting ? 'Extracting...' : 'Extract Recipe from URL'}
               </Button>
             </Stack>
           </Box>
@@ -687,7 +687,7 @@ function RecipeForm({
       {/* Save Button */}
       <Stack direction="row" gap="md" justifyContent="flex-end">
         <Button variant="primary" onClick={onSave} disabled={saving}>
-          {saving ? 'Saving...' : '💾 Save Recipe'}
+          {saving ? 'Saving...' : 'Save Recipe'}
         </Button>
       </Stack>
     </Stack>

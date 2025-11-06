@@ -17,6 +17,12 @@ export type MealCardProps = {
   reasons?: string[];
   onSwapClick?: () => void;
   onDeleteClick?: () => void;
+  // Customization options
+  showMenu?: boolean;
+  swapButtonText?: string;
+  swapButtonVariant?: "primary" | "secondary";
+  viewRecipeButtonText?: string;
+  viewRecipeButtonVariant?: "primary" | "secondary";
 };
 
 export default function MealCard({ 
@@ -28,7 +34,12 @@ export default function MealCard({
   conflicts = [],
   reasons = [],
   onSwapClick,
-  onDeleteClick
+  onDeleteClick,
+  showMenu = true,
+  swapButtonText = "Swap meal",
+  swapButtonVariant = "secondary",
+  viewRecipeButtonText = "View Recipe",
+  viewRecipeButtonVariant = "secondary",
 }: MealCardProps) {
   const [favorited, setFavorited] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -61,80 +72,82 @@ export default function MealCard({
       style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}
     >
       {/* Top right buttons */}
-      <div style={{ position: "absolute", top: "12px", right: "12px", display: 'flex', gap: '8px', alignItems: 'center' }}>
-        {/* Menu button */}
-        <div style={{ position: 'relative' }}>
-          <IconButton
-            variant="secondary"
-            iconName="close"
-            size="small"
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="More options"
-          />
-          
-          {/* Dropdown menu */}
-          {menuOpen && (
-            <>
-              {/* Backdrop to close menu */}
-              <div
-                onClick={() => setMenuOpen(false)}
-                style={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  zIndex: 998
-                }}
-              />
-              
-              {/* Menu */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  marginTop: '4px',
-                  backgroundColor: 'white',
-                  border: '1px solid #dee2e6',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                  zIndex: 999,
-                  minWidth: '160px'
-                }}
-              >
-                {onDeleteClick && (
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onDeleteClick();
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      border: 'none',
-                      backgroundColor: 'transparent',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      color: '#dc3545',
-                      transition: 'background-color 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#f8f9fa';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                    }}
-                  >
-                    Remove from plan
-                  </button>
-                )}
-              </div>
-            </>
-          )}
+      {showMenu && (
+        <div style={{ position: "absolute", top: "12px", right: "12px", display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {/* Menu button */}
+          <div style={{ position: 'relative' }}>
+            <IconButton
+              variant="secondary"
+              iconName="close"
+              size="small"
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label="More options"
+            />
+            
+            {/* Dropdown menu */}
+            {menuOpen && (
+              <>
+                {/* Backdrop to close menu */}
+                <div
+                  onClick={() => setMenuOpen(false)}
+                  style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    zIndex: 998
+                  }}
+                />
+                
+                {/* Menu */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '4px',
+                    backgroundColor: 'white',
+                    border: '1px solid #dee2e6',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    zIndex: 999,
+                    minWidth: '160px'
+                  }}
+                >
+                  {onDeleteClick && (
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onDeleteClick();
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        color: '#dc3545',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f8f9fa';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                    >
+                      Remove from plan
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '16px' }}>
         {/* Top section - Title and Chef */}
@@ -175,29 +188,30 @@ export default function MealCard({
           {/* Bottom section - Action buttons */}
           <Divider size="small" />
           <Stack direction="row" gap="sm">
-            <Link href={`/recipe/${recipeId}`} style={{ textDecoration: 'none' }}>
-              <Button
-                variant="secondary"
-                size="medium"
-                purpose="button"
-                style={{ width: '100%' }}
-              >
-                View Recipe
-              </Button>
-            </Link>
-            
             {onSwapClick && (
               <Button
-                variant="secondary"
+                variant={swapButtonVariant}
                 size="medium"
                 onClick={(e) => {
                   e.stopPropagation();
                   onSwapClick();
                 }}
               >
-                Swap meal
+                {swapButtonText}
               </Button>
             )}
+            
+            <Link href={`/recipe/${recipeId}`} style={{ textDecoration: 'none' }}>
+              <Button
+                variant={viewRecipeButtonVariant}
+                size="medium"
+                purpose="button"
+                style={{ width: '100%' }}
+              >
+                {viewRecipeButtonText}
+              </Button>
+            </Link>
+            
             {/* Favorite button */}
             <IconButton
               variant={favorited ? "secondary" : "naked"}

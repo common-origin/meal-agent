@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { Stack, Typography, IconButton, ChipGroup, Button, Divider } from "@common-origin/design-system";
+import { Stack, Typography, IconButton, Button, Sheet } from "@common-origin/design-system";
 import { type Recipe } from "@/lib/types/recipe";
-import { RecipeLibrary } from "@/lib/library";
+import MealCard from "./MealCard";
 
 export type SwapDrawerProps = {
   isOpen: boolean;
@@ -34,57 +33,29 @@ export default function SwapDrawer({
   };
 
   return (
-    <>
-      {/* Overlay */}
-      <div
-        onClick={onClose}
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.5)",
-          zIndex: 999,
-        }}
-        aria-hidden="true"
-      />
-
-      {/* Side Sheet */}
-      <div
-        role="dialog"
-        aria-labelledby="swap-drawer-title"
-        aria-modal="true"
-        style={{
-          position: "fixed",
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: "600px",
-          maxWidth: "90vw",
-          backgroundColor: "white",
-          boxShadow: "-4px 0 12px rgba(0, 0, 0, 0.15)",
-          zIndex: 1000,
-          overflowY: "auto",
-          padding: "24px"
-        }}
-      >
-        {/* Header */}
-        <Stack direction="column" gap="xl">
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <div id="swap-drawer-title">
-              <Typography variant="h2">
-                Swap {dayName} meal
-              </Typography>
-            </div>
-            <IconButton
-              variant="naked"
-              iconName="close"
-              size="medium"
-              onClick={onClose}
-              aria-label="Close swap drawer"
-            />
-          </Stack>
+    <Sheet
+      isOpen={isOpen}
+      onClose={onClose}
+      position="right"
+      width="600px"
+      title={`Swap ${dayName} meal`}
+    >
+      {/* Header */}
+      <Stack direction="column" gap="xl">
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <div id="swap-drawer-title">
+            <Typography variant="h2">
+              Swap {dayName} meal
+            </Typography>
+          </div>
+          <IconButton
+            variant="naked"
+            iconName="close"
+            size="medium"
+            onClick={onClose}
+            aria-label="Close swap drawer"
+          />
+        </Stack>
           
           {currentRecipe && (
             <div style={{ 
@@ -131,68 +102,25 @@ export default function SwapDrawer({
               </div>
             ) : (
               suggestedSwaps.map((recipe) => (
-                <div
+                <MealCard
                   key={recipe.id}
-                  style={{
-                    border: "1px solid #dee2e6",
-                    borderRadius: "8px",
-                    padding: "16px",
-                    backgroundColor: "white"
-                  }}
-                >
-                  <Stack direction="column" gap="sm">
-                    <Typography variant="h4">{recipe.title}</Typography>
-                    
-                    <Stack direction="row" gap="md" alignItems="center">
-                      <Typography variant="small">
-                        {RecipeLibrary.isCustomRecipe(recipe.id) 
-                          ? "AI Generated" 
-                          : recipe.source.chef === "jamie_oliver" 
-                            ? "Jamie Oliver" 
-                            : "RecipeTin Eats"}
-                      </Typography>
-                      {recipe.timeMins && (
-                        <Typography variant="small">
-                          {recipe.timeMins} mins
-                        </Typography>
-                      )}
-                      {recipe.costPerServeEst && (
-                        <Typography variant="small">
-                          ${recipe.costPerServeEst.toFixed(2)}/serve
-                        </Typography>
-                      )}
-                    </Stack>
-
-                    <ChipGroup 
-                      labels={recipe.tags.slice(0, 3).map(tag => tag.replace(/_/g, " "))}
-                      variant="default"
-                    />
-                    <Divider size="small" />
-                    <Stack direction="row" gap="sm">
-                      <Link href={`/recipe/${recipe.id}`} style={{ textDecoration: 'none' }}>
-                        <Button
-                          variant="secondary"
-                          size="medium"
-                          purpose="button"
-                        >
-                          View recipe
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="primary"
-                        size="medium"
-                        onClick={() => handleSelectSwap(recipe)}
-                      >
-                        Select
-                      </Button>
-                    </Stack>
-                  </Stack>
-                </div>
+                  recipeId={recipe.id}
+                  title={recipe.title}
+                  chef={recipe.source.chef === "jamie_oliver" ? "Jamie Oliver" : "RecipeTin Eats"}
+                  timeMins={recipe.timeMins || 0}
+                  kidsFriendly={recipe.tags.includes('kid_friendly')}
+                  reasons={recipe.tags.slice(0, 3)}
+                  onSwapClick={() => handleSelectSwap(recipe)}
+                  showMenu={false}
+                  swapButtonText="Select this recipe"
+                  swapButtonVariant="primary"
+                  viewRecipeButtonText="View recipe"
+                  viewRecipeButtonVariant="secondary"
+                />
               ))
             )}
           </Stack>
         </Stack>
-      </div>
-    </>
+    </Sheet>
   );
 }

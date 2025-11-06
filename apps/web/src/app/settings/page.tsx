@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import styled from "styled-components";
-import { Box, Button, Checkbox, Chip, Container, Divider, Dropdown, NumberInput, Stack, TextField, Typography } from "@common-origin/design-system";
+import { Box, Button, Checkbox, Chip, Container, Divider, Dropdown, NumberInput, PasswordField, Slider, Stack, TextField, Typography } from "@common-origin/design-system";
 import { tokens } from "@common-origin/design-system";
 import { 
   getFamilySettings, 
@@ -235,7 +235,7 @@ export default function SettingsPage() {
 					<Stack direction="column" gap="xl">
 						{/* Header */}
 						<Stack direction="column" gap="sm">
-							<Typography variant="h1">Family Settings</Typography>
+							<Typography variant="h1">Family settings</Typography>
 							<Typography variant="body">
 								Configure your family&apos;s preferences for AI-powered meal planning
 							</Typography>
@@ -330,10 +330,10 @@ export default function SettingsPage() {
 							</Stack>
 						</Box>
 
-						{/* Dietary Requirements */}
+						{/* Dietary requirements */}
 						<Box border="default" borderRadius="4" p="lg" bg="default">
 							<Stack direction="column" gap="md">
-								<Typography variant="h3">Dietary Requirements</Typography>
+								<Typography variant="h3">Dietary requirements</Typography>
 								
 								<Stack direction="column" gap="sm">
 									<Checkbox
@@ -369,86 +369,66 @@ export default function SettingsPage() {
 						{/* Budget & Time */}
 						<Box border="default" borderRadius="4" p="lg" bg="default">
 							<Stack direction="column" gap="md">
-								<Typography variant="h3">Budget & Time</Typography>
+								<Typography variant="h3">Budget & time</Typography>
 								
-								<Stack direction="column" gap="sm">
-									<label>
-										<Typography variant="subtitle">
-											Budget per meal: ${settings.budgetPerMeal.min} - ${settings.budgetPerMeal.max}
-										</Typography>
-										<Stack direction="row" gap="md" alignItems="center">
-											<input
-												type="range"
-												min="10"
-												max="50"
-												value={settings.budgetPerMeal.min}
-												onChange={(e) => setSettings(prev => ({
-													...prev,
-													budgetPerMeal: {
-														...prev.budgetPerMeal,
-														min: parseInt(e.target.value)
-													}
-												}))}
-												style={{ flex: 1 }}
-											/>
-											<input
-												type="range"
-												min="10"
-												max="50"
-												value={settings.budgetPerMeal.max}
-												onChange={(e) => setSettings(prev => ({
-													...prev,
-													budgetPerMeal: {
-														...prev.budgetPerMeal,
-														max: parseInt(e.target.value)
-													}
-												}))}
-												style={{ flex: 1 }}
-											/>
-										</Stack>
-									</label>
+								<Stack direction="column" gap="lg">
+									<Slider
+										label={`Budget per meal (min): $${settings.budgetPerMeal.min}`}
+										min={10}
+										max={50}
+										value={settings.budgetPerMeal.min}
+										onChange={(value: number) => setSettings(prev => ({
+											...prev,
+											budgetPerMeal: {
+												...prev.budgetPerMeal,
+												min: value
+											}
+										}))}
+									/>
 
-									<label>
-										<Typography variant="subtitle">
-											Max cooking time (weeknights): {settings.maxCookTime.weeknight} minutes
-										</Typography>
-										<input
-											type="range"
-											min="15"
-											max="90"
-											step="5"
-											value={settings.maxCookTime.weeknight}
-											onChange={(e) => setSettings(prev => ({
-												...prev,
-												maxCookTime: {
-													...prev.maxCookTime,
-													weeknight: parseInt(e.target.value)
-												}
-											}))}
-											style={{ width: '100%' }}
-										/>
-									</label>
+									<Slider
+										label={`Budget per meal (max): $${settings.budgetPerMeal.max}`}
+										min={10}
+										max={50}
+										value={settings.budgetPerMeal.max}
+										onChange={(value: number) => setSettings(prev => ({
+											...prev,
+											budgetPerMeal: {
+												...prev.budgetPerMeal,
+												max: value
+											}
+										}))}
+									/>
 
-									<label>
-										<Typography variant="subtitle">
-											Max cooking time (weekends): {settings.maxCookTime.weekend} minutes
-										</Typography>
-										<input
-											type="range"
-											min="15"
-											max="120"
-											step="5"
-											value={settings.maxCookTime.weekend}
-											onChange={(e) => setSettings(prev => ({
-												...prev,
-												maxCookTime: {
-													...prev.maxCookTime,
-													weekend: parseInt(e.target.value)
-												}
-											}))}
-											style={{ width: '100%' }}
-										/>
-									</label>
+									<Slider
+										label={`Max cooking time (weeknights): ${settings.maxCookTime.weeknight} minutes`}
+										min={15}
+										max={90}
+										step={5}
+										value={settings.maxCookTime.weeknight}
+										onChange={(value: number) => setSettings(prev => ({
+											...prev,
+											maxCookTime: {
+												...prev.maxCookTime,
+												weeknight: value
+											}
+										}))}
+									/>
+
+									<Slider
+										label={`Max cooking time (weekends): ${settings.maxCookTime.weekend} minutes`}
+										min={15}
+										max={120}
+										step={5}
+										value={settings.maxCookTime.weekend}
+										onChange={(value: number) => setSettings(prev => ({
+											...prev,
+											maxCookTime: {
+												...prev.maxCookTime,
+												weekend: value
+											}
+										}))}
+									/>
 								</Stack>
 							</Stack>
 						</Box>
@@ -456,7 +436,7 @@ export default function SettingsPage() {
 						{/* Batch Cooking */}
 						<Box border="default" borderRadius="4" p="lg" bg="default">
 							<Stack direction="column" gap="md">
-								<Typography variant="h3">Batch Cooking</Typography>
+								<Typography variant="h3">Batch cooking</Typography>
 								
 								<Checkbox
 									label="Enable batch cooking"
@@ -513,15 +493,16 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Pantry Preference */}
-						<Box border="default" borderRadius="4" p="lg" bg="surface">
+						<Box border="default" borderRadius="4" p="lg" bg="default">
 							<Stack direction="column" gap="md">
-								<Typography variant="h3">Pantry Ingredients Priority</Typography>
+								<Typography variant="h3">Pantry ingredients priority</Typography>
 								<Typography variant="body">
 									Control how the AI prioritizes ingredients you already have in your pantry/fridge when generating meal plans.
 								</Typography>
 								
 								<Dropdown
 									label="Priority Level"
+									helperText="Perishable items you add to your pantry list will automatically be prioritized regardless of this setting to help reduce food waste."
 									value={settings.pantryPreference}
 									onChange={(value) => setSettings(prev => ({
 										...prev,
@@ -532,17 +513,13 @@ export default function SettingsPage() {
 										{ id: 'soft', label: 'Low Priority - Consider these ingredients if suitable' }
 									]}
 								/>
-
-								<Typography variant="small">
-									💡 Note: Perishable items you add to your pantry list will automatically be prioritized regardless of this setting to help reduce food waste.
-								</Typography>
 							</Stack>
 						</Box>
 
 						{/* Weekly Planning Reminder */}
-						<Box border="default" borderRadius="4" p="lg" bg="surface">
+						<Box border="default" borderRadius="4" p="lg" bg="default">
 							<Stack direction="column" gap="md">
-								<Typography variant="h3">Weekly Planning Reminder</Typography>
+								<Typography variant="h3">Weekly planning reminder</Typography>
 								<Typography variant="body">
 									Set when you&apos;d like to be reminded to plan your weekly meals and create your shopping list.
 								</Typography>
@@ -550,6 +527,7 @@ export default function SettingsPage() {
 								<Stack direction="row" gap="md">
 									<Dropdown
 										label="Reminder Day"
+										helperText="This will be used for future email/SMS notifications to help you stay on track with your meal planning routine."
 										value={settings.weeklyReminderDay || 'saturday'}
 										onChange={(value) => setSettings(prev => ({
 											...prev,
@@ -577,17 +555,13 @@ export default function SettingsPage() {
 										}}
 									/>
 								</Stack>
-
-								<Typography variant="small">
-									💡 This will be used for future email/SMS notifications to help you stay on track with your meal planning routine.
-								</Typography>
 							</Stack>
 						</Box>
 
 						{/* GitHub Recipe Sync */}
 						<Box border="default" borderRadius="3" p="xl" bg="default">
 							<Stack direction="column" gap="md">
-								<Typography variant="h2">GitHub Recipe Sync</Typography>
+								<Typography variant="h3">GitHub recipe sync</Typography>
 								<Typography variant="body">
 									Backup and sync your custom recipes to a GitHub repository. This keeps your recipes safe and accessible across devices.
 								</Typography>
@@ -611,40 +585,21 @@ export default function SettingsPage() {
 								{settings.github?.enabled && (
 									<Box maxWidth="400px">
 										<Stack direction="column" gap="lg">
-											<div>
-												<div style={{ marginBottom: '4px' }}>
-													<Typography variant="small">
-														GitHub Personal Access Token
-													</Typography>
-												</div>
-												<input
-													type="password"
-													value={settings.github?.token || ''}
-													onChange={(e) => setSettings(prev => ({
-														...prev,
-														github: {
-															...prev.github!,
-															token: e.target.value,
-														}
-													}))}
-													placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-													style={{
-														width: '100%',
-														padding: '12px 12px',
-														borderRadius: '4px',
-														border: '1px solid #ddd',
-														fontSize: '14px',
-														fontFamily: 'monospace',
-													}}
-												/>
-												<div style={{ marginTop: '4px' }}>
-													<Typography variant="small" color="subdued">
-														<a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
-															Create a token
-														</a> with &apos;repo&apos; scope
-													</Typography>
-												</div>
-											</div>
+											<PasswordField
+												label="GitHub Personal Access Token"
+												value={settings.github?.token || ''}
+												onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSettings(prev => ({
+													...prev,
+													github: {
+														...prev.github!,
+														token: e.target.value,
+													}
+												}))}
+												placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+											/>
+											<a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
+												Create a token
+											</a> with &apos;repo&apos; scope
 											
 											<TextField
 												label="GitHub Username"

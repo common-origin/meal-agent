@@ -810,7 +810,7 @@ export default function PlanPage() {
             purpose="link"
             url="/plan/review"
           >
-            Review Plan →
+            Review Plan
           </Button>
         </Stack>
         </Stack>

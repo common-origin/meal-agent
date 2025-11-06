@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Stack, Typography, IconButton } from "@common-origin/design-system";
+import { Stack, Typography, IconButton, Sheet } from "@common-origin/design-system";
 import { saveWeeklyOverrides } from "@/lib/storage";
 import { nextWeekMondayISO } from "@/lib/schedule";
 import { track } from "@/lib/analytics";
@@ -74,42 +74,26 @@ export default function WeeklyOverridesSheet({
   };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-        zIndex: 50,
-        display: "flex",
-        alignItems: "flex-end",
-        justifyContent: "center"
-      }}
-      onClick={onClose}
+    <Sheet
+      isOpen={isOpen}
+      onClose={onClose}
+      position="bottom"
+      variant="drawer"
+      height="90vh"
+      title="Next Week's Preferences"
     >
-      <div
-        style={{
-          backgroundColor: "white",
-          borderRadius: "16px 16px 0 0",
-          padding: "24px",
-          maxWidth: "600px",
-          width: "100%",
-          maxHeight: "90vh",
-          overflowY: "auto"
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <form onSubmit={handleSubmit}>
-          <Stack direction="column" gap="lg">
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <Typography variant="h2">Next Week&apos;s Preferences</Typography>
-              <IconButton
-                variant="naked"
-                iconName="close"
-                size="medium"
-                onClick={onClose}
-                aria-label="Close"
-              />
-            </Stack>
+      <form onSubmit={handleSubmit}>
+        <Stack direction="column" gap="lg">
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Typography variant="h2">Next Week&apos;s Preferences</Typography>
+            <IconButton
+              variant="naked"
+              iconName="close"
+              size="medium"
+              onClick={onClose}
+              aria-label="Close weekly preferences sheet"
+            />
+          </Stack>
 
             {/* Dinners */}
             <Stack direction="column" gap="sm">
@@ -344,7 +328,6 @@ export default function WeeklyOverridesSheet({
             </button>
           </Stack>
         </form>
-      </div>
-    </div>
+    </Sheet>
   );
 }
