@@ -6,12 +6,17 @@ A family meal planning application built with Common Origin Design System.
 
 ## Features
 
-- 📅 **Weekly Meal Planning** - Plan dinners for the week with an intuitive grid
-- 🍳 **Real Recipes** - 50+ recipes from RecipeTin Eats with real ingredients
-- 💰 **Budget Tracking** - Track spending against your weekly food budget with Coles price estimates
-- 🛒 **Smart Shopping Lists** - Aggregated ingredient lists with CSV export
-- 📊 **Analytics** - Privacy-first local analytics tracking
-- 🔄 **Meal Regeneration** - Intelligent meal suggestions with explainability
+- 📅 **Weekly Meal Planning** - Plan dinners for the week with an intuitive responsive grid
+- 🤖 **AI Recipe Generation** - Gemini-powered personalized recipe creation based on family preferences
+- 🍳 **Real Recipes** - 50+ curated recipes from RecipeTin Eats and Jamie Oliver with real ingredients
+- 🔄 **Intelligent Swapping** - Swap meals with AI-generated suggestions or curated alternatives
+- 💰 **Budget Tracking** - Track spending against your weekly food budget with cost estimates
+- 🛒 **Smart Shopping Lists** - Aggregated ingredient lists with pantry awareness and CSV export
+- � **Pantry Scanning** - AI-powered image recognition to detect ingredients from photos
+- 🎯 **Weekly Planning Wizard** - Interactive wizard for cuisine selection and pantry management
+- 👨‍👩‍👧‍👦 **Family Settings** - Customizable preferences for servings, dietary needs, budget, and cook time
+- �📊 **Analytics** - Privacy-first local analytics tracking
+- ⚙️ **Regeneration** - Pin favorite meals and regenerate the rest with custom constraints
 
 ## Development
 
@@ -66,13 +71,25 @@ pnpm -F web typecheck    # Run TypeScript checking
 
 ## Design System
 
-This project uses the [Common Origin Design System](https://common-origin-design-system.vercel.app/) with components like:
+This project uses the [Common Origin Design System v1.14.0](https://common-origin-design-system.vercel.app/) with components including:
 
+### Core Components
+- `Sheet` - Side and bottom drawers with overlay (used for Pantry, Swap, Regenerate, WeeklyOverrides)
+- `Slider` - Range input for budget and cook time settings
+- `PasswordField` - Secure input with show/hide toggle
+- `ResponsiveGrid` - Adaptive grid layout (1/2/3/4 columns based on breakpoints)
+- `IconButton` - Accessible icon-only buttons
 - `Avatar` - User profile pictures with initials fallback
 - `Stack` - Flexible layout primitive with gap control
-- `Typography` - Semantic text hierarchy (h1-h6, body, small, etc.)
+- `Typography` - Semantic text hierarchy (h1-h6, body, small, label)
+- `Button` - Primary, secondary, and naked variants
+- `TextField` - Text input with label and helper text
+- `Dropdown` - Select input with label
+- `Checkbox` - Boolean input
+- `Box` - Layout primitive with spacing and borders
 
-*Note: Currently experiencing React version compatibility issues between Next.js 16 (React 19) and the design system (React 18). Working with the design system team to resolve.*
+### Design Tokens
+Full access to design tokens for spacing, colors, typography, and breakpoints.
 
 ## Deployment
 
@@ -121,11 +138,32 @@ Built with ❤️ using Common Origin Design System
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 with App Router
-- **Language**: TypeScript
-- **Design System**: [@common-origin/design-system](https://www.npmjs.com/package/@common-origin/design-system)
-- **Package Manager**: PNPM
+- **Framework**: Next.js 16 with App Router
+- **Language**: TypeScript (strict mode)
+- **Design System**: [@common-origin/design-system v1.14.0](https://www.npmjs.com/package/@common-origin/design-system)
+- **AI**: Google Gemini 2.0 Flash Experimental (recipe generation, image recognition, URL extraction)
+- **Package Manager**: PNPM 10.19.0
 - **Deployment**: Vercel
+- **Analytics**: Privacy-first local tracking
+
+## Architecture
+
+### Component Pattern
+- **Shared Components**: Reusable MealCard component with customizable props for different contexts
+- **Sheet Components**: Consistent drawer UX using design system Sheet component
+- **Responsive Grid**: Mobile-first 1→2→3→4 column layout
+- **Context-Aware Navigation**: Browser history-based navigation for proper back button behavior
+
+### State Management
+- **Local Storage**: Recipe library, family settings, week plans, pantry items, recipe history
+- **URL State**: Recipe detail pages
+- **React State**: UI interactions, form inputs, drawer visibility
+
+### AI Integration
+- **Recipe Generation**: Gemini generates personalized recipes based on family settings
+- **Image Recognition**: Detects ingredients from pantry/fridge photos  
+- **URL Extraction**: Scrapes and parses recipes from external websites
+- **Context Awareness**: Excludes recently used recipes, respects pantry items, follows dietary preferences
 
 ## Getting Started
 
