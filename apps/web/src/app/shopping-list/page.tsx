@@ -5,6 +5,7 @@ import styled from "styled-components";
 import { Box, Button, Chip, Container, ResponsiveGrid, Stack, Typography } from "@common-origin/design-system";
 import { tokens } from "@common-origin/design-system";
 import ShoppingListItem from "@/components/app/ShoppingListItem";
+import ColesShoppingModal from "@/components/app/ColesShoppingModal";
 import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from "@/lib/shoppingListAggregator";
 import { generateShoppingListCSV, downloadCSV } from "@/lib/csv";
 import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides, loadCurrentWeekPlan } from "@/lib/storage";
@@ -23,6 +24,7 @@ export default function ShoppingListPage() {
   const [aggregatedItems, setAggregatedItems] = useState<AggregatedIngredient[]>([]);
   const [excludePantry, setExcludePantry] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showColesModal, setShowColesModal] = useState(false);
 
   const generateShoppingList = (excludePantryParam: boolean = false) => {
     setLoading(true);
@@ -140,6 +142,10 @@ export default function ShoppingListPage() {
     downloadCSV(csvContent, "coles-shopping-list.csv");
   };
 
+  const handleShopAtColes = () => {
+    setShowColesModal(true);
+  };
+
   if (loading) {
     return (
       <main style={{ padding: 24 }}>
@@ -188,8 +194,11 @@ export default function ShoppingListPage() {
               >
                 {excludePantry ? "Show Pantry Items" : "Hide Pantry Items"}
               </Button>
-              <Button variant="primary" size="medium" onClick={handleExportCSV}>
+              <Button variant="secondary" size="medium" onClick={handleExportCSV}>
                 Export CSV
+              </Button>
+              <Button variant="primary" size="medium" onClick={handleShopAtColes}>
+                Shop at Coles
               </Button>
             </Stack>
           </Stack>
@@ -264,6 +273,13 @@ export default function ShoppingListPage() {
       </Stack>
       </Container>
       </PageLayout>
+      
+      {/* Coles Shopping Modal */}
+      <ColesShoppingModal
+        isOpen={showColesModal}
+        onClose={() => setShowColesModal(false)}
+        items={aggregatedItems}
+      />
     </main>
   );
 }
