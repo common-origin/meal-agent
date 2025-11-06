@@ -43,19 +43,19 @@ In Chat, run this *work order*:
 > **WORK ORDER 1: Workspace & Next app**
 >
 > * Create `pnpm-workspace.yaml` with packages `apps/*` and `packages/*`.
-> * Create folders: `apps/web`, `packages/common-origin-ds` (placeholder), `packages/utils`.
+> * Create folders: `apps/web`, `packages/utils`.
 > * Scaffold Next.js app **in `apps/web`** (TypeScript, App Router).
 > * Add scripts to `apps/web/package.json`: dev/build/start/lint/typecheck.
-> * Add dependencies: `zod`, `dayjs`.
+> * Add dependencies: `zod`, `dayjs`, `@common-origin/design-system@1.14.0`, `@google/generative-ai`.
 > * Configure import alias `@/*`.
 
-If Copilot can’t run terminal commands, let it generate the files; you run terminal bits:
+If Copilot can't run terminal commands, let it generate the files; you run terminal bits:
 
 ```bash
 printf "packages:\n  - apps/*\n  - packages/*\n" > pnpm-workspace.yaml
-mkdir -p apps web packages/common-origin-ds packages/utils
+mkdir -p apps/web packages/utils
 pnpm create next-app apps/web --ts --eslint --app --src-dir --tailwind false --import-alias @/*
-cd apps/web && pnpm add zod dayjs && cd ../../
+cd apps/web && pnpm add zod dayjs @common-origin/design-system@1.14.0 @google/generative-ai && cd ../../
 pnpm i
 ```
 
@@ -64,6 +64,16 @@ Commit:
 ```bash
 git add . && git commit -m "feat: workspace + Next.js app"
 ```
+
+---
+
+## 4) Install the Common Origin Design System
+
+The design system is available as an NPM package. Install it directly:
+
+```bash
+cd apps/web
+pnpm add @common-origin/design-system@1.14.0
 
 ---
 
@@ -82,17 +92,30 @@ cat > packages/common-origin-ds/package.json << 'JSON'
 JSON
 ```
 
-> Later, you will replace this with your actual DS (copy into `packages/common-origin-ds` or switch to the published package).
+**Available Components (v1.14.0)**:
+- Layout: Container, Stack, Box, ResponsiveGrid, Divider
+- Forms: TextField, NumberInput, PasswordField, Slider, Checkbox, Dropdown
+- Interactive: Button, IconButton, Sheet, Chip
+- Typography: Typography, Avatar
 
-Commit:
-
-```bash
-git add packages/common-origin-ds/package.json && git commit -m "chore(ds): add CODS placeholder"
-```
+Documentation: https://common-origin-design-system.vercel.app/
 
 ---
 
-## 5) App structure & providers
+## 5) Setup Environment Variables
+
+Create a `.env.local` file for API keys:
+
+```bash
+cat > apps/web/.env.local << 'ENV'
+# Google Gemini API Key (get from https://aistudio.google.com/apikey)
+GEMINI_API_KEY=your_api_key_here
+
+# GitHub Personal Access Token (optional, for recipe sync)
+GITHUB_TOKEN=your_token_here
+ENV
+
+## 6) App structure & providers
 
 Use this *work order* in Copilot:
 

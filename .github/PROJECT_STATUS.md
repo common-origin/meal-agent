@@ -1,7 +1,7 @@
 # Meal Agent Project Status
 
-**Last Updated**: 2 November 2025  
-**Status**: ✅ Phase 1 Complete - Real Recipes Integrated - **DEPLOYED TO PRODUCTION**  
+**Last Updated**: 6 November 2025  
+**Status**: ✅ **Phase 1 & 2 Complete** - AI-Powered Meal Planning - **DEPLOYED TO PRODUCTION**  
 **Production URL**: https://meal-agent-gvvyzmw1k-commonorigins-projects.vercel.app
 
 ---
@@ -11,6 +11,10 @@
 ### ✅ Phase 1: Complete (All 10 Work Orders + Recipe Integration)
 
 **Status**: Production-ready intelligent meal planning system with real RecipeTin Eats recipes, explainability, cost transparency, and analytics.
+
+### ✅ Phase 2: Complete (AI Integration & Advanced Features)
+
+**Status**: AI-powered recipe generation, pantry scanning, URL extraction, and weekly planning wizard fully implemented using Google Gemini API.
 
 #### Completed Work Orders
 
@@ -57,9 +61,86 @@
     - Keyboard navigation, screen reader support
     - Touch targets ≥44px, mobile responsive layouts
 
+11. **WO11: Family Settings & Preferences** ✅
+    - `/settings` page with comprehensive family configuration
+    - Household size, cuisine preferences, dietary requirements
+    - Budget constraints, cooking time limits
+    - Batch cooking preferences, pantry priority settings
+    - GitHub recipe sync integration
+
+#### Phase 2 Features (AI Integration)
+
+1. **AI Recipe Generation** ✅
+   - Google Gemini API integration (gemini-2.0-flash-exp model)
+   - `/api/generate-recipes` - Generates personalized recipes from family settings
+   - Context-aware generation (avoids recent recipes, respects dietary preferences)
+   - Custom recipe storage and management
+
+2. **Pantry Scanning** ✅
+   - `/api/extract-recipe-from-image` - Image-based recipe extraction
+   - Uses Gemini Vision to detect ingredients from photos
+   - Pantry/fridge scanning for ingredient detection
+   - PantrySheet component for managing pantry items
+
+3. **URL Recipe Extraction** ✅
+   - `/api/extract-recipe-from-url` - Extracts recipes from any URL
+   - Gemini-powered parsing of recipe websites
+   - Automatic ingredient and instruction extraction
+   - Adds extracted recipes to library
+
+4. **Weekly Planning Wizard** ✅
+   - Step-by-step wizard for generating complete weekly meal plans
+   - AI generates 7 recipes based on family preferences
+   - Integrated with pantry items and dietary constraints
+   - One-click plan creation from wizard
+
+5. **Intelligent Swap Suggestions** ✅
+   - AI-powered meal swap recommendations
+   - Context-aware suggestions based on day of week and family settings
+   - Generates multiple alternatives for any meal
+   - Seamless integration with SwapDrawer
+
+#### Design System Integration (v1.14.0)
+
+1. **Component Migration** ✅
+   - Migrated 4 Sheet components (PantrySheet, RegenerateDrawer, WeeklyOverridesSheet, SwapDrawer)
+   - Migrated 5 Slider components (budget/time controls)
+   - Migrated 1 PasswordField (GitHub token)
+   - Implemented ResponsiveGrid across Plan and Review pages
+   - Refactored MealCard with customization props
+
+2. **Code Consolidation** ✅
+   - ~280 lines removed through component reuse
+   - Standardized all drawers/sheets to Sheet component
+   - Unified recipe cards using shared MealCard component
+   - Consistent close buttons (IconButton) across all sheets
+
+3. **Navigation UX** ✅
+   - Fixed recipe page to use router.back() for context-aware navigation
+   - Returns to previous page (Plan or Review) instead of hardcoded /plan
+
 ---
 
 ## 🎯 System Capabilities
+
+### AI-Powered Recipe Generation
+- **Gemini Integration**: Google's gemini-2.0-flash-exp model for recipe generation
+- **Context-Aware**: Considers family settings, recent history, dietary preferences
+- **Pantry Priority**: Prioritizes ingredients already in pantry/fridge
+- **Customization**: Respects cuisine preferences, budget constraints, cooking time limits
+- **Quality**: Generates family-friendly, practical recipes with clear instructions
+
+### Pantry & Ingredient Management
+- **Image Recognition**: Scan pantry/fridge photos to detect ingredients
+- **Manual Entry**: Add/remove pantry items via PantrySheet
+- **Waste Reduction**: AI prioritizes perishable pantry items
+- **Priority Modes**: Hard (must use) or Soft (prefer) pantry preference
+
+### Recipe Import & Extraction
+- **URL Extraction**: Import recipes from any website via AI parsing
+- **Image Extraction**: Extract recipes from food photos or screenshots
+- **Smart Parsing**: Handles various recipe formats and structures
+- **Library Integration**: Automatically adds extracted recipes to library
 
 ### Intelligent Meal Selection
 - **Scoring Engine**: 10+ rules evaluating freshness, variety, timing, family fit
@@ -96,8 +177,11 @@
 
 ### Core Libraries (`apps/web/src/lib/`)
 
+#### AI Integration
+- **`@google/generative-ai`** - Google Gemini API client
+
 #### Meal Planning Logic
-- **`library.ts`** - Recipe library with normalized tags, filtering, search
+- **`library.ts`** - Recipe library with normalized tags, filtering, search, custom recipe management
 - **`compose.ts`** - Week composition algorithm (variety, constraints, leftovers)
 - **`scoring.ts`** - Recipe scoring engine with 10+ rules
 - **`explainer.ts`** - Converts reason codes to human-readable chips
@@ -116,16 +200,29 @@
 
 ### Components (`apps/web/src/components/app/`)
 
-- **`MealCard.tsx`** - Meal display with reason chips
+- **`MealCard.tsx`** - Meal display with reason chips and customization props
 - **`LeftoverCard.tsx`** - Bulk cook leftover placeholder
 - **`ShoppingListItem.tsx`** - Expandable ingredient with Coles info
-- **`RegenerateDrawer.tsx`** - Plan regeneration with constraints
+- **`RegenerateDrawer.tsx`** - Plan regeneration with constraints (Sheet component)
+- **`PantrySheet.tsx`** - Pantry item management with image scanning (Sheet component)
+- **`WeeklyOverridesSheet.tsx`** - Week-specific preference overrides (Sheet component)
+- **`SwapDrawer.tsx`** - Meal swapping with AI suggestions (Sheet component)
 
 ### Pages (`apps/web/src/app/`)
 
+- **`/plan/page.tsx`** - Weekly meal planning grid with wizard and swap functionality
 - **`/plan/review/page.tsx`** - Plan review, summary stats, regeneration
 - **`/shopping-list/page.tsx`** - Aggregated list with Coles pricing
 - **`/analytics/page.tsx`** - Analytics dashboard
+- **`/settings/page.tsx`** - Family preferences and GitHub sync configuration
+- **`/recipe/[id]/page.tsx`** - Individual recipe details with context-aware navigation
+
+### API Routes (`apps/web/src/app/api/`)
+
+- **`/api/generate-recipes/route.ts`** - AI recipe generation endpoint (Gemini)
+- **`/api/extract-recipe-from-image/route.ts`** - Image-based recipe extraction (Gemini Vision)
+- **`/api/extract-recipe-from-url/route.ts`** - URL recipe scraping (Gemini)
+- **`/api/list-models/route.ts`** - Gemini model testing and validation
 
 ### Data Files
 

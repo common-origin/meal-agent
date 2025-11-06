@@ -1,11 +1,11 @@
 # Architecture Documentation
 
-**Last Updated**: October 27, 2025  
-**Version**: Phase 1 Complete
+**Last Updated**: 6 November 2025  
+**Version**: Phase 1 & 2 Complete
 
 ## System Overview
 
-Meal Agent is a Next.js-based intelligent meal planning application that helps households plan weekly dinners using a curated library of 50+ recipes. The system combines build-time recipe indexing with runtime meal composition algorithms featuring deterministic scoring, explainability, cost transparency, and privacy-first analytics.
+Meal Agent is a Next.js-based AI-powered meal planning application that helps households plan weekly dinners using a combination of curated recipes and AI-generated meals. The system integrates Google's Gemini API for recipe generation, pantry scanning, and URL extraction, combined with deterministic scoring algorithms, explainability, cost transparency, and privacy-first analytics.
 
 ## High-Level Architecture
 
@@ -21,10 +21,19 @@ Meal Agent is a Next.js-based intelligent meal planning application that helps h
 │  │ • Pages      │    │ • compose.ts    │    │ • library.ts     │       │
 │  │ • Components │    │ • scoring.ts    │    │ • recipes.json   │       │
 │  │ • Drawers    │    │ • explainer.ts  │    │ • localStorage   │       │
-│  │ • Cards      │    │ • aggregator.ts │    │                  │       │
+│  │ • Cards      │    │ • aggregator.ts │    │ • Gemini API     │       │
 │  │              │    │ • colesMapping  │    │                  │       │
 │  │              │    │ • analytics.ts  │    │                  │       │
 │  └──────────────┘    └─────────────────┘    └──────────────────┘       │
+│                                │                                         │
+│                                ▼                                         │
+│                      ┌──────────────────┐                                │
+│                      │   AI Layer       │                                │
+│                      │ • Gemini API     │                                │
+│                      │ • Recipe Gen     │                                │
+│                      │ • Image OCR      │                                │
+│                      │ • URL Extract    │                                │
+│                      └──────────────────┘                                │
 │                                                                           │
 └─────────────────────────────────────────────────────────────────────────┘
                                 │
@@ -47,24 +56,67 @@ Meal Agent is a Next.js-based intelligent meal planning application that helps h
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Phase 1 Architecture Layers
+## Phase 1 & 2 Architecture Layers
 
 ### 1. UI Layer (`apps/web/src/components/` & `apps/web/src/app/`)
 
+**Design System**: @common-origin/design-system v1.14.0
+- Sheet, Slider, PasswordField, ResponsiveGrid, IconButton
+- Button, TextField, Dropdown, Checkbox, Container, Box
+- Typography, Avatar, Stack, Chip, Divider, NumberInput
+
 **Components**:
-- `MealCard.tsx` - Meal display with reason chips
+- `MealCard.tsx` - Meal display with reason chips and customization props
 - `LeftoverCard.tsx` - Bulk cook leftover placeholder
 - `ShoppingListItem.tsx` - Expandable ingredient with Coles info
-- `RegenerateDrawer.tsx` - Plan regeneration modal
+- `RegenerateDrawer.tsx` - Plan regeneration modal (Sheet component)
+- `PantrySheet.tsx` - Pantry management with image scanning (Sheet component)
+- `SwapDrawer.tsx` - Meal swapping with AI suggestions (Sheet component)
+- `WeeklyOverridesSheet.tsx` - Week-specific overrides (Sheet component)
 
 **Pages**:
+- `/plan/page.tsx` - Weekly grid with wizard and AI swap functionality
 - `/plan/review/page.tsx` - Plan review with summary stats
 - `/shopping-list/page.tsx` - Aggregated shopping list
 - `/analytics/page.tsx` - Analytics dashboard
+- `/settings/page.tsx` - Family preferences and GitHub sync
+- `/recipe/[id]/page.tsx` - Recipe details with context-aware navigation
 
 **Accessibility**: WCAG 2.1 AA compliant, keyboard navigation, screen readers
 
-### 2. Logic Layer (`apps/web/src/lib/`)
+### 2. AI Layer (`apps/web/src/app/api/`)
+
+**Google Gemini Integration**:
+```
+API Routes
+    │
+    ├──▶ /api/generate-recipes ────── AI recipe generation
+    │                                  Model: gemini-2.0-flash-exp
+    │                                  Input: Family settings, constraints
+    │                                  Output: 1-7 custom recipes
+    │
+    ├──▶ /api/extract-recipe-from-image ── Pantry scanning
+    │                                       Gemini Vision API
+    │                                       Input: Image file
+    │                                       Output: Detected ingredients
+    │
+    ├──▶ /api/extract-recipe-from-url ──── URL extraction
+    │                                       Gemini text parsing
+    │                                       Input: Recipe URL
+    │                                       Output: Structured recipe
+    │
+    └──▶ /api/list-models ────────────── Model testing
+                                          Validates Gemini API access
+                                          Returns: Available models
+```
+
+**AI Features**:
+- Context-aware recipe generation (family settings, recent history, pantry items)
+- Image recognition for pantry/fridge scanning
+- Smart URL parsing for recipe import
+- Automatic ingredient and instruction extraction
+
+### 3. Logic Layer (`apps/web/src/lib/`)
 
 #### Meal Planning Core
 ```

@@ -4,10 +4,29 @@
 Building a family meal planning application using Common Origin Design System (@common-origin/design-system) in a PNPM monorepo with Next.js.
 
 ## Design System Integration
-- **Package**: `@common-origin/design-system` (available on NPM)
+- **Package**: `@common-origin/design-system` v1.14.0 (available on NPM)
 - **Documentation**: https://common-origin-design-system.vercel.app/
-- **Available Components**: Avatar, Stack, Typography, and more (confirmed access)
+- **Available Components**: 15+ production-ready components
 - **Tokens**: Full design token system available
+
+### Core Components in Use
+- **Sheet** - Drawers and side panels with animations (PantrySheet, SwapDrawer, RegenerateDrawer, WeeklyOverridesSheet)
+- **Slider** - Range inputs for budget and time controls (5 instances in Settings)
+- **PasswordField** - Secure password entry with show/hide toggle (GitHub token)
+- **ResponsiveGrid** - Adaptive grid layouts (Plan and Review pages)
+- **IconButton** - Icon-only buttons (close buttons in sheets)
+- **Button** - Primary/secondary/destructive actions
+- **TextField** - Text inputs with validation
+- **NumberInput** - Number inputs with min/max
+- **Dropdown** - Select inputs
+- **Checkbox** - Boolean options
+- **Container** - Page width constraints
+- **Stack** - Vertical/horizontal spacing
+- **Box** - Flexible container with design tokens
+- **Typography** - Semantic heading and text variants
+- **Avatar** - User/chef profile images
+- **Chip** - Tags, filters, and labels
+- **Divider** - Visual separation
 
 ## Project Structure
 ```
@@ -24,9 +43,21 @@ meal-agent/
 ## Key Routes & Components to Build
 - `/` - Welcome page with CTA links
 - `/onboarding` - Multi-step onboarding
-- `/plan` - Weekly meal grid + BudgetBar
+- `/plan` - Weekly meal grid + BudgetBar + PantrySheet + SwapDrawer
+- `/plan/review` - Plan review with regeneration
 - `/recipe/[id]` - Recipe details with provenance
 - `/shopping-list` - Aisle-grouped list with CSV export
+- `/settings` - Family preferences and GitHub sync
+- `/analytics` - Privacy-first analytics dashboard
+
+## AI Integration
+- **Provider**: Google Gemini API (gemini-2.0-flash-exp)
+- **Features**:
+  - AI recipe generation from family settings
+  - Pantry scanning via image upload
+  - URL recipe extraction
+  - Weekly planning wizard
+  - Smart swap suggestions
 
 ## Design System Components Needed
 Based on plan requirements, we'll use:
@@ -44,9 +75,11 @@ Based on plan requirements, we'll use:
 - `Modal`/`Drawer` components (for mobile swap flows)
 
 ## Dependencies to Install
-- Core: Next.js, TypeScript, React
+- Core: Next.js 16, TypeScript, React 19
 - Utilities: zod, dayjs
-- Design System: @common-origin/design-system
+- Design System: @common-origin/design-system@1.14.0
+- AI: @google/generative-ai
+- GitHub: octokit
 
 ## Development Tools
 - PNPM 9+ (with corepack)
@@ -65,10 +98,14 @@ Based on plan requirements, we'll use:
 ## Success Criteria
 - All routes render without errors
 - CSV export functionality works
-- Design system integration is seamless
+- Design system v1.14.0 integration is seamless
 - Mobile responsive design
 - Accessibility compliance (WCAG 2.2 AA)
 - TypeScript strict mode compliance
+- AI recipe generation functional
+- Pantry scanning and URL extraction working
+- All Sheet components use design system Sheet
+- Context-aware navigation (router.back())
 
 ## Notes for Copilot
 - Always use exact component APIs from DS documentation
