@@ -112,6 +112,29 @@ export default function RecipesPage() {
     }
   };
 
+  const handleClearAllRecipes = async () => {
+    if (!confirm("Are you sure you want to delete ALL saved recipes? This will clear them from localStorage and GitHub. This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      // Clear from localStorage
+      RecipeLibrary.clearCustomRecipes();
+      
+      // Clear from GitHub (save empty array)
+      await RecipeLibrary.saveToGitHub();
+      
+      // Update UI
+      setRecipes([]);
+      alert("All recipes have been cleared!");
+      
+      track('page_view', { page: 'saved_recipes_cleared' });
+    } catch (error) {
+      console.error("Failed to clear recipes:", error);
+      alert("Failed to clear recipes. Check console for details.");
+    }
+  };
+
   const filterOptions = [
     { id: "all", label: "All Recipes" },
     { id: "favorites", label: "Favorites" },
@@ -146,6 +169,16 @@ export default function RecipesPage() {
             </Typography>
           </Stack>
           <Stack direction="row" gap="md">
+            {recipes.length > 0 && (
+              <Button
+                variant="secondary"
+                size="large"
+                onClick={handleClearAllRecipes}
+                style={{ color: '#d32f2f' }}
+              >
+                Clear All
+              </Button>
+            )}
             <Button
               variant="secondary"
               size="large"
