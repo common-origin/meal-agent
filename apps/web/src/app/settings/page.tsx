@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import styled from "styled-components";
-import { Box, Button, Checkbox, Chip, Container, Divider, Dropdown, NumberInput, PasswordField, Slider, Stack, TextField, Typography } from "@common-origin/design-system";
+import { Alert, Box, Button, Checkbox, Chip, Container, Divider, Dropdown, NumberInput, PasswordField, Slider, Stack, TextField, Typography } from "@common-origin/design-system";
 import { tokens } from "@common-origin/design-system";
 import { 
   getFamilySettings, 
@@ -14,10 +14,20 @@ import { validateFamilySettings } from "@/lib/types/settings";
 import { track } from "@/lib/analytics";
 import { GitHubClient } from "@/lib/github/client";
 import { RecipeLibrary } from "@/lib/library";
+import Link from "next/link";
 
 const PageLayout = styled.div`
  max-width: ${tokens.base.breakpoint.md};
  margin: 0 auto;
+`
+
+const StyledHelperText = styled.div`
+	font: ${tokens.semantic.typography.caption};
+	color: ${tokens.semantic.color.text.subdued};
+
+	> a {
+		text-decoration: underline;
+	}
 `
 
 export default function SettingsPage() {
@@ -241,32 +251,29 @@ export default function SettingsPage() {
 							</Typography>
 						</Stack>
 
-						{/* Success Message */}
-						{saved && (
-							<Box bg="success-subtle" border="success" borderRadius="3" p="md">
-								<Typography variant="body" color="success">
-									Settings saved successfully!
-								</Typography>
-							</Box>
-						)}
+					{/* Success Message */}
+					{saved && (
+						<Alert 
+							variant="success" 
+							dismissible 
+							onDismiss={() => setSaved(false)}
+						>
+							Settings saved successfully!
+						</Alert>
+					)}
 
-						{/* Errors */}
-						{errors.length > 0 && (
-							<Box bg="error-subtle" border="error" borderRadius="3" p="md">
-								<Stack direction="column" gap="xs">
-									<Typography variant="body" color="error">
-										⚠️ Please fix the following errors:
+					{/* Errors */}
+					{errors.length > 0 && (
+						<Alert variant="error" title="Please fix the following errors:">
+							<Stack direction="column" gap="xs">
+								{errors.map((error, i) => (
+									<Typography key={i} variant="small">
+										• {error}
 									</Typography>
-									{errors.map((error, i) => (
-										<Typography key={i} variant="small" color="error">
-											• {error}
-										</Typography>
-									))}
-								</Stack>
-							</Box>
-						)}
-
-						{/* Household Section */}
+								))}
+							</Stack>
+						</Alert>
+					)}						{/* Household Section */}
 						<Box border="default" borderRadius="4" p="lg" bg="default">
 							<Stack direction="column" gap="md">
 								<Typography variant="h3">Household</Typography>
@@ -303,10 +310,10 @@ export default function SettingsPage() {
 														}}
 														placeholder="Child's age"
 													/>
-													<Box mb="sm">
-														<Button															
-															variant="primary"
-															size="small"
+													<Box>
+														<Button
+															variant="secondary"
+															size="large"
 															onClick={() => removeChild(index)}
 															aria-label="Remove child"
 														>
@@ -317,7 +324,7 @@ export default function SettingsPage() {
 											))}
 											<Box my="md">
 												<Button variant="secondary" onClick={addChild}>
-													Add Child
+													Add child
 												</Button>
 											</Box>
 										</Stack>
@@ -585,6 +592,7 @@ export default function SettingsPage() {
 								{settings.github?.enabled && (
 									<Box maxWidth="400px">
 										<Stack direction="column" gap="lg">
+											<Stack direction="column" gap="xs">
 											<PasswordField
 												label="GitHub Personal Access Token"
 												value={settings.github?.token || ''}
@@ -597,10 +605,13 @@ export default function SettingsPage() {
 												}))}
 												placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 											/>
-											<a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
-												Create a token
-											</a> with &apos;repo&apos; scope
-											
+											<StyledHelperText>
+												<Link href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer">
+													Create a token
+												</Link> with &apos;repo&apos; scope
+											</StyledHelperText>
+											</Stack>
+
 											<TextField
 												label="GitHub Username"
 												type="text"
@@ -680,15 +691,19 @@ export default function SettingsPage() {
 												</Stack>
 											</Stack>
 
-											{githubStatus && (
-												<div style={{ marginTop: '8px' }}>
-													<Typography variant="small">
-														{githubStatus}
-													</Typography>
-												</div>
-											)}
-
-											{settings.github?.lastSynced && (
+										{githubStatus && (
+											<Alert 
+												variant={
+													githubStatus.startsWith('✅') ? 'success' :
+													githubStatus.startsWith('❌') ? 'error' :
+													githubStatus.startsWith('⚠️') ? 'warning' :
+													'info'
+												}
+												inline
+											>
+												{githubStatus.replace(/^[✅❌⚠️🔄]\s*/, '')}
+											</Alert>
+										)}											{settings.github?.lastSynced && (
 												<Typography variant="small" color="subdued">
 													Last synced: {new Date(settings.github.lastSynced).toLocaleString()}
 												</Typography>

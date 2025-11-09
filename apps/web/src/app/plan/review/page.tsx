@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Stack, Typography, Button, ProgressBar, ResponsiveGrid } from "@common-origin/design-system";
+import { Alert, Stack, Typography, Button, ProgressBar, ResponsiveGrid, Box } from "@common-origin/design-system";
 import MealCard from "@/components/app/MealCard";
 import LeftoverCard from "@/components/app/LeftoverCard";
 import RegenerateDrawer from "@/components/app/RegenerateDrawer";
@@ -222,17 +222,10 @@ export default function PlanReviewPage() {
   return (
     <main style={{ padding: 24 }}>
       <Stack direction="column" gap="xl">
+
         {/* Header */}
         <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Typography variant="h1">Review your Meal Plan</Typography>
-          <Button
-            variant="secondary"
-            size="medium"
-            onClick={() => router.push('/plan')}
-            aria-label="Go back to plan overview page"
-          >
-            Back to Plan
-          </Button>
+          <Typography variant="h1">Review your meal plan</Typography>
         </Stack>
 
         {/* Summary Cards */}
@@ -249,93 +242,69 @@ export default function PlanReviewPage() {
           <div 
             role="article"
             aria-label={`Total cost: $${plan.costEstimate.toFixed(2)}, which is $${(plan.costEstimate / plan.days.length).toFixed(2)} per meal`}
-            style={{
-              flex: "1 1 200px",
-              minHeight: "120px",
-              padding: "16px",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              backgroundColor: "#f9f9f9"
-            }}
+            style={{ flex: "1 1 200px" }}
           >
-            <Typography variant="h4">Total cost</Typography>
-            <Typography variant="h2">${plan.costEstimate.toFixed(2)}</Typography>
-            <Typography variant="small">
-              ${(plan.costEstimate / plan.days.length).toFixed(2)} per meal
-            </Typography>
+            <Box bg="emphasis" p="lg" borderRadius="3" minHeight="120px">
+              <Stack direction="column" gap="xs">
+                <Typography variant="h4" color="inverse">Total cost</Typography>
+                <Typography variant="h2" color="inverse">${plan.costEstimate.toFixed(2)}</Typography>
+                <Typography variant="small" color="inverse">
+                  ${(plan.costEstimate / plan.days.length).toFixed(2)} per meal
+                </Typography>
+              </Stack>
+            </Box>
           </div>
 
           <div 
             role="article"
             aria-label={`Weeknight constraint: ${weeknightsMeetConstraint} out of ${weeknightCount} weeknight meals are 40 minutes or less`}
-            style={{
-              flex: "1 1 200px",
-              minHeight: "120px",
-              padding: "16px",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              backgroundColor: "#f9f9f9"
-            }}
+            style={{ flex: "1 1 200px" }}
           >
-            <Typography variant="h4">Weeknight constraint</Typography>
-            <Typography variant="h2">
-              {weeknightsMeetConstraint}/{weeknightCount}
-            </Typography>
-            <Typography variant="small">Meals ≤40 minutes</Typography>
+            <Box bg="emphasis" p="lg" borderRadius="3" minHeight="120px">
+              <Stack direction="column" gap="xs">
+                <Typography variant="h4" color="inverse">Weeknight constraint</Typography>
+                <Typography variant="h2" color="inverse">
+                  {weeknightsMeetConstraint}/{weeknightCount}
+                </Typography>
+                <Typography variant="small" color="inverse">Meals ≤40 minutes</Typography>
+              </Stack>
+            </Box>
           </div>
 
           <div 
             role="article"
             aria-label={`${kidFriendlyCount} out of ${totalDays} meals are kid-friendly`}
-            style={{
-              flex: "1 1 200px",
-              minHeight: "120px",
-              padding: "16px",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              backgroundColor: "#f9f9f9"
-            }}
+            style={{ flex: "1 1 200px" }}
           >
-            <Typography variant="h4">Kid-friendly</Typography>
-            <Typography variant="h2">
-              {kidFriendlyCount}/{totalDays}
-            </Typography>
-            <Typography variant="small">Meals kid-friendly</Typography>
+            <Box bg="emphasis" p="lg" borderRadius="3" minHeight="120px">
+              <Stack direction="column" gap="xs">
+                <Typography variant="h4" color="inverse">Kid-friendly</Typography>
+                <Typography variant="h2" color="inverse">
+                  {kidFriendlyCount}/{totalDays}
+                </Typography>
+                <Typography variant="small" color="inverse">Meals kid-friendly</Typography>
+              </Stack>
+            </Box>
           </div>
 
           <div 
             role="article"
             aria-label={`${reusedIngredients} ingredients are used in 2 or more meals`}
-            style={{
-              flex: "1 1 200px",
-              minHeight: "120px",
-              padding: "16px",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              backgroundColor: "#f9f9f9"
-            }}
+            style={{ flex: "1 1 200px" }}
           >
-            <Typography variant="h4">Ingredient reuse</Typography>
-            <Typography variant="h2">{reusedIngredients}</Typography>
-            <Typography variant="small">Ingredients used 2+ times</Typography>
+            <Box bg="emphasis" p="lg" borderRadius="3" minHeight="120px">
+              <Stack direction="column" gap="xs">
+                <Typography variant="h4" color="inverse">Ingredient reuse</Typography>
+                <Typography variant="h2" color="inverse">{reusedIngredients}</Typography>
+                <Typography variant="small" color="inverse">Ingredients used 2+ times</Typography>
+              </Stack>
+            </Box>
           </div>
         </div>
 
         {/* Conflicts */}
         {plan.conflicts.length > 0 && (
-          <div 
-            role="alert"
-            aria-live="polite"
-            style={{
-              padding: "16px",
-              backgroundColor: "#fff3cd",
-              border: "1px solid #ffc107",
-              borderRadius: "8px"
-            }}
-          >
-            <Typography variant="h4">
-              <span role="img" aria-label="Warning">⚠️</span> Plan conflicts
-            </Typography>
+          <Alert variant="warning" title="Plan conflicts">
             <Stack direction="column" gap="xs">
               {plan.conflicts.map((conflict, idx) => (
                 <Typography key={idx} variant="body">
@@ -343,23 +312,10 @@ export default function PlanReviewPage() {
                 </Typography>
               ))}
             </Stack>
-          </div>
+          </Alert>
         )}
 
         {/* Meal Grid */}
-        <div>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="h2">Your Weekly Meals</Typography>
-            <Button
-              variant="secondary"
-              size="medium"
-              onClick={() => setShowRegenerateDrawer(true)}
-              aria-label="Open regenerate drawer to customize meal plan with constraints"
-            >
-              <span role="img" aria-label="Settings">⚙️</span> Regenerate with constraints
-            </Button>
-          </Stack>
-        </div>
 
         <ResponsiveGrid 
           cols={1} 
@@ -393,7 +349,6 @@ export default function PlanReviewPage() {
                 <Typography variant="h4">{DAYS[index]}</Typography>
                 <MealCard 
                   {...meal}
-                  showMenu={false}
                 />
               </div>
             );
@@ -405,14 +360,24 @@ export default function PlanReviewPage() {
           <Button
             variant="secondary"
             size="large"
-            onClick={() => setShowRegenerateDrawer(true)}
-            aria-label="Regenerate meal plan with different constraints"
+            iconName="arrowLeft"
+            onClick={() => router.push('/plan')}
+            aria-label="Go back to plan overview page"
           >
-            Regenerate plan
+            Back to plan
+          </Button>
+          <Button
+            variant="secondary"
+            size="large"
+            onClick={() => setShowRegenerateDrawer(true)}
+            aria-label="Open regenerate drawer to customize meal plan with constraints"
+          >
+            Regenerate with constraints
           </Button>
           <Button
             variant="primary"
             size="large"
+            iconName="check"
             purpose="link"
             url="/shopping-list"
             onClick={handleConfirm}

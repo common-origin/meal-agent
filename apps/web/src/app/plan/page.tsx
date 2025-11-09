@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Badge, Stack, Typography, Button } from "@common-origin/design-system";
+import { Alert, Badge, Stack, Typography, Button } from "@common-origin/design-system";
 import WeekPlannerGrid from "@/components/app/WeekPlannerGrid";
 import BudgetBar from "@/components/app/BudgetBar";
 import WeeklyOverridesSheet from "@/components/app/WeeklyOverridesSheet";
@@ -33,6 +33,7 @@ export default function PlanPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [generatingDayIndex, setGeneratingDayIndex] = useState<number | null>(null);
+
   
   // Pantry items state
   const [pantryItems, setPantryItems] = useState<string[]>([]);
@@ -214,10 +215,13 @@ export default function PlanPage() {
   const handleSelectSwap = (recipe: Recipe) => {
     if (swapDayIndex === null) return;
     
+    const isAddingNew = weekPlan[swapDayIndex] === null;
+    
     track('swap', { 
       day: DAYS[swapDayIndex],
-      oldRecipeId: weekPlan[swapDayIndex]?.recipeId,
-      newRecipeId: recipe.id 
+      oldRecipeId: weekPlan[swapDayIndex]?.recipeId || 'none',
+      newRecipeId: recipe.id,
+      action: isAddingNew ? 'add' : 'swap'
     });
     
     const household = loadHousehold() || getDefaultHousehold();
@@ -230,10 +234,19 @@ export default function PlanPage() {
     if (household.favorites.includes(recipe.id)) reasons.push("favorite");
     if (recipe.costPerServeEst && recipe.costPerServeEst < 4) reasons.push("best value");
     
+    // Determine chef name
+    const chefName = recipe.source.chef === "jamie_oliver" 
+      ? "Jamie Oliver" 
+      : RecipeLibrary.isCustomRecipe(recipe.id)
+        ? "AI Generated"
+        : recipe.source.domain === "user-added"
+          ? "User Added"
+          : "RecipeTin Eats";
+    
     const newMeal: MealCardProps = {
       recipeId: recipe.id,
       title: recipe.title,
-      chef: recipe.source.chef === "jamie_oliver" ? "Jamie Oliver" : "RecipeTin Eats",
+      chef: chefName,
       timeMins: recipe.timeMins || 0,
       kidsFriendly: recipe.tags.includes("kid_friendly"),
       conflicts: [],
@@ -260,6 +273,16 @@ export default function PlanPage() {
     
     // Close drawer
     setSwapDayIndex(null);
+  };
+
+  const handleAddSavedRecipe = (dayIndex: number) => {
+    console.log(`➕ Adding saved recipe for ${DAYS[dayIndex]}`);
+    
+    // Open swap drawer for adding a new recipe
+    setSwapDayIndex(dayIndex);
+    setSuggestedSwaps([]); // Clear AI suggestions so it defaults to saved tab
+    
+    track('page_view', { page: 'add_saved_recipe', day: DAYS[dayIndex] });
   };
 
   const handleDeleteMeal = (dayIndex: number) => {
@@ -297,8 +320,11 @@ export default function PlanPage() {
     // Set pantry items from wizard
     setPantryItems(wizardData.pantryItems);
     
-    // Hide wizard and show plan view
+    // Hide wizard and show plan view with loading states
     setShowWizard(false);
+    
+    // Clear previous week plan to show loading skeletons
+    setWeekPlan([null, null, null, null, null, null, null]);
     
     // Generate plan using wizard data
     setIsGenerating(true);
@@ -437,6 +463,10 @@ export default function PlanPage() {
       const data = await response.json();
 
       if (!response.ok || data.error) {
+        // Handle rate limit error specifically
+        if (data.isRateLimit) {
+          throw new Error('API rate limit reached. Please wait a few minutes and try again, or add ingredients manually.');
+        }
         throw new Error(data.error || data.details || 'Failed to scan image');
       }
 
@@ -456,13 +486,17 @@ export default function PlanPage() {
 
     } catch (error) {
       console.error('❌ Error scanning image:', error);
-      setScanError(error instanceof Error ? error.message : 'Failed to scan image');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to scan image';
+      setScanError(errorMessage);
     } finally {
       setIsScanning(false);
     }
   };
 
   const handleGenerateWithAI = async () => {
+    // Clear previous plan to show loading skeletons
+    setWeekPlan([null, null, null, null, null, null, null]);
+    
     setIsGenerating(true);
     setGenerationError(null);
 
@@ -714,63 +748,33 @@ export default function PlanPage() {
                   View pantry items
                 </Button>
               </Badge>
-              <Button
-                variant="primary"
-                size="large"
-                onClick={handleGenerateWithAI}
-                disabled={isGenerating}
-              >
-                {isGenerating ? 'Generating...' : 'Generate new plan'}
-              </Button>
             </Stack>
           </Stack>
 
         {/* Error Message */}
         {generationError && (
-          <div style={{
-            padding: "16px",
-            backgroundColor: "#f8d7da",
-            border: "1px solid #dc3545",
-            borderRadius: "8px"
-          }}>
-            <Typography variant="body" color="error">
-              ❌ {generationError}
-            </Typography>
-          </div>
+          <Alert variant="error">
+            {generationError}
+          </Alert>
         )}
 
         {/* Saturday Banner for Weekly Overrides */}
         {showSaturdayBanner && (
-          <div style={{
-            padding: "16px",
-            backgroundColor: "#fff3cd",
-            border: "1px solid #ffc107",
-            borderRadius: "8px"
-          }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <Stack direction="column" gap="xs">
-                <Typography variant="h4">Plan for next week</Typography>
-                <Typography variant="body">
-                  Update your preferences for next week&apos;s meal plan
-                </Typography>
-              </Stack>
-              <button
+          <Alert 
+            variant="warning" 
+            title="Plan for next week"
+            action={
+              <Button
+                variant="primary"
+                size="small"
                 onClick={() => setShowOverridesSheet(true)}
-                style={{
-                  padding: "8px 16px",
-                  backgroundColor: "#007bff",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  whiteSpace: "nowrap"
-                }}
               >
                 Update next week inputs
-              </button>
-            </Stack>
-          </div>
+              </Button>
+            }
+          >
+            Update your preferences for next week&apos;s meal plan
+          </Alert>
         )}
 
         {/* Success Toast */}
@@ -799,18 +803,29 @@ export default function PlanPage() {
           meals={weekPlan} 
           onSwapClick={handleSwapClick}
           onGenerateClick={handleGenerateSingleRecipe}
+          onAddSavedRecipeClick={handleAddSavedRecipe}
           generatingDayIndex={generatingDayIndex}
           onDeleteClick={handleDeleteMeal}
+          isGeneratingPlan={isGenerating}
         />
         
-        <Stack direction="row" gap="md">
+        {/* Actions */}
+        <Stack direction="row" gap="md" justifyContent="flex-end">
+          <Button
+            variant="secondary"
+            size="large"
+            onClick={handleGenerateWithAI}
+            disabled={isGenerating}
+          >
+            {isGenerating ? 'Generating...' : 'Generate new plan'}
+          </Button>
           <Button
             variant="primary"
             size="large"
             purpose="link"
             url="/plan/review"
           >
-            Review Plan
+            Review plan
           </Button>
         </Stack>
         </Stack>

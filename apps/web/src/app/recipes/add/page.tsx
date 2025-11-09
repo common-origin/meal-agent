@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Stack, Typography, Button, Box } from "@common-origin/design-system";
+import { Stack, Typography, Button, Box, TextField, NumberInput, Dropdown, List, ListItem, IconButton } from "@common-origin/design-system";
+import { tokens } from "@common-origin/design-system/tokens";
 import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
 import type { Recipe, Ingredient } from "@/lib/types/recipe";
@@ -174,30 +175,14 @@ export default function AddRecipePage() {
     }
   };
 
-  const inputStyle = {
-    width: '100%',
-    padding: '8px 12px',
-    borderRadius: '4px',
-    border: '1px solid #ddd',
-    fontSize: '14px',
-    fontFamily: 'inherit',
-  };
-
-  const labelStyle = {
-    display: 'block',
-    marginBottom: '4px',
-    fontSize: '14px',
-    fontWeight: 500,
-  };
-
   if (mode === 'choice') {
     return (
-      <main style={{ padding: 24, maxWidth: '600px', margin: '0 auto' }}>
+      <main style={{ padding: 24, maxWidth: tokens.base.breakpoint.md, margin: '0 auto' }}>
         <Stack direction="column" gap="xl">
           <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="h1">Add Recipe</Typography>
+            <Typography variant="h1">Add recipe</Typography>
             <Link href="/plan" style={{ textDecoration: 'none' }}>
-              <Button variant="secondary" size="small">Cancel</Button>
+              <Button variant="secondary" size="large">Cancel</Button>
             </Link>
           </Stack>
 
@@ -264,11 +249,11 @@ export default function AddRecipePage() {
 
   if (mode === 'image') {
     return (
-      <main style={{ padding: 24, maxWidth: '800px', margin: '0 auto' }}>
+      <main style={{ padding: 24, maxWidth: tokens.base.breakpoint.md, margin: '0 auto' }}>
         <Stack direction="column" gap="xl">
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="h1">Upload recipe photo</Typography>
-            <Button variant="secondary" size="small" onClick={() => setMode('choice')}>
+            <Button variant="secondary" size="large" iconName="arrowLeft" onClick={() => setMode('choice')}>
               Back
             </Button>
           </Stack>
@@ -337,8 +322,6 @@ export default function AddRecipePage() {
                   onRemoveInstruction={handleRemoveInstruction}
                   onSave={handleSaveRecipe}
                   saving={saving}
-                  inputStyle={inputStyle}
-                  labelStyle={labelStyle}
                 />
               )}
             </Stack>
@@ -350,27 +333,24 @@ export default function AddRecipePage() {
 
   if (mode === 'url') {
     return (
-      <main style={{ padding: 24, maxWidth: '800px', margin: '0 auto' }}>
+      <main style={{ padding: 24, maxWidth: tokens.base.breakpoint.md, margin: '0 auto' }}>
         <Stack direction="column" gap="xl">
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="h1">Import from URL</Typography>
-            <Button variant="secondary" size="small" onClick={() => setMode('choice')}>
+            <Button variant="secondary" size="large" iconName="arrowLeft" onClick={() => setMode('choice')}>
               Back
             </Button>
           </Stack>
 
           <Box border="default" borderRadius="3" p="lg" bg="surface">
             <Stack direction="column" gap="md">
-              <div>
-                <label style={labelStyle}>Recipe URL</label>
-                <input
-                  type="url"
-                  placeholder="https://example.com/recipe"
-                  value={recipeUrl}
-                  onChange={(e) => setRecipeUrl(e.target.value)}
-                  style={inputStyle}
-                />
-              </div>
+              <TextField
+                label="Recipe URL"
+                type="url"
+                placeholder="https://example.com/recipe"
+                value={recipeUrl}
+                onChange={(e) => setRecipeUrl(e.target.value)}
+              />
 
               <Button 
                 variant="primary" 
@@ -408,8 +388,6 @@ export default function AddRecipePage() {
               onRemoveInstruction={handleRemoveInstruction}
               onSave={handleSaveRecipe}
               saving={saving}
-              inputStyle={inputStyle}
-              labelStyle={labelStyle}
             />
           )}
         </Stack>
@@ -419,11 +397,11 @@ export default function AddRecipePage() {
 
   // Manual mode
   return (
-    <main style={{ padding: 24, maxWidth: '800px', margin: '0 auto' }}>
+    <main style={{ padding: 24, maxWidth: tokens.base.breakpoint.md, margin: '0 auto' }}>
       <Stack direction="column" gap="xl">
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Typography variant="h1">Add Recipe Manually</Typography>
-          <Button variant="secondary" size="small" onClick={() => setMode('choice')}>
+          <Button variant="secondary" size="large" iconName="arrowLeft" onClick={() => setMode('choice')}>
             Back
           </Button>
         </Stack>
@@ -453,8 +431,6 @@ export default function AddRecipePage() {
           onRemoveInstruction={handleRemoveInstruction}
           onSave={handleSaveRecipe}
           saving={saving}
-          inputStyle={inputStyle}
-          labelStyle={labelStyle}
         />
       </Stack>
     </main>
@@ -487,8 +463,6 @@ function RecipeForm({
   onRemoveInstruction,
   onSave,
   saving,
-  inputStyle,
-  labelStyle,
 }: {
   title: string;
   setTitle: (v: string) => void;
@@ -514,58 +488,44 @@ function RecipeForm({
   onRemoveInstruction: (index: number) => void;
   onSave: () => void;
   saving: boolean;
-  inputStyle: React.CSSProperties;
-  labelStyle: React.CSSProperties;
 }) {
   return (
     <Stack direction="column" gap="lg">
       {/* Basic Info */}
       <Box border="default" borderRadius="3" p="lg" bg="surface">
         <Stack direction="column" gap="md">
-          <Typography variant="h3">Recipe Details</Typography>
+          <Typography variant="h3">Recipe details</Typography>
           
-          <div>
-            <label style={labelStyle}>Recipe Title</label>
-            <input
-              style={inputStyle}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Spaghetti Bolognese"
-            />
-          </div>
+          <TextField
+            label="Recipe Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g., Spaghetti Bolognese"
+          />
 
           <Stack direction="row" gap="md">
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Cooking Time (minutes)</label>
-              <input
-                style={inputStyle}
-                type="number"
-                value={timeMins}
-                onChange={(e) => setTimeMins(e.target.value)}
-                placeholder="30"
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Servings</label>
-              <input
-                style={inputStyle}
-                type="number"
-                value={serves}
-                onChange={(e) => setServes(e.target.value)}
-                placeholder="4"
-              />
-            </div>
+            <NumberInput
+              label="Cooking Time (minutes)"
+              value={timeMins ? parseInt(timeMins) : ''}
+              onChange={(value) => setTimeMins(value.toString())}
+              placeholder="30"
+              style={{ flex: 1 }}
+            />
+            <NumberInput
+              label="Servings"
+              value={serves ? parseInt(serves) : ''}
+              onChange={(value) => setServes(value.toString())}
+              placeholder="4"
+              style={{ flex: 1 }}
+            />
           </Stack>
 
-          <div>
-            <label style={labelStyle}>Source URL (optional)</label>
-            <input
-              style={inputStyle}
-              value={sourceUrl}
-              onChange={(e) => setSourceUrl(e.target.value)}
-              placeholder="https://..."
-            />
-          </div>
+          <TextField
+            label="Source URL (optional)"
+            value={sourceUrl}
+            onChange={(e) => setSourceUrl(e.target.value)}
+            placeholder="https://..."
+          />
         </Stack>
       </Box>
 
@@ -575,59 +535,56 @@ function RecipeForm({
           <Typography variant="h3">Ingredients</Typography>
           
           <Stack direction="row" gap="sm" alignItems="flex-end">
-            <div style={{ flex: 2 }}>
-              <label style={labelStyle}>Ingredient</label>
-              <input
-                style={inputStyle}
-                value={ingredientName}
-                onChange={(e) => setIngredientName(e.target.value)}
-                placeholder="e.g., Tomatoes"
-              />
-            </div>
+            <TextField
+              label="Ingredient"
+              value={ingredientName}
+              onChange={(e) => setIngredientName(e.target.value)}
+              placeholder="e.g., Tomatoes"
+              style={{ flex: 2 }}
+            />
+            <NumberInput
+              label="Qty"
+              value={ingredientQty ? parseFloat(ingredientQty) : ''}
+              onChange={(value) => setIngredientQty(value.toString())}
+              placeholder="500"
+            />
             <div style={{ width: '100px' }}>
-              <label style={labelStyle}>Qty</label>
-              <input
-                style={inputStyle}
-                type="number"
-                value={ingredientQty}
-                onChange={(e) => setIngredientQty(e.target.value)}
-                placeholder="500"
+              <Dropdown
+                label="Unit"
+                options={[
+                  { id: 'g', label: 'g' },
+                  { id: 'ml', label: 'ml' },
+                  { id: 'tsp', label: 'tsp' },
+                  { id: 'tbsp', label: 'tbsp' },
+                  { id: 'unit', label: 'unit' },
+                ]}
+                value={ingredientUnit}
+                onChange={(value) => setIngredientUnit(value as 'g'|'ml'|'tsp'|'tbsp'|'unit')}
               />
             </div>
-            <div style={{ width: '80px' }}>
-              <label style={labelStyle}>Unit</label>
-              <select
-                value={ingredientUnit}
-                onChange={(e) => setIngredientUnit(e.target.value as 'g'|'ml'|'tsp'|'tbsp'|'unit')}
-                style={inputStyle}
-              >
-                <option value="g">g</option>
-                <option value="ml">ml</option>
-                <option value="tsp">tsp</option>
-                <option value="tbsp">tbsp</option>
-                <option value="unit">unit</option>
-              </select>
-            </div>
-            <Button variant="primary" size="small" onClick={onAddIngredient}>
+            <Button variant="primary" size="large" iconName="add" onClick={onAddIngredient}>
               Add
             </Button>
           </Stack>
 
           {ingredients.length > 0 && (
-            <Stack direction="column" gap="sm">
+            <List dividers spacing="comfortable">
               {ingredients.map((ing, index) => (
-                <Stack key={index} direction="row" justifyContent="space-between" alignItems="center">
-                  <Typography variant="body">
-                    {ing.qty > 0 && `${ing.qty} `}
-                    {ing.unit !== 'unit' && `${ing.unit} `}
-                    {ing.name}
-                  </Typography>
-                  <Button variant="secondary" size="small" onClick={() => onRemoveIngredient(index)}>
-                    Remove
-                  </Button>
-                </Stack>
+                <ListItem
+                  key={index}
+                  primary={`${ing.qty > 0 ? `${ing.qty} ` : ''}${ing.unit !== 'unit' ? `${ing.unit} ` : ''}${ing.name}`}
+                  badge={
+                    <IconButton
+                      variant="naked"
+                      iconName="trash"
+                      size="large"
+                      onClick={() => onRemoveIngredient(index)}
+                      aria-label={`Remove ${ing.name}`}
+                    />
+                  }
+                />
               ))}
-            </Stack>
+            </List>
           )}
         </Stack>
       </Box>
@@ -637,49 +594,66 @@ function RecipeForm({
         <Stack direction="column" gap="md">
           <Typography variant="h3">Instructions</Typography>
           
-          <Stack direction="column" gap="sm">
-            <textarea
-              value={instructionInput}
-              onChange={(e) => setInstructionInput(e.target.value)}
-              placeholder="Enter a cooking step..."
-              rows={3}
-              style={{ 
-                ...inputStyle,
-                resize: 'vertical',
-              }}
-            />
-            <Button variant="primary" size="small" onClick={onAddInstruction}>
-              Add Step
+          <Stack direction="column" gap="sm" alignItems="flex-start">
+            <div>
+              <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 500 }}>
+                Cooking step
+              </label>
+              <textarea
+                value={instructionInput}
+                onChange={(e) => setInstructionInput(e.target.value)}
+                placeholder="Enter a cooking step..."
+                rows={3}
+                style={{ 
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: '4px',
+                  border: '1px solid #ddd',
+                  fontSize: '14px',
+                  fontFamily: 'inherit',
+                  resize: 'vertical',
+                }}
+              />
+            </div>
+            <Button variant="primary" size="large" onClick={onAddInstruction}>
+              Add step
             </Button>
           </Stack>
 
           {instructions.length > 0 && (
-            <Stack direction="column" gap="sm">
+            <List dividers spacing="comfortable">
               {instructions.map((instruction, index) => (
-                <Stack key={index} direction="row" gap="md" alignItems="flex-start">
-                  <div style={{ 
-                    minWidth: '24px', 
-                    height: '24px', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    backgroundColor: '#007bff',
-                    borderRadius: '999px',
-                    color: 'white',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                  }}>
-                    {index + 1}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <Typography variant="body">{instruction}</Typography>
-                  </div>
-                  <Button variant="secondary" size="small" onClick={() => onRemoveInstruction(index)}>
-                    Remove
-                  </Button>
-                </Stack>
+                <ListItem
+                  key={index}
+                  icon={
+                    <div style={{ 
+                      minWidth: '24px', 
+                      height: '24px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      backgroundColor: tokens.semantic.color.background.emphasis,
+                      borderRadius: '999px',
+                      color: 'white',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                    }}>
+                      {index + 1}
+                    </div>
+                  }
+                  primary={instruction}
+                  badge={
+                    <IconButton
+                      variant="naked"
+                      iconName="trash"
+                      size="small"
+                      onClick={() => onRemoveInstruction(index)}
+                      aria-label={`Remove step ${index + 1}`}
+                    />
+                  }
+                />
               ))}
-            </Stack>
+            </List>
           )}
         </Stack>
       </Box>
@@ -687,7 +661,7 @@ function RecipeForm({
       {/* Save Button */}
       <Stack direction="row" gap="md" justifyContent="flex-end">
         <Button variant="primary" onClick={onSave} disabled={saving}>
-          {saving ? 'Saving...' : 'Save Recipe'}
+          {saving ? 'Saving...' : 'Save recipe'}
         </Button>
       </Stack>
     </Stack>

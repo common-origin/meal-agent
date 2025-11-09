@@ -32,11 +32,7 @@ const UNIT_CONVERSIONS: Record<string, { toBase: number; baseUnit: string }> = {
   'pieces': { toBase: 1, baseUnit: 'unit' },
 };
 
-// Common pantry staples that can be optionally filtered
-const PANTRY_STAPLES = new Set([
-  'salt', 'pepper', 'olive oil', 'vegetable oil', 'flour', 'sugar',
-  'baking powder', 'baking soda', 'vinegar', 'soy sauce', 'water'
-]);
+
 
 /**
  * Normalize ingredient name for deduplication
@@ -144,12 +140,16 @@ function formatQuantity(qty: number, unit: string): { qty: number; unit: string 
 }
 
 /**
- * Check if ingredient is a pantry staple
+ * Check if ingredient is in user's pantry inventory
  */
-function isPantryStaple(name: string): boolean {
+function isInUserPantry(name: string, userPantryItems?: Array<{ name: string; qty: number; unit: string }>): boolean {
+  if (!userPantryItems || userPantryItems.length === 0) return false;
+  
   const normalized = normalizeIngredientName(name);
-  return PANTRY_STAPLES.has(normalized) || 
-         Array.from(PANTRY_STAPLES).some(staple => normalized.includes(staple));
+  return userPantryItems.some(pantryItem => {
+    const pantryNormalized = normalizeIngredientName(pantryItem.name);
+    return pantryNormalized === normalized || normalized.includes(pantryNormalized);
+  });
 }
 
 /**
@@ -159,8 +159,7 @@ function isPantryStaple(name: string): boolean {
 export function aggregateShoppingList(
   plan: PlanWeek,
   options: {
-    excludePantryStaples?: boolean;
-    pantryItems?: Array<{ name: string; qty: number; unit: string }>;
+    userPantryItems?: Array<{ name: string; qty: number; unit: string }>;
   } = {}
 ): AggregatedIngredient[] {
   const ingredientMap = new Map<string, AggregatedIngredient>();
@@ -184,9 +183,8 @@ export function aggregateShoppingList(
       // Skip empty normalized names
       if (!normalizedName) continue;
       
-      // Check pantry exclusion
-      const isStaple = isPantryStaple(ingredient.name);
-      if (options.excludePantryStaples && isStaple) continue;
+      // Check if ingredient is in user's pantry
+      const inUserPantry = isInUserPantry(ingredient.name, options.userPantryItems);
       
       // Convert to base unit for aggregation (handle missing unit)
       const converted = convertToBaseUnit(
@@ -220,7 +218,7 @@ export function aggregateShoppingList(
             recipeTitle: recipe.title,
             qty: ingredient.qty * scaleFactor
           }],
-          isPantryStaple: isStaple
+          isPantryStaple: inUserPantry
         });
       } else {
         // New ingredient
@@ -235,28 +233,8 @@ export function aggregateShoppingList(
             recipeTitle: recipe.title,
             qty: ingredient.qty * scaleFactor
           }],
-          isPantryStaple: isStaple
+          isPantryStaple: inUserPantry
         });
-      }
-    }
-  }
-  
-  // Subtract pantry items if provided
-  if (options.pantryItems) {
-    for (const pantryItem of options.pantryItems) {
-      const normalized = normalizeIngredientName(pantryItem.name);
-      const existing = ingredientMap.get(normalized);
-      
-      if (existing) {
-        const converted = convertToBaseUnit(pantryItem.qty, pantryItem.unit);
-        if (existing.unit === converted.unit) {
-          existing.totalQty = Math.max(0, existing.totalQty - converted.qty);
-          
-          // Remove if quantity is now zero or negative
-          if (existing.totalQty <= 0) {
-            ingredientMap.delete(normalized);
-          }
-        }
       }
     }
   }

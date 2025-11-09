@@ -162,18 +162,35 @@ function buildRecipeLibrary() {
   const libraryPath = path.join(process.cwd(), "data/library");
   const outputPath = path.join(process.cwd(), "apps/web/src/lib/recipes.generated.json");
 
-  if (!fs.existsSync(libraryPath)) {
-    console.error(`❌ Recipe library not found at ${libraryPath}`);
-    process.exit(1);
-  }
-
   const recipes: Recipe[] = [];
 
+  // Check if library directory exists
+  if (!fs.existsSync(libraryPath)) {
+    console.warn(`⚠️  Recipe library not found at ${libraryPath}`);
+    console.log(`📝 Generating empty recipe library`);
+    fs.writeFileSync(outputPath, JSON.stringify(recipes, null, 2));
+    console.log(`✅ Built recipe library: 0 recipes (empty)`);
+    console.log(`   Output: ${outputPath}`);
+    return;
+  }
+
+  // Get chef directories
   const chefs = fs.readdirSync(libraryPath).filter(item => {
     const itemPath = path.join(libraryPath, item);
     return fs.statSync(itemPath).isDirectory();
   });
 
+  // Handle empty library directory
+  if (chefs.length === 0) {
+    console.warn(`⚠️  No chef directories found in ${libraryPath}`);
+    console.log(`📝 Generating empty recipe library`);
+    fs.writeFileSync(outputPath, JSON.stringify(recipes, null, 2));
+    console.log(`✅ Built recipe library: 0 recipes (empty)`);
+    console.log(`   Output: ${outputPath}`);
+    return;
+  }
+
+  // Process recipes from each chef directory
   chefs.forEach(chef => {
     const chefPath = path.join(libraryPath, chef);
     const files = fs.readdirSync(chefPath).filter(f => f.endsWith('.json'));

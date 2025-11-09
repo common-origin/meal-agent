@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Button, Chip, IconButton, Sheet, Stack, Typography } from "@common-origin/design-system";
+import { Alert, Box, Button, Chip, IconButton, Sheet, Stack, Typography } from "@common-origin/design-system";
 import { estimateIngredientCost } from "@/lib/colesMapping";
 import type { AggregatedIngredient } from "@/lib/shoppingListAggregator";
 
@@ -251,11 +251,9 @@ export default function ColesShoppingModal({ isOpen, onClose, items }: ColesShop
                     }
                     
                     return (
-                      <Box bg="subtle" borderRadius="2" p="sm">
-                        <Typography variant="small">
-                          ⚠️ Not in our database - search manually at Coles
-                        </Typography>
-                      </Box>
+                      <Alert variant="warning" inline>
+                        Not in our database - search manually at Coles
+                      </Alert>
                     );
                   })()}
                 </Stack>

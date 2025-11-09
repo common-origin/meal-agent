@@ -51,6 +51,7 @@ export default function RecipePage({ params }: RecipePageProps) {
           <Button 
             variant="secondary" 
             size="large"
+            iconName="arrowLeft"
             onClick={() => router.back()}
           >
             Back
@@ -79,6 +80,7 @@ export default function RecipePage({ params }: RecipePageProps) {
           <Button 
             variant="secondary" 
             size="large"
+            iconName="arrowLeft"
             onClick={() => router.back()}
           >
             Back
@@ -86,7 +88,7 @@ export default function RecipePage({ params }: RecipePageProps) {
           
           <IconButton
             variant={favorited ? "primary" : "secondary"}
-            iconName={favorited ? "close" : "add"}
+            iconName={favorited ? "starFilled" : "star"}
             size="medium"
             onClick={handleFavoriteClick}
             aria-label={favorited ? "Remove from favorites" : "Add to favorites"}

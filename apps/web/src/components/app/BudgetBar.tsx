@@ -31,7 +31,7 @@ export default function BudgetBar({
       
       {isOverBudget && (
         <Typography variant="small">
-          ⚠️ Over budget by {currency}{(currentSpend - budget).toFixed(2)}
+          Over budget by {currency}{(currentSpend - budget).toFixed(2)}
         </Typography>
       )}
     </Stack>

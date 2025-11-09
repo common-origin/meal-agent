@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import styled from "styled-components";
-import { Box, Button, Chip, Container, ResponsiveGrid, Stack, Typography } from "@common-origin/design-system";
+import { Box, Button, Chip, Container, List, ListItem, ResponsiveGrid, Stack, Typography } from "@common-origin/design-system";
 import { tokens } from "@common-origin/design-system";
-import ShoppingListItem from "@/components/app/ShoppingListItem";
 import ColesShoppingModal from "@/components/app/ColesShoppingModal";
 import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from "@/lib/shoppingListAggregator";
 import { generateShoppingListCSV, downloadCSV } from "@/lib/csv";
@@ -22,11 +21,11 @@ const PageLayout = styled.div`
 
 export default function ShoppingListPage() {
   const [aggregatedItems, setAggregatedItems] = useState<AggregatedIngredient[]>([]);
-  const [excludePantry, setExcludePantry] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showColesModal, setShowColesModal] = useState(false);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
-  const generateShoppingList = (excludePantryParam: boolean = false) => {
+  const generateShoppingList = () => {
     setLoading(true);
     
     // Get current plan
@@ -87,8 +86,7 @@ export default function ShoppingListPage() {
     
     // Aggregate ingredients
     const items = aggregateShoppingList(plan, {
-      excludePantryStaples: excludePantryParam,
-      pantryItems: household.pantry
+      userPantryItems: household.pantry
     });
     
     setAggregatedItems(items);
@@ -123,15 +121,13 @@ export default function ShoppingListPage() {
 
   useEffect(() => {
     track('page_view', { page: '/shopping-list' });
-    generateShoppingList(excludePantry);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
+    // Generate shopping list on mount
+    const loadShoppingList = async () => {
+      generateShoppingList();
+    };
+    loadShoppingList();
   }, []);
-
-  const handleTogglePantry = () => {
-    const newValue = !excludePantry;
-    setExcludePantry(newValue);
-    generateShoppingList(newValue);
-  };
 
   const handleExportCSV = () => {
     track('export_csv', { itemCount: aggregatedItems.length });
@@ -154,8 +150,12 @@ export default function ShoppingListPage() {
     );
   }
 
+  // Separate items: what user needs to buy vs. what they already have
+  const needToBuy = aggregatedItems.filter(item => !item.isPantryStaple);
+  const alreadyHave = aggregatedItems.filter(item => item.isPantryStaple);
+  
   // Group by category
-  const grouped = aggregatedItems.reduce((acc, item) => {
+  const groupedNeedToBuy = needToBuy.reduce((acc, item) => {
     if (!acc[item.category]) {
       acc[item.category] = [];
     }
@@ -163,122 +163,166 @@ export default function ShoppingListPage() {
     return acc;
   }, {} as Record<string, AggregatedIngredient[]>);
 
-  const categories = Object.keys(grouped).sort();
-  const totalItems = aggregatedItems.length;
-  const pantryItems = aggregatedItems.filter(i => i.isPantryStaple).length;
-  
-  // Calculate Coles estimates
-  const mappedItems = aggregatedItems.filter(item => {
-    const colesInfo = estimateIngredientCost(item.normalizedName, item.totalQty, item.unit);
-    return colesInfo.mapped;
-  });
-  const totalEstimatedCost = aggregatedItems.reduce((sum, item) => {
-    const colesInfo = estimateIngredientCost(item.normalizedName, item.totalQty, item.unit);
-    return sum + (colesInfo.mapped ? colesInfo.estimatedCost : 0);
-  }, 0);
-  const mappingCoverage = totalItems > 0 ? Math.round((mappedItems.length / totalItems) * 100) : 0;
+  const categories = Object.keys(groupedNeedToBuy).sort();
+  const totalItems = needToBuy.length;
 
   return (
     <main style={{ padding: 24 }}>
       <PageLayout>
-      <Container>
-        <Stack direction="column" gap="lg">
-          {/* Header */}
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="h1">Shopping List</Typography>
-            <Stack direction="row" gap="md">
-              <Button 
-                variant="secondary" 
-                size="medium"
-                onClick={handleTogglePantry}
-              >
-                {excludePantry ? "Show Pantry Items" : "Hide Pantry Items"}
-              </Button>
-              <Button variant="secondary" size="medium" onClick={handleExportCSV}>
-                Export CSV
-              </Button>
-              <Button variant="primary" size="medium" onClick={handleShopAtColes}>
-                Shop at Coles
-              </Button>
-            </Stack>
-          </Stack>
-        
-          <Typography variant="body">
-            Aggregated from your meal plan with de-duplicated ingredients.
-          </Typography>
-
-        {/* Summary Stats */}
-        <ResponsiveGrid 
-          cols={1} 
-          colsSm={2} 
-          colsMd={4} 
-          gap={2}
-        >
-          <Box bg="surface" borderRadius="3" p="md">
-            <Typography variant="subtitle" color="subdued">Total Items</Typography>
-            <Typography variant="h2">{totalItems}</Typography>
-          </Box>
-          <Box bg="surface" borderRadius="3" p="md">
-            <Typography variant="subtitle" color="subdued">Pantry Staples</Typography>
-            <Typography variant="h2">{pantryItems}</Typography>
-          </Box>
-          <Box bg="surface" borderRadius="3" p="md">
-            <Typography variant="subtitle" color="subdued">Categories</Typography>
-            <Typography variant="h2">{categories.length}</Typography>
-          </Box>
-          <Box bg="surface" borderRadius="3" p="md">
-            <Typography variant="subtitle" color="subdued">Est. Coles Cost</Typography>
-            <Typography variant="h2">${totalEstimatedCost.toFixed(2)}</Typography>
-            <Typography variant="small">{mappingCoverage}% mapped</Typography>
-          </Box>
-        </ResponsiveGrid>
-
-        {/* Items by Category */}
-        {categories.map((category) => {
-          const items = grouped[category];
-          
-          return (
-            <Box 
-              key={category}
-              border="default"
-              borderRadius="4"
-              p="md"
-              bg="subtle"
-            >
-              <Stack direction="column" gap="md">
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Typography variant="h3">{category}</Typography>
-                  <Chip variant="dark">{items.length} items</Chip>
-                </Stack>
-                
-                <Stack direction="column" gap="xs">
-                  {items.map((item, index) => (
-                    <ShoppingListItem 
-                      key={index} 
-                      item={item}
-                      showPantryBadge={!excludePantry}
-                    />
-                  ))}
+          <Container>
+            <Stack direction="column" gap="lg">
+              {/* Header */}
+              <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <Typography variant="h1">Shopping list</Typography>
+                <Stack direction="row" gap="md">
+                  <Button variant="secondary" size="large" onClick={handleExportCSV}>
+                    Export CSV
+                  </Button>
+                  <Button variant="primary" size="large" onClick={handleShopAtColes}>
+                    Shop at Coles
+                  </Button>
                 </Stack>
               </Stack>
-            </Box>
-          );
-        })}
-        
-        <Typography variant="small">
-          💡 Click items with multiple recipes to see breakdown • 
-          ✓ Green badges show Coles mapped items with estimated prices • 
-          Ready for Coles pickup or delivery
-        </Typography>
-      </Stack>
-      </Container>
+            
+              <Typography variant="body">
+                Aggregated from your meal plan with de-duplicated ingredients.
+              </Typography>
+
+              {/* Summary Stats */}
+              <ResponsiveGrid 
+                cols={1} 
+                colsSm={2} 
+                colsMd={3} 
+                gap={2}
+              >
+                <Box bg="surface" borderRadius="3" p="md">
+                  <Typography variant="subtitle" color="subdued">Items to buy</Typography>
+                  <Typography variant="h2">{totalItems}</Typography>
+                </Box>
+                <Box bg="surface" borderRadius="3" p="md">
+                  <Typography variant="subtitle" color="subdued">Already have</Typography>
+                  <Typography variant="h2">{alreadyHave.length}</Typography>
+                </Box>
+                <Box bg="surface" borderRadius="3" p="md">
+                  <Typography variant="subtitle" color="subdued">Categories</Typography>
+                  <Typography variant="h2">{categories.length}</Typography>
+                </Box>
+              </ResponsiveGrid>
+
+              {/* Items to Buy - Grouped by Category */}
+              {categories.map((category) => {
+                const items = groupedNeedToBuy[category];
+                
+                return (
+                  <Box 
+                    key={category}
+                    border="default"
+                    borderRadius="4"
+                    p="md"
+                    bg="subtle"
+                  >
+                    <Stack direction="column" gap="md">
+                      <Stack direction="row"  alignItems="center">
+                        <Typography variant="h3">{category}</Typography>
+                        <Chip variant="dark">{items.length} items</Chip>
+                      </Stack>
+                      
+                      <List dividers spacing="comfortable">
+                        {items.map((item, index) => {
+                          const hasMultipleRecipes = item.sourceRecipes.length > 1;
+                          const itemKey = `${category}-${index}`;
+                          const isExpanded = expandedItems.has(itemKey);
+                          
+                          const handleToggle = () => {
+                            setExpandedItems(prev => {
+                              const next = new Set(prev);
+                              if (next.has(itemKey)) {
+                                next.delete(itemKey);
+                              } else {
+                                next.add(itemKey);
+                              }
+                              return next;
+                            });
+                          };
+                          
+                          return (
+                            <ListItem
+                              key={index}
+                              primary={`${item.name}`}
+                              secondary={hasMultipleRecipes && `${item.sourceRecipes.length} recipes`}
+                              badge={
+                                <Chip variant="light" size="small">
+                                  {item.totalQty.toFixed(1)} {item.unit}
+                                </Chip>
+                              }
+                              expandable={hasMultipleRecipes}
+                              expanded={isExpanded}
+                              onToggle={handleToggle}
+                            >
+                              {hasMultipleRecipes && (
+                                <Stack direction="column" gap="xs">
+                                  <Typography variant="small" color="subdued">
+                                    Used in:
+                                  </Typography>
+                                  {item.sourceRecipes.map((recipe, idx) => (
+                                    <Typography key={idx} variant="small">
+                                      • {recipe.recipeTitle}: {recipe.qty.toFixed(1)} {item.unit}
+                                    </Typography>
+                                  ))}
+                                </Stack>
+                              )}
+                            </ListItem>
+                          );
+                        })}
+                      </List>
+                    </Stack>
+                  </Box>
+                );
+              })}
+
+              {/* Already Have Section */}
+              {alreadyHave.length > 0 && (
+                <Box 
+                  border="default"
+                  borderRadius="4"
+                  p="md"
+                  bg="subtle"
+                >
+                  <Stack direction="column" gap="md">
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                      <Typography variant="h3">Already in your pantry</Typography>
+                      <Chip variant="light">{alreadyHave.length} items</Chip>
+                    </Stack>
+                    
+                    <Typography variant="small" color="subdued">
+                      These ingredients were in your pantry inventory, so they&apos;re excluded from your shopping list.
+                    </Typography>
+                    
+                    <List dividers spacing="compact">
+                      {alreadyHave.map((item, index) => (
+                        <ListItem
+                          key={index}
+                          primary={item.name}
+                          badge={
+                            <Chip variant="light" size="small">
+                              {item.totalQty.toFixed(1)} {item.unit}
+                            </Chip>
+                          }
+                        />
+                      ))}
+                    </List>
+                  </Stack>
+                </Box>
+              )}
+          </Stack>
+        </Container>
       </PageLayout>
       
       {/* Coles Shopping Modal */}
       <ColesShoppingModal
         isOpen={showColesModal}
         onClose={() => setShowColesModal(false)}
-        items={aggregatedItems}
+        items={needToBuy}
       />
     </main>
   );

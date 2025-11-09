@@ -127,10 +127,29 @@ Example output:
 
   } catch (error) {
     console.error('❌ Error scanning pantry image:', error);
+    
+    // Check for rate limit error
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const isRateLimit = errorMessage.includes('429') || 
+                       errorMessage.includes('Too Many Requests') ||
+                       errorMessage.includes('Resource exhausted');
+    
+    if (isRateLimit) {
+      return NextResponse.json(
+        {
+          error: 'API rate limit exceeded',
+          details: 'You\'ve reached the API usage limit. Please try again in a few minutes, or enter ingredients manually.',
+          isRateLimit: true,
+        },
+        { status: 429 }
+      );
+    }
+    
     return NextResponse.json(
       {
         error: 'Failed to scan image',
         details: error instanceof Error ? error.message : 'Unknown error',
+        isRateLimit: false,
       },
       { status: 500 }
     );
