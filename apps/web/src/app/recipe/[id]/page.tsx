@@ -7,6 +7,7 @@ import { toggleFavorite, isFavorite } from "@/lib/storage";
 import { RecipeLibrary } from "@/lib/library";
 import { type Recipe } from "@/lib/types/recipe";
 import { track } from "@/lib/analytics";
+import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
 
 type RecipePageProps = {
   params: Promise<{ id: string }>;
@@ -65,12 +66,8 @@ export default function RecipePage({ params }: RecipePageProps) {
     );
   }
 
-  const isAIGenerated = RecipeLibrary.isCustomRecipe(id);
-  const chefName = isAIGenerated 
-    ? "AI Generated" 
-    : recipe.source.chef === "jamie_oliver" 
-      ? "Jamie Oliver" 
-      : "RecipeTin Eats";
+  const chefName = getRecipeSourceDisplay(recipe);
+  const isAIGenerated = recipe.id.startsWith("custom-ai-");
 
   return (
     <main style={{ padding: 24, maxWidth: '900px', margin: '0 auto' }}>

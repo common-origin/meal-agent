@@ -13,6 +13,7 @@ import { composeWeek } from "@/lib/compose";
 import { RecipeLibrary } from "@/lib/library";
 import { nextWeekMondayISO } from "@/lib/schedule";
 import { track, type PlanComposedMeta, type PlanRegeneratedMeta } from "@/lib/analytics";
+import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -114,7 +115,7 @@ export default function PlanReviewPage() {
           newMeals.push({
             recipeId: recipe.id,
             title: recipe.title,
-            chef: recipe.source.chef === "jamie_oliver" ? "Jamie Oliver" : "RecipeTin Eats",
+            chef: getRecipeSourceDisplay(recipe),
             timeMins: recipe.timeMins || 0,
             kidsFriendly: recipe.tags.includes("kid_friendly"),
             conflicts: [],

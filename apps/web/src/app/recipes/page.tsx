@@ -2,14 +2,56 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Stack, Typography, Box, Button, TextField, Dropdown, ResponsiveGrid, IconButton } from "@common-origin/design-system";
+import { Stack, Typography, Box, Button, TextField, Dropdown, ResponsiveGrid } from "@common-origin/design-system";
 import { RecipeLibrary } from "@/lib/library";
-import { getFavorites, toggleFavorite } from "@/lib/storage";
+import { getFavorites } from "@/lib/storage";
 import { type Recipe } from "@/lib/types/recipe";
 import { track } from "@/lib/analytics";
+import MealCard from "@/components/app/MealCard";
+import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
 
 type FilterOption = "all" | "favorites" | "ai-generated" | "manual";
 type SortOption = "date-desc" | "date-asc" | "title-asc" | "title-desc";
+
+/**
+ * Convert recipe properties to reason codes that the explainer understands
+ */
+function generateReasonCodes(recipe: Recipe, isFavorited: boolean): string[] {
+  const reasons: string[] = [];
+  
+  // Time-based reasons
+  if (recipe.timeMins && recipe.timeMins <= 30) {
+    reasons.push("≤30m");
+  } else if (recipe.timeMins && recipe.timeMins <= 40) {
+    reasons.push("≤40m");
+  }
+  
+  // Favorite
+  if (isFavorited) {
+    reasons.push("favorite");
+  }
+  
+  // Tag-based reasons
+  if (recipe.tags.includes("kid_friendly")) {
+    reasons.push("kid-friendly");
+  }
+  if (recipe.tags.includes("bulk_cook")) {
+    reasons.push("bulk cook");
+  }
+  if (recipe.tags.includes("vegetarian")) {
+    reasons.push("vegetarian");
+  }
+  if (recipe.tags.includes("high_protein")) {
+    reasons.push("high-protein");
+  }
+  
+  // Value-based reason
+  if (recipe.costPerServeEst && recipe.costPerServeEst < 4) {
+    reasons.push("best value");
+  }
+  
+  return reasons;
+}
 
 export default function RecipesPage() {
   const router = useRouter();
@@ -86,15 +128,7 @@ export default function RecipesPage() {
     setFilteredRecipes(result);
   }, [recipes, searchQuery, filterBy, sortBy, favorites]);
 
-  const handleToggleFavorite = (recipeId: string) => {
-    toggleFavorite(recipeId);
-    setFavorites(getFavorites());
-    track('page_view', { page: 'saved_recipes_favorite_toggle', recipeId });
-  };
 
-  const handleViewRecipe = (recipeId: string) => {
-    router.push(`/recipe/${recipeId}`);
-  };
 
   const handleAddRecipe = () => {
     router.push("/recipes/add");
@@ -163,7 +197,7 @@ export default function RecipesPage() {
         {/* Header */}
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Stack direction="column" gap="xs">
-            <Typography variant="h1">My Saved Recipes</Typography>
+            <Typography variant="h1">My saved recipes</Typography>
             <Typography variant="body" color="subdued">
               {filteredRecipes.length} of {recipes.length} recipes
             </Typography>
@@ -192,37 +226,37 @@ export default function RecipesPage() {
               iconName="add"
               onClick={handleAddRecipe}
             >
-              Add Recipe
+              Add recipe
             </Button>
           </Stack>
         </Stack>
 
         {/* Search and Filters */}
         <Stack direction="row" gap="md" alignItems="flex-end">
-          <div style={{ flex: 1 }}>
+          <Box width="100%" maxWidth="400px">
             <TextField
               label="Search recipes"
               placeholder="Search by title, ingredient, or tag..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-          </div>
-          <div style={{ minWidth: '200px' }}>
+          </Box>
+          <Box width="100%" maxWidth="200px">
             <Dropdown
               label="Filter"
               options={filterOptions}
               value={filterBy}
               onChange={(value) => setFilterBy(value as FilterOption)}
             />
-          </div>
-          <div style={{ minWidth: '200px' }}>
+          </Box>
+          <Box width="100%" maxWidth="200px">
             <Dropdown
               label="Sort"
               options={sortOptions}
               value={sortBy}
               onChange={(value) => setSortBy(value as SortOption)}
             />
-          </div>
+          </Box>
         </Stack>
 
         {/* Empty State */}
@@ -244,7 +278,7 @@ export default function RecipesPage() {
                 iconName="add"
                 onClick={handleAddRecipe}
               >
-                Add Your First Recipe
+                Add your first recipe
               </Button>
             </Stack>
           </Box>
@@ -282,161 +316,29 @@ export default function RecipesPage() {
             gapX={4}
             gapY={6}
           >
-            {filteredRecipes.map((recipe) => (
-              <RecipeCard
-                key={recipe.id}
-                recipe={recipe}
-                isFavorited={favorites.includes(recipe.id)}
-                onToggleFavorite={handleToggleFavorite}
-                onViewRecipe={handleViewRecipe}
-              />
-            ))}
+            {filteredRecipes.map((recipe) => {
+              // Get chef/source display name
+              const chef = getRecipeSourceDisplay(recipe);
+              
+              // Generate proper reason codes for the chips
+              const reasons = generateReasonCodes(recipe, favorites.includes(recipe.id));
+
+              return (
+                <MealCard
+                  key={recipe.id}
+                  recipeId={recipe.id}
+                  title={recipe.title}
+                  chef={chef}
+                  timeMins={recipe.timeMins || 30}
+                  reasons={reasons}
+                  viewRecipeButtonText="View Recipe"
+                  viewRecipeButtonVariant="secondary"
+                />
+              );
+            })}
           </ResponsiveGrid>
         )}
       </Stack>
     </main>
-  );
-}
-
-// Recipe Card Component
-function RecipeCard({ 
-  recipe, 
-  isFavorited, 
-  onToggleFavorite, 
-  onViewRecipe 
-}: { 
-  recipe: Recipe; 
-  isFavorited: boolean;
-  onToggleFavorite: (id: string) => void;
-  onViewRecipe: (id: string) => void;
-}) {
-  const isAIGenerated = recipe.id.startsWith("custom-ai-");
-  const chef = isAIGenerated 
-    ? "AI Generated" 
-    : recipe.source.chef === "jamie_oliver" 
-      ? "Jamie Oliver" 
-      : recipe.source.domain === "user-added"
-        ? "User Added"
-        : "RecipeTin Eats";
-
-  return (
-    <div
-      style={{
-        cursor: "pointer",
-        transition: "box-shadow 0.2s",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "none";
-      }}
-      onClick={() => onViewRecipe(recipe.id)}
-    >
-      <Box
-        p="lg"
-        bg="default"
-        border="subtle"
-        borderRadius="3"
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "12px",
-          height: "100%",
-        }}
-      >
-      {/* Header with favorite */}
-      <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-        <div 
-          style={{ 
-            flex: 1, 
-            minWidth: 0,
-            overflow: "hidden", 
-            textOverflow: "ellipsis",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-          }}
-        >
-          <Typography variant="h4">
-            {recipe.title}
-          </Typography>
-        </div>
-        <div onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-          <IconButton
-            variant={isFavorited ? "primary" : "secondary"}
-            iconName={isFavorited ? "close" : "add"}
-            size="small"
-            onClick={() => onToggleFavorite(recipe.id)}
-            aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
-          />
-        </div>
-      </Stack>
-
-      {/* Details */}
-      <Stack direction="column" gap="xs">
-        <Typography variant="small" color="subdued">
-          {chef}
-        </Typography>
-        {recipe.timeMins && (
-          <Typography variant="small" color="subdued">
-            ⏱️ {recipe.timeMins} mins
-          </Typography>
-        )}
-        <Typography variant="small" color="subdued">
-          🍽️ {recipe.serves || 4} servings
-        </Typography>
-        {recipe.ingredients && (
-          <Typography variant="small" color="subdued">
-            📝 {recipe.ingredients.length} ingredients
-          </Typography>
-        )}
-      </Stack>
-
-      {/* Tags */}
-      {recipe.tags && recipe.tags.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "4px" }}>
-          {recipe.tags.slice(0, 3).map((tag) => (
-            <span
-              key={tag}
-              style={{
-                padding: "2px 8px",
-                borderRadius: "12px",
-                backgroundColor: "#f0f0f0",
-                fontSize: "11px",
-                color: "#666",
-              }}
-            >
-              {tag.replace(/_/g, " ")}
-            </span>
-          ))}
-          {recipe.tags.length > 3 && (
-            <span
-              style={{
-                padding: "2px 8px",
-                fontSize: "11px",
-                color: "#999",
-              }}
-            >
-              +{recipe.tags.length - 3} more
-            </span>
-          )}
-        </div>
-      )}
-
-        {/* View Button */}
-        <Button
-          variant="secondary"
-          size="small"
-          style={{ marginTop: "auto" }}
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation();
-            onViewRecipe(recipe.id);
-          }}
-        >
-          View Recipe
-        </Button>
-      </Box>
-    </div>
   );
 }

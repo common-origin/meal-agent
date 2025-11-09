@@ -16,6 +16,7 @@ import { getSuggestedSwaps } from "@/lib/compose";
 import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
 import { addToRecipeHistory, getRecipeIdsToExclude } from "@/lib/recipeHistory";
+import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -72,11 +73,13 @@ export default function PlanPage() {
         if (household.favorites.includes(recipe.id)) reasons.push("favorite");
         if (recipe.costPerServeEst && recipe.costPerServeEst < 4) reasons.push("best value");
         
+        // Get chef/source display name
+        const chefDisplay = getRecipeSourceDisplay(recipe);
+        
         return {
           recipeId: recipe.id,
           title: recipe.title,
-          chef: recipe.source.chef === "jamie_oliver" ? "Jamie Oliver" : 
-                RecipeLibrary.isCustomRecipe(recipe.id) ? "AI Generated" : "RecipeTin Eats",
+          chef: chefDisplay,
           timeMins: recipe.timeMins || 0,
           kidsFriendly: recipe.tags.includes("kid_friendly"),
           conflicts: [],
@@ -234,14 +237,8 @@ export default function PlanPage() {
     if (household.favorites.includes(recipe.id)) reasons.push("favorite");
     if (recipe.costPerServeEst && recipe.costPerServeEst < 4) reasons.push("best value");
     
-    // Determine chef name
-    const chefName = recipe.source.chef === "jamie_oliver" 
-      ? "Jamie Oliver" 
-      : RecipeLibrary.isCustomRecipe(recipe.id)
-        ? "AI Generated"
-        : recipe.source.domain === "user-added"
-          ? "User Added"
-          : "RecipeTin Eats";
+    // Get chef/source display name
+    const chefName = getRecipeSourceDisplay(recipe);
     
     const newMeal: MealCardProps = {
       recipeId: recipe.id,

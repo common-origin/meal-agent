@@ -369,7 +369,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
               </Box>
 
               <Typography variant="small">
-                Click &quot;Generate Plan&quot; below to create your personalized weekly meal plan with AI
+                Click &quot;Generate plan&quot; below to create your personalized weekly meal plan with AI
               </Typography>
             </Stack>
           </Box>

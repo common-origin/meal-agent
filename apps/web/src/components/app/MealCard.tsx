@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Stack, Typography, Box, Button, ChipGroup, IconButton, Divider } from "@common-origin/design-system";
+import { Stack, Typography, Box, Button, ChipGroup, IconButton, Divider, Tag } from "@common-origin/design-system";
 import { toggleFavorite, isFavorite } from "@/lib/storage";
 import { track } from "@/lib/analytics";
 import { explainReasons } from "@/lib/explainer";
@@ -26,7 +26,8 @@ export type MealCardProps = {
 
 export default function MealCard({ 
   recipeId,
-  title, 
+  title,
+  chef,
   timeMins, 
   kidsFriendly = false, 
   conflicts = [],
@@ -77,7 +78,10 @@ export default function MealCard({
         
         <div>
           <Stack direction="column" gap="sm">
-            <Typography variant="small">{timeMins} mins</Typography>
+            <Stack direction="row" gap="sm">
+              <Tag variant="interactive" border={false}>{chef}</Tag>
+              <Typography variant="small">{timeMins} mins</Typography>
+            </Stack>
             {/* Middle section - Time and Chips */}
             <Stack direction="row" gap="md" alignItems="center">
               {chipLabels.length > 0 && (

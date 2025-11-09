@@ -18,6 +18,7 @@ export default function AddRecipePage() {
   
   const [recipeUrl, setRecipeUrl] = useState('');
   const [title, setTitle] = useState('');
+  const [source, setSource] = useState('');
   const [timeMins, setTimeMins] = useState('');
   const [serves, setServes] = useState('4');
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
@@ -143,6 +144,11 @@ export default function AddRecipePage() {
       return;
     }
 
+    if (!source.trim()) {
+      alert('Please provide a source/attribution for this recipe');
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -152,7 +158,7 @@ export default function AddRecipePage() {
         source: {
           url: sourceUrl || '',
           domain: 'user-added',
-          chef: 'recipe_tin_eats',
+          chef: source.trim(), // Store the user's source/attribution
           license: 'unknown',
           fetchedAt: new Date().toISOString(),
         },
@@ -300,6 +306,8 @@ export default function AddRecipePage() {
                 <RecipeForm 
                   title={title}
                   setTitle={setTitle}
+                  source={source}
+                  setSource={setSource}
                   timeMins={timeMins}
                   setTimeMins={setTimeMins}
                   serves={serves}
@@ -366,6 +374,8 @@ export default function AddRecipePage() {
             <RecipeForm 
               title={title}
               setTitle={setTitle}
+              source={source}
+              setSource={setSource}
               timeMins={timeMins}
               setTimeMins={setTimeMins}
               serves={serves}
@@ -409,6 +419,8 @@ export default function AddRecipePage() {
         <RecipeForm 
           title={title}
           setTitle={setTitle}
+          source={source}
+          setSource={setSource}
           timeMins={timeMins}
           setTimeMins={setTimeMins}
           serves={serves}
@@ -441,6 +453,8 @@ export default function AddRecipePage() {
 function RecipeForm({
   title,
   setTitle,
+  source,
+  setSource,
   timeMins,
   setTimeMins,
   serves,
@@ -466,6 +480,8 @@ function RecipeForm({
 }: {
   title: string;
   setTitle: (v: string) => void;
+  source: string;
+  setSource: (v: string) => void;
   timeMins: string;
   setTimeMins: (v: string) => void;
   serves: string;
@@ -501,6 +517,14 @@ function RecipeForm({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g., Spaghetti Bolognese"
+          />
+
+          <TextField
+            label="Source / Attribution *"
+            value={source}
+            onChange={(e) => setSource(e.target.value)}
+            placeholder="e.g., Mum's Recipe, Jamie Oliver's 15-Minute Meals, RecipeTin Eats"
+            helperText="Where did this recipe come from? This helps you identify it later."
           />
 
           <Stack direction="row" gap="md">

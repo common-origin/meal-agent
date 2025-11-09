@@ -118,6 +118,7 @@ export default function WeekPlannerGrid({ meals, onSwapClick, onGenerateClick, o
                     p="xl"
                     bg="subtle"
                     border="subtle"
+                    minHeight="200px"
                     style={{
                       display: "flex",
                       flexDirection: "column",
@@ -131,12 +132,12 @@ export default function WeekPlannerGrid({ meals, onSwapClick, onGenerateClick, o
                     <Typography variant="label" color="subdued">
                       No meal planned
                     </Typography>
-                    <div style={{ width: "100%" }}>
-                      <Stack direction="column" gap="sm">
+                    <Box width="100%">
+                      <Stack direction="row" gap="sm" justifyContent="center">
                         {onAddSavedRecipeClick && (
                           <Button
-                            variant="primary"
-                            size="medium"
+                            variant="secondary"
+                            size="small"
                             onClick={() => onAddSavedRecipeClick(index)}
                             iconName="add"
                           >
@@ -145,8 +146,8 @@ export default function WeekPlannerGrid({ meals, onSwapClick, onGenerateClick, o
                         )}
                         {onGenerateClick && (
                           <Button
-                            variant="secondary"
-                            size="medium"
+                            variant="primary"
+                            size="small"
                             onClick={() => onGenerateClick(index)}
                             disabled={generatingDayIndex === index}
                           >
@@ -154,7 +155,7 @@ export default function WeekPlannerGrid({ meals, onSwapClick, onGenerateClick, o
                           </Button>
                         )}
                       </Stack>
-                    </div>
+                    </Box>
                   </Box>
                 )}
               </div>

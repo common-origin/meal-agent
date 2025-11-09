@@ -5,7 +5,48 @@ import { Alert, Stack, Typography, IconButton, Button, Sheet, TextField, Dropdow
 import { type Recipe } from "@/lib/types/recipe";
 import { RecipeLibrary } from "@/lib/library";
 import { getFavorites } from "@/lib/storage";
+import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
 import MealCard from "./MealCard";
+
+/**
+ * Convert recipe properties to reason codes that the explainer understands
+ */
+function generateReasonCodes(recipe: Recipe, isFavorited: boolean): string[] {
+  const reasons: string[] = [];
+  
+  // Time-based reasons
+  if (recipe.timeMins && recipe.timeMins <= 30) {
+    reasons.push("≤30m");
+  } else if (recipe.timeMins && recipe.timeMins <= 40) {
+    reasons.push("≤40m");
+  }
+  
+  // Favorite
+  if (isFavorited) {
+    reasons.push("favorite");
+  }
+  
+  // Tag-based reasons
+  if (recipe.tags.includes("kid_friendly")) {
+    reasons.push("kid-friendly");
+  }
+  if (recipe.tags.includes("bulk_cook")) {
+    reasons.push("bulk cook");
+  }
+  if (recipe.tags.includes("vegetarian")) {
+    reasons.push("vegetarian");
+  }
+  if (recipe.tags.includes("high_protein")) {
+    reasons.push("high-protein");
+  }
+  
+  // Value-based reason
+  if (recipe.costPerServeEst && recipe.costPerServeEst < 4) {
+    reasons.push("best value");
+  }
+  
+  return reasons;
+}
 
 export type SwapDrawerProps = {
   isOpen: boolean;
@@ -168,22 +209,26 @@ export default function SwapDrawer({
                 </Typography>
               </div>
             ) : (
-              suggestedSwaps.map((recipe) => (
-                <MealCard
-                  key={recipe.id}
-                  recipeId={recipe.id}
-                  title={recipe.title}
-                  chef={recipe.source.chef === "jamie_oliver" ? "Jamie Oliver" : "RecipeTin Eats"}
-                  timeMins={recipe.timeMins || 0}
-                  kidsFriendly={recipe.tags.includes('kid_friendly')}
-                  reasons={recipe.tags.slice(0, 3)}
-                  onSwapClick={() => handleSelectSwap(recipe)}
-                  swapButtonText="Select this recipe"
-                  swapButtonVariant="primary"
-                  viewRecipeButtonText="View recipe"
-                  viewRecipeButtonVariant="secondary"
-                />
-              ))
+              suggestedSwaps.map((recipe) => {
+                const reasons = generateReasonCodes(recipe, favorites.includes(recipe.id));
+                const chef = getRecipeSourceDisplay(recipe);
+                return (
+                  <MealCard
+                    key={recipe.id}
+                    recipeId={recipe.id}
+                    title={recipe.title}
+                    chef={chef}
+                    timeMins={recipe.timeMins || 0}
+                    kidsFriendly={recipe.tags.includes('kid_friendly')}
+                    reasons={reasons}
+                    onSwapClick={() => handleSelectSwap(recipe)}
+                    swapButtonText="Select this recipe"
+                    swapButtonVariant="primary"
+                    viewRecipeButtonText="View recipe"
+                    viewRecipeButtonVariant="secondary"
+                  />
+                );
+              })
             )}
           </Stack>
         )}
@@ -241,30 +286,27 @@ export default function SwapDrawer({
             ) : (
               <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
                 <Stack direction="column" gap="md">
-                  {filteredSavedRecipes.map((recipe) => (
-                    <MealCard
-                      key={recipe.id}
-                      recipeId={recipe.id}
-                      title={recipe.title}
-                      chef={
-                        recipe.id.startsWith("custom-ai-") 
-                          ? "AI Generated" 
-                          : recipe.source.chef === "jamie_oliver" 
-                            ? "Jamie Oliver" 
-                            : recipe.source.domain === "user-added"
-                              ? "User Added"
-                              : "RecipeTin Eats"
-                      }
-                      timeMins={recipe.timeMins || 0}
-                      kidsFriendly={recipe.tags.includes('kid_friendly')}
-                      reasons={recipe.tags.slice(0, 3)}
-                      onSwapClick={() => handleSelectSwap(recipe)}
-                      swapButtonText="Select this recipe"
-                      swapButtonVariant="primary"
-                      viewRecipeButtonText="View recipe"
-                      viewRecipeButtonVariant="secondary"
-                    />
-                  ))}
+                  {filteredSavedRecipes.map((recipe) => {
+                    const reasons = generateReasonCodes(recipe, favorites.includes(recipe.id));
+                    const chef = getRecipeSourceDisplay(recipe);
+                    
+                    return (
+                      <MealCard
+                        key={recipe.id}
+                        recipeId={recipe.id}
+                        title={recipe.title}
+                        chef={chef}
+                        timeMins={recipe.timeMins || 0}
+                        kidsFriendly={recipe.tags.includes('kid_friendly')}
+                        reasons={reasons}
+                        onSwapClick={() => handleSelectSwap(recipe)}
+                        swapButtonText="Select this recipe"
+                        swapButtonVariant="primary"
+                        viewRecipeButtonText="View recipe"
+                        viewRecipeButtonVariant="secondary"
+                      />
+                    );
+                  })}
                 </Stack>
               </div>
             )}

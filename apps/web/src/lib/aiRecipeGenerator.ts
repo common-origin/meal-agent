@@ -195,7 +195,7 @@ function validateRecipes(recipes: unknown[]): Recipe[] {
         source: {
           url: '',
           domain: 'ai-generated',
-          chef: 'recipe_tin_eats', // Default to Recipe Tin Eats style
+          chef: 'AI Generated',
           license: 'unknown',
           fetchedAt: new Date().toISOString(),
         },

@@ -21,7 +21,7 @@ export type WeeklyOverrides = {
 export type RecipeSource = { 
   url: string; 
   domain: string; 
-  chef: 'jamie_oliver'|'recipe_tin_eats'; 
+  chef: string; // Chef name or source attribution (e.g., "Jamie Oliver", "Mom's Recipe", "AI Generated")
   license: 'unknown'|'restricted'|'permitted'; 
   image?: string; 
   fetchedAt: string 
