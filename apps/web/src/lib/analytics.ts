@@ -23,7 +23,10 @@ export type AnalyticsEventType =
   // User Preferences
   | 'favorite_added'
   | 'favorite_removed'
-  | 'override_saved';
+  | 'override_saved'
+  
+  // Price Reports
+  | 'price_reported';
 
 export type AnalyticsEvent = {
   type: AnalyticsEventType;

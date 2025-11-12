@@ -5,6 +5,7 @@ import styled from "styled-components";
 import { Box, Button, Chip, Container, List, ListItem, ResponsiveGrid, Stack, Typography } from "@common-origin/design-system";
 import { tokens } from "@common-origin/design-system";
 import ColesShoppingModal from "@/components/app/ColesShoppingModal";
+import ReportPriceModal from "@/components/app/ReportPriceModal";
 import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from "@/lib/shoppingListAggregator";
 import { generateShoppingListCSV, downloadCSV } from "@/lib/csv";
 import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides, loadCurrentWeekPlan } from "@/lib/storage";
@@ -24,6 +25,7 @@ export default function ShoppingListPage() {
   const [loading, setLoading] = useState(true);
   const [showColesModal, setShowColesModal] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [reportPriceItem, setReportPriceItem] = useState<AggregatedIngredient | null>(null);
 
   const generateShoppingList = () => {
     setLoading(true);
@@ -192,7 +194,7 @@ export default function ShoppingListPage() {
               <ResponsiveGrid 
                 cols={1} 
                 colsSm={2} 
-                colsMd={3} 
+                colsMd={4} 
                 gap={2}
               >
                 <Box bg="surface" borderRadius="3" p="md">
@@ -207,7 +209,31 @@ export default function ShoppingListPage() {
                   <Typography variant="subtitle" color="subdued">Categories</Typography>
                   <Typography variant="h2">{categories.length}</Typography>
                 </Box>
+                <Box bg="surface" borderRadius="3" p="md">
+                  <Typography variant="subtitle" color="subdued">Estimated total</Typography>
+                  <Typography variant="h2">
+                    ${needToBuy.reduce((sum, item) => {
+                      const priceInfo = estimateIngredientCost(item.normalizedName, item.totalQty, item.unit);
+                      return sum + priceInfo.estimatedCost;
+                    }, 0).toFixed(2)}
+                  </Typography>
+                </Box>
               </ResponsiveGrid>
+
+              {/* Price confidence legend */}
+              <Box bg="subtle" borderRadius="3" p="sm">
+                <Stack direction="row" gap="lg" alignItems="center">
+                  <Typography variant="small" color="subdued">
+                    Price indicators:
+                  </Typography>
+                  <Typography variant="small">
+                    ✓ = Verified price
+                  </Typography>
+                  <Typography variant="small">
+                    ~ = Estimated price
+                  </Typography>
+                </Stack>
+              </Box>
 
               {/* Items to Buy - Grouped by Category */}
               {categories.map((category) => {
@@ -233,6 +259,13 @@ export default function ShoppingListPage() {
                           const itemKey = `${category}-${index}`;
                           const isExpanded = expandedItems.has(itemKey);
                           
+                          // Get price estimate with confidence
+                          const priceInfo = estimateIngredientCost(item.normalizedName, item.totalQty, item.unit);
+                          const priceDisplay = priceInfo.estimatedCost > 0 
+                            ? `$${priceInfo.estimatedCost.toFixed(2)}` 
+                            : '';
+                          const confidenceIcon = priceInfo.confidence === 'high' ? '✓' : '~';
+                          
                           const handleToggle = () => {
                             setExpandedItems(prev => {
                               const next = new Set(prev);
@@ -248,8 +281,32 @@ export default function ShoppingListPage() {
                           return (
                             <ListItem
                               key={index}
-                              primary={`${item.name}`}
-                              secondary={hasMultipleRecipes && `${item.sourceRecipes.length} recipes`}
+                              primary={
+                                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                  <Typography variant="body">{item.name}</Typography>
+                                  <Button
+                                    variant="naked"
+                                    size="small"
+                                    onClick={() => setReportPriceItem(item)}
+                                  >
+                                    Report price
+                                  </Button>
+                                </Stack>
+                              }
+                              secondary={
+                                <Stack direction="row" gap="sm" alignItems="center">
+                                  {hasMultipleRecipes && (
+                                    <Typography variant="small" color="subdued">
+                                      {item.sourceRecipes.length} recipes
+                                    </Typography>
+                                  )}
+                                  {priceDisplay && (
+                                    <Typography variant="small" color={priceInfo.confidence === 'high' ? 'default' : 'subdued'}>
+                                      {confidenceIcon} {priceDisplay}
+                                    </Typography>
+                                  )}
+                                </Stack>
+                              }
                               badge={
                                 <Chip variant="light" size="small">
                                   {item.totalQty.toFixed(1)} {item.unit}
@@ -324,6 +381,18 @@ export default function ShoppingListPage() {
         onClose={() => setShowColesModal(false)}
         items={needToBuy}
       />
+
+      {/* Report Price Modal */}
+      {reportPriceItem && (
+        <ReportPriceModal
+          isOpen={!!reportPriceItem}
+          onClose={() => setReportPriceItem(null)}
+          ingredientName={reportPriceItem.name}
+          normalizedName={reportPriceItem.normalizedName}
+          suggestedQuantity={reportPriceItem.totalQty}
+          suggestedUnit={reportPriceItem.unit}
+        />
+      )}
     </main>
   );
 }

@@ -4,6 +4,8 @@
  * Includes pack sizes, prices, and confidence levels
  */
 
+import { estimateIngredientCostByCategory, type PriceEstimate } from './ingredientPricing';
+
 export interface ColesProduct {
   sku: string;
   name: string;
@@ -628,6 +630,7 @@ export function selectBestProduct(
 
 /**
  * Estimate total cost for an ingredient at Coles
+ * Now with intelligent fallback to category-based pricing
  */
 export function estimateIngredientCost(
   normalizedName: string,
@@ -640,15 +643,21 @@ export function estimateIngredientCost(
   packsNeeded: number;
   requiresChoice: boolean;
   confidence?: 'high' | 'medium' | 'low';
+  priceEstimate?: PriceEstimate;
 } {
   const mapping = findColesMapping(normalizedName);
   
   if (!mapping) {
+    // Use category-based pricing as fallback
+    const estimate = estimateIngredientCostByCategory(normalizedName, quantity, unit);
+    
     return {
       mapped: false,
-      estimatedCost: 0,
-      packsNeeded: 0,
-      requiresChoice: false
+      estimatedCost: estimate.price,
+      packsNeeded: 1,
+      requiresChoice: false,
+      confidence: estimate.confidence,
+      priceEstimate: estimate,
     };
   }
   
@@ -661,6 +670,6 @@ export function estimateIngredientCost(
     product: bestProduct,
     packsNeeded,
     requiresChoice: mapping.requiresChoice,
-    confidence: mapping.confidence
+    confidence: mapping.confidence,
   };
 }

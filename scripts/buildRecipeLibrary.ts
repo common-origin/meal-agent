@@ -126,14 +126,61 @@ function parseIngredients(ingredientList?: string[]): Array<{qty?: number; unit?
   });
 }
 
+/**
+ * Estimate cost per serving based on ingredient categories
+ * Improved from simple formula to consider ingredient types
+ */
 function estimateCost(recipe: IndexedRecipe['recipe']): number {
-  const ingredientCount = recipe.recipeIngredient?.length || 10;
+  const ingredients = recipe.recipeIngredient || [];
   const serves = parseServings(recipe.recipeYield);
   
-  const totalCost = 2.50 + (ingredientCount * 0.35);
+  if (ingredients.length === 0) {
+    return 5.0; // Default fallback
+  }
+  
+  // Estimate cost by categorizing ingredients
+  let totalCost = 0;
+  
+  ingredients.forEach(ing => {
+    const normalized = ing.toLowerCase();
+    let ingredientCost = 0;
+    
+    // Protein (expensive)
+    if (/(chicken|beef|pork|lamb|turkey|fish|salmon|prawn|seafood)/.test(normalized)) {
+      ingredientCost = 4.0; // ~$15/kg for 250g avg
+    }
+    // Dairy
+    else if (/(milk|cream|cheese|butter|yogurt)/.test(normalized)) {
+      ingredientCost = 1.5;
+    }
+    // Fresh herbs (small quantity but expensive per weight)
+    else if (/(basil|parsley|coriander|mint|herb)/.test(normalized) && /(fresh|bunch)/.test(normalized)) {
+      ingredientCost = 0.5;
+    }
+    // Vegetables
+    else if (/(onion|garlic|tomato|potato|carrot|capsicum|broccoli|spinach|mushroom|vegetable)/.test(normalized)) {
+      ingredientCost = 0.8;
+    }
+    // Pantry staples (cheap)
+    else if (/(pasta|rice|flour|sugar|salt|pepper|oil)/.test(normalized)) {
+      ingredientCost = 0.3;
+    }
+    // Spices/condiments (small quantities)
+    else if (/(spice|powder|cumin|paprika|sauce|vinegar)/.test(normalized)) {
+      ingredientCost = 0.4;
+    }
+    // Default for unknown ingredients
+    else {
+      ingredientCost = 0.6;
+    }
+    
+    totalCost += ingredientCost;
+  });
+  
   const perServe = totalCost / serves;
   
-  return Math.max(2.0, Math.min(8.0, Math.round(perServe * 100) / 100));
+  // Cap between $2-$12 per serve (wider range than before)
+  return Math.max(2.0, Math.min(12.0, Math.round(perServe * 100) / 100));
 }
 
 function convertToAppFormat(indexed: IndexedRecipe): Recipe {
