@@ -94,9 +94,11 @@ export default function RecipesPage() {
     if (filterBy === "favorites") {
       result = result.filter(r => favorites.includes(r.id));
     } else if (filterBy === "ai-generated") {
-      result = result.filter(r => r.id.startsWith("custom-ai-"));
+      // AI-generated recipes have IDs starting with "ai-"
+      result = result.filter(r => r.id.startsWith("ai-"));
     } else if (filterBy === "manual") {
-      result = result.filter(r => r.id.startsWith("custom-") && !r.id.startsWith("custom-ai-"));
+      // User-added recipes have IDs starting with "custom-"
+      result = result.filter(r => r.id.startsWith("custom-"));
     }
 
     // Filter by search query
