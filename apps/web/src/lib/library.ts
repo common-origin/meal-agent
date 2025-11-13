@@ -3,7 +3,7 @@ import { recipes } from "./recipes";
 import { enhanceRecipeWithTags } from "./tagNormalizer";
 import { Storage } from "./storage";
 import { GitHubClient } from "./github/client";
-import { getFamilySettings } from "./storage";
+import { getFamilySettings, getFavorites } from "./storage";
 
 // Library search interface (same as MockLibrary for compatibility)
 export interface LibrarySearchOptions {
@@ -15,7 +15,8 @@ export interface LibrarySearchOptions {
   searchText?: string; // New: keyword search
 }
 
-const CUSTOM_RECIPES_KEY = "meal-agent:custom-recipes:v1";
+const CUSTOM_RECIPES_KEY = "meal-agent:custom-recipes:v1"; // User-added recipes only
+const CONFIRMED_RECIPES_KEY = "meal-agent:confirmed-recipes:v1"; // Track recipes confirmed in plans
 
 /**
  * Real Recipe Library
@@ -203,10 +204,29 @@ export class RecipeLibrary {
   }
 
   /**
-   * Get only custom recipes
+   * Get only custom recipes ("My Recipes")
+   * Includes:
+   * - User-added recipes (via URL/image/manual entry)
+   * - Favorited recipes (from built-in library)
+   * - Confirmed recipes (recipes that were part of a confirmed week plan)
    */
   static getCustomRecipes(): Recipe[] {
-    return this.loadCustomRecipes();
+    const userAddedRecipes = this.loadCustomRecipes();
+    const favorites = getFavorites();
+    const confirmedRecipeIds = Storage.get<string[]>(CONFIRMED_RECIPES_KEY, []);
+    
+    // Combine all "My Recipes" sources
+    const myRecipeIds = new Set([
+      ...userAddedRecipes.map(r => r.id),
+      ...favorites,
+      ...confirmedRecipeIds,
+    ]);
+    
+    // Get all recipes (user-added are already in the list)
+    const allRecipes = this.getEnhancedRecipes();
+    
+    // Return only recipes that are in the "My Recipes" set
+    return allRecipes.filter(r => myRecipeIds.has(r.id));
   }
 
   /**
@@ -215,6 +235,23 @@ export class RecipeLibrary {
   static isCustomRecipe(id: string): boolean {
     const customRecipes = this.loadCustomRecipes();
     return customRecipes.some(r => r.id === id);
+  }
+
+  /**
+   * Mark recipes as confirmed (user confirmed their week plan)
+   * This adds them to "My Recipes"
+   */
+  static markRecipesAsConfirmed(recipeIds: string[]): boolean {
+    const existing = Storage.get<string[]>(CONFIRMED_RECIPES_KEY, []);
+    const combined = new Set([...existing, ...recipeIds]);
+    return Storage.set(CONFIRMED_RECIPES_KEY, Array.from(combined));
+  }
+
+  /**
+   * Get confirmed recipe IDs
+   */
+  static getConfirmedRecipeIds(): string[] {
+    return Storage.get<string[]>(CONFIRMED_RECIPES_KEY, []);
   }
 
   /**

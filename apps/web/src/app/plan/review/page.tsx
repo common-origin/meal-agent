@@ -173,6 +173,13 @@ export default function PlanReviewPage() {
   };
 
   const handleConfirm = () => {
+    // Mark all recipes in this plan as confirmed (adds them to "My Recipes")
+    if (plan) {
+      const recipeIds = plan.days.map(day => day.recipeId);
+      RecipeLibrary.markRecipesAsConfirmed(recipeIds);
+      console.log('✅ Marked', recipeIds.length, 'recipes as confirmed');
+    }
+    
     track('plan_confirmed', {
       finalCost: plan?.costEstimate,
       dayCount: plan?.days.length

@@ -27,8 +27,8 @@ export async function POST(req: NextRequest) {
     const html = await response.text();
     console.log('✅ Webpage fetched, length:', html.length);
 
-    // Use Gemini to extract recipe from HTML
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // Use Gemini to extract recipe from HTML (same model as recipe generation)
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `You are a recipe extraction expert. Extract recipe information from the following HTML content.
 
