@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Stack, Typography, Box, Button, TextField, Dropdown, ResponsiveGrid } from "@common-origin/design-system";
 import { RecipeLibrary } from "@/lib/library";
-import { getFavorites } from "@/lib/storage";
+import { getFavorites, toggleFavorite } from "@/lib/storage";
+import { Storage } from "@/lib/storage";
 import { type Recipe } from "@/lib/types/recipe";
 import { track } from "@/lib/analytics";
 import MealCard from "@/components/app/MealCard";
@@ -168,6 +169,47 @@ export default function RecipesPage() {
     } catch (error) {
       console.error("Failed to clear recipes:", error);
       alert("Failed to clear recipes. Check console for details.");
+    }
+  };
+
+  const handleDeleteRecipe = async (recipeId: string, recipeTitle: string) => {
+    if (!confirm(`Remove "${recipeTitle}" from My Recipes?`)) {
+      return;
+    }
+
+    try {
+      // Check if it's a user-added recipe (custom-* or ai-*)
+      const isUserAdded = recipeId.startsWith('custom-') || recipeId.startsWith('ai-');
+      
+      if (isUserAdded) {
+        // Actually delete user-added recipes
+        const success = RecipeLibrary.removeCustomRecipe(recipeId);
+        if (success) {
+          setRecipes(prev => prev.filter(r => r.id !== recipeId));
+          alert(`Recipe "${recipeTitle}" has been deleted`);
+        } else {
+          alert('Failed to delete recipe.');
+        }
+      } else {
+        // For built-in recipes, just unfavorite and remove from confirmed list
+        // This removes them from "My Recipes" without deleting them from the library
+        if (favorites.includes(recipeId)) {
+          toggleFavorite(recipeId);
+          setFavorites(prev => prev.filter(id => id !== recipeId));
+        }
+        
+        // Remove from confirmed recipes
+        const confirmedIds = RecipeLibrary.getConfirmedRecipeIds();
+        const updatedConfirmed = confirmedIds.filter(id => id !== recipeId);
+        Storage.set('meal-agent:confirmed-recipes:v1', updatedConfirmed);
+        
+        // Update local state
+        setRecipes(prev => prev.filter(r => r.id !== recipeId));
+        alert(`Recipe "${recipeTitle}" has been removed from My Recipes`);
+      }
+    } catch (error) {
+      console.error("Failed to delete recipe:", error);
+      alert("Failed to delete recipe. Check console for details.");
     }
   };
 
@@ -335,6 +377,7 @@ export default function RecipesPage() {
                   reasons={reasons}
                   viewRecipeButtonText="View Recipe"
                   viewRecipeButtonVariant="secondary"
+                  onDeleteClick={() => handleDeleteRecipe(recipe.id, recipe.title)}
                 />
               );
             })}
