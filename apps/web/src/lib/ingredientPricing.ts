@@ -105,7 +105,12 @@ export function categorizeIngredient(ingredientName: string): IngredientCategory
  * Handles common cooking units
  */
 function convertToKg(quantity: number, unit: string): number {
-  const normalized = unit.toLowerCase();
+  const normalized = unit.toLowerCase().trim();
+  
+  // Handle empty/missing unit - assume grams (most common in recipes)
+  if (!normalized || normalized === '') {
+    return quantity / 1000;
+  }
   
   // Already in kg
   if (/kg|kilogram/.test(normalized)) {
@@ -141,7 +146,7 @@ function convertToKg(quantity: number, unit: string): number {
   }
   
   // Units (treat as 100g average for items like onions, tomatoes)
-  if (/unit|whole|piece/.test(normalized) || normalized === '') {
+  if (/unit|whole|piece/.test(normalized)) {
     return quantity * 0.1; // 100g per unit
   }
   
@@ -150,8 +155,8 @@ function convertToKg(quantity: number, unit: string): number {
     return quantity * 0.035; // 35g per bunch
   }
   
-  // Default fallback: assume small quantity
-  return quantity * 0.05; // 50g default
+  // Default fallback for unknown units: assume it's grams
+  return quantity / 1000;
 }
 
 /**

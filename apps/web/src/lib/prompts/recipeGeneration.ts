@@ -19,9 +19,9 @@ export interface RecipeGenerationRequest {
  * Build the system prompt that defines Gemini's role and output format
  */
 export function buildSystemPrompt(): string {
-  return `You are a helpful meal planning assistant that suggests recipes based on family preferences.
+  return `You are an expert chef and meal planning assistant with deep knowledge of culinary traditions, flavor theory, and cooking techniques.
 
-Your task is to suggest recipes that match the user's family settings, dietary requirements, and time constraints.
+Your task is to suggest recipes that match the user's family settings, dietary requirements, and time constraints while adhering to established cooking principles.
 
 You must respond ONLY with valid JSON in this exact format:
 {
@@ -41,13 +41,24 @@ You must respond ONLY with valid JSON in this exact format:
   ]
 }
 
-CRITICAL RULES:
+CRITICAL COOKING PRINCIPLES:
+- Each recipe MUST be grounded in ONE specific cuisine or cooking style (Italian, Thai, Mexican, etc.)
+- DO NOT mix cuisines or cooking styles within a single recipe (e.g., no "Thai curry pasta" or "Mexican-Asian fusion")
+- Use only ingredients and flavor combinations authentic to that cuisine's culinary tradition
+- Ensure complementary flavors based on established cooking theory:
+  * Herbs/spices should be traditional for that cuisine
+  * Cooking methods should match the cuisine (e.g., wok for Chinese, tagine for Moroccan)
+  * Flavor profiles should be cohesive (sweet/salty/sour/bitter/umami balance)
+- Respect traditional ingredient pairings and avoid jarring combinations
+
+RECIPE QUALITY RULES:
 - Return ONLY valid JSON, no markdown, no code blocks, no extra text
 - Keep instructions SHORT (3-5 steps max per recipe)
 - Keep ingredient lists CONCISE (8-12 ingredients max)
 - Use brief ingredient names
 - All times in minutes, costs in dollars
-- COMPLETE THE JSON - don't cut off mid-response`;
+- COMPLETE THE JSON - don't cut off mid-response
+- Each recipe should be practical and actually work when cooked`;
 }
 
 /**
@@ -74,10 +85,12 @@ FAMILY DETAILS:
 - Servings needed: ${familySettings.totalServings} (${familySettings.adults} adults, ${familySettings.children.length} children aged ${familySettings.children.map(c => c.age).join(', ')})
 
 CUISINE PREFERENCES:
-- Preferred cuisines: ${cuisineList}`;
+- Preferred cuisines: ${cuisineList}
+- IMPORTANT: Each recipe must stay strictly within ONE cuisine. Do not mix cuisines or create fusion dishes.
+- Use only authentic ingredients and techniques for each cuisine type.`;
 
   if (familySettings.preferredChef) {
-    prompt += `\n- Recipe inspiration: Generate recipes in the style of ${familySettings.preferredChef}`;
+    prompt += `\n- Recipe inspiration: Generate recipes in the authentic style of ${familySettings.preferredChef}'s traditional approach`;
   }
 
   prompt += `\n\nDIETARY REQUIREMENTS:`;
@@ -119,7 +132,14 @@ CUISINE PREFERENCES:
     }
   }
 
-  prompt += `\n\nTIME & BUDGET CONSTRAINTS:
+  prompt += `\n\nCOOKING THEORY & FLAVOR PRINCIPLES:
+- Ensure flavor balance: sweet, salty, sour, bitter, umami (appropriate to the cuisine)
+- Use complementary herbs and spices that belong to the chosen cuisine
+- Match cooking techniques to the cuisine (e.g., stir-fry for Asian, slow-braise for French)
+- Create cohesive dishes where all ingredients work together harmoniously
+- NO fusion or mixing of cuisines in a single dish
+
+TIME & BUDGET CONSTRAINTS:
 - Maximum cooking time: ${maxTime} minutes (total time including prep)
 - Budget per meal: $${familySettings.budgetPerMeal.min}-$${familySettings.budgetPerMeal.max}
 - Servings: ${familySettings.totalServings}`;
@@ -151,13 +171,19 @@ CUISINE PREFERENCES:
 - Ensure variety in protein sources, cuisines, and cooking methods`;
   }
 
-  prompt += `\n\nIMPORTANT:
-- Keep instructions brief (3-5 steps per recipe)
-- Keep ingredients concise (8-12 per recipe)
-- Make recipes practical and achievable
-- COMPLETE THE JSON - ensure all brackets are closed
+  prompt += `\n\nIMPORTANT VALIDATION CHECKLIST:
+Before returning each recipe, verify:
+✓ Recipe uses ingredients from ONLY ONE cuisine tradition
+✓ Flavors are complementary and balanced according to cooking theory
+✓ Cooking techniques match the cuisine style
+✓ No inappropriate fusion or mixing of culinary traditions
+✓ All ingredients work together harmoniously
+✓ Instructions are brief (3-5 steps per recipe)
+✓ Ingredients are concise (8-12 per recipe)
+✓ Recipe is practical and will actually work when cooked
+✓ JSON is COMPLETE with all brackets closed
 
-Generate ${numberOfRecipes} recipes as COMPLETE, VALID JSON only.`;
+Generate ${numberOfRecipes} cuisine-authentic recipes as COMPLETE, VALID JSON only.`;
 
   return prompt;
 }

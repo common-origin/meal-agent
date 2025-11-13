@@ -73,12 +73,6 @@ const REASON_CHIP_MAP: Record<string, ReasonChip> = {
     text: "Simple recipe",
     variant: "default",
     icon: "✨"
-  },
-  
-  // Fallback for unknown reasons
-  "default": {
-    text: "Recommended",
-    variant: "default"
   }
 };
 
@@ -128,11 +122,14 @@ export class DeterministicExplainer implements ExplainAdapter {
     
     // Take top 3 reasons
     for (const reason of sortedReasons.slice(0, 3)) {
-      const chip = REASON_CHIP_MAP[reason] || REASON_CHIP_MAP["default"];
-      chips.push({
-        ...chip,
-        text: chip.text
-      });
+      const chip = REASON_CHIP_MAP[reason];
+      // Skip unknown reasons (no fallback chip)
+      if (chip) {
+        chips.push({
+          ...chip,
+          text: chip.text
+        });
+      }
     }
     
     return chips;

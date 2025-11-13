@@ -214,6 +214,17 @@ export default function ShoppingListPage() {
                   <Typography variant="h2">
                     ${needToBuy.reduce((sum, item) => {
                       const priceInfo = estimateIngredientCost(item.normalizedName, item.totalQty, item.unit);
+                      // Debug logging to find the issue
+                      if (priceInfo.estimatedCost > 100) {
+                        console.log('⚠️ High price detected:', {
+                          item: item.name,
+                          normalized: item.normalizedName,
+                          qty: item.totalQty,
+                          unit: item.unit,
+                          price: priceInfo.estimatedCost,
+                          priceInfo
+                        });
+                      }
                       return sum + priceInfo.estimatedCost;
                     }, 0).toFixed(2)}
                   </Typography>

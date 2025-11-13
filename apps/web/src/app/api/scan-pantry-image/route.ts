@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     // Use Gemini Vision to identify ingredients
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-1.5-flash',
       generationConfig: {
         temperature: 0.3, // Slightly higher for variety in ingredient naming
         topK: 40,
