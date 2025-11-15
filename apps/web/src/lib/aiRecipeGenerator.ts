@@ -31,7 +31,44 @@ export interface GenerationError {
 }
 
 /**
- * Generate recipes using Gemini AI
+ * Retry helper with exponential backoff
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  initialDelayMs: number = 1000
+): Promise<T> {
+  let lastError: Error | undefined;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+      
+      // Check if it's a retryable error (503, 429, network issues)
+      const isRetryable = 
+        lastError.message.includes('503') || 
+        lastError.message.includes('429') ||
+        lastError.message.includes('overloaded') ||
+        lastError.message.includes('ECONNRESET') ||
+        lastError.message.includes('ETIMEDOUT');
+      
+      if (!isRetryable || attempt === maxRetries - 1) {
+        throw lastError;
+      }
+      
+      const delay = initialDelayMs * Math.pow(2, attempt);
+      console.log(`⏳ Attempt ${attempt + 1} failed, retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw lastError;
+}
+
+/**
+ * Generate recipes using Gemini AI with retry logic
  */
 export async function generateRecipes(
   request: RecipeGenerationRequest
@@ -63,8 +100,13 @@ export async function generateRecipes(
       servings: request.familySettings.totalServings,
     });
 
-    // Generate content
-    const result = await model.generateContent(fullPrompt);
+    // Generate content with retry logic for transient errors
+    const result = await retryWithBackoff(
+      () => model.generateContent(fullPrompt),
+      3, // Max 3 retries
+      1000 // Start with 1 second delay
+    );
+    
     const response = result.response;
     const text = response.text();
 
@@ -109,9 +151,20 @@ export async function generateRecipes(
     console.error('❌ Error generating recipes:', error);
     
     if (error instanceof Error) {
+      // Provide user-friendly error messages for common issues
+      let userMessage = error.message;
+      
+      if (error.message.includes('503') || error.message.includes('overloaded')) {
+        userMessage = 'The AI service is temporarily overloaded. We tried 3 times but it\'s still busy. Please wait a minute and try again.';
+      } else if (error.message.includes('429')) {
+        userMessage = 'Rate limit reached. Please wait a minute before generating more recipes.';
+      } else if (error.message.includes('ETIMEDOUT') || error.message.includes('ECONNRESET')) {
+        userMessage = 'Network connection issue. Please check your internet and try again.';
+      }
+      
       return {
         error: 'Failed to generate recipes',
-        details: error.message,
+        details: userMessage,
       };
     }
     

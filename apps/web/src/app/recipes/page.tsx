@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Stack, Typography, Box, Button, TextField, Dropdown, ResponsiveGrid } from "@common-origin/design-system";
+import Main from "@/components/app/Main";
+import ButtonGroup from "@/components/app/ButtonGroup";
 import { RecipeLibrary } from "@/lib/library";
 import { getFavorites, toggleFavorite } from "@/lib/storage";
 import { Storage } from "@/lib/storage";
@@ -20,11 +22,9 @@ type SortOption = "date-desc" | "date-asc" | "title-asc" | "title-desc";
 function generateReasonCodes(recipe: Recipe, isFavorited: boolean): string[] {
   const reasons: string[] = [];
   
-  // Time-based reasons
-  if (recipe.timeMins && recipe.timeMins <= 30) {
-    reasons.push("≤30m");
-  } else if (recipe.timeMins && recipe.timeMins <= 40) {
-    reasons.push("≤40m");
+  // Time-based reasons (only recipes under 25 mins are "quick")
+  if (recipe.timeMins && recipe.timeMins < 25) {
+    reasons.push("quick");
   }
   
   // Favorite
@@ -236,43 +236,14 @@ export default function RecipesPage() {
   }
 
   return (
-    <main style={{ padding: 24, maxWidth: '1400px', margin: '0 auto' }}>
+    <Main maxWidth="1400px">
       <Stack direction="column" gap="xl">
         {/* Header */}
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Stack direction="column" gap="xs">
-            <Typography variant="h1">My saved recipes</Typography>
-            <Typography variant="body" color="subdued">
-              {filteredRecipes.length} of {recipes.length} recipes
-            </Typography>
-          </Stack>
-          <Stack direction="row" gap="md">
-            {recipes.length > 0 && (
-              <Button
-                variant="secondary"
-                size="large"
-                onClick={handleClearAllRecipes}
-                style={{ color: '#d32f2f' }}
-              >
-                Clear All
-              </Button>
-            )}
-            <Button
-              variant="secondary"
-              size="large"
-              onClick={handleSyncGitHub}
-            >
-              Sync GitHub
-            </Button>
-            <Button
-              variant="primary"
-              size="large"
-              iconName="add"
-              onClick={handleAddRecipe}
-            >
-              Add recipe
-            </Button>
-          </Stack>
+        <Stack direction="column" gap="xs">
+          <Typography variant="h1">My saved recipes</Typography>
+          <Typography variant="body" color="subdued">
+            {filteredRecipes.length} of {recipes.length} recipes
+          </Typography>
         </Stack>
 
         {/* Search and Filters */}
@@ -375,8 +346,6 @@ export default function RecipesPage() {
                   chef={chef}
                   timeMins={recipe.timeMins || 30}
                   reasons={reasons}
-                  viewRecipeButtonText="View Recipe"
-                  viewRecipeButtonVariant="secondary"
                   onDeleteClick={() => handleDeleteRecipe(recipe.id, recipe.title)}
                 />
               );
@@ -384,6 +353,38 @@ export default function RecipesPage() {
           </ResponsiveGrid>
         )}
       </Stack>
-    </main>
+
+      <ButtonGroup 
+        right={
+          <>
+            {recipes.length > 0 && (
+              <Button
+                variant="secondary"
+                size="large"
+                onClick={handleClearAllRecipes}
+                style={{ color: '#d32f2f' }}
+              >
+                Clear All
+              </Button>
+            )}
+            <Button
+              variant="secondary"
+              size="large"
+              onClick={handleSyncGitHub}
+            >
+              Sync GitHub
+            </Button>
+            <Button
+              variant="primary"
+              size="large"
+              iconName="add"
+              onClick={handleAddRecipe}
+            >
+              Add recipe
+            </Button>
+          </>
+        }
+      />
+    </Main>
   );
 }

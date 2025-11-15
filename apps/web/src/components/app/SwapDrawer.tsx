@@ -15,10 +15,8 @@ function generateReasonCodes(recipe: Recipe, isFavorited: boolean): string[] {
   const reasons: string[] = [];
   
   // Time-based reasons
-  if (recipe.timeMins && recipe.timeMins <= 30) {
-    reasons.push("≤30m");
-  } else if (recipe.timeMins && recipe.timeMins <= 40) {
-    reasons.push("≤40m");
+  if (recipe.timeMins && recipe.timeMins < 25) {
+    reasons.push("quick");
   }
   
   // Favorite
@@ -222,10 +220,7 @@ export default function SwapDrawer({
                     kidsFriendly={recipe.tags.includes('kid_friendly')}
                     reasons={reasons}
                     onSwapClick={() => handleSelectSwap(recipe)}
-                    swapButtonText="Select this recipe"
-                    swapButtonVariant="primary"
-                    viewRecipeButtonText="View recipe"
-                    viewRecipeButtonVariant="secondary"
+                    disableLink={true}
                   />
                 );
               })
@@ -300,10 +295,7 @@ export default function SwapDrawer({
                         kidsFriendly={recipe.tags.includes('kid_friendly')}
                         reasons={reasons}
                         onSwapClick={() => handleSelectSwap(recipe)}
-                        swapButtonText="Select this recipe"
-                        swapButtonVariant="primary"
-                        viewRecipeButtonText="View recipe"
-                        viewRecipeButtonVariant="secondary"
+                        disableLink={true}
                       />
                     );
                   })}

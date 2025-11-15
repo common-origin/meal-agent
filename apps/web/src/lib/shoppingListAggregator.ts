@@ -47,7 +47,11 @@ function normalizeIngredientName(name: string): string {
   return name
     .toLowerCase()
     .trim()
-    .replace(/^(fresh|dried|ground|chopped|sliced|diced)\s+/g, '') // Remove prep descriptors
+    .replace(/\s+or\s+.*$/g, '') // Remove "or" alternatives (e.g., "ghee or oil" -> "ghee")
+    .replace(/\s+and\/or\s+.*$/g, '') // Remove "and/or" alternatives
+    .replace(/^(fresh|dried|ground|chopped|sliced|diced|minced|grated|crushed|shredded|raw|cooked)\s+/g, '') // Remove prep descriptors
+    .replace(/^(plain|greek|whole|full cream|low fat|reduced fat|extra virgin|unsalted|salted|canned|frozen)\s+/g, '') // Remove quality descriptors
+    .replace(/\s+(plain|greek|whole|full cream|low fat|reduced fat|extra virgin|unsalted|salted|canned|frozen)$/g, '') // Remove trailing descriptors
     .replace(/\s+\(.*?\)/g, '') // Remove parenthetical notes
     .replace(/,.*$/g, '') // Remove anything after comma
     .replace(/\s+/g, ' ') // Normalize whitespace

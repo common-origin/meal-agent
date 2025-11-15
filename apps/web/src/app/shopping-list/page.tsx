@@ -1,11 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import styled from "styled-components";
-import { Box, Button, Chip, Container, List, ListItem, ResponsiveGrid, Stack, Typography } from "@common-origin/design-system";
-import { tokens } from "@common-origin/design-system";
+import { Box, Button, Chip, Container, Icon, List, ListItem, ResponsiveGrid, Stack, Typography } from "@common-origin/design-system";
+import Main from "@/components/app/Main";
 import ColesShoppingModal from "@/components/app/ColesShoppingModal";
-import ReportPriceModal from "@/components/app/ReportPriceModal";
 import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from "@/lib/shoppingListAggregator";
 import { generateShoppingListCSV, downloadCSV } from "@/lib/csv";
 import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides, loadCurrentWeekPlan } from "@/lib/storage";
@@ -15,17 +13,11 @@ import { track, type CostOptimizedMeta } from "@/lib/analytics";
 import { estimateIngredientCost } from "@/lib/colesMapping";
 import { RecipeLibrary } from "@/lib/library";
 
-const PageLayout = styled.div`
- max-width: ${tokens.base.breakpoint.md};
- margin: 0 auto;
-`
-
 export default function ShoppingListPage() {
   const [aggregatedItems, setAggregatedItems] = useState<AggregatedIngredient[]>([]);
   const [loading, setLoading] = useState(true);
   const [showColesModal, setShowColesModal] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
-  const [reportPriceItem, setReportPriceItem] = useState<AggregatedIngredient | null>(null);
 
   const generateShoppingList = () => {
     setLoading(true);
@@ -38,9 +30,19 @@ export default function ShoppingListPage() {
     const savedPlan = loadCurrentWeekPlan(nextWeekISO);
     
     let plan;
+    let weeklyPantryItems: Array<{ name: string; qty: number; unit: string }> = [];
+    
     if (savedPlan) {
       // Use the saved plan - build PlanWeek from saved recipe IDs
       console.log('📋 Using saved week plan:', savedPlan.recipeIds);
+      
+      // Use week-specific pantry items if available (convert from string[] to required format)
+      weeklyPantryItems = (savedPlan.pantryItems || []).map(item => ({
+        name: item,
+        qty: 1,
+        unit: 'item'
+      }));
+      console.log('🥫 Using week-specific pantry items:', weeklyPantryItems.length, 'items');
       
       // Calculate dates for the week (Monday through Sunday)
       const startDate = new Date(nextWeekISO);
@@ -84,11 +86,13 @@ export default function ShoppingListPage() {
       console.log('🔄 No saved plan found, composing from library...');
       const overrides = loadWeeklyOverrides(nextWeekISO);
       plan = composeWeek(household, overrides || undefined);
+      // Fall back to general household pantry if no saved plan (already in correct format)
+      weeklyPantryItems = household.pantry;
     }
     
-    // Aggregate ingredients
+    // Aggregate ingredients using week-specific pantry items
     const items = aggregateShoppingList(plan, {
-      userPantryItems: household.pantry
+      userPantryItems: weeklyPantryItems
     });
     
     setAggregatedItems(items);
@@ -169,222 +173,214 @@ export default function ShoppingListPage() {
   const totalItems = needToBuy.length;
 
   return (
-    <main style={{ padding: 24 }}>
-      <PageLayout>
-          <Container>
-            <Stack direction="column" gap="lg">
-              {/* Header */}
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography variant="h1">Shopping list</Typography>
-                <Stack direction="row" gap="md">
-                  <Button variant="secondary" size="large" onClick={handleExportCSV}>
-                    Export CSV
-                  </Button>
-                  <Button variant="primary" size="large" onClick={handleShopAtColes}>
-                    Shop at Coles
-                  </Button>
+    <>
+      <Main maxWidth="md">
+        <Container>
+          <Stack direction="column" gap="lg">
+            {/* Header */}
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Typography variant="h1">Shopping list</Typography>
+              <Stack direction="row" gap="md">
+                <Button variant="secondary" size="large" onClick={handleExportCSV}>
+                  Export CSV
+                </Button>
+                <Button variant="primary" size="large" onClick={handleShopAtColes}>
+                  Shop at Coles
+                </Button>
+              </Stack>
+            </Stack>
+          
+            <Typography variant="body">
+              Aggregated from your meal plan with de-duplicated ingredients.
+            </Typography>
+
+            {/* Summary Stats */}
+            <ResponsiveGrid 
+              cols={1} 
+              colsSm={2} 
+              colsMd={4} 
+              gap={2}
+            >
+              <Box bg="emphasis" borderRadius="4" p="md">
+                <Typography variant="subtitle" color="inverse">Items to buy</Typography>
+                <Typography variant="h2" color="inverse">{totalItems}</Typography>
+              </Box>
+              <Box bg="emphasis" borderRadius="4" p="md">
+                <Typography variant="subtitle" color="inverse">Already have</Typography>
+                <Typography variant="h2" color="inverse">{alreadyHave.length}</Typography>
+              </Box>
+              <Box bg="emphasis" borderRadius="4" p="md">
+                <Typography variant="subtitle" color="inverse">Categories</Typography>
+                <Typography variant="h2" color="inverse">{categories.length}</Typography>
+              </Box>
+              <Box bg="emphasis" borderRadius="4" p="md">
+                <Typography variant="subtitle" color="inverse">Estimated total</Typography>
+                <Typography variant="h2" color="inverse">
+                  ${needToBuy.reduce((sum, item) => {
+                    const priceInfo = estimateIngredientCost(item.normalizedName, item.totalQty, item.unit);
+                    // Debug logging to find the issue
+                    if (priceInfo.estimatedCost > 100) {
+                      console.log('⚠️ High price detected:', {
+                        item: item.name,
+                        normalized: item.normalizedName,
+                        qty: item.totalQty,
+                        unit: item.unit,
+                        price: priceInfo.estimatedCost,
+                        priceInfo
+                      });
+                    }
+                    return sum + priceInfo.estimatedCost;
+                  }, 0).toFixed(2)}
+                </Typography>
+              </Box>
+            </ResponsiveGrid>
+
+            {/* Price confidence legend */}
+            <Box bg="default" borderRadius="4" border="subtle" p="sm">
+              <Stack direction="row" gap="lg" alignItems="center">
+                <Typography variant="small" color="subdued">
+                  Price indicators:
+                </Typography>
+                <Stack direction="row" gap="sm" alignItems="center">
+                  <Icon name="checkRing" iconColor="success" size="sm" />
+                  <Typography variant="small">
+                    Verified price
+                  </Typography>
                 </Stack>
               </Stack>
-            
-              <Typography variant="body">
-                Aggregated from your meal plan with de-duplicated ingredients.
-              </Typography>
+            </Box>
 
-              {/* Summary Stats */}
-              <ResponsiveGrid 
-                cols={1} 
-                colsSm={2} 
-                colsMd={4} 
-                gap={2}
-              >
-                <Box bg="surface" borderRadius="3" p="md">
-                  <Typography variant="subtitle" color="subdued">Items to buy</Typography>
-                  <Typography variant="h2">{totalItems}</Typography>
-                </Box>
-                <Box bg="surface" borderRadius="3" p="md">
-                  <Typography variant="subtitle" color="subdued">Already have</Typography>
-                  <Typography variant="h2">{alreadyHave.length}</Typography>
-                </Box>
-                <Box bg="surface" borderRadius="3" p="md">
-                  <Typography variant="subtitle" color="subdued">Categories</Typography>
-                  <Typography variant="h2">{categories.length}</Typography>
-                </Box>
-                <Box bg="surface" borderRadius="3" p="md">
-                  <Typography variant="subtitle" color="subdued">Estimated total</Typography>
-                  <Typography variant="h2">
-                    ${needToBuy.reduce((sum, item) => {
-                      const priceInfo = estimateIngredientCost(item.normalizedName, item.totalQty, item.unit);
-                      // Debug logging to find the issue
-                      if (priceInfo.estimatedCost > 100) {
-                        console.log('⚠️ High price detected:', {
-                          item: item.name,
-                          normalized: item.normalizedName,
-                          qty: item.totalQty,
-                          unit: item.unit,
-                          price: priceInfo.estimatedCost,
-                          priceInfo
-                        });
-                      }
-                      return sum + priceInfo.estimatedCost;
-                    }, 0).toFixed(2)}
-                  </Typography>
-                </Box>
-              </ResponsiveGrid>
-
-              {/* Price confidence legend */}
-              <Box bg="subtle" borderRadius="3" p="sm">
-                <Stack direction="row" gap="lg" alignItems="center">
-                  <Typography variant="small" color="subdued">
-                    Price indicators:
-                  </Typography>
-                  <Typography variant="small">
-                    ✓ = Verified price
-                  </Typography>
-                  <Typography variant="small">
-                    ~ = Estimated price
-                  </Typography>
-                </Stack>
-              </Box>
-
-              {/* Items to Buy - Grouped by Category */}
-              {categories.map((category) => {
-                const items = groupedNeedToBuy[category];
-                
-                return (
-                  <Box 
-                    key={category}
-                    border="default"
-                    borderRadius="4"
-                    p="md"
-                    bg="subtle"
-                  >
-                    <Stack direction="column" gap="md">
-                      <Stack direction="row"  alignItems="center">
-                        <Typography variant="h3">{category}</Typography>
-                        <Chip variant="dark">{items.length} items</Chip>
-                      </Stack>
-                      
-                      <List dividers spacing="comfortable">
-                        {items.map((item, index) => {
-                          const hasMultipleRecipes = item.sourceRecipes.length > 1;
-                          const itemKey = `${category}-${index}`;
-                          const isExpanded = expandedItems.has(itemKey);
-                          
-                          // Get price estimate with confidence
-                          const priceInfo = estimateIngredientCost(item.normalizedName, item.totalQty, item.unit);
-                          const priceDisplay = priceInfo.estimatedCost > 0 
-                            ? `$${priceInfo.estimatedCost.toFixed(2)}` 
-                            : '';
-                          const confidenceIcon = priceInfo.confidence === 'high' ? '✓' : '~';
-                          
-                          const handleToggle = () => {
-                            setExpandedItems(prev => {
-                              const next = new Set(prev);
-                              if (next.has(itemKey)) {
-                                next.delete(itemKey);
-                              } else {
-                                next.add(itemKey);
-                              }
-                              return next;
-                            });
-                          };
-                          
-                          return (
-                            <ListItem
-                              key={index}
-                              primary={
-                                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                                  <Typography variant="body">{item.name}</Typography>
-                                  <Button
-                                    variant="naked"
-                                    size="small"
-                                    onClick={() => setReportPriceItem(item)}
-                                  >
-                                    Report price
-                                  </Button>
-                                </Stack>
-                              }
-                              secondary={
-                                <Stack direction="row" gap="sm" alignItems="center">
-                                  {hasMultipleRecipes && (
-                                    <Typography variant="small" color="subdued">
-                                      {item.sourceRecipes.length} recipes
-                                    </Typography>
-                                  )}
-                                  {priceDisplay && (
-                                    <Typography variant="small" color={priceInfo.confidence === 'high' ? 'default' : 'subdued'}>
-                                      {confidenceIcon} {priceDisplay}
-                                    </Typography>
-                                  )}
-                                </Stack>
-                              }
-                              badge={
-                                <Chip variant="light" size="small">
-                                  {item.totalQty.toFixed(1)} {item.unit}
-                                </Chip>
-                              }
-                              expandable={hasMultipleRecipes}
-                              expanded={isExpanded}
-                              onToggle={handleToggle}
-                            >
-                              {hasMultipleRecipes && (
-                                <Stack direction="column" gap="xs">
-                                  <Typography variant="small" color="subdued">
-                                    Used in:
-                                  </Typography>
-                                  {item.sourceRecipes.map((recipe, idx) => (
-                                    <Typography key={idx} variant="small">
-                                      • {recipe.recipeTitle}: {recipe.qty.toFixed(1)} {item.unit}
-                                    </Typography>
-                                  ))}
-                                </Stack>
-                              )}
-                            </ListItem>
-                          );
-                        })}
-                      </List>
-                    </Stack>
-                  </Box>
-                );
-              })}
-
-              {/* Already Have Section */}
-              {alreadyHave.length > 0 && (
+            {/* Items to Buy - Grouped by Category */}
+            {categories.map((category) => {
+              const items = groupedNeedToBuy[category];
+              
+              return (
                 <Box 
-                  border="default"
+                  key={category}
+                  border="subtle"
                   borderRadius="4"
                   p="md"
-                  bg="subtle"
+                  bg="default"
                 >
                   <Stack direction="column" gap="md">
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography variant="h3">Already in your pantry</Typography>
-                      <Chip variant="light">{alreadyHave.length} items</Chip>
+                    <Stack direction="row"  alignItems="center">
+                      <Typography variant="h3">{category}</Typography>
+                      <Chip variant="dark">{items.length} items</Chip>
                     </Stack>
                     
-                    <Typography variant="small" color="subdued">
-                      These ingredients were in your pantry inventory, so they&apos;re excluded from your shopping list.
-                    </Typography>
-                    
-                    <List dividers spacing="compact">
-                      {alreadyHave.map((item, index) => (
-                        <ListItem
-                          key={index}
-                          primary={item.name}
-                          badge={
-                            <Chip variant="light" size="small">
-                              {item.totalQty.toFixed(1)} {item.unit}
-                            </Chip>
-                          }
-                        />
-                      ))}
+                    <List dividers spacing="comfortable">
+                      {items.map((item, index) => {
+                        const hasMultipleRecipes = item.sourceRecipes.length > 1;
+                        const itemKey = `${category}-${index}`;
+                        const isExpanded = expandedItems.has(itemKey);
+                        
+                        // Get price estimate with confidence
+                        const priceInfo = estimateIngredientCost(item.normalizedName, item.totalQty, item.unit);
+                        const priceDisplay = priceInfo.estimatedCost > 0 
+                          ? `$${priceInfo.estimatedCost.toFixed(2)}` 
+                          : '';
+                        const showConfidenceIcon = priceInfo.confidence === 'high';
+                        
+                        const handleToggle = () => {
+                          setExpandedItems(prev => {
+                            const next = new Set(prev);
+                            if (next.has(itemKey)) {
+                              next.delete(itemKey);
+                            } else {
+                              next.add(itemKey);
+                            }
+                            return next;
+                          });
+                        };
+                        
+                        return (
+                          <ListItem
+                            key={index}
+                            primary={item.name}
+                            secondary={
+                              <Stack direction="row" gap="sm" alignItems="center">
+                                {hasMultipleRecipes && (
+                                  <Typography variant="small" color="subdued">
+                                    {item.sourceRecipes.length} recipes
+                                  </Typography>
+                                )}
+                                {priceDisplay && (
+                                  <Stack direction="row" gap="xs" alignItems="center">
+                                    <Typography variant="small" color={priceInfo.confidence === 'high' ? 'default' : 'subdued'}>
+                                      {priceDisplay}
+                                    </Typography>
+                                    {showConfidenceIcon && <Icon name="checkRing" iconColor="success" size="sm" />}
+                                  </Stack>
+                                )}
+                              </Stack>
+                            }
+                            badge={
+                              <Chip variant="light" size="small">
+                                {item.totalQty.toFixed(1)} {item.unit}
+                              </Chip>
+                            }
+                            expandable={hasMultipleRecipes}
+                            expanded={isExpanded}
+                            onToggle={handleToggle}
+                          >
+                            {hasMultipleRecipes && (
+                              <Stack direction="column" gap="xs">
+                                <Typography variant="small" color="subdued">
+                                  Used in:
+                                </Typography>
+                                {item.sourceRecipes.map((recipe, idx) => (
+                                  <Typography key={idx} variant="small">
+                                    • {recipe.recipeTitle}: {recipe.qty.toFixed(1)} {item.unit}
+                                  </Typography>
+                                ))}
+                              </Stack>
+                            )}
+                          </ListItem>
+                        );
+                      })}
                     </List>
                   </Stack>
                 </Box>
-              )}
+              );
+            })}
+
+            {/* Already Have Section */}
+            {alreadyHave.length > 0 && (
+              <Box 
+                border="subtle"
+                borderRadius="4"
+                p="md"
+                bg="default"
+              >
+                <Stack direction="column" gap="md">
+                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Typography variant="h3">Already in your pantry</Typography>
+                    <Chip variant="light">{alreadyHave.length} items</Chip>
+                  </Stack>
+                  
+                  <Typography variant="small" color="subdued">
+                    These ingredients were in your pantry inventory, so they&apos;re excluded from your shopping list.
+                  </Typography>
+                  
+                  <List dividers spacing="compact">
+                    {alreadyHave.map((item, index) => (
+                      <ListItem
+                        key={index}
+                        primary={item.name}
+                        badge={
+                          <Chip variant="light" size="small">
+                            {item.totalQty.toFixed(1)} {item.unit}
+                          </Chip>
+                        }
+                      />
+                    ))}
+                  </List>
+                </Stack>
+              </Box>
+            )}
           </Stack>
         </Container>
-      </PageLayout>
+      </Main>
       
       {/* Coles Shopping Modal */}
       <ColesShoppingModal
@@ -392,18 +388,6 @@ export default function ShoppingListPage() {
         onClose={() => setShowColesModal(false)}
         items={needToBuy}
       />
-
-      {/* Report Price Modal */}
-      {reportPriceItem && (
-        <ReportPriceModal
-          isOpen={!!reportPriceItem}
-          onClose={() => setReportPriceItem(null)}
-          ingredientName={reportPriceItem.name}
-          normalizedName={reportPriceItem.normalizedName}
-          suggestedQuantity={reportPriceItem.totalQty}
-          suggestedUnit={reportPriceItem.unit}
-        />
-      )}
-    </main>
+    </>
   );
 }

@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Stack, Typography, Button, ProgressBar, ResponsiveGrid, Box } from "@common-origin/design-system";
+import Main from "@/components/app/Main";
 import MealCard from "@/components/app/MealCard";
 import LeftoverCard from "@/components/app/LeftoverCard";
 import RegenerateDrawer from "@/components/app/RegenerateDrawer";
+import ButtonGroup from "@/components/app/ButtonGroup";
 import { type PlanWeek } from "@/lib/types/recipe";
 import { type MealCardProps } from "@/components/app/MealCard";
 import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides, loadCurrentWeekPlan } from "@/lib/storage";
@@ -67,7 +69,7 @@ export default function PlanReviewPage() {
         
         // Generate reasons for this meal
         const reasons: string[] = [];
-        if (recipe.timeMins && recipe.timeMins <= 40) reasons.push("≤40m");
+        if (recipe.timeMins && recipe.timeMins < 25) reasons.push("quick");
         if (recipe.tags.includes("kid_friendly")) reasons.push("kid-friendly");
         if (recipe.tags.includes("bulk_cook")) reasons.push("bulk cook");
         if (household.favorites.includes(recipe.id)) reasons.push("favorite");
@@ -228,7 +230,7 @@ export default function PlanReviewPage() {
     .length;
 
   return (
-    <main style={{ padding: 24 }}>
+    <Main>
       <Stack direction="column" gap="xl">
 
         {/* Header */}
@@ -364,36 +366,43 @@ export default function PlanReviewPage() {
         </ResponsiveGrid>
 
         {/* Actions */}
-        <Stack direction="row" gap="md" justifyContent="flex-end">
-          <Button
-            variant="secondary"
-            size="large"
-            iconName="arrowLeft"
-            onClick={() => router.push('/plan')}
-            aria-label="Go back to plan overview page"
-          >
-            Back to plan
-          </Button>
-          <Button
-            variant="secondary"
-            size="large"
-            onClick={() => setShowRegenerateDrawer(true)}
-            aria-label="Open regenerate drawer to customize meal plan with constraints"
-          >
-            Regenerate with constraints
-          </Button>
-          <Button
-            variant="primary"
-            size="large"
-            iconName="check"
-            purpose="link"
-            url="/shopping-list"
-            onClick={handleConfirm}
-            aria-label="Confirm meal plan and view shopping list"
-          >
-            Confirm & view Shopping List
-          </Button>
-        </Stack>
+        <ButtonGroup
+          left={
+            <Button
+              variant="secondary"
+              size="large"
+              iconName="arrowLeft"
+              onClick={() => router.push('/plan')}
+              aria-label="Go back to plan overview page"
+            >
+              Back to plan
+            </Button>
+          }
+          right={
+            <>
+
+              <Button
+                variant="secondary"
+                size="large"
+                onClick={() => setShowRegenerateDrawer(true)}
+                aria-label="Open regenerate drawer to customize meal plan with constraints"
+              >
+                Regenerate with constraints
+              </Button>
+              <Button
+                variant="primary"
+                size="large"
+                iconName="check"
+                purpose="link"
+                url="/shopping-list"
+                onClick={handleConfirm}
+                aria-label="Confirm meal plan and view shopping list"
+              >
+                Confirm & view Shopping List
+              </Button>
+            </>
+          }
+        />
       </Stack>
 
       {/* Regenerate Drawer */}
@@ -403,6 +412,6 @@ export default function PlanReviewPage() {
         onRegenerate={handleRegenerate}
         currentPlan={plan}
       />
-    </main>
+    </Main>
   );
 }

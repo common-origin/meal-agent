@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Stack, Typography, Box, Button, ChipGroup, IconButton } from "@common-origin/design-system";
+import Main from "@/components/app/Main";
+import { tokens } from "@common-origin/design-system";
 import { toggleFavorite, isFavorite } from "@/lib/storage";
 import { RecipeLibrary } from "@/lib/library";
 import { type Recipe } from "@/lib/types/recipe";
@@ -47,7 +49,7 @@ export default function RecipePage({ params }: RecipePageProps) {
   
   if (!recipe) {
     return (
-      <main style={{ padding: 24 }}>
+      <Main>
         <Stack direction="column" gap="lg">
           <Button 
             variant="secondary" 
@@ -62,7 +64,7 @@ export default function RecipePage({ params }: RecipePageProps) {
             The recipe with ID &quot;{id}&quot; could not be found.
           </Typography>
         </Stack>
-      </main>
+      </Main>
     );
   }
 
@@ -70,7 +72,7 @@ export default function RecipePage({ params }: RecipePageProps) {
   const isAIGenerated = recipe.id.startsWith("custom-ai-");
 
   return (
-    <main style={{ padding: 24, maxWidth: '900px', margin: '0 auto' }}>
+    <Main maxWidth="900px">
       <Stack direction="column" gap="xl">
         {/* Back button and favorite */}
         <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -112,13 +114,13 @@ export default function RecipePage({ params }: RecipePageProps) {
           {recipe.tags && recipe.tags.length > 0 && (
             <ChipGroup 
               labels={recipe.tags.slice(0, 8).map(tag => tag.replace(/_/g, " "))} 
-              variant="default" 
+              variant="dark" 
             />
           )}
         </Stack>
 
         {/* Ingredients */}
-        <Box border="default" borderRadius="3" p="lg" bg="surface">
+        <Box border="subtle" borderRadius="4" p="lg" bg="default">
           <Stack direction="column" gap="md">
             <Typography variant="h2">Ingredients</Typography>
             
@@ -139,7 +141,7 @@ export default function RecipePage({ params }: RecipePageProps) {
 
         {/* Instructions */}
         {recipe.instructions && recipe.instructions.length > 0 ? (
-          <Box border="default" borderRadius="3" p="lg" bg="surface">
+          <Box border="subtle" borderRadius="4" p="lg" bg="default">
             <Stack direction="column" gap="md">
               <Typography variant="h2">Instructions</Typography>
               
@@ -148,12 +150,13 @@ export default function RecipePage({ params }: RecipePageProps) {
                   <Stack key={index} direction="row" gap="md" alignItems="flex-start">
                     <div 
                       style={{ 
-                        minWidth: '32px', 
-                        height: '32px', 
+                        minWidth: '24px', 
+                        height: '24px', 
                         display: 'flex', 
                         alignItems: 'center', 
                         justifyContent: 'center',
-                        backgroundColor: 'var(--color-primary)',
+                        backgroundColor: tokens.semantic.color.background.emphasis,
+                        font: tokens.semantic.typography.overline,
                         borderRadius: '999px',
                         color: 'white',
                         fontWeight: 600,
@@ -218,6 +221,6 @@ export default function RecipePage({ params }: RecipePageProps) {
           </Stack>
         </Box>
       </Stack>
-    </main>
+    </Main>
   );
 }

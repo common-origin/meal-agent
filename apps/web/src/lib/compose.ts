@@ -193,6 +193,11 @@ function normalizeIngredientName(name: string): string {
     .toLowerCase()
     .replace(/\([^)]*\)/g, "")
     .replace(/[0-9]/g, "")
+    .replace(/\s+or\s+.*$/g, '') // Remove "or" alternatives
+    .replace(/\s+and\/or\s+.*$/g, '') // Remove "and/or" alternatives
+    .replace(/^(fresh|dried|ground|chopped|sliced|diced|minced|grated|crushed|shredded|raw|cooked)\s+/g, '') // Remove prep descriptors
+    .replace(/^(plain|greek|whole|full cream|low fat|reduced fat|extra virgin|unsalted|salted|canned|frozen)\s+/g, '') // Remove quality descriptors
+    .replace(/\s+(plain|greek|whole|full cream|low fat|reduced fat|extra virgin|unsalted|salted|canned|frozen)$/g, '') // Remove trailing descriptors
     .replace(/\s+/g, " ")
     .trim()
     .split(" ")

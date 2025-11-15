@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@common-origin/design-system": "^1.15.3",
+    "@common-origin/design-system": "^1.16.0",
     "@google/generative-ai": "^0.24.1",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.18",

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import styled from "styled-components";
 import { Alert, Box, Button, Checkbox, Chip, Container, Divider, Dropdown, NumberInput, PasswordField, Slider, Stack, TextField, Typography } from "@common-origin/design-system";
 import { tokens } from "@common-origin/design-system";
+import Main from "@/components/app/Main";
 import { 
   getFamilySettings, 
   saveFamilySettings, 
@@ -15,11 +16,6 @@ import { track } from "@/lib/analytics";
 import { GitHubClient } from "@/lib/github/client";
 import { RecipeLibrary } from "@/lib/library";
 import Link from "next/link";
-
-const PageLayout = styled.div`
- max-width: ${tokens.base.breakpoint.md};
- margin: 0 auto;
-`
 
 const StyledHelperText = styled.div`
 	font: ${tokens.semantic.typography.caption};
@@ -239,8 +235,8 @@ export default function SettingsPage() {
   };
 
   return (
-    <main style={{ padding: 24 }}>
-			<PageLayout>
+    <>
+			<Main maxWidth="md">
 				<Container>
 					<Stack direction="column" gap="xl">
 						{/* Header */}
@@ -745,7 +741,7 @@ export default function SettingsPage() {
 						</Stack>
 					</Stack>
 				</Container>
-			</PageLayout>
-    </main>
+			</Main>
+    </>
   );
 }

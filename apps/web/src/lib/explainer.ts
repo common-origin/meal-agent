@@ -17,16 +17,11 @@ export interface ReasonChip {
  * Mapping from reason codes to human-readable chips
  */
 const REASON_CHIP_MAP: Record<string, ReasonChip> = {
-  // Time-based
-  "≤30m": {
-    text: "Quick 30min",
+  // Time-based (only recipes under 25 mins are "quick")
+  "quick": {
+    text: "Quick",
     variant: "success",
     icon: "⚡"
-  },
-  "≤40m": {
-    text: "Quick 40min",
-    variant: "success",
-    icon: "⏱️"
   },
   
   // Dietary
@@ -98,8 +93,7 @@ export class DeterministicExplainer implements ExplainAdapter {
     // Prioritize reasons for display
     const priorityOrder = [
       "favorite",
-      "≤30m",
-      "≤40m",
+      "quick",
       "best value",
       "kid-friendly",
       "bulk cook",

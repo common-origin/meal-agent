@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Stack, Typography, Button, Box, TextField, NumberInput, Dropdown, List, ListItem, IconButton } from "@common-origin/design-system";
+import Main from "@/components/app/Main";
+import ButtonGroup from "@/components/app/ButtonGroup";
 import { tokens } from "@common-origin/design-system/tokens";
 import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
@@ -183,7 +185,7 @@ export default function AddRecipePage() {
 
   if (mode === 'choice') {
     return (
-      <main style={{ padding: 24, maxWidth: tokens.base.breakpoint.md, margin: '0 auto' }}>
+      <Main maxWidth="md">
         <Stack direction="column" gap="xl">
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="h1">Add recipe</Typography>
@@ -247,22 +249,15 @@ export default function AddRecipePage() {
                 Type in the recipe details yourself.
               </Typography>
             </button>
-          </Stack>
         </Stack>
-      </main>
-    );
-  }
-
-  if (mode === 'image') {
+      </Stack>
+    </Main>
+  );
+}  if (mode === 'image') {
     return (
-      <main style={{ padding: 24, maxWidth: tokens.base.breakpoint.md, margin: '0 auto' }}>
+      <Main maxWidth="md">
         <Stack direction="column" gap="xl">
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="h1">Upload recipe photo</Typography>
-            <Button variant="secondary" size="large" iconName="arrowLeft" onClick={() => setMode('choice')}>
-              Back
-            </Button>
-          </Stack>
+          <Typography variant="h1">Upload recipe photo</Typography>
 
           {!imagePreview ? (
             <Box border="default" borderRadius="3" p="xl" bg="surface">
@@ -329,26 +324,22 @@ export default function AddRecipePage() {
                   onAddInstruction={handleAddInstruction}
                   onRemoveInstruction={handleRemoveInstruction}
                   onSave={handleSaveRecipe}
+                  onBack={() => setMode('choice')}
                   saving={saving}
                 />
               )}
             </Stack>
           )}
         </Stack>
-      </main>
+      </Main>
     );
   }
 
   if (mode === 'url') {
     return (
-      <main style={{ padding: 24, maxWidth: tokens.base.breakpoint.md, margin: '0 auto' }}>
+      <Main maxWidth="md">
         <Stack direction="column" gap="xl">
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="h1">Import from URL</Typography>
-            <Button variant="secondary" size="large" iconName="arrowLeft" onClick={() => setMode('choice')}>
-              Back
-            </Button>
-          </Stack>
+          <Typography variant="h1">Import from URL</Typography>
 
           <Box border="default" borderRadius="3" p="lg" bg="surface">
             <Stack direction="column" gap="md">
@@ -397,24 +388,20 @@ export default function AddRecipePage() {
               onAddInstruction={handleAddInstruction}
               onRemoveInstruction={handleRemoveInstruction}
               onSave={handleSaveRecipe}
+              onBack={() => setMode('choice')}
               saving={saving}
             />
           )}
         </Stack>
-      </main>
+      </Main>
     );
   }
 
   // Manual mode
   return (
-    <main style={{ padding: 24, maxWidth: tokens.base.breakpoint.md, margin: '0 auto' }}>
+    <Main maxWidth="md">
       <Stack direction="column" gap="xl">
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Typography variant="h1">Add Recipe Manually</Typography>
-          <Button variant="secondary" size="large" iconName="arrowLeft" onClick={() => setMode('choice')}>
-            Back
-          </Button>
-        </Stack>
+        <Typography variant="h1">Add Recipe Manually</Typography>
 
         <RecipeForm 
           title={title}
@@ -442,10 +429,11 @@ export default function AddRecipePage() {
           onAddInstruction={handleAddInstruction}
           onRemoveInstruction={handleRemoveInstruction}
           onSave={handleSaveRecipe}
+          onBack={() => setMode('choice')}
           saving={saving}
         />
       </Stack>
-    </main>
+    </Main>
   );
 }
 
@@ -476,6 +464,7 @@ function RecipeForm({
   onAddInstruction,
   onRemoveInstruction,
   onSave,
+  onBack,
   saving,
 }: {
   title: string;
@@ -503,12 +492,13 @@ function RecipeForm({
   onAddInstruction: () => void;
   onRemoveInstruction: (index: number) => void;
   onSave: () => void;
+  onBack: () => void;
   saving: boolean;
 }) {
   return (
     <Stack direction="column" gap="lg">
       {/* Basic Info */}
-      <Box border="default" borderRadius="3" p="lg" bg="surface">
+      <Box border="subtle" borderRadius="4" p="lg" bg="default">
         <Stack direction="column" gap="md">
           <Typography variant="h3">Recipe details</Typography>
           
@@ -554,7 +544,7 @@ function RecipeForm({
       </Box>
 
       {/* Ingredients */}
-      <Box border="default" borderRadius="3" p="lg" bg="surface">
+      <Box border="subtle" borderRadius="4" p="lg" bg="default">
         <Stack direction="column" gap="md">
           <Typography variant="h3">Ingredients</Typography>
           
@@ -601,7 +591,7 @@ function RecipeForm({
                     <IconButton
                       variant="naked"
                       iconName="trash"
-                      size="large"
+                      size="small"
                       onClick={() => onRemoveIngredient(index)}
                       aria-label={`Remove ${ing.name}`}
                     />
@@ -614,7 +604,7 @@ function RecipeForm({
       </Box>
 
       {/* Instructions */}
-      <Box border="default" borderRadius="3" p="lg" bg="surface">
+      <Box border="subtle" borderRadius="4" p="lg" bg="default">
         <Stack direction="column" gap="md">
           <Typography variant="h3">Instructions</Typography>
           
@@ -657,6 +647,7 @@ function RecipeForm({
                       alignItems: 'center', 
                       justifyContent: 'center',
                       backgroundColor: tokens.semantic.color.background.emphasis,
+                      font: tokens.semantic.typography.overline,
                       borderRadius: '999px',
                       color: 'white',
                       fontSize: '12px',
@@ -683,11 +674,18 @@ function RecipeForm({
       </Box>
 
       {/* Save Button */}
-      <Stack direction="row" gap="md" justifyContent="flex-end">
-        <Button variant="primary" onClick={onSave} disabled={saving}>
-          {saving ? 'Saving...' : 'Save recipe'}
-        </Button>
-      </Stack>
+      <ButtonGroup
+        left={
+          <Button variant="secondary" size="large" iconName="arrowLeft" onClick={onBack}>
+            Back
+          </Button>
+        }
+        right={
+          <Button variant="primary" onClick={onSave} disabled={saving}>
+            {saving ? 'Saving...' : 'Save recipe'}
+          </Button>
+        }
+      />
     </Stack>
   );
 }

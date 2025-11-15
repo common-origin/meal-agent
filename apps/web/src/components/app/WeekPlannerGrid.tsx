@@ -114,9 +114,9 @@ export default function WeekPlannerGrid({ meals, onSwapClick, onGenerateClick, o
                   />
                 ) : (
                   <Box 
-                    borderRadius="3"
+                    borderRadius="4"
                     p="xl"
-                    bg="subtle"
+                    bg="surface"
                     border="subtle"
                     minHeight="200px"
                     style={{
@@ -126,7 +126,9 @@ export default function WeekPlannerGrid({ meals, onSwapClick, onGenerateClick, o
                       alignItems: "center",
                       flex: 1,
                       justifyContent: "center",
-                      textAlign: "center"
+                      textAlign: "center",
+                      borderStyle: "dashed",
+                      borderWidth: "2px"
                     }}
                   >
                     <Typography variant="label" color="subdued">

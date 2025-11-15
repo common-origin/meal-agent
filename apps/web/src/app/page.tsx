@@ -18,6 +18,7 @@ export default function HomePage() {
         alignItems: "center",
         justifyContent: "center",
         padding: "24px",
+        paddingBottom: "64px",
         background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
       }}
     >

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Alert, Badge, Stack, Typography, Button } from "@common-origin/design-system";
+import Main from "@/components/app/Main";
+import ButtonGroup from "@/components/app/ButtonGroup";
 import WeekPlannerGrid from "@/components/app/WeekPlannerGrid";
 import BudgetBar from "@/components/app/BudgetBar";
 import WeeklyOverridesSheet from "@/components/app/WeeklyOverridesSheet";
@@ -46,6 +48,7 @@ export default function PlanPage() {
     scheduleSundayToast();
     
     const household = loadHousehold() || getDefaultHousehold();
+    const familySettings = getFamilySettings();
     const nextWeekISO = nextWeekMondayISO();
     
     // Check if there's a saved week plan first
@@ -67,7 +70,7 @@ export default function PlanPage() {
         
         // Generate reasons for this meal
         const reasons: string[] = [];
-        if (recipe.timeMins && recipe.timeMins <= 40) reasons.push("≤40m");
+        if (recipe.timeMins && recipe.timeMins < 25) reasons.push("quick");
         if (recipe.tags.includes("kid_friendly")) reasons.push("kid-friendly");
         if (recipe.tags.includes("bulk_cook")) reasons.push("bulk cook");
         if (household.favorites.includes(recipe.id)) reasons.push("favorite");
@@ -94,8 +97,12 @@ export default function PlanPage() {
         return sum + ((recipe?.costPerServeEst || 0) * (recipe?.serves || 4));
       }, 0);
       
+      // Calculate weekly budget based on number of meals and budget per meal setting
+      const numberOfMeals = savedPlan.recipeIds.filter(id => id).length;
+      const weeklyBudget = numberOfMeals * familySettings.budgetPerMeal.max;
+      
       setWeekPlan(meals);
-      setBudget({ current: totalCost, total: 120 });
+      setBudget({ current: totalCost, total: weeklyBudget });
       console.log('✅ Loaded saved week plan with', meals.filter(m => m !== null).length, 'meals');
       
       // Load pantry items if available
@@ -231,7 +238,7 @@ export default function PlanPage() {
     
     // Generate reasons for the new meal
     const reasons: string[] = [];
-    if (recipe.timeMins && recipe.timeMins <= 40) reasons.push("≤40m");
+    if (recipe.timeMins && recipe.timeMins < 25) reasons.push("quick");
     if (recipe.tags.includes("kid_friendly")) reasons.push("kid-friendly");
     if (recipe.tags.includes("bulk_cook")) reasons.push("bulk cook");
     if (household.favorites.includes(recipe.id)) reasons.push("favorite");
@@ -256,11 +263,14 @@ export default function PlanPage() {
     newWeekPlan[swapDayIndex] = newMeal;
     setWeekPlan(newWeekPlan);
     
-    // Update budget
+    // Update budget (recalculate total based on number of meals)
+    const familySettings = getFamilySettings();
+    const numberOfMeals = newWeekPlan.filter(m => m !== null).length;
     const oldCost = oldMeal ? (RecipeLibrary.getById(oldMeal.recipeId)?.costPerServeEst || 0) * 4 : 0;
     const newCost = (recipe.costPerServeEst || 0) * 4;
     const budgetDiff = newCost - oldCost;
-    setBudget(prev => ({ ...prev, current: prev.current + budgetDiff }));
+    const weeklyBudget = numberOfMeals * familySettings.budgetPerMeal.max;
+    setBudget(prev => ({ current: prev.current + budgetDiff, total: weeklyBudget }));
     
     // Save updated week plan
     const nextWeekISO = nextWeekMondayISO();
@@ -293,10 +303,13 @@ export default function PlanPage() {
     newWeekPlan[dayIndex] = null;
     setWeekPlan(newWeekPlan);
     
-    // Update budget
+    // Update budget (recalculate total based on number of meals)
+    const familySettings = getFamilySettings();
+    const numberOfMeals = newWeekPlan.filter(m => m !== null).length;
     const recipe = RecipeLibrary.getById(meal.recipeId);
     const costToRemove = recipe ? (recipe.costPerServeEst || 0) * (recipe.serves || 4) : 0;
-    setBudget(prev => ({ ...prev, current: prev.current - costToRemove }));
+    const weeklyBudget = numberOfMeals * familySettings.budgetPerMeal.max;
+    setBudget(prev => ({ current: prev.current - costToRemove, total: weeklyBudget }));
     
     // Save updated week plan
     const nextWeekISO = nextWeekMondayISO();
@@ -411,11 +424,12 @@ export default function PlanPage() {
       const recipeIds = data.recipes.map((r: Recipe) => r.id);
       saveCurrentWeekPlan(recipeIds, nextWeekISO, wizardData.pantryItems);
       
-      // Update budget
+      // Update budget based on family settings
       const totalCost = data.recipes.reduce((sum: number, r: Recipe) => {
         return sum + ((r.costPerServeEst || 0) * (r.serves || 4));
       }, 0);
-      setBudget({ current: totalCost, total: 120 });
+      const weeklyBudget = data.recipes.length * weeklySettings.budgetPerMeal.max;
+      setBudget({ current: totalCost, total: weeklyBudget });
 
       console.log('🎉 Wizard-based generation complete!');
 
@@ -584,11 +598,12 @@ export default function PlanPage() {
         console.warn('⚠️ Failed to save week plan');
       }
       
-      // Update budget estimate
+      // Update budget estimate based on family settings
       const totalCost = data.recipes.reduce((sum: number, r: Recipe) => {
         return sum + ((r.costPerServeEst || 0) * (r.serves || 4));
       }, 0);
-      setBudget({ current: totalCost, total: 120 });
+      const weeklyBudget = data.recipes.length * familySettings.budgetPerMeal.max;
+      setBudget({ current: totalCost, total: weeklyBudget });
 
       console.log('🎉 AI generation complete! Total cost:', totalCost);
 
@@ -670,7 +685,7 @@ export default function PlanPage() {
       // Create meal card
       const household = loadHousehold() || getDefaultHousehold();
       const reasons: string[] = [];
-      if (recipe.timeMins && recipe.timeMins <= 40) reasons.push("≤40m");
+      if (recipe.timeMins && recipe.timeMins < 25) reasons.push("quick");
       if (recipe.tags?.includes("kid_friendly")) reasons.push("kid-friendly");
       if (household.favorites.includes(recipe.id)) reasons.push("favorite");
       
@@ -689,9 +704,11 @@ export default function PlanPage() {
       newWeekPlan[dayIndex] = newMeal;
       setWeekPlan(newWeekPlan);
 
-      // Update budget
+      // Update budget (recalculate total based on number of meals)
+      const numberOfMeals = newWeekPlan.filter(m => m !== null).length;
       const newCost = (recipe.costPerServeEst || 0) * (recipe.serves || 4);
-      setBudget(prev => ({ ...prev, current: prev.current + newCost }));
+      const weeklyBudget = numberOfMeals * familySettings.budgetPerMeal.max;
+      setBudget(prev => ({ current: prev.current + newCost, total: weeklyBudget }));
 
       // Save updated week plan
       const nextWeekISO = nextWeekMondayISO();
@@ -714,7 +731,7 @@ export default function PlanPage() {
   };
 
   return (
-    <main style={{ padding: 24 }}>
+    <Main>
       {showWizard ? (
         <WeeklyPlanWizard
           onComplete={handleWizardComplete}
@@ -807,24 +824,28 @@ export default function PlanPage() {
         />
         
         {/* Actions */}
-        <Stack direction="row" gap="md" justifyContent="flex-end">
-          <Button
-            variant="secondary"
-            size="large"
-            onClick={handleGenerateWithAI}
-            disabled={isGenerating}
-          >
-            {isGenerating ? 'Generating...' : 'Generate new plan'}
-          </Button>
-          <Button
-            variant="primary"
-            size="large"
-            purpose="link"
-            url="/plan/review"
-          >
-            Review plan
-          </Button>
-        </Stack>
+        <ButtonGroup
+          right={
+            <>
+              <Button
+                variant="secondary"
+                size="large"
+                onClick={handleGenerateWithAI}
+                disabled={isGenerating}
+              >
+                {isGenerating ? 'Generating...' : 'Generate new plan'}
+              </Button>
+              <Button
+                variant="primary"
+                size="large"
+                purpose="link"
+                url="/plan/review"
+              >
+                Review plan
+              </Button>
+            </>
+          }
+        />
         </Stack>
       )}
 
@@ -858,6 +879,6 @@ export default function PlanPage() {
         isScanning={isScanning}
         scanError={scanError}
       />
-    </main>
+    </Main>
   );
 }

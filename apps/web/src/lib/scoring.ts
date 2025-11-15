@@ -11,6 +11,7 @@ import type { Recipe, Household } from "./types/recipe";
 export const SCORING_WEIGHTS = {
   // Bonuses
   FAVORITE_BONUS: 50,
+  USER_ADDED_BONUS: 50, // Same weight as favorites - user took effort to add it
   INGREDIENT_REUSE_BONUS_PER_MATCH: 5,
   SAME_CHEF_BONUS: 10,
   BULK_COOK_BONUS: 8, // For leftovers strategy
@@ -97,6 +98,13 @@ export function scoreRecipe(
     score += SCORING_WEIGHTS.FAVORITE_BONUS;
     bonuses.push(`Favorite (+${SCORING_WEIGHTS.FAVORITE_BONUS})`);
     reasons.push("favorite");
+  }
+
+  // User-added recipe bonus (custom recipes and AI-generated recipes)
+  // If user took the time to add it, it's important to them
+  if (recipe.id.startsWith('custom-') || recipe.id.startsWith('ai-')) {
+    score += SCORING_WEIGHTS.USER_ADDED_BONUS;
+    bonuses.push(`User-added recipe (+${SCORING_WEIGHTS.USER_ADDED_BONUS})`);
   }
 
   // Recent recipe penalty (within 3 weeks)
@@ -229,6 +237,11 @@ function normalizeIngredientName(name: string): string {
     .toLowerCase()
     .replace(/\([^)]*\)/g, "") // Remove parentheses
     .replace(/[0-9]/g, "") // Remove numbers
+    .replace(/\s+or\s+.*$/g, '') // Remove "or" alternatives
+    .replace(/\s+and\/or\s+.*$/g, '') // Remove "and/or" alternatives
+    .replace(/^(fresh|dried|ground|chopped|sliced|diced|minced|grated|crushed|shredded|raw|cooked)\s+/g, '') // Remove prep descriptors
+    .replace(/^(plain|greek|whole|full cream|low fat|reduced fat|extra virgin|unsalted|salted|canned|frozen)\s+/g, '') // Remove quality descriptors
+    .replace(/\s+(plain|greek|whole|full cream|low fat|reduced fat|extra virgin|unsalted|salted|canned|frozen)$/g, '') // Remove trailing descriptors
     .replace(/\s+/g, " ") // Normalize spaces
     .trim()
     .split(" ")

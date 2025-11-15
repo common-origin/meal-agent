@@ -1,20 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import styled from "styled-components";
 import { Alert, Divider, Stack, Typography, Button, Box, TextField, List, ListItem, IconButton, Chip } from "@common-origin/design-system";
-import { tokens } from "@common-origin/design-system";
+import Main from "@/components/app/Main";
+import ButtonGroup from "@/components/app/ButtonGroup";
 import { CUISINE_OPTIONS } from "@/lib/types/settings";
 
 interface WeeklyPlanWizardProps {
   onComplete: (data: WeeklyPlanData) => void;
   onCancel?: () => void;
 }
-
-const PageLayout = styled.div`
-  max-width: ${tokens.base.breakpoint.md};
-  margin: 0 auto;
-`;
 
 export interface WeeklyPlanData {
   pantryItems: string[];
@@ -124,7 +119,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
   };
 
   return (
-    <PageLayout>
+    <Main maxWidth="md">
       <Box>
         {/* Progress Indicator */}
         <Box mb="xl">
@@ -143,14 +138,14 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
                     justifyContent: 'center',
                   }}
                 >
-                  <div style={{ color: step <= currentStep ? '#fff' : '#666', fontSize: '12px' }}>
+                  <Typography variant="body">
                     {step < currentStep ? '✓' : step}
-                  </div>
+                  </Typography>
                 </Box>
-                <div style={{ fontWeight: step === currentStep ? 600 : 400, fontSize: '14px' }}>
+                <Typography variant="body">
                   {step === 1 ? 'Pantry' : step === 2 ? 'Cuisines' : 'Generate'}
-                </div>
-                {step < 3 && <div style={{ color: '#ccc', fontSize: '14px' }}>→</div>}
+                </Typography>
+                {step < 3 && <Typography variant="body" color="subdued">→</Typography>}
               </Stack>
             ))}
           </Stack>
@@ -258,9 +253,9 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
               )}
 
               {pantryItems.length === 0 && (
-                <div style={{ color: '#666', fontSize: '14px' }}>
+                <Alert variant="info" inline>
                   No items added yet. Add ingredients above or skip this step if you don&apos;t want to specify pantry items this week.
-                </div>
+                </Alert>
               )}
             </Stack>
           </Box>
@@ -377,41 +372,44 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
 
         {/* Navigation Buttons */}
         <Box mt="xl" mb="9xl">
-          <Stack direction="row" justifyContent="space-between">
-            <Button
-              variant="secondary"
-              size="large"
-              iconName="arrowLeft"
-              onClick={handleBack}
-              disabled={currentStep === 1}
-            >
-              Back
-            </Button>
-
-            <Stack direction="row" gap="md">
-              {onCancel && (
-                <Button
-                  variant="secondary"
-                  size="large"
-                  onClick={onCancel}
-                >
-                  Cancel
-                </Button>
-              )}
-              
+          <ButtonGroup
+            left={
               <Button
-                variant="primary"
+                variant="secondary"
                 size="large"
-                iconName="check"
-                onClick={handleNext}
-                disabled={!canProceed()}
+                iconName="arrowLeft"
+                onClick={handleBack}
+                disabled={currentStep === 1}
               >
-                {currentStep === totalSteps ? 'Generate plan' : 'Next'}
+                Back
               </Button>
-            </Stack>
-          </Stack>
+            }
+            right={
+              <>
+                {onCancel && (
+                  <Button
+                    variant="secondary"
+                    size="large"
+                    onClick={onCancel}
+                  >
+                    Cancel
+                  </Button>
+                )}
+                
+                <Button
+                  variant="primary"
+                  size="large"
+                  iconName="check"
+                  onClick={handleNext}
+                  disabled={!canProceed()}
+                >
+                  {currentStep === totalSteps ? 'Generate plan' : 'Next'}
+                </Button>
+              </>
+            }
+          />
         </Box>
       </Box>
-    </PageLayout>
+    </Main>
   );
 }
