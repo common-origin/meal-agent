@@ -2326,6 +2326,921 @@ export const COLES_INGREDIENT_MAPPINGS: IngredientMapping[] = [
     ],
     confidence: 'high',
     requiresChoice: false
+  },
+
+  // === ADDITIONAL PROTEINS & MEATS (50 NEW PRODUCTS) ===
+  {
+    normalizedName: 'duck',
+    colesProducts: [
+      {
+        sku: 'COL-DUCK-1KG',
+        name: 'Duck Whole',
+        brand: 'Coles',
+        packSize: 1000,
+        packUnit: 'g',
+        price: 15.00,
+        aisle: 'Meat & Poultry',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'turkey',
+    colesProducts: [
+      {
+        sku: 'COL-TURKEY-500',
+        name: 'Turkey Breast',
+        brand: 'Coles',
+        packSize: 500,
+        packUnit: 'g',
+        price: 9.00,
+        aisle: 'Meat & Poultry',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'ham',
+    colesProducts: [
+      {
+        sku: 'COL-HAM-200',
+        name: 'Shaved Ham',
+        brand: 'Coles',
+        packSize: 200,
+        packUnit: 'g',
+        price: 5.50,
+        aisle: 'Deli',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'salami',
+    colesProducts: [
+      {
+        sku: 'COL-SALAMI-150',
+        name: 'Sliced Salami',
+        brand: 'Coles',
+        packSize: 150,
+        packUnit: 'g',
+        price: 5.00,
+        aisle: 'Deli',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'chorizo',
+    colesProducts: [
+      {
+        sku: 'COL-CHORIZO-200',
+        name: 'Spanish Chorizo',
+        brand: 'Coles',
+        packSize: 200,
+        packUnit: 'g',
+        price: 6.00,
+        aisle: 'Deli',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'mince',
+    colesProducts: [
+      {
+        sku: 'COL-PORK-MINCE-500',
+        name: 'Pork Mince',
+        brand: 'Coles',
+        packSize: 500,
+        packUnit: 'g',
+        price: 6.50,
+        aisle: 'Meat & Poultry',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'medium',
+    requiresChoice: true,
+    notes: 'Various types available'
+  },
+  {
+    normalizedName: 'liver',
+    colesProducts: [
+      {
+        sku: 'COL-LIVER-400',
+        name: 'Chicken Liver',
+        brand: 'Coles',
+        packSize: 400,
+        packUnit: 'g',
+        price: 4.50,
+        aisle: 'Meat & Poultry',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'scallop',
+    colesProducts: [
+      {
+        sku: 'COL-SCALLOP-300',
+        name: 'Scallops',
+        brand: 'Coles',
+        packSize: 300,
+        packUnit: 'g',
+        price: 12.00,
+        aisle: 'Seafood',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'mussel',
+    colesProducts: [
+      {
+        sku: 'COL-MUSSEL-500',
+        name: 'Mussels',
+        brand: 'Coles',
+        packSize: 500,
+        packUnit: 'g',
+        price: 8.00,
+        aisle: 'Seafood',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'squid',
+    colesProducts: [
+      {
+        sku: 'COL-SQUID-400',
+        name: 'Squid Tubes',
+        brand: 'Coles',
+        packSize: 400,
+        packUnit: 'g',
+        price: 9.00,
+        aisle: 'Seafood',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+
+  // === ADDITIONAL VEGETABLES & PRODUCE ===
+  {
+    normalizedName: 'asparagus',
+    colesProducts: [
+      {
+        sku: 'COL-ASPARAGUS-250',
+        name: 'Asparagus',
+        brand: 'Coles',
+        packSize: 250,
+        packUnit: 'g',
+        price: 4.50,
+        aisle: 'Fresh Produce',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'brussels sprout',
+    colesProducts: [
+      {
+        sku: 'COL-BRUSSELSSPROUT-300',
+        name: 'Brussels Sprouts',
+        brand: 'Coles',
+        packSize: 300,
+        packUnit: 'g',
+        price: 3.50,
+        aisle: 'Fresh Produce',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'fennel',
+    colesProducts: [
+      {
+        sku: 'COL-FENNEL-300',
+        name: 'Fennel Bulb',
+        brand: 'Coles',
+        packSize: 300,
+        packUnit: 'g',
+        price: 3.00,
+        aisle: 'Fresh Produce',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'artichoke',
+    colesProducts: [
+      {
+        sku: 'COL-ARTICHOKE-400',
+        name: 'Globe Artichoke',
+        brand: 'Coles',
+        packSize: 400,
+        packUnit: 'g',
+        price: 5.00,
+        aisle: 'Fresh Produce',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'silverbeet',
+    colesProducts: [
+      {
+        sku: 'COL-SILVERBEET-300',
+        name: 'Silverbeet',
+        brand: 'Coles',
+        packSize: 300,
+        packUnit: 'g',
+        price: 3.00,
+        aisle: 'Fresh Produce',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'rocket',
+    colesProducts: [
+      {
+        sku: 'COL-ROCKET-120',
+        name: 'Rocket Leaves',
+        brand: 'Coles',
+        packSize: 120,
+        packUnit: 'g',
+        price: 3.50,
+        aisle: 'Fresh Produce',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'watercress',
+    colesProducts: [
+      {
+        sku: 'COL-WATERCRESS-100',
+        name: 'Watercress',
+        brand: 'Coles',
+        packSize: 100,
+        packUnit: 'g',
+        price: 3.00,
+        aisle: 'Fresh Produce',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'turnip',
+    colesProducts: [
+      {
+        sku: 'COL-TURNIP-500',
+        name: 'Turnip',
+        brand: 'Coles',
+        packSize: 500,
+        packUnit: 'g',
+        price: 2.50,
+        aisle: 'Fresh Produce',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'parsnip',
+    colesProducts: [
+      {
+        sku: 'COL-PARSNIP-500',
+        name: 'Parsnips',
+        brand: 'Coles',
+        packSize: 500,
+        packUnit: 'g',
+        price: 3.50,
+        aisle: 'Fresh Produce',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'swede',
+    colesProducts: [
+      {
+        sku: 'COL-SWEDE-700',
+        name: 'Swede',
+        brand: 'Coles',
+        packSize: 700,
+        packUnit: 'g',
+        price: 2.50,
+        aisle: 'Fresh Produce',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+
+  // === ADDITIONAL DAIRY & CHEESE ===
+  {
+    normalizedName: 'ricotta',
+    colesProducts: [
+      {
+        sku: 'COL-RICOTTA-250',
+        name: 'Ricotta Cheese',
+        brand: 'Coles',
+        packSize: 250,
+        packUnit: 'g',
+        price: 4.00,
+        aisle: 'Dairy & Eggs',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'brie',
+    colesProducts: [
+      {
+        sku: 'COL-BRIE-125',
+        name: 'Brie Cheese',
+        brand: 'Coles',
+        packSize: 125,
+        packUnit: 'g',
+        price: 5.00,
+        aisle: 'Dairy & Eggs',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'camembert',
+    colesProducts: [
+      {
+        sku: 'COL-CAMEMBERT-125',
+        name: 'Camembert Cheese',
+        brand: 'Coles',
+        packSize: 125,
+        packUnit: 'g',
+        price: 5.00,
+        aisle: 'Dairy & Eggs',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'blue cheese',
+    colesProducts: [
+      {
+        sku: 'COL-BLUECHEESE-150',
+        name: 'Blue Cheese',
+        brand: 'Coles',
+        packSize: 150,
+        packUnit: 'g',
+        price: 5.50,
+        aisle: 'Dairy & Eggs',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'halloumi',
+    colesProducts: [
+      {
+        sku: 'COL-HALLOUMI-200',
+        name: 'Halloumi Cheese',
+        brand: 'Coles',
+        packSize: 200,
+        packUnit: 'g',
+        price: 6.00,
+        aisle: 'Dairy & Eggs',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'goat cheese',
+    colesProducts: [
+      {
+        sku: 'COL-GOATCHEESE-100',
+        name: 'Goats Cheese',
+        brand: 'Coles',
+        packSize: 100,
+        packUnit: 'g',
+        price: 4.50,
+        aisle: 'Dairy & Eggs',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'mascarpone',
+    colesProducts: [
+      {
+        sku: 'COL-MASCARPONE-250',
+        name: 'Mascarpone',
+        brand: 'Coles',
+        packSize: 250,
+        packUnit: 'g',
+        price: 5.50,
+        aisle: 'Dairy & Eggs',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'cottage cheese',
+    colesProducts: [
+      {
+        sku: 'COL-COTTAGECHEESE-250',
+        name: 'Cottage Cheese',
+        brand: 'Coles',
+        packSize: 250,
+        packUnit: 'g',
+        price: 3.50,
+        aisle: 'Dairy & Eggs',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+
+  // === ADDITIONAL HERBS, SPICES & AROMATICS ===
+  {
+    normalizedName: 'sage',
+    colesProducts: [
+      {
+        sku: 'COL-SAGE-15',
+        name: 'Fresh Sage',
+        brand: 'Coles',
+        packSize: 15,
+        packUnit: 'g',
+        price: 3.50,
+        aisle: 'Fresh Produce',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'tarragon',
+    colesProducts: [
+      {
+        sku: 'COL-TARRAGON-15',
+        name: 'Fresh Tarragon',
+        brand: 'Coles',
+        packSize: 15,
+        packUnit: 'g',
+        price: 3.50,
+        aisle: 'Fresh Produce',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'lemongrass',
+    colesProducts: [
+      {
+        sku: 'COL-LEMONGRASS-100',
+        name: 'Lemongrass',
+        brand: 'Coles',
+        packSize: 100,
+        packUnit: 'g',
+        price: 3.00,
+        aisle: 'Fresh Produce',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'kaffir lime',
+    colesProducts: [
+      {
+        sku: 'COL-KAFFIRLIME-10',
+        name: 'Kaffir Lime Leaves',
+        brand: 'Coles',
+        packSize: 10,
+        packUnit: 'g',
+        price: 3.50,
+        aisle: 'Fresh Produce',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'curry leaf',
+    colesProducts: [
+      {
+        sku: 'COL-CURRYLEAF-10',
+        name: 'Curry Leaves',
+        brand: 'Coles',
+        packSize: 10,
+        packUnit: 'g',
+        price: 3.00,
+        aisle: 'Fresh Produce',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'nutmeg',
+    colesProducts: [
+      {
+        sku: 'COL-NUTMEG-30',
+        name: 'Ground Nutmeg',
+        brand: 'Coles',
+        packSize: 30,
+        packUnit: 'g',
+        price: 3.50,
+        aisle: 'Herbs & Spices',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'clove',
+    colesProducts: [
+      {
+        sku: 'COL-CLOVE-25',
+        name: 'Ground Cloves',
+        brand: 'Coles',
+        packSize: 25,
+        packUnit: 'g',
+        price: 3.50,
+        aisle: 'Herbs & Spices',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'allspice',
+    colesProducts: [
+      {
+        sku: 'COL-ALLSPICE-30',
+        name: 'Ground Allspice',
+        brand: 'Coles',
+        packSize: 30,
+        packUnit: 'g',
+        price: 3.50,
+        aisle: 'Herbs & Spices',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'mustard seed',
+    colesProducts: [
+      {
+        sku: 'COL-MUSTARDSEED-40',
+        name: 'Mustard Seeds',
+        brand: 'Coles',
+        packSize: 40,
+        packUnit: 'g',
+        price: 3.00,
+        aisle: 'Herbs & Spices',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'fennel seed',
+    colesProducts: [
+      {
+        sku: 'COL-FENNELSEED-35',
+        name: 'Fennel Seeds',
+        brand: 'Coles',
+        packSize: 35,
+        packUnit: 'g',
+        price: 3.00,
+        aisle: 'Herbs & Spices',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+
+  // === ADDITIONAL PANTRY & GRAINS ===
+  {
+    normalizedName: 'quinoa',
+    colesProducts: [
+      {
+        sku: 'COL-QUINOA-400',
+        name: 'Quinoa',
+        brand: 'Coles',
+        packSize: 400,
+        packUnit: 'g',
+        price: 5.00,
+        aisle: 'Health Foods',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'bulgur',
+    colesProducts: [
+      {
+        sku: 'COL-BULGUR-500',
+        name: 'Bulgur Wheat',
+        brand: 'Coles',
+        packSize: 500,
+        packUnit: 'g',
+        price: 3.50,
+        aisle: 'Pantry',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'barley',
+    colesProducts: [
+      {
+        sku: 'COL-BARLEY-500',
+        name: 'Pearl Barley',
+        brand: 'Coles',
+        packSize: 500,
+        packUnit: 'g',
+        price: 3.00,
+        aisle: 'Pantry',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'polenta',
+    colesProducts: [
+      {
+        sku: 'COL-POLENTA-500',
+        name: 'Polenta',
+        brand: 'Coles',
+        packSize: 500,
+        packUnit: 'g',
+        price: 3.00,
+        aisle: 'Pantry',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'oats',
+    colesProducts: [
+      {
+        sku: 'COL-OATS-750',
+        name: 'Rolled Oats',
+        brand: 'Coles',
+        packSize: 750,
+        packUnit: 'g',
+        price: 3.50,
+        aisle: 'Breakfast Foods',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+
+  // === ADDITIONAL CONDIMENTS & SPECIALTY ===
+  {
+    normalizedName: 'capers',
+    colesProducts: [
+      {
+        sku: 'COL-CAPERS-100',
+        name: 'Capers',
+        brand: 'Coles',
+        packSize: 100,
+        packUnit: 'g',
+        price: 3.50,
+        aisle: 'Pantry',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'olive',
+    colesProducts: [
+      {
+        sku: 'COL-OLIVE-200',
+        name: 'Kalamata Olives',
+        brand: 'Coles',
+        packSize: 200,
+        packUnit: 'g',
+        price: 4.00,
+        aisle: 'Pantry',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'medium',
+    requiresChoice: true,
+    notes: 'Various types available'
+  },
+  {
+    normalizedName: 'anchovy',
+    colesProducts: [
+      {
+        sku: 'COL-ANCHOVY-50',
+        name: 'Anchovy Fillets',
+        brand: 'Coles',
+        packSize: 50,
+        packUnit: 'g',
+        price: 4.50,
+        aisle: 'Pantry',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'sun-dried tomato',
+    colesProducts: [
+      {
+        sku: 'COL-SUNDRIEDTOM-100',
+        name: 'Sun-Dried Tomatoes',
+        brand: 'Coles',
+        packSize: 100,
+        packUnit: 'g',
+        price: 4.00,
+        aisle: 'Pantry',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'pesto',
+    colesProducts: [
+      {
+        sku: 'COL-PESTO-190',
+        name: 'Basil Pesto',
+        brand: 'Coles',
+        packSize: 190,
+        packUnit: 'g',
+        price: 4.50,
+        aisle: 'Pantry',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'sambal',
+    colesProducts: [
+      {
+        sku: 'COL-SAMBAL-200',
+        name: 'Sambal Oelek',
+        brand: 'Coles',
+        packSize: 200,
+        packUnit: 'g',
+        price: 3.50,
+        aisle: 'International Foods',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'gochujang',
+    colesProducts: [
+      {
+        sku: 'COL-GOCHUJANG-300',
+        name: 'Gochujang',
+        brand: 'Coles',
+        packSize: 300,
+        packUnit: 'g',
+        price: 5.00,
+        aisle: 'International Foods',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'miso',
+    colesProducts: [
+      {
+        sku: 'COL-MISO-300',
+        name: 'Miso Paste',
+        brand: 'Coles',
+        packSize: 300,
+        packUnit: 'g',
+        price: 5.00,
+        aisle: 'International Foods',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'harissa',
+    colesProducts: [
+      {
+        sku: 'COL-HARISSA-180',
+        name: 'Harissa Paste',
+        brand: 'Coles',
+        packSize: 180,
+        packUnit: 'g',
+        price: 4.50,
+        aisle: 'International Foods',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
+  },
+  {
+    normalizedName: 'pomegranate molasses',
+    colesProducts: [
+      {
+        sku: 'COL-POMMOLASSES-250',
+        name: 'Pomegranate Molasses',
+        brand: 'Coles',
+        packSize: 250,
+        packUnit: 'ml',
+        price: 6.00,
+        aisle: 'International Foods',
+        lastUpdated: '2025-11-16'
+      }
+    ],
+    confidence: 'high',
+    requiresChoice: false
   }
 ];
 

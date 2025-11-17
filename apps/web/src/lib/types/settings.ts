@@ -23,6 +23,12 @@ export interface BatchCookingPreferences {
   preferredDay: 'sunday' | 'saturday' | 'friday';
 }
 
+export interface LocationSettings {
+  city: string;
+  country: string;
+  hemisphere: 'northern' | 'southern';
+}
+
 export interface GitHubSyncSettings {
   enabled: boolean;
   token: string; // GitHub Personal Access Token
@@ -49,6 +55,19 @@ export interface FamilySettings {
   allergies: string[];
   avoidFoods: string[];
   favoriteIngredients: string[];
+  
+  // Cooking Profile
+  spiceTolerance: 'very_mild' | 'mild' | 'medium' | 'hot' | 'loves_hot';
+  cookingSkill: 'beginner' | 'intermediate' | 'confident_home_cook' | 'advanced';
+  effortPreference: 'minimal_clean_up' | 'balanced' | 'happy_to_spend_time_on_weekends';
+  flavorProfileDescription: string; // Free-text summary, e.g., "fresh & herby, avoids heavy cream"
+  
+  // Location & Seasonality
+  location: LocationSettings;
+  
+  // Learning & Preferences
+  dislikedRecipeIds: string[]; // Recipe IDs rated poorly
+  dislikedPatterns?: string[]; // Optional derived tags like 'too_spicy', 'too_creamy'
   
   // Budget & Time
   budgetPerMeal: BudgetRange;
@@ -108,6 +127,23 @@ export const DEFAULT_FAMILY_SETTINGS: FamilySettings = {
   allergies: [],
   avoidFoods: [],
   favoriteIngredients: [],
+  
+  // Cooking Profile
+  spiceTolerance: 'medium',
+  cookingSkill: 'intermediate',
+  effortPreference: 'balanced',
+  flavorProfileDescription: '',
+  
+  // Location & Seasonality
+  location: {
+    city: 'Melbourne',
+    country: 'Australia',
+    hemisphere: 'southern',
+  },
+  
+  // Learning & Preferences
+  dislikedRecipeIds: [],
+  dislikedPatterns: [],
   
   budgetPerMeal: {
     min: 15,

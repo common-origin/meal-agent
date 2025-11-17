@@ -48,6 +48,15 @@ Request body:
     "cuisines": ["mexican", "italian", "asian"],
     "glutenFreePreference": false,
     "proteinFocus": true,
+    "spiceTolerance": "medium",
+    "cookingSkill": "intermediate",
+    "effortPreference": "balanced",
+    "flavorProfileDescription": "fresh & herby, avoids heavy cream",
+    "location": {
+      "city": "Melbourne",
+      "country": "Australia",
+      "hemisphere": "southern"
+    },
     "budgetPerMeal": { "min": 15, "max": 20 },
     "maxCookTime": { "weeknight": 30, "weekend": 45 },
     // ... other settings
@@ -85,6 +94,11 @@ Response:
 - **Personalized**: Uses your family settings for:
   - Cuisine preferences
   - Dietary requirements (gluten-free, high protein, etc.)
+  - Spice tolerance (very mild to loves hot)
+  - Cooking skill level (beginner to advanced)
+  - Effort preference (minimal clean-up to weekend projects)
+  - Flavor profile (free-text description)
+  - Location & seasonality (city, country, hemisphere)
   - Time constraints (weeknight vs weekend)
   - Budget per meal
   - Kid-friendly options based on children's ages

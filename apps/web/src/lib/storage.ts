@@ -156,9 +156,37 @@ export function loadFamilySettings(): FamilySettings | null {
 
 /**
  * Get family settings with defaults if not set
+ * Merges loaded settings with defaults to ensure new fields exist
  */
 export function getFamilySettings(): FamilySettings {
-  return loadFamilySettings() || DEFAULT_FAMILY_SETTINGS;
+  const loaded = loadFamilySettings();
+  
+  if (!loaded) {
+    return DEFAULT_FAMILY_SETTINGS;
+  }
+  
+  // Deep merge to ensure all new fields have defaults
+  return {
+    ...DEFAULT_FAMILY_SETTINGS,
+    ...loaded,
+    // Ensure nested objects have defaults
+    location: {
+      ...DEFAULT_FAMILY_SETTINGS.location,
+      ...(loaded.location || {}),
+    },
+    budgetPerMeal: {
+      ...DEFAULT_FAMILY_SETTINGS.budgetPerMeal,
+      ...(loaded.budgetPerMeal || {}),
+    },
+    maxCookTime: {
+      ...DEFAULT_FAMILY_SETTINGS.maxCookTime,
+      ...(loaded.maxCookTime || {}),
+    },
+    batchCooking: {
+      ...DEFAULT_FAMILY_SETTINGS.batchCooking,
+      ...(loaded.batchCooking || {}),
+    },
+  };
 }
 
 /**

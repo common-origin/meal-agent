@@ -79,7 +79,7 @@ Meal Agent is a Next.js-based AI-powered meal planning application that helps ho
 - `/plan/review/page.tsx` - Plan review with summary stats
 - `/shopping-list/page.tsx` - Aggregated shopping list
 - `/analytics/page.tsx` - Analytics dashboard
-- `/settings/page.tsx` - Family preferences and GitHub sync
+- `/settings/page.tsx` - Family preferences (household, cooking profile, location & seasonality, dietary needs) and GitHub sync
 - `/recipe/[id]/page.tsx` - Recipe details with context-aware navigation
 
 **Accessibility**: WCAG 2.1 AA compliant, keyboard navigation, screen readers

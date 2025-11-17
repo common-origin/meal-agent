@@ -145,6 +145,23 @@ interface FamilySettings {
   avoidFoods: string[]; // Free-form list
   favoriteIngredients: string[]; // Free-form list
   
+  // Cooking Profile
+  spiceTolerance: 'very_mild' | 'mild' | 'medium' | 'hot' | 'loves_hot';
+  cookingSkill: 'beginner' | 'intermediate' | 'confident_home_cook' | 'advanced';
+  effortPreference: 'minimal_clean_up' | 'balanced' | 'happy_to_spend_time_on_weekends';
+  flavorProfileDescription: string; // Free-text summary
+  
+  // Location & Seasonality
+  location: {
+    city: string;
+    country: string;
+    hemisphere: 'northern' | 'southern';
+  };
+  
+  // Learning & Preferences
+  dislikedRecipeIds: string[]; // Recipe IDs rated poorly
+  dislikedPatterns?: string[]; // Optional derived tags
+  
   // Budget & Time
   budgetPerMeal: {
     min: number; // $15
@@ -276,6 +293,23 @@ const DEFAULT_SETTINGS: FamilySettings = {
   allergies: [],
   avoidFoods: [],
   favoriteIngredients: [],
+  
+  // Cooking Profile
+  spiceTolerance: 'medium',
+  cookingSkill: 'intermediate',
+  effortPreference: 'balanced',
+  flavorProfileDescription: '',
+  
+  // Location & Seasonality
+  location: {
+    city: 'Melbourne',
+    country: 'Australia',
+    hemisphere: 'southern',
+  },
+  
+  // Learning & Preferences
+  dislikedRecipeIds: [],
+  dislikedPatterns: [],
   
   budgetPerMeal: {
     min: 15,

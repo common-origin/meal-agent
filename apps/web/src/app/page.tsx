@@ -40,7 +40,12 @@ export default function HomePage() {
             <div style={{ display: "flex", gap: "16px", justifyContent: "center", marginTop: "24px" }}>
               <Link href="/plan" style={{ textDecoration: "none" }}>
                 <Button variant="primary" size="large">
-                  Get Started Free
+                  Plan your week
+                </Button>
+              </Link>
+              <Link href="/about" style={{ textDecoration: "none" }}>
+                <Button variant="secondary" size="large">
+                  Learn more
                 </Button>
               </Link>
             </div>

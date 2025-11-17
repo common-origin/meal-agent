@@ -223,6 +223,36 @@ console.log(metrics);
 // }
 ```
 
+### Configure Family Settings
+
+```typescript
+import { saveFamilySettings, getFamilySettings } from "@/lib/storage";
+
+// Get current settings
+const settings = getFamilySettings();
+
+// Update settings
+saveFamilySettings({
+  ...settings,
+  adults: 2,
+  children: [{ age: 5 }, { age: 7 }],
+  cuisines: ['mexican', 'italian', 'thai'],
+  spiceTolerance: 'medium',
+  cookingSkill: 'intermediate',
+  effortPreference: 'balanced',
+  flavorProfileDescription: 'fresh & herby, avoids heavy cream',
+  location: {
+    city: 'Melbourne',
+    country: 'Australia',
+    hemisphere: 'southern'
+  },
+  budgetPerMeal: { min: 15, max: 20 },
+  maxCookTime: { weeknight: 30, weekend: 45 }
+});
+
+// Settings are now available at /settings page
+```
+
 ---
 
 ## Development Commands

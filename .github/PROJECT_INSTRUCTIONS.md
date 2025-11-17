@@ -47,17 +47,18 @@ meal-agent/
 - `/plan/review` - Plan review with regeneration
 - `/recipe/[id]` - Recipe details with provenance
 - `/shopping-list` - Aisle-grouped list with CSV export
-- `/settings` - Family preferences and GitHub sync
+- `/settings` - Family preferences (household, cooking profile, location, dietary needs) and GitHub sync
 - `/analytics` - Privacy-first analytics dashboard
 
 ## AI Integration
 - **Provider**: Google Gemini API (gemini-2.0-flash-exp)
 - **Features**:
-  - AI recipe generation from family settings
+  - AI recipe generation from family settings (cuisine, dietary needs, spice tolerance, cooking skill, effort preference, location/seasonality)
   - Pantry scanning via image upload
   - URL recipe extraction
   - Weekly planning wizard
   - Smart swap suggestions
+  - Personalized recommendations based on cooking profile and location
 
 ## Design System Components Needed
 Based on plan requirements, we'll use:

@@ -369,6 +369,146 @@ export default function SettingsPage() {
 							</Stack>
 						</Box>
 
+						{/* Cooking Profile */}
+						<Box border="default" borderRadius="4" p="lg" bg="default">
+							<Stack direction="column" gap="md">
+								<Typography variant="h3">Cooking profile</Typography>
+								<Typography variant="small" color="subdued">
+									Help us understand your cooking preferences and skill level
+								</Typography>
+								
+								<Box maxWidth="500px">
+									<Stack direction="column" gap="lg">
+										<Box>
+											<Dropdown
+												label="Spice tolerance"
+												helperText="How spicy can your meals be?"
+												value={settings.spiceTolerance}
+												onChange={(value) => setSettings(prev => ({
+													...prev,
+													spiceTolerance: value as any
+												}))}
+												options={[
+													{ id: 'very_mild', label: 'Very Mild (no spice)' },
+													{ id: 'mild', label: 'Mild (a little kick)' },
+													{ id: 'medium', label: 'Medium (moderate heat)' },
+													{ id: 'hot', label: 'Hot (bring the heat!)' },
+													{ id: 'loves_hot', label: 'Loves Hot (extra spicy)' }
+												]}
+											/>
+										</Box>
+
+										<Box>
+											<Dropdown
+												label="Cooking skill"
+												helperText="How comfortable are you following recipes?"
+												value={settings.cookingSkill}
+												onChange={(value) => setSettings(prev => ({
+													...prev,
+													cookingSkill: value as any
+												}))}
+												options={[
+													{ id: 'beginner', label: 'Beginner (new to cooking)' },
+													{ id: 'intermediate', label: 'Intermediate (comfortable with basics)' },
+													{ id: 'confident_home_cook', label: 'Confident Home Cook' },
+													{ id: 'advanced', label: 'Advanced (love a challenge)' }
+												]}
+											/>
+										</Box>
+
+										<Box>
+											<Dropdown
+												label="Effort preference"
+												helperText="How much time and clean-up is okay on most nights?"
+												value={settings.effortPreference}
+												onChange={(value) => setSettings(prev => ({
+													...prev,
+													effortPreference: value as any
+												}))}
+												options={[
+													{ id: 'minimal_clean_up', label: 'Minimal Clean-up (one-pot meals)' },
+													{ id: 'balanced', label: 'Balanced (reasonable effort)' },
+													{ id: 'happy_to_spend_time_on_weekends', label: 'Happy to spend time on weekends' }
+												]}
+											/>
+										</Box>
+
+										<Box>
+											<TextField
+												label="Flavor profile description"
+												helperText="Describe your family&apos;s taste preferences in a few words"
+												value={settings.flavorProfileDescription}
+												onChange={(e) => setSettings(prev => ({
+													...prev,
+													flavorProfileDescription: e.target.value
+												}))}
+												placeholder="e.g., fresh & herby, avoids heavy cream"
+											/>
+										</Box>
+									</Stack>
+								</Box>
+							</Stack>
+						</Box>
+
+						{/* Location & Seasonality */}
+						<Box border="default" borderRadius="4" p="lg" bg="default">
+							<Stack direction="column" gap="md">
+								<Typography variant="h3">Location & seasonality</Typography>
+								<Typography variant="small" color="subdued">
+									Used for ingredient availability and seasonal preferences
+								</Typography>
+								
+								<Box maxWidth="500px">
+									<Stack direction="column" gap="lg">
+										<TextField
+											label="City"
+											value={settings.location.city}
+											onChange={(e) => setSettings(prev => ({
+												...prev,
+												location: {
+													...prev.location,
+													city: e.target.value
+												}
+											}))}
+											placeholder="e.g., Melbourne"
+										/>
+
+										<TextField
+											label="Country"
+											value={settings.location.country}
+											onChange={(e) => setSettings(prev => ({
+												...prev,
+												location: {
+													...prev.location,
+													country: e.target.value
+												}
+											}))}
+											placeholder="e.g., Australia"
+										/>
+
+										<Box>
+											<Dropdown
+												label="Hemisphere"
+												helperText="Affects seasonal ingredient recommendations"
+												value={settings.location.hemisphere}
+												onChange={(value) => setSettings(prev => ({
+													...prev,
+													location: {
+														...prev.location,
+														hemisphere: value as 'northern' | 'southern'
+													}
+												}))}
+												options={[
+													{ id: 'northern', label: 'Northern Hemisphere' },
+													{ id: 'southern', label: 'Southern Hemisphere' }
+												]}
+											/>
+										</Box>
+									</Stack>
+								</Box>
+							</Stack>
+						</Box>
+
 						{/* Budget & Time */}
 						<Box border="default" borderRadius="4" p="lg" bg="default">
 							<Stack direction="column" gap="md">

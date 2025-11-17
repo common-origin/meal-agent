@@ -14,7 +14,7 @@ A family meal planning application built with Common Origin Design System.
 - 🛒 **Smart Shopping Lists** - Aggregated ingredient lists with pantry awareness and CSV export
 - � **Pantry Scanning** - AI-powered image recognition to detect ingredients from photos
 - 🎯 **Weekly Planning Wizard** - Interactive wizard for cuisine selection and pantry management
-- 👨‍👩‍👧‍👦 **Family Settings** - Customizable preferences for servings, dietary needs, budget, and cook time
+- 👨‍👩‍👧‍👦 **Family Settings** - Customizable preferences for servings, dietary needs, budget, cook time, cooking skill, spice tolerance, and location
 - �📊 **Analytics** - Privacy-first local analytics tracking
 - ⚙️ **Regeneration** - Pin favorite meals and regenerate the rest with custom constraints
 
