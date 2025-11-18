@@ -17,6 +17,7 @@ export interface LibrarySearchOptions {
 
 const CUSTOM_RECIPES_KEY = "meal-agent:custom-recipes:v1"; // User-added recipes only
 const CONFIRMED_RECIPES_KEY = "meal-agent:confirmed-recipes:v1"; // Track recipes confirmed in plans
+const AI_TEMP_RECIPES_KEY = "meal-agent:ai-temp-recipes:v1"; // Temporary AI recipes for current plans
 
 /**
  * Real Recipe Library
@@ -50,7 +51,21 @@ export class RecipeLibrary {
   }
 
   /**
-   * Get all recipes with enhanced tags (built-in + custom)
+   * Load temporary AI recipes from localStorage
+   */
+  private static loadTempAIRecipes(): Recipe[] {
+    return Storage.get<Recipe[]>(AI_TEMP_RECIPES_KEY, []);
+  }
+
+  /**
+   * Save temporary AI recipes to localStorage
+   */
+  private static saveTempAIRecipes(recipes: Recipe[]): boolean {
+    return Storage.set(AI_TEMP_RECIPES_KEY, recipes);
+  }
+
+  /**
+   * Get all recipes with enhanced tags (built-in + custom + temporary AI)
    */
   private static getEnhancedRecipes(): Recipe[] {
     if (!this.recipes) {
@@ -58,9 +73,10 @@ export class RecipeLibrary {
       this.recipes = recipes.map(r => enhanceRecipeWithTags(r));
     }
     
-    // Combine built-in recipes with custom recipes
+    // Combine built-in recipes with custom recipes and temporary AI recipes
     const customRecipes = this.loadCustomRecipes();
-    return [...this.recipes, ...customRecipes];
+    const tempAIRecipes = this.loadTempAIRecipes();
+    return [...this.recipes, ...customRecipes, ...tempAIRecipes];
   }
 
   /**
@@ -142,7 +158,37 @@ export class RecipeLibrary {
   }
 
   /**
-   * Add custom recipes (e.g., AI-generated)
+   * Add temporary AI recipes (for current meal plans only, not "My Recipes")
+   * These recipes are available for searching and planning but won't appear in "My Recipes"
+   * unless explicitly favorited or added via other methods
+   */
+  static addTempAIRecipes(newRecipes: Recipe[]): boolean {
+    const existingTemp = this.loadTempAIRecipes();
+    const existingIds = new Set(existingTemp.map(r => r.id));
+    
+    // Filter out duplicates
+    const recipesToAdd = newRecipes.filter(r => !existingIds.has(r.id));
+    
+    if (recipesToAdd.length === 0) {
+      console.log('No new temporary AI recipes to add (all duplicates)');
+      return true;
+    }
+    
+    // Enhance new recipes with tags
+    const enhancedNewRecipes = recipesToAdd.map(r => enhanceRecipeWithTags(r));
+    
+    // Merge and save
+    const allTemp = [...existingTemp, ...enhancedNewRecipes];
+    const success = this.saveTempAIRecipes(allTemp);
+    
+    console.log(`✅ Added ${recipesToAdd.length} temporary AI recipes (for planning only)`);
+
+    return success;
+  }
+
+  /**
+   * Add custom recipes (user-added via URL/image/manual entry)
+   * These recipes will appear in "My Recipes"
    * Merges with existing custom recipes, avoiding duplicates by ID
    */
   static addCustomRecipes(newRecipes: Recipe[]): boolean {
@@ -164,7 +210,7 @@ export class RecipeLibrary {
     const allCustom = [...existingCustom, ...enhancedNewRecipes];
     const success = this.saveCustomRecipes(allCustom);
     
-    console.log(`✅ Added ${recipesToAdd.length} custom recipes to library`);
+    console.log(`✅ Added ${recipesToAdd.length} custom recipes to "My Recipes"`);
 
     // Auto-sync to GitHub if enabled (fire and forget)
     this.saveToGitHub().catch(error => {
@@ -207,22 +253,23 @@ export class RecipeLibrary {
    * Get only custom recipes ("My Recipes")
    * Includes:
    * - User-added recipes (via URL/image/manual entry)
-   * - Favorited recipes (from built-in library)
-   * - Confirmed recipes (recipes that were part of a confirmed week plan)
+   * - Favorited recipes (from any source including AI-generated)
+   * 
+   * Does NOT include:
+   * - Temporary AI recipes (unless favorited)
+   * - Built-in library recipes (unless favorited)
    */
   static getCustomRecipes(): Recipe[] {
     const userAddedRecipes = this.loadCustomRecipes();
     const favorites = getFavorites();
-    const confirmedRecipeIds = Storage.get<string[]>(CONFIRMED_RECIPES_KEY, []);
     
     // Combine all "My Recipes" sources
     const myRecipeIds = new Set([
       ...userAddedRecipes.map(r => r.id),
       ...favorites,
-      ...confirmedRecipeIds,
     ]);
     
-    // Get all recipes (user-added are already in the list)
+    // Get all recipes (includes built-in, custom, and temp AI)
     const allRecipes = this.getEnhancedRecipes();
     
     // Return only recipes that are in the "My Recipes" set
@@ -235,6 +282,29 @@ export class RecipeLibrary {
   static isCustomRecipe(id: string): boolean {
     const customRecipes = this.loadCustomRecipes();
     return customRecipes.some(r => r.id === id);
+  }
+
+  /**
+   * Promote a temporary AI recipe to permanent custom recipe
+   * This happens when a user favorites an AI-generated recipe
+   */
+  static promoteTempAIRecipeToCustom(recipeId: string): boolean {
+    const tempRecipes = this.loadTempAIRecipes();
+    const recipe = tempRecipes.find(r => r.id === recipeId);
+    
+    if (!recipe) {
+      console.warn(`Temporary AI recipe ${recipeId} not found`);
+      return false;
+    }
+    
+    // Add to custom recipes
+    const success = this.addCustomRecipes([recipe]);
+    
+    if (success) {
+      console.log(`✅ Promoted AI recipe "${recipe.title}" to "My Recipes"`);
+    }
+    
+    return success;
   }
 
   /**

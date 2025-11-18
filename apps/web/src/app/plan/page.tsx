@@ -196,9 +196,9 @@ export default function PlanPage() {
 
       console.log('✅ Generated', data.recipes.length, 'AI swap suggestions');
 
-      // Save to library
-      RecipeLibrary.addCustomRecipes(data.recipes);
-      console.log('✅ AI swaps saved to library');
+      // Save to temporary storage (not "My Recipes")
+      RecipeLibrary.addTempAIRecipes(data.recipes);
+      console.log('✅ AI swaps saved to temporary storage');
       
       // Add to recipe history
       const newRecipeIds = data.recipes.map((r: Recipe) => r.id);
@@ -396,10 +396,10 @@ export default function PlanPage() {
 
       console.log('✅ [6/6] Generated recipes:', data.recipes.length, 'recipes');
 
-      // Save AI recipes to library
-      const saved = RecipeLibrary.addCustomRecipes(data.recipes);
+      // Save AI recipes to temporary storage (not "My Recipes")
+      const saved = RecipeLibrary.addTempAIRecipes(data.recipes);
       if (saved) {
-        console.log('✅ Recipes saved to library');
+        console.log('✅ Recipes saved to temporary storage');
       }
       
       // Add to recipe history
@@ -559,13 +559,13 @@ export default function PlanPage() {
       console.log('✅ [6/6] Generated recipes:', data.recipes.length, 'recipes');
       console.log('Recipe titles:', data.recipes.map((r: Recipe) => r.title));
 
-      // Save AI recipes to library for persistence
-      console.log('💾 Saving AI recipes to library...');
-      const saved = RecipeLibrary.addCustomRecipes(data.recipes);
+      // Save AI recipes to temporary storage (not "My Recipes")
+      console.log('💾 Saving AI recipes to temporary storage...');
+      const saved = RecipeLibrary.addTempAIRecipes(data.recipes);
       if (saved) {
-        console.log('✅ Recipes saved to library and will persist across sessions');
+        console.log('✅ Recipes saved to temporary storage and will persist for planning');
       } else {
-        console.warn('⚠️ Failed to save recipes to library (localStorage issue?)');
+        console.warn('⚠️ Failed to save recipes to temporary storage (localStorage issue?)');
       }
       
       // Add to recipe history to avoid repetition
@@ -674,9 +674,9 @@ export default function PlanPage() {
       const recipe: Recipe = data.recipes[0];
       console.log('✅ Generated recipe:', recipe.title);
 
-      // Save to library
-      RecipeLibrary.addCustomRecipes([recipe]);
-      console.log('✅ Recipe saved to library');
+      // Save to temporary storage (not "My Recipes")
+      RecipeLibrary.addTempAIRecipes([recipe]);
+      console.log('✅ Recipe saved to temporary storage');
       
       // Add to recipe history
       addToRecipeHistory([recipe.id], 'ai-generated');

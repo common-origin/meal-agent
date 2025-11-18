@@ -115,6 +115,11 @@ export function toggleFavorite(recipeId: string): boolean {
   } else {
     // Add to favorites
     household.favorites.push(recipeId);
+    
+    // If this is a temporary AI recipe, promote it to permanent custom recipe
+    // This is lazy-loaded to avoid circular dependency
+    const { RecipeLibrary } = require('./library');
+    RecipeLibrary.promoteTempAIRecipeToCustom(recipeId);
   }
   
   return saveHousehold(household);
