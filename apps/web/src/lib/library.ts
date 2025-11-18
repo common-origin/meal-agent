@@ -384,6 +384,7 @@ export class RecipeLibrary {
 
   /**
    * Save recipes to GitHub (called after adding/removing recipes)
+   * Implements retry logic with fresh SHA fetching to handle concurrent updates
    */
   static async saveToGitHub(): Promise<{ success: boolean; error?: string }> {
     const client = this.getGitHubClient();
@@ -410,18 +411,46 @@ export class RecipeLibrary {
 
       const customRecipes = this.loadCustomRecipes();
 
-      // Get current SHA (needed to update file)
-      const currentState = await client.getRecipes();
-      
-      const result = await client.saveRecipes(customRecipes, currentState.sha);
+      // Retry up to 3 times with fresh SHA on each attempt
+      let lastError: string | undefined;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          // Get fresh SHA on each attempt (needed to update file)
+          const currentState = await client.getRecipes();
+          
+          const result = await client.saveRecipes(customRecipes, currentState.sha);
 
-      if (result.success) {
-        console.log(`✅ Saved ${customRecipes.length} recipes to GitHub`);
-      } else {
-        console.error('Failed to save to GitHub:', result.error);
+          if (result.success) {
+            console.log(`✅ Saved ${customRecipes.length} recipes to GitHub`);
+            return result;
+          } else {
+            lastError = result.error;
+            
+            // If it's a SHA mismatch, retry with fresh SHA
+            if (result.error?.includes('does not match')) {
+              console.log(`⏳ SHA mismatch on attempt ${attempt + 1}, retrying...`);
+              await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+              continue;
+            }
+            
+            // For other errors, don't retry
+            console.error('Failed to save to GitHub:', result.error);
+            return result;
+          }
+        } catch (error) {
+          lastError = error instanceof Error ? error.message : 'Unknown error';
+          console.error(`Attempt ${attempt + 1} failed:`, lastError);
+          
+          // Wait before retrying
+          if (attempt < 2) {
+            await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+          }
+        }
       }
 
-      return result;
+      console.error('Failed to save to GitHub after 3 attempts:', lastError);
+      return { success: false, error: lastError };
+
     } catch (error) {
       console.error('Error saving to GitHub:', error);
       return { 
