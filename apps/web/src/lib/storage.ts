@@ -267,3 +267,78 @@ export function loadCurrentWeekPlan(weekOfISO: string): StoredWeekPlan | null {
 export function clearCurrentWeekPlan(): boolean {
   return Storage.remove(CURRENT_WEEK_PLAN_KEY);
 }
+
+/**
+ * Recipe Ratings & Blocking
+ */
+const RECIPE_RATINGS_KEY = 'recipe_ratings';
+const BLOCKED_RECIPES_KEY = 'blocked_recipes';
+
+export type RecipeRating = {
+  recipeId: string;
+  rating: number; // 1-5 stars
+  ratedAt: string; // ISO date
+};
+
+/**
+ * Get all recipe ratings
+ */
+export function getRecipeRatings(): Record<string, RecipeRating> {
+  return Storage.get<Record<string, RecipeRating>>(RECIPE_RATINGS_KEY, {});
+}
+
+/**
+ * Save or update a recipe rating
+ */
+export function saveRecipeRating(recipeId: string, rating: number): boolean {
+  const ratings = getRecipeRatings();
+  ratings[recipeId] = {
+    recipeId,
+    rating,
+    ratedAt: new Date().toISOString()
+  };
+  return Storage.set(RECIPE_RATINGS_KEY, ratings);
+}
+
+/**
+ * Get rating for a specific recipe
+ */
+export function getRecipeRating(recipeId: string): number | null {
+  const ratings = getRecipeRatings();
+  return ratings[recipeId]?.rating ?? null;
+}
+
+/**
+ * Get blocked recipes (never show again)
+ */
+export function getBlockedRecipes(): Set<string> {
+  const blocked = Storage.get<string[]>(BLOCKED_RECIPES_KEY, []);
+  return new Set(blocked);
+}
+
+/**
+ * Block a recipe (never show again)
+ */
+export function blockRecipe(recipeId: string): boolean {
+  const blocked = Array.from(getBlockedRecipes());
+  if (!blocked.includes(recipeId)) {
+    blocked.push(recipeId);
+  }
+  return Storage.set(BLOCKED_RECIPES_KEY, blocked);
+}
+
+/**
+ * Unblock a recipe
+ */
+export function unblockRecipe(recipeId: string): boolean {
+  const blocked = Array.from(getBlockedRecipes());
+  const filtered = blocked.filter(id => id !== recipeId);
+  return Storage.set(BLOCKED_RECIPES_KEY, filtered);
+}
+
+/**
+ * Check if a recipe is blocked
+ */
+export function isRecipeBlocked(recipeId: string): boolean {
+  return getBlockedRecipes().has(recipeId);
+}

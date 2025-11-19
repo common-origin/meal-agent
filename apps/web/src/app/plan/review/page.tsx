@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Stack, Typography, Button, ProgressBar, ResponsiveGrid, Box } from "@common-origin/design-system";
+import { Alert, Stack, Typography, Button, ProgressBar, ResponsiveGrid, Box, Divider } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import { MemoizedMealCard } from "@/components/app/MealCard";
 import LeftoverCard from "@/components/app/LeftoverCard";
@@ -213,6 +213,35 @@ export default function PlanReviewPage() {
     return recipe?.tags.includes("kid_friendly");
   }).length;
 
+  // Calculate weekly nutrition totals (memoized for performance)
+  const weeklyNutrition = useMemo(() => {
+    const totals = { calories: 0, protein: 0, carbs: 0, fat: 0, count: 0 };
+    
+    plan.days.forEach(d => {
+      const recipe = RecipeLibrary.getById(d.recipeId);
+      if (recipe?.nutrition) {
+        // Multiply by servings for this meal
+        const servingMultiplier = d.scaledServings || recipe.serves || 4;
+        totals.calories += recipe.nutrition.calories * servingMultiplier;
+        totals.protein += recipe.nutrition.protein * servingMultiplier;
+        totals.carbs += recipe.nutrition.carbs * servingMultiplier;
+        totals.fat += recipe.nutrition.fat * servingMultiplier;
+        totals.count++;
+      }
+    });
+    
+    // Return averages per serving (total divided by number of recipes with nutrition data)
+    if (totals.count === 0) return null;
+    
+    return {
+      avgCaloriesPerServing: Math.round(totals.calories / totals.count / 4), // Assuming 4 servings average
+      avgProteinPerServing: Math.round(totals.protein / totals.count / 4),
+      avgCarbsPerServing: Math.round(totals.carbs / totals.count / 4),
+      avgFatPerServing: Math.round(totals.fat / totals.count / 4),
+      totalMealsWithNutrition: totals.count,
+    };
+  }, [plan.days]);
+
   // Count ingredient reuse
   const ingredientCounts: Record<string, number> = {};
   plan.days.forEach(d => {
@@ -310,6 +339,57 @@ export default function PlanReviewPage() {
             </Box>
           </div>
         </div>
+
+        {/* Nutrition Summary */}
+        {weeklyNutrition && (
+          <Box border="subtle" borderRadius="4" p="lg" bg="default">
+            <Stack direction="column" gap="md">
+              <Typography variant="h3">Average Nutrition (per serving)</Typography>
+              <Typography variant="small" color="subdued">
+                Based on {weeklyNutrition.totalMealsWithNutrition} of {totalDays} meals with nutrition data
+              </Typography>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '24px', marginTop: '8px' }}>
+                <Stack direction="column" gap="xs">
+                  <Typography variant="small" color="subdued">Calories</Typography>
+                  <Typography variant="h2">{weeklyNutrition.avgCaloriesPerServing}</Typography>
+                  <Typography variant="small">kcal</Typography>
+                  <ProgressBar 
+                    value={Math.min((weeklyNutrition.avgCaloriesPerServing / 800) * 100, 100)} 
+                    aria-label={`Average ${weeklyNutrition.avgCaloriesPerServing} calories per serving`}
+                  />
+                </Stack>
+                <Stack direction="column" gap="xs">
+                  <Typography variant="small" color="subdued">Protein</Typography>
+                  <Typography variant="h2">{weeklyNutrition.avgProteinPerServing}g</Typography>
+                  <Typography variant="small">per serving</Typography>
+                  <ProgressBar 
+                    value={Math.min((weeklyNutrition.avgProteinPerServing / 50) * 100, 100)} 
+                    color="success"
+                    aria-label={`Average ${weeklyNutrition.avgProteinPerServing} grams of protein per serving`}
+                  />
+                </Stack>
+                <Stack direction="column" gap="xs">
+                  <Typography variant="small" color="subdued">Carbs</Typography>
+                  <Typography variant="h2">{weeklyNutrition.avgCarbsPerServing}g</Typography>
+                  <Typography variant="small">per serving</Typography>
+                  <ProgressBar 
+                    value={Math.min((weeklyNutrition.avgCarbsPerServing / 80) * 100, 100)} 
+                    aria-label={`Average ${weeklyNutrition.avgCarbsPerServing} grams of carbs per serving`}
+                  />
+                </Stack>
+                <Stack direction="column" gap="xs">
+                  <Typography variant="small" color="subdued">Fat</Typography>
+                  <Typography variant="h2">{weeklyNutrition.avgFatPerServing}g</Typography>
+                  <Typography variant="small">per serving</Typography>
+                  <ProgressBar 
+                    value={Math.min((weeklyNutrition.avgFatPerServing / 40) * 100, 100)} 
+                    aria-label={`Average ${weeklyNutrition.avgFatPerServing} grams of fat per serving`}
+                  />
+                </Stack>
+              </div>
+            </Stack>
+          </Box>
+        )}
 
         {/* Conflicts */}
         {plan.conflicts.length > 0 && (

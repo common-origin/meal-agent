@@ -30,7 +30,15 @@ export type RecipeSource = {
 export type Ingredient = { 
   name: string; 
   qty: number; 
-  unit: 'g'|'ml'|'tsp'|'tbsp'|'unit' 
+  unit: 'g'|'ml'|'tsp'|'tbsp'|'unit';
+  seasonal?: boolean; // True if ingredient is in season
+};
+
+export type NutritionInfo = {
+  calories: number; // kcal per serving
+  protein: number; // grams per serving
+  carbs: number; // grams per serving
+  fat: number; // grams per serving
 };
 
 export type Recipe = { 
@@ -42,7 +50,11 @@ export type Recipe = {
   ingredients: Ingredient[]; 
   instructions?: string[]; // Step-by-step cooking instructions
   serves?: number; 
-  costPerServeEst?: number 
+  costPerServeEst?: number;
+  nutrition?: NutritionInfo; // Optional nutrition data per serving
+  rating?: number; // User rating 1-5 stars (stored separately in localStorage)
+  isBlocked?: boolean; // True if user selected "never show this recipe again"
+  seasonalScore?: number; // 0-1 score indicating seasonal relevance (computed based on ingredients + current date)
 };
 
 export type PlanDay = { 

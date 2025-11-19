@@ -2,14 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Stack, Typography, Box, Button, ChipGroup, IconButton } from "@common-origin/design-system";
+import { Stack, Typography, Box, Button, ChipGroup, IconButton, Chip, Tag, Divider, Alert } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import { tokens } from "@common-origin/design-system";
-import { toggleFavorite, isFavorite } from "@/lib/storage";
+import { toggleFavorite, isFavorite, getRecipeRating, saveRecipeRating, blockRecipe, isRecipeBlocked } from "@/lib/storage";
 import { RecipeLibrary } from "@/lib/library";
 import { type Recipe } from "@/lib/types/recipe";
 import { track } from "@/lib/analytics";
 import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
+import { calculateSeasonalScore, isIngredientInSeason } from "@/lib/seasonal";
+import StarRating from "@/components/app/StarRating";
 
 type RecipePageProps = {
   params: Promise<{ id: string }>;
@@ -20,11 +22,16 @@ export default function RecipePage({ params }: RecipePageProps) {
   const [id, setId] = useState<string>("");
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [favorited, setFavorited] = useState(false);
+  const [rating, setRating] = useState<number>(0);
+  const [blocked, setBlocked] = useState<boolean>(false);
+  const [showBlockConfirm, setShowBlockConfirm] = useState<boolean>(false);
   
   useEffect(() => {
     params.then((resolvedParams) => {
       setId(resolvedParams.id);
       setFavorited(isFavorite(resolvedParams.id));
+      setRating(getRecipeRating(resolvedParams.id) || 0);
+      setBlocked(isRecipeBlocked(resolvedParams.id));
       
       // Load recipe from library
       const loadedRecipe = RecipeLibrary.getById(resolvedParams.id);
@@ -45,6 +52,17 @@ export default function RecipePage({ params }: RecipePageProps) {
     toggleFavorite(id);
     setFavorited(!favorited);
     track(favorited ? 'favorite_removed' : 'favorite_added', { recipeId: id });
+  };
+  
+  const handleRatingChange = (newRating: number) => {
+    setRating(newRating);
+    saveRecipeRating(id, newRating);
+  };
+  
+  const handleBlockRecipe = () => {
+    blockRecipe(id);
+    setBlocked(true);
+    setShowBlockConfirm(false);
   };
   
   if (!recipe) {
@@ -118,6 +136,73 @@ export default function RecipePage({ params }: RecipePageProps) {
             />
           )}
         </Stack>
+
+        {/* Rating */}
+        <Box border="subtle" borderRadius="4" p="lg" bg="default">
+          <Stack direction="column" gap="md">
+            <Typography variant="h3">Rate this recipe</Typography>
+            <StarRating rating={rating} onChange={handleRatingChange} size="large" />
+            {blocked && (
+              <Alert variant="warning">
+                This recipe is blocked and won't appear in future AI meal plans.
+              </Alert>
+            )}
+            {!blocked && (
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={() => setShowBlockConfirm(true)}
+              >
+                Never show this recipe again
+              </Button>
+            )}
+            {showBlockConfirm && (
+              <Alert variant="warning">
+                <Stack direction="column" gap="sm">
+                  <Typography variant="body">
+                    Are you sure? This recipe won't appear in future AI meal plans.
+                  </Typography>
+                  <Stack direction="row" gap="sm">
+                    <Button variant="primary" size="small" onClick={handleBlockRecipe}>
+                      Yes, block it
+                    </Button>
+                    <Button variant="secondary" size="small" onClick={() => setShowBlockConfirm(false)}>
+                      Cancel
+                    </Button>
+                  </Stack>
+                </Stack>
+              </Alert>
+            )}
+          </Stack>
+        </Box>
+
+        {/* Nutrition Info */}
+        {recipe.nutrition && (
+          <Box border="subtle" borderRadius="4" p="lg" bg="default">
+            <Stack direction="column" gap="md">
+              <Typography variant="h3">Nutrition (per serving)</Typography>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '16px' }}>
+                <Stack direction="column" gap="xs">
+                  <Typography variant="small" color="subdued">Calories</Typography>
+                  <Typography variant="h3">{recipe.nutrition.calories}</Typography>
+                  <Typography variant="small">kcal</Typography>
+                </Stack>
+                <Stack direction="column" gap="xs">
+                  <Typography variant="small" color="subdued">Protein</Typography>
+                  <Typography variant="h3">{recipe.nutrition.protein}g</Typography>
+                </Stack>
+                <Stack direction="column" gap="xs">
+                  <Typography variant="small" color="subdued">Carbs</Typography>
+                  <Typography variant="h3">{recipe.nutrition.carbs}g</Typography>
+                </Stack>
+                <Stack direction="column" gap="xs">
+                  <Typography variant="small" color="subdued">Fat</Typography>
+                  <Typography variant="h3">{recipe.nutrition.fat}g</Typography>
+                </Stack>
+              </div>
+            </Stack>
+          </Box>
+        )}
 
         {/* Ingredients */}
         <Box border="subtle" borderRadius="4" p="lg" bg="default">

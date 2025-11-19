@@ -6,6 +6,7 @@
  */
 
 import type { FamilySettings } from '../types/settings';
+import { getCurrentSeason, getSeasonalDescription, type Hemisphere } from '../seasonal';
 
 export interface RecipeGenerationRequest {
   familySettings: FamilySettings;
@@ -263,13 +264,21 @@ KID-FRIENDLY REQUIREMENTS:`;
 LOCATION & SEASONALITY:`;
 
   // Use dynamic location from settings
+  const hemisphere = (familySettings.location?.hemisphere || 'southern') as Hemisphere;
   const locationStr = familySettings.location && familySettings.location.city && familySettings.location.country
     ? `${familySettings.location.city}, ${familySettings.location.country} (${familySettings.location.hemisphere === 'southern' ? 'Southern' : 'Northern'} Hemisphere)`
     : 'Melbourne, Australia (Southern Hemisphere)';
   
+  const currentSeason = getCurrentSeason(hemisphere);
+  const seasonalDesc = getSeasonalDescription(hemisphere);
+  const currentMonth = new Date().toLocaleString('en-US', { month: 'long' });
+  
   prompt += `\n- The family is located in ${locationStr}.`;
-  prompt += `\n- Prefer ingredients that are in season for the current month in this location when they make sense for the chosen cuisine.`;
-  prompt += `\n- Seasonal substitutions are encouraged if they keep the recipe delicious and aligned with the cuisine.`;
+  prompt += `\n- Current month: ${currentMonth} (${currentSeason} season).`;
+  prompt += `\n- PRIORITISE seasonal ingredients for ${currentSeason} in the ${hemisphere} hemisphere.`;
+  prompt += `\n- Prefer ingredients that are in season for this time of year when they make sense for the chosen cuisine.`;
+  prompt += `\n- Seasonal substitutions are strongly encouraged if they keep the recipe delicious and aligned with the cuisine.`;
+  prompt += `\n- Examples of ${currentSeason} ingredients (use as inspiration where appropriate): Consider what's naturally fresh and abundant during ${currentMonth} in ${hemisphere === 'southern' ? 'Australia' : 'the Northern Hemisphere'}.`;
 
   if (excludeRecipeIds && excludeRecipeIds.length > 0) {
     prompt += `
