@@ -46,6 +46,44 @@ export const DEFAULT_RECIPE_TIME_MINS = 30;
  */
 export const MAX_RECIPE_TIME_MINS = 60;
 
+// ============================================
+// API & PERFORMANCE
+// ============================================
+
+/**
+ * API request timeout in milliseconds
+ */
+export const API_REQUEST_TIMEOUT_MS = 30000; // 30 seconds
+
+/**
+ * Maximum number of API retry attempts
+ */
+export const API_MAX_RETRIES = 3;
+
+/**
+ * Initial delay for exponential backoff in milliseconds
+ */
+export const API_INITIAL_RETRY_DELAY_MS = 1000; // 1 second
+
+/**
+ * Debounce delay for text inputs in milliseconds
+ */
+export const DEBOUNCE_DELAY_MS = 300;
+
+/**
+ * Duration to show success messages in milliseconds
+ */
+export const SUCCESS_MESSAGE_DURATION_MS = 3000;
+
+// ============================================
+// STORAGE & CLEANUP
+// ============================================
+
+/**
+ * Number of days before cleaning up temporary AI recipes
+ */
+export const TEMP_RECIPE_CLEANUP_DAYS = 30;
+
 /**
  * Maximum number of ingredients allowed in a recipe
  */

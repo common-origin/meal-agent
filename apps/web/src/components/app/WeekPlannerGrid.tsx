@@ -1,6 +1,7 @@
 import { Stack, Typography, Button, ResponsiveGrid, Box } from "@common-origin/design-system";
 import { tokens } from "@common-origin/design-system/tokens";
-import MealCard, { type MealCardProps } from "./MealCard";
+import { MemoizedMealCard, type MealCardProps } from "./MealCard";
+import LoadingSkeleton from "./LoadingSkeleton";
 
 export type WeekPlannerGridProps = {
   meals: (MealCardProps | null)[];
@@ -14,79 +15,7 @@ export type WeekPlannerGridProps = {
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-// Skeleton loader component for meal cards
-const MealCardSkeleton = () => (
-  <Box 
-    borderRadius="3"
-    p="xl"
-    bg="default"
-    border="subtle"
-    gap="lg"
-    style={{
-      display: "flex",
-      flexDirection: "column",
-      flex: 1
-    }}
-  >
-    <div 
-      style={{ 
-        height: "24px", 
-        backgroundColor: tokens.semantic.color.background.disabled, 
-        borderRadius: "4px", 
-        width: "80%",
-        animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
-      }} 
-    />
-    <div 
-      style={{ 
-        height: "16px", 
-        backgroundColor: tokens.semantic.color.background.disabled, 
-        borderRadius: "4px", 
-        width: "40%",
-        animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        animationDelay: "0.1s"
-      }} 
-    />
-    <div 
-      style={{ 
-        height: "16px", 
-        backgroundColor: tokens.semantic.color.background.disabled, 
-        borderRadius: "4px", 
-        width: "60%",
-        animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        animationDelay: "0.2s"
-      }} 
-    />
-    <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
-      <div 
-        style={{ 
-          height: "24px", 
-          backgroundColor: tokens.semantic.color.background.disabled, 
-          borderRadius: "12px", 
-          width: "60px",
-          animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-          animationDelay: "0.3s"
-        }} 
-      />
-      <div 
-        style={{ 
-          height: "24px", 
-          backgroundColor: tokens.semantic.color.background.disabled, 
-          borderRadius: "12px", 
-          width: "80px",
-          animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-          animationDelay: "0.4s"
-        }} 
-      />
-    </div>
-    <style dangerouslySetInnerHTML={{__html: `
-      @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-      }
-    `}} />
-  </Box>
-);
+// Now using shared LoadingSkeleton component with ARIA support
 
 export default function WeekPlannerGrid({ meals, onSwapClick, onGenerateClick, onAddSavedRecipeClick, generatingDayIndex, onDeleteClick, isGeneratingPlan }: WeekPlannerGridProps) {
   return (
@@ -105,13 +34,15 @@ export default function WeekPlannerGrid({ meals, onSwapClick, onGenerateClick, o
               <Typography variant="h4">{day}</Typography>
               <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
                 {isGeneratingPlan ? (
-                  <MealCardSkeleton />
+                  <LoadingSkeleton ariaLabel={`Loading recipe for ${day}`} />
                 ) : meals[index] ? (
-                  <MealCard 
+                  <MemoizedMealCard 
                     {...meals[index]!} 
                     onSwapClick={onSwapClick ? () => onSwapClick(index) : undefined}
                     onDeleteClick={onDeleteClick ? () => onDeleteClick(index) : undefined}
                   />
+                ) : generatingDayIndex === index ? (
+                  <LoadingSkeleton ariaLabel={`Generating AI recipe for ${day}`} />
                 ) : (
                   <Box 
                     borderRadius="4"

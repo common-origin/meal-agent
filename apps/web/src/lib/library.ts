@@ -4,6 +4,7 @@ import { enhanceRecipeWithTags } from "./tagNormalizer";
 import { Storage } from "./storage";
 import { GitHubClient } from "./github/client";
 import { getFamilySettings, getFavorites } from "./storage";
+import { TEMP_RECIPE_CLEANUP_DAYS } from "./constants";
 
 // Library search interface (same as MockLibrary for compatibility)
 export interface LibrarySearchOptions {
@@ -62,7 +63,7 @@ export class RecipeLibrary {
     if (!this.hasCleanedThisSession) {
       this.hasCleanedThisSession = true;
       const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - 30);
+      cutoffDate.setDate(cutoffDate.getDate() - TEMP_RECIPE_CLEANUP_DAYS);
       
       const recentRecipes = recipes.filter(recipe => {
         const fetchedAt = new Date(recipe.source.fetchedAt);
@@ -71,7 +72,7 @@ export class RecipeLibrary {
       
       if (recentRecipes.length < recipes.length) {
         this.saveTempAIRecipes(recentRecipes);
-        console.log(`🧹 Auto-cleaned ${recipes.length - recentRecipes.length} old AI recipes`);
+        console.log(`🧹 Auto-cleaned ${recipes.length - recentRecipes.length} old AI recipes (older than ${TEMP_RECIPE_CLEANUP_DAYS} days)`);
         return recentRecipes;
       }
     }
@@ -90,7 +91,7 @@ export class RecipeLibrary {
    * Clean up old temporary AI recipes (older than specified days)
    * Call this periodically to prevent unbounded storage growth
    */
-  static cleanupOldTempRecipes(daysOld: number = 30): number {
+  static cleanupOldTempRecipes(daysOld: number = TEMP_RECIPE_CLEANUP_DAYS): number {
     const tempRecipes = this.loadTempAIRecipes();
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysOld);

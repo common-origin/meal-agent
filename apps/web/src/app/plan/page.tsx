@@ -36,6 +36,7 @@ export default function PlanPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [generatingDayIndex, setGeneratingDayIndex] = useState<number | null>(null);
+  const [ariaLiveMessage, setAriaLiveMessage] = useState<string>("");
 
   
   // Pantry items state
@@ -337,6 +338,7 @@ export default function PlanPage() {
     // Generate plan using wizard data
     setIsGenerating(true);
     setGenerationError(null);
+    setAriaLiveMessage("Generating weekly meal plan...");
 
     try {
       console.log('🤖 [1/6] Starting AI meal plan generation from wizard...');
@@ -429,6 +431,7 @@ export default function PlanPage() {
       setBudget({ current: totalCost, total: weeklyBudget });
 
       console.log('🎉 Wizard-based generation complete!');
+      setAriaLiveMessage("Weekly meal plan generated successfully!");
 
       track('plan_composed', {
         dayCount: 7,
@@ -442,7 +445,9 @@ export default function PlanPage() {
 
     } catch (error) {
       console.error('❌ Error generating plan from wizard:', error);
-      setGenerationError(error instanceof Error ? error.message : 'Unknown error');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setGenerationError(errorMessage);
+      setAriaLiveMessage(`Error generating plan: ${errorMessage}`);
       setShowWizard(true); // Show wizard again on error
     } finally {
       setIsGenerating(false);
@@ -507,6 +512,7 @@ export default function PlanPage() {
     
     setIsGenerating(true);
     setGenerationError(null);
+    setAriaLiveMessage("Generating weekly meal plan...");
 
     try {
       console.log('🤖 [1/6] Starting AI meal plan generation...');
@@ -602,6 +608,7 @@ export default function PlanPage() {
       setBudget({ current: totalCost, total: weeklyBudget });
 
       console.log('🎉 AI generation complete! Total cost:', totalCost);
+      setAriaLiveMessage("Weekly meal plan generated successfully!");
 
       track('plan_composed', {
         dayCount: 7,
@@ -613,7 +620,9 @@ export default function PlanPage() {
 
     } catch (error) {
       console.error('❌ Error generating AI plan:', error);
-      setGenerationError(error instanceof Error ? error.message : 'Unknown error');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setGenerationError(errorMessage);
+      setAriaLiveMessage(`Error generating plan: ${errorMessage}`);
     } finally {
       setIsGenerating(false);
     }
@@ -626,6 +635,7 @@ export default function PlanPage() {
     try {
       const dayName = DAYS[dayIndex];
       console.log(`🤖 Generating single recipe for ${dayName}...`);
+      setAriaLiveMessage(`Generating AI recipe for ${dayName}...`);
       
       const familySettings = getFamilySettings();
       
@@ -710,6 +720,7 @@ export default function PlanPage() {
       const recipeIds = newWeekPlan.map(meal => meal?.recipeId || "");
       saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
       console.log('✅ Week plan updated');
+      setAriaLiveMessage(`Recipe generated for ${dayName}: ${recipe.title}`);
 
       track('swap', {
         day: dayName,
@@ -719,7 +730,9 @@ export default function PlanPage() {
 
     } catch (error) {
       console.error('❌ Error generating recipe:', error);
-      setGenerationError(error instanceof Error ? error.message : 'Unknown error');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setGenerationError(errorMessage);
+      setAriaLiveMessage(`Error generating recipe for ${DAYS[dayIndex]}: ${errorMessage}`);
     } finally {
       setGeneratingDayIndex(null);
     }
@@ -727,6 +740,22 @@ export default function PlanPage() {
 
   return (
     <Main>
+      {/* ARIA live region for screen reader announcements */}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        style={{
+          position: "absolute",
+          left: "-10000px",
+          width: "1px",
+          height: "1px",
+          overflow: "hidden"
+        }}
+      >
+        {ariaLiveMessage}
+      </div>
+
       {showWizard ? (
         <WeeklyPlanWizard
           onComplete={handleWizardComplete}

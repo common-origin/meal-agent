@@ -9,6 +9,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Recipe } from './types/recipe';
 import type { RecipeGenerationRequest } from './prompts/recipeGeneration';
 import { buildSystemPrompt, buildRecipeGenerationPrompt } from './prompts/recipeGeneration';
+import { retryWithExponentialBackoff } from './utils/async';
+import { API_REQUEST_TIMEOUT_MS } from './constants';
 
 // Initialize Gemini API
 const getGeminiClient = () => {
@@ -28,43 +30,6 @@ export interface GeneratedRecipeResponse {
 export interface GenerationError {
   error: string;
   details?: string;
-}
-
-/**
- * Retry helper with exponential backoff
- */
-async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 3,
-  initialDelayMs: number = 1000
-): Promise<T> {
-  let lastError: Error | undefined;
-  
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error as Error;
-      
-      // Check if it's a retryable error (503, 429, network issues)
-      const isRetryable = 
-        lastError.message.includes('503') || 
-        lastError.message.includes('429') ||
-        lastError.message.includes('overloaded') ||
-        lastError.message.includes('ECONNRESET') ||
-        lastError.message.includes('ETIMEDOUT');
-      
-      if (!isRetryable || attempt === maxRetries - 1) {
-        throw lastError;
-      }
-      
-      const delay = initialDelayMs * Math.pow(2, attempt);
-      console.log(`⏳ Attempt ${attempt + 1} failed, retrying in ${delay}ms...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-  
-  throw lastError;
 }
 
 /**
@@ -100,26 +65,24 @@ export async function generateRecipes(
       servings: request.familySettings.totalServings,
     });
 
-    // Create AbortController for 30s timeout
+    // Create AbortController for timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
-      console.warn('⏰ Request timed out after 30 seconds');
-    }, 30000);
+      console.warn(`⏰ Request timed out after ${API_REQUEST_TIMEOUT_MS / 1000} seconds`);
+    }, API_REQUEST_TIMEOUT_MS);
 
     let result;
     try {
       // Generate content with retry logic for transient errors
-      result = await retryWithBackoff(
+      result = await retryWithExponentialBackoff(
         async () => {
           // Check if already aborted
           if (controller.signal.aborted) {
-            throw new Error('Request timeout: AI generation took longer than 30 seconds');
+            throw new Error(`Request timeout: AI generation took longer than ${API_REQUEST_TIMEOUT_MS / 1000} seconds`);
           }
           return await model.generateContent(fullPrompt);
-        },
-        3, // Max 3 retries
-        1000 // Start with 1 second delay
+        }
       );
       
       clearTimeout(timeoutId);
@@ -130,7 +93,7 @@ export async function generateRecipes(
       if (error instanceof Error && error.message.includes('timeout')) {
         return {
           error: 'Request timeout',
-          details: 'AI generation took longer than 30 seconds. Please try again with fewer recipes or simpler requirements.',
+          details: `AI generation took longer than ${API_REQUEST_TIMEOUT_MS / 1000} seconds. Please try again with fewer recipes or simpler requirements.`,
         };
       }
       

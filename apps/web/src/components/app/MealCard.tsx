@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, MouseEvent } from "react";
+import { useState, useEffect, MouseEvent, memo } from "react";
 import styled from "styled-components";
 import Link from "next/link";
 import { Stack, Typography, Box, ChipGroup, IconButton, Divider, Tag } from "@common-origin/design-system";
@@ -212,3 +212,6 @@ export default function MealCard({
     </CardLink>
   );
 }
+
+// Memoize to prevent unnecessary re-renders
+export const MemoizedMealCard = memo(MealCard);

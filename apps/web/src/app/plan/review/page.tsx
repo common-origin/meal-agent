@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Stack, Typography, Button, ProgressBar, ResponsiveGrid, Box } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
-import MealCard from "@/components/app/MealCard";
+import { MemoizedMealCard } from "@/components/app/MealCard";
 import LeftoverCard from "@/components/app/LeftoverCard";
 import RegenerateDrawer from "@/components/app/RegenerateDrawer";
 import ButtonGroup from "@/components/app/ButtonGroup";
@@ -356,7 +356,7 @@ export default function PlanReviewPage() {
             return (
               <div key={index} style={{ display: "flex", flexDirection: "column", gap: "8px", height: "100%" }}>
                 <Typography variant="h4">{DAYS[index]}</Typography>
-                <MealCard 
+                <MemoizedMealCard 
                   {...meal}
                 />
               </div>
