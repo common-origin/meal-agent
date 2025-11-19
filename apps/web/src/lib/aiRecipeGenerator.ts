@@ -100,12 +100,42 @@ export async function generateRecipes(
       servings: request.familySettings.totalServings,
     });
 
-    // Generate content with retry logic for transient errors
-    const result = await retryWithBackoff(
-      () => model.generateContent(fullPrompt),
-      3, // Max 3 retries
-      1000 // Start with 1 second delay
-    );
+    // Create AbortController for 30s timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      console.warn('⏰ Request timed out after 30 seconds');
+    }, 30000);
+
+    let result;
+    try {
+      // Generate content with retry logic for transient errors
+      result = await retryWithBackoff(
+        async () => {
+          // Check if already aborted
+          if (controller.signal.aborted) {
+            throw new Error('Request timeout: AI generation took longer than 30 seconds');
+          }
+          return await model.generateContent(fullPrompt);
+        },
+        3, // Max 3 retries
+        1000 // Start with 1 second delay
+      );
+      
+      clearTimeout(timeoutId);
+    } catch (error) {
+      clearTimeout(timeoutId);
+      
+      // Check if it was a timeout
+      if (error instanceof Error && error.message.includes('timeout')) {
+        return {
+          error: 'Request timeout',
+          details: 'AI generation took longer than 30 seconds. Please try again with fewer recipes or simpler requirements.',
+        };
+      }
+      
+      throw error;
+    }
     
     const response = result.response;
     const text = response.text();

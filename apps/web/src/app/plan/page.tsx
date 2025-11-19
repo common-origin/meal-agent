@@ -84,7 +84,6 @@ export default function PlanPage() {
           title: recipe.title,
           chef: chefDisplay,
           timeMins: recipe.timeMins || 0,
-          kidsFriendly: recipe.tags.includes("kid_friendly"),
           conflicts: [],
           reasons
         };
@@ -252,7 +251,6 @@ export default function PlanPage() {
       title: recipe.title,
       chef: chefName,
       timeMins: recipe.timeMins || 0,
-      kidsFriendly: recipe.tags.includes("kid_friendly"),
       conflicts: [],
       reasons
     };
@@ -412,7 +410,6 @@ export default function PlanPage() {
         title: recipe.title,
         chef: "AI Generated",
         timeMins: recipe.timeMins || 30,
-        kidsFriendly: recipe.tags?.includes("kid_friendly") ?? true,
         conflicts: [],
         reasons: ["AI suggested", "✨ personalized"]
       }));
@@ -581,7 +578,6 @@ export default function PlanPage() {
         title: recipe.title,
         chef: "AI Generated",
         timeMins: recipe.timeMins || 30,
-        kidsFriendly: recipe.tags?.includes("kid_friendly") ?? true,
         conflicts: [],
         reasons: ["AI suggested", "✨ personalized"]
       }));
@@ -694,7 +690,6 @@ export default function PlanPage() {
         title: recipe.title,
         chef: "AI Generated",
         timeMins: recipe.timeMins || 30,
-        kidsFriendly: recipe.tags?.includes("kid_friendly") ?? true,
         conflicts: [],
         reasons: ["AI suggested", "✨ personalized", ...reasons]
       };

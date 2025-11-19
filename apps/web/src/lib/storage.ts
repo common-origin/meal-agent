@@ -26,7 +26,14 @@ export class Storage {
       localStorage.setItem(key, JSON.stringify(value));
       return true;
     } catch (error) {
-      console.warn(`Failed to set item in localStorage: ${key}`, error);
+      // Handle quota exceeded error with user-friendly message
+      if (error instanceof Error && error.name === 'QuotaExceededError') {
+        console.error('localStorage quota exceeded. Please clear old data.');
+        // Show user-friendly alert
+        alert('Storage is full. Please clear old meal plans or recipe history from the Analytics page.');
+      } else {
+        console.warn(`Failed to set item in localStorage: ${key}`, error);
+      }
       return false;
     }
   }

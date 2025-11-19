@@ -119,7 +119,6 @@ export default function PlanReviewPage() {
             title: recipe.title,
             chef: getRecipeSourceDisplay(recipe),
             timeMins: recipe.timeMins || 0,
-            kidsFriendly: recipe.tags.includes("kid_friendly"),
             conflicts: [],
             reasons: planDay.reasons || []
           });

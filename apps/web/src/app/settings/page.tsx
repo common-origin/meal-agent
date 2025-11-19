@@ -386,7 +386,7 @@ export default function SettingsPage() {
 												value={settings.spiceTolerance}
 												onChange={(value) => setSettings(prev => ({
 													...prev,
-													spiceTolerance: value as any
+													spiceTolerance: value as 'very_mild' | 'mild' | 'medium' | 'hot' | 'loves_hot'
 												}))}
 												options={[
 													{ id: 'very_mild', label: 'Very Mild (no spice)' },
@@ -405,7 +405,7 @@ export default function SettingsPage() {
 												value={settings.cookingSkill}
 												onChange={(value) => setSettings(prev => ({
 													...prev,
-													cookingSkill: value as any
+													cookingSkill: value as 'beginner' | 'intermediate' | 'confident_home_cook' | 'advanced'
 												}))}
 												options={[
 													{ id: 'beginner', label: 'Beginner (new to cooking)' },
@@ -423,7 +423,7 @@ export default function SettingsPage() {
 												value={settings.effortPreference}
 												onChange={(value) => setSettings(prev => ({
 													...prev,
-													effortPreference: value as any
+													effortPreference: value as 'minimal_clean_up' | 'balanced' | 'happy_to_spend_time_on_weekends'
 												}))}
 												options={[
 													{ id: 'minimal_clean_up', label: 'Minimal Clean-up (one-pot meals)' },

@@ -9,12 +9,44 @@ import { toggleFavorite, isFavorite } from "@/lib/storage";
 import { track } from "@/lib/analytics";
 import { explainReasons } from "@/lib/explainer";
 
+// Convert title to sentence case while preserving proper nouns
+function toSentenceCase(str: string): string {
+  if (!str) return str;
+  
+  // Words that should remain capitalized (cuisine names, regions, proper nouns)
+  const properNouns = new Set([
+    'thai', 'indian', 'mexican', 'italian', 'chinese', 'japanese', 'korean',
+    'vietnamese', 'mediterranean', 'french', 'spanish', 'greek', 'moroccan',
+    'middle eastern', 'asian', 'european', 'american', 'cajun', 'creole',
+    'tuscan', 'sicilian', 'neapolitan', 'australian'
+  ]);
+  
+  const words = str.split(' ');
+  const result = words.map((word, index) => {
+    const lowerWord = word.toLowerCase();
+    
+    // First word is always capitalized
+    if (index === 0) {
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    }
+    
+    // Preserve capitalization of proper nouns
+    if (properNouns.has(lowerWord)) {
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    }
+    
+    // Everything else lowercase
+    return lowerWord;
+  });
+  
+  return result.join(' ');
+}
+
 export type MealCardProps = {
   recipeId: string;
   title: string;
   chef: string;
   timeMins: number;
-  kidsFriendly?: boolean;
   conflicts?: string[];
   reasons?: string[];
   onSwapClick?: () => void;
@@ -51,7 +83,6 @@ export default function MealCard({
   title,
   chef,
   timeMins, 
-  kidsFriendly = false, 
   conflicts = [],
   reasons = [],
   onSwapClick,
@@ -101,7 +132,7 @@ export default function MealCard({
       >
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '16px' }}>
           {/* Top section - Title and Chef */}
-          <Typography variant="h3">{title}</Typography>
+          <Typography variant="h3">{toSentenceCase(title)}</Typography>
 
           {/* Spacer to push buttons to bottom */}
           <div style={{ flex: 1 }} />

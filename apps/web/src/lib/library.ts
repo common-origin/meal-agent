@@ -31,6 +31,7 @@ export class RecipeLibrary {
   private static customRecipes: Recipe[] | null = null;
   private static githubClient: GitHubClient | null = null;
   private static syncInProgress = false;
+  private static hasCleanedThisSession = false;
 
   /**
    * Load custom recipes from localStorage
@@ -52,9 +53,30 @@ export class RecipeLibrary {
 
   /**
    * Load temporary AI recipes from localStorage
+   * Automatically cleans up old recipes on load
    */
   private static loadTempAIRecipes(): Recipe[] {
-    return Storage.get<Recipe[]>(AI_TEMP_RECIPES_KEY, []);
+    const recipes = Storage.get<Recipe[]>(AI_TEMP_RECIPES_KEY, []);
+    
+    // Auto-cleanup on first load (once per session)
+    if (!this.hasCleanedThisSession) {
+      this.hasCleanedThisSession = true;
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - 30);
+      
+      const recentRecipes = recipes.filter(recipe => {
+        const fetchedAt = new Date(recipe.source.fetchedAt);
+        return fetchedAt > cutoffDate;
+      });
+      
+      if (recentRecipes.length < recipes.length) {
+        this.saveTempAIRecipes(recentRecipes);
+        console.log(`🧹 Auto-cleaned ${recipes.length - recentRecipes.length} old AI recipes`);
+        return recentRecipes;
+      }
+    }
+    
+    return recipes;
   }
 
   /**
@@ -62,6 +84,31 @@ export class RecipeLibrary {
    */
   private static saveTempAIRecipes(recipes: Recipe[]): boolean {
     return Storage.set(AI_TEMP_RECIPES_KEY, recipes);
+  }
+
+  /**
+   * Clean up old temporary AI recipes (older than specified days)
+   * Call this periodically to prevent unbounded storage growth
+   */
+  static cleanupOldTempRecipes(daysOld: number = 30): number {
+    const tempRecipes = this.loadTempAIRecipes();
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+    
+    // Filter out recipes older than cutoff
+    const recentRecipes = tempRecipes.filter(recipe => {
+      const fetchedAt = new Date(recipe.source.fetchedAt);
+      return fetchedAt > cutoffDate;
+    });
+    
+    const removedCount = tempRecipes.length - recentRecipes.length;
+    
+    if (removedCount > 0) {
+      this.saveTempAIRecipes(recentRecipes);
+      console.log(`🧹 Cleaned up ${removedCount} old temporary AI recipes (older than ${daysOld} days)`);
+    }
+    
+    return removedCount;
   }
 
   /**

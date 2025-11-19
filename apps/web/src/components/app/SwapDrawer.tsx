@@ -217,7 +217,6 @@ export default function SwapDrawer({
                     title={recipe.title}
                     chef={chef}
                     timeMins={recipe.timeMins || 0}
-                    kidsFriendly={recipe.tags.includes('kid_friendly')}
                     reasons={reasons}
                     onSwapClick={() => handleSelectSwap(recipe)}
                     disableLink={true}
@@ -292,7 +291,6 @@ export default function SwapDrawer({
                         title={recipe.title}
                         chef={chef}
                         timeMins={recipe.timeMins || 0}
-                        kidsFriendly={recipe.tags.includes('kid_friendly')}
                         reasons={reasons}
                         onSwapClick={() => handleSelectSwap(recipe)}
                         disableLink={true}
