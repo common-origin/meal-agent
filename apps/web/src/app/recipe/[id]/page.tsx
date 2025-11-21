@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Stack, Typography, Box, Button, ChipGroup, IconButton, Chip, Tag, Divider, Alert } from "@common-origin/design-system";
+import { Stack, Typography, Box, Button, ChipGroup, IconButton, Alert } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import { tokens } from "@common-origin/design-system";
 import { toggleFavorite, isFavorite, getRecipeRating, saveRecipeRating, blockRecipe, isRecipeBlocked } from "@/lib/storage";
@@ -90,7 +90,7 @@ export default function RecipePage({ params }: RecipePageProps) {
   const isAIGenerated = recipe.id.startsWith("custom-ai-");
 
   return (
-    <Main maxWidth="900px">
+    <Main maxWidth={tokens.base.breakpoint.md}>
       <Stack direction="column" gap="xl">
         {/* Back button and favorite */}
         <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -131,52 +131,13 @@ export default function RecipePage({ params }: RecipePageProps) {
 
           {recipe.tags && recipe.tags.length > 0 && (
             <ChipGroup 
-              labels={recipe.tags.slice(0, 8).map(tag => tag.replace(/_/g, " "))} 
+              labels={Array.from(new Set(recipe.tags.map(tag => tag.replace(/_/g, " ")))).slice(0, 8)} 
               variant="dark" 
             />
           )}
         </Stack>
 
         {/* Rating */}
-        <Box border="subtle" borderRadius="4" p="lg" bg="default">
-          <Stack direction="column" gap="md">
-            <Typography variant="h3">Rate this recipe</Typography>
-            <StarRating rating={rating} onChange={handleRatingChange} size="large" />
-            {blocked && (
-              <Alert variant="warning">
-                This recipe is blocked and won't appear in future AI meal plans.
-              </Alert>
-            )}
-            {!blocked && (
-              <Button
-                variant="secondary"
-                size="small"
-                onClick={() => setShowBlockConfirm(true)}
-              >
-                Never show this recipe again
-              </Button>
-            )}
-            {showBlockConfirm && (
-              <Alert variant="warning">
-                <Stack direction="column" gap="sm">
-                  <Typography variant="body">
-                    Are you sure? This recipe won't appear in future AI meal plans.
-                  </Typography>
-                  <Stack direction="row" gap="sm">
-                    <Button variant="primary" size="small" onClick={handleBlockRecipe}>
-                      Yes, block it
-                    </Button>
-                    <Button variant="secondary" size="small" onClick={() => setShowBlockConfirm(false)}>
-                      Cancel
-                    </Button>
-                  </Stack>
-                </Stack>
-              </Alert>
-            )}
-          </Stack>
-        </Box>
-
-        {/* Nutrition Info */}
         {recipe.nutrition && (
           <Box border="subtle" borderRadius="4" p="lg" bg="default">
             <Stack direction="column" gap="md">
@@ -271,6 +232,45 @@ export default function RecipePage({ params }: RecipePageProps) {
             </Stack>
           </Box>
         )}
+
+        {/* Rating */}
+        <Box border="subtle" borderRadius="4" p="lg" bg="default">
+          <Stack direction="column" gap="md" alignItems="flex-start">
+            <Typography variant="h3">Rate this recipe</Typography>
+            <StarRating rating={rating} onChange={handleRatingChange} size="large" />
+            {blocked && (
+              <Alert variant="warning">
+                This recipe is blocked and will not appear in future AI meal plans.
+              </Alert>
+            )}
+            {!blocked && (
+              <Button
+                variant="secondary"
+                size="medium"
+                onClick={() => setShowBlockConfirm(true)}
+              >
+                Never show this recipe again
+              </Button>
+            )}
+            {showBlockConfirm && (
+              <Alert variant="warning">
+                <Stack direction="column" gap="sm">
+                  <Typography variant="body">
+                    Are you sure? This recipe will not appear in future AI meal plans.
+                  </Typography>
+                  <Stack direction="row" gap="sm">
+                    <Button variant="primary" size="small" onClick={handleBlockRecipe}>
+                      Yes, block it
+                    </Button>
+                    <Button variant="secondary" size="small" onClick={() => setShowBlockConfirm(false)}>
+                      Cancel
+                    </Button>
+                  </Stack>
+                </Stack>
+              </Alert>
+            )}
+          </Stack>
+        </Box>
 
         {/* Source Attribution */}
         <Box border="default" borderRadius="3" p="md" bg="subtle">

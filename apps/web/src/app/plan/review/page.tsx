@@ -26,6 +26,38 @@ export default function PlanReviewPage() {
   const [showRegenerateDrawer, setShowRegenerateDrawer] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Calculate weekly nutrition totals (memoized for performance)
+  // Must be called before any conditional returns to follow Rules of Hooks
+  const weeklyNutrition = useMemo(() => {
+    if (!plan) return null;
+    
+    const totals = { calories: 0, protein: 0, carbs: 0, fat: 0, count: 0 };
+    
+    plan.days.forEach(d => {
+      const recipe = RecipeLibrary.getById(d.recipeId);
+      if (recipe?.nutrition) {
+        // Multiply by servings for this meal
+        const servingMultiplier = d.scaledServings || recipe.serves || 4;
+        totals.calories += recipe.nutrition.calories * servingMultiplier;
+        totals.protein += recipe.nutrition.protein * servingMultiplier;
+        totals.carbs += recipe.nutrition.carbs * servingMultiplier;
+        totals.fat += recipe.nutrition.fat * servingMultiplier;
+        totals.count++;
+      }
+    });
+    
+    // Return averages per serving (total divided by number of recipes with nutrition data)
+    if (totals.count === 0) return null;
+    
+    return {
+      avgCaloriesPerServing: Math.round(totals.calories / totals.count / 4), // Assuming 4 servings average
+      avgProteinPerServing: Math.round(totals.protein / totals.count / 4),
+      avgCarbsPerServing: Math.round(totals.carbs / totals.count / 4),
+      avgFatPerServing: Math.round(totals.fat / totals.count / 4),
+      totalMealsWithNutrition: totals.count,
+    };
+  }, [plan]);
+
   useEffect(() => {
     track('page_view', { page: '/plan/review' });
     track('plan_reviewed');
@@ -212,35 +244,6 @@ export default function PlanReviewPage() {
     const recipe = RecipeLibrary.getById(d.recipeId);
     return recipe?.tags.includes("kid_friendly");
   }).length;
-
-  // Calculate weekly nutrition totals (memoized for performance)
-  const weeklyNutrition = useMemo(() => {
-    const totals = { calories: 0, protein: 0, carbs: 0, fat: 0, count: 0 };
-    
-    plan.days.forEach(d => {
-      const recipe = RecipeLibrary.getById(d.recipeId);
-      if (recipe?.nutrition) {
-        // Multiply by servings for this meal
-        const servingMultiplier = d.scaledServings || recipe.serves || 4;
-        totals.calories += recipe.nutrition.calories * servingMultiplier;
-        totals.protein += recipe.nutrition.protein * servingMultiplier;
-        totals.carbs += recipe.nutrition.carbs * servingMultiplier;
-        totals.fat += recipe.nutrition.fat * servingMultiplier;
-        totals.count++;
-      }
-    });
-    
-    // Return averages per serving (total divided by number of recipes with nutrition data)
-    if (totals.count === 0) return null;
-    
-    return {
-      avgCaloriesPerServing: Math.round(totals.calories / totals.count / 4), // Assuming 4 servings average
-      avgProteinPerServing: Math.round(totals.protein / totals.count / 4),
-      avgCarbsPerServing: Math.round(totals.carbs / totals.count / 4),
-      avgFatPerServing: Math.round(totals.fat / totals.count / 4),
-      totalMealsWithNutrition: totals.count,
-    };
-  }, [plan.days]);
 
   // Count ingredient reuse
   const ingredientCounts: Record<string, number> = {};

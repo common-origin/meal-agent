@@ -770,13 +770,6 @@ export default function PlanPage() {
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="h1">Weekly Meal Plan</Typography>
             <Stack direction="row" gap="md">
-              <Button
-                variant="secondary"
-                size="large"
-                onClick={() => setShowWizard(true)}
-              >
-                Start new week
-              </Button>
               <Badge count={pantryItems.length}>
                 <Button
                   variant="secondary"
@@ -849,6 +842,16 @@ export default function PlanPage() {
         
         {/* Actions */}
         <ButtonGroup
+          left={
+            <Button
+                variant="secondary"
+                size="large"
+                iconName="refresh"
+                onClick={() => setShowWizard(true)}
+              >
+                Start new week
+              </Button>
+          }
           right={
             <>
               <Button
@@ -862,6 +865,7 @@ export default function PlanPage() {
               <Button
                 variant="primary"
                 size="large"
+                iconName="fileDocSearch"
                 purpose="link"
                 url="/plan/review"
               >
