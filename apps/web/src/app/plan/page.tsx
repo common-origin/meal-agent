@@ -647,10 +647,25 @@ export default function PlanPage() {
         .filter(meal => meal !== null)
         .map(meal => meal!.recipeId);
       
+      // Analyze existing proteins in the week plan for variety
+      const existingProteins: string[] = [];
+      weekPlan.forEach(meal => {
+        if (meal) {
+          const recipe = RecipeLibrary.getById(meal.recipeId);
+          if (recipe) {
+            // Check tags for protein types
+            const proteinTags = ['chicken', 'beef', 'pork', 'fish', 'lamb', 'seafood', 'tofu', 'lentil', 'bean'];
+            const recipeProteins = recipe.tags.filter(tag => proteinTags.includes(tag));
+            existingProteins.push(...recipeProteins);
+          }
+        }
+      });
+      
       // Combine with recipe history to avoid repetition
       const historyIds = getRecipeIdsToExclude();
       const excludeRecipeIds = [...new Set([...existingRecipeIds, ...historyIds])];
       console.log('📚 Excluding', excludeRecipeIds.length, 'recipes from generation');
+      console.log('🥩 Existing proteins in week:', existingProteins.length > 0 ? existingProteins.join(', ') : 'none');
       
       console.log('📡 Calling API for single recipe...');
       const response = await fetch('/api/generate-recipes', {
@@ -662,6 +677,7 @@ export default function PlanPage() {
           familySettings,
           numberOfRecipes: 1,
           excludeRecipeIds,
+          existingProteins, // Pass existing proteins for variety
           specificDays: [{ index: dayIndex, type: dayType }],
         }),
       });

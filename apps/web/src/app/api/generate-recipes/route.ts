@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
       excludeRecipeIds: body.excludeRecipeIds || [],
       specificDays: body.specificDays || undefined,
       pantryItems: body.pantryItems || [], // Pass pantry items to AI
+      existingProteins: body.existingProteins || [], // Pass existing proteins for variety
     };
 
     console.log('📥 Recipe generation request:', {

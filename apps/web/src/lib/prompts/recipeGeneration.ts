@@ -14,6 +14,15 @@ export interface RecipeGenerationRequest {
   excludeRecipeIds?: string[]; // Recipes to avoid (for variety)
   specificDays?: ('weeknight' | 'weekend')[]; // If generating specific days
   pantryItems?: string[]; // Ingredients already available
+  existingProteins?: string[]; // Proteins already in the week plan (for single recipe variety)
+}
+
+/**
+ * Get alternative protein suggestions based on what's already used
+ */
+function getAlternativeProteins(usedProteins: string[]): string[] {
+  const allProteins = ['chicken', 'beef', 'pork', 'fish', 'lamb', 'seafood', 'tofu', 'lentils', 'beans'];
+  return allProteins.filter(protein => !usedProteins.includes(protein));
 }
 
 /**
@@ -285,6 +294,26 @@ LOCATION & SEASONALITY:`;
 
 VARIETY:
 - Avoid repeating similar recipes to these recently used recipe IDs: ${excludeRecipeIds.slice(0, 10).join(', ')}.`;
+  }
+
+  // Add protein variety guidance for single recipe generation
+  if (request.existingProteins && request.existingProteins.length > 0 && numberOfRecipes === 1) {
+    const proteinCounts: Record<string, number> = {};
+    request.existingProteins.forEach(protein => {
+      proteinCounts[protein] = (proteinCounts[protein] || 0) + 1;
+    });
+    
+    const proteinSummary = Object.entries(proteinCounts)
+      .map(([protein, count]) => `${protein} (${count}x)`)
+      .join(', ');
+    
+    prompt += `
+
+PROTEIN VARIETY FOR THIS MEAL:
+- This week already includes: ${proteinSummary}.
+- IMPORTANT: Choose a DIFFERENT protein type to ensure weekly variety.
+- Avoid using ${Object.keys(proteinCounts).join(' or ')} for this recipe.
+- Consider proteins that are NOT already in the week: ${getAlternativeProteins(Object.keys(proteinCounts)).join(', ')}.`;
   }
 
   prompt += `
