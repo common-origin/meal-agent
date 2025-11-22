@@ -98,6 +98,14 @@
    - AI-powered meal swap recommendations
    - Context-aware suggestions based on day of week and family settings
    - Generates multiple alternatives for any meal
+
+6. **Ingredient Analytics & Price Mapping** ✅
+   - Automatic ingredient usage frequency tracking across all meal plans
+   - Analytics dashboard at `/debug/ingredient-analytics`
+   - Identifies unmapped ingredients that need Coles price data
+   - Generates priority reports for expanding price mapping database
+   - Export functionality for data analysis (JSON format)
+   - Tracks 179 manually-mapped Coles products with fallback to category-based estimation
    - Seamless integration with SwapDrawer
 
 #### Design System Integration (v1.14.0)

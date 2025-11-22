@@ -78,6 +78,14 @@ const CardWrapper = styled(Box)<{ $clickable?: boolean }>`
   }
 `;
 
+const StyledMealCardTitle = styled.h3`
+  font: ${tokens.semantic.typography.h3};
+  letter-spacing: ${tokens.base.letterSpacing[1]};
+  font-size: 1.5rem;
+  line-height: 1.75rem;
+  color: ${tokens.semantic.color.text.default}
+`;
+
 export default function MealCard({ 
   recipeId,
   title,
@@ -132,7 +140,7 @@ export default function MealCard({
       >
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '16px' }}>
           {/* Top section - Title and Chef */}
-          <Typography variant="h3">{toSentenceCase(title)}</Typography>
+          <StyledMealCardTitle>{toSentenceCase(title)}</StyledMealCardTitle>
 
           {/* Spacer to push buttons to bottom */}
           <div style={{ flex: 1 }} />

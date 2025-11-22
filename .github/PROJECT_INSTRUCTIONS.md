@@ -49,6 +49,7 @@ meal-agent/
 - `/shopping-list` - Aisle-grouped list with CSV export
 - `/settings` - Family preferences (household, cooking profile, location, dietary needs) and GitHub sync
 - `/analytics` - Privacy-first analytics dashboard
+- `/debug/ingredient-analytics` - Ingredient usage tracking and price mapping prioritization
 
 ## AI Integration
 - **Provider**: Google Gemini API (gemini-2.0-flash-exp)

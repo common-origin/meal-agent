@@ -402,6 +402,43 @@ pnpm dev
 
 ---
 
+## 📊 Ingredient Analytics & Price Mapping
+
+### Overview
+The system automatically tracks ingredient usage frequency to help prioritize which ingredients need Coles price mappings.
+
+### How It Works
+
+**Automatic Tracking**:
+- Triggered automatically when users generate or view meal plans
+- Extracts all ingredients from selected recipes
+- Normalizes ingredient names (removes "fresh", "chopped", etc.)
+- Increments frequency counters in localStorage
+- Checks each ingredient against 179 mapped Coles products
+
+**Analytics Dashboard**: `/debug/ingredient-analytics`
+- View total recipes tracked and ingredient counts
+- See coverage statistics (mapped vs unmapped %)
+- Top 10 unmapped ingredients needing prices
+- Generate full priority report (top 50-100 ingredients)
+- Export data as JSON for analysis
+
+**Key Functions** - `apps/web/src/lib/ingredientAnalytics.ts`:
+```typescript
+trackIngredientUsage(recipeIds: string[])      // Auto-called on plan generation
+getIngredientAnalytics()                        // Returns comprehensive stats
+generatePriorityReport()                        // Creates formatted text report
+exportIngredientData()                          // JSON export
+resetIngredientAnalytics()                      // Clear all data
+```
+
+**Storage**: localStorage key `meal-agent:ingredient-frequency:v1`
+
+**Use Case**: 
+When expanding price mappings in `colesMapping.ts`, use the analytics dashboard to identify which 50-100 ingredients are most frequently used in real meal plans, ensuring you're adding the most valuable mappings first.
+
+---
+
 ## 🤖 AI Agent Guidelines
 
 When working on this codebase:

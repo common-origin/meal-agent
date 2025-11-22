@@ -16,6 +16,7 @@ import { RecipeLibrary } from "@/lib/library";
 import { nextWeekMondayISO } from "@/lib/schedule";
 import { track, type PlanComposedMeta, type PlanRegeneratedMeta } from "@/lib/analytics";
 import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
+import { trackIngredientUsage } from "@/lib/ingredientAnalytics";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -26,8 +27,13 @@ export default function PlanReviewPage() {
   const [showRegenerateDrawer, setShowRegenerateDrawer] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    track('page_view', { page: '/plan/review' });
+    track('plan_reviewed');
+    generatePlan();
+  }, []);
+
   // Calculate weekly nutrition totals (memoized for performance)
-  // Must be called before any conditional returns to follow Rules of Hooks
   const weeklyNutrition = useMemo(() => {
     if (!plan) return null;
     
@@ -57,12 +63,6 @@ export default function PlanReviewPage() {
       totalMealsWithNutrition: totals.count,
     };
   }, [plan]);
-
-  useEffect(() => {
-    track('page_view', { page: '/plan/review' });
-    track('plan_reviewed');
-    generatePlan();
-  }, []);
 
   const generatePlan = (_pinnedDays?: number[], _constraints?: {
     maxCost?: number;
@@ -129,6 +129,9 @@ export default function PlanReviewPage() {
       };
       
       console.log('✅ Review page: Built plan from saved recipe IDs:', days.length, 'meals');
+      
+      // Track ingredient usage from saved plan
+      trackIngredientUsage(savedPlan.recipeIds.filter((id): id is string => id !== null));
     } else {
       // Fall back to auto-composition from library
       console.log('🔄 Review page: No saved plan found, composing from library...');

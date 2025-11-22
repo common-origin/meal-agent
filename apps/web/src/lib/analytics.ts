@@ -14,6 +14,7 @@ export type AnalyticsEventType =
   // Meal Swapping
   | 'swap'
   | 'swap_suggested'
+  | 'meal_reordered'
   
   // Shopping List
   | 'export_csv'

@@ -1,6 +1,9 @@
 import { Stack, Typography, Button, ResponsiveGrid, Box } from "@common-origin/design-system";
 import { tokens } from "@common-origin/design-system/tokens";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { MemoizedMealCard, type MealCardProps } from "./MealCard";
+import SortableDay from "./SortableDay";
 import LoadingSkeleton from "./LoadingSkeleton";
 
 export type WeekPlannerGridProps = {
@@ -11,90 +14,126 @@ export type WeekPlannerGridProps = {
   generatingDayIndex?: number | null;
   onDeleteClick?: (dayIndex: number) => void;
   isGeneratingPlan?: boolean;
+  onReorder?: (oldIndex: number, newIndex: number) => void;
 };
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 // Now using shared LoadingSkeleton component with ARIA support
 
-export default function WeekPlannerGrid({ meals, onSwapClick, onGenerateClick, onAddSavedRecipeClick, generatingDayIndex, onDeleteClick, isGeneratingPlan }: WeekPlannerGridProps) {
+export default function WeekPlannerGrid({ 
+  meals, 
+  onSwapClick, 
+  onGenerateClick, 
+  onAddSavedRecipeClick, 
+  generatingDayIndex, 
+  onDeleteClick, 
+  isGeneratingPlan,
+  onReorder 
+}: WeekPlannerGridProps) {
+  
+  // Set up sensors for drag interactions
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px movement before drag starts
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200, // 200ms delay before drag starts on touch
+        tolerance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) return;
+    
+    const oldIndex = DAYS.indexOf(active.id as string);
+    const newIndex = DAYS.indexOf(over.id as string);
+    
+    if (oldIndex !== -1 && newIndex !== -1 && onReorder) {
+      onReorder(oldIndex, newIndex);
+    }
+  };
+
+  // If generating the whole plan, show loading state without drag-and-drop
+  if (isGeneratingPlan) {
+    return (
+      <Box mt="2xl">
+        <Stack direction="column" gap="lg">      
+          <ResponsiveGrid 
+            cols={1} 
+            colsSm={2} 
+            colsMd={3} 
+            colsLg={4}
+            gapX={4}
+            gapY={8}
+          >
+            {DAYS.map((day) => (
+              <div key={day} style={{ display: "flex", flexDirection: "column", gap: "8px", height: "100%" }}>
+                <Typography variant="h4">{day}</Typography>
+                <LoadingSkeleton ariaLabel={`Loading recipe for ${day}`} />
+              </div>
+            ))}
+          </ResponsiveGrid>
+        </Stack>
+      </Box>
+    );
+  }
+
   return (
     <Box mt="2xl">
-      <Stack direction="column" gap="lg">      
-        <ResponsiveGrid 
-          cols={1} 
-          colsSm={2} 
-          colsMd={3} 
-          colsLg={4}
-          gapX={4}
-          gapY={8}
+      <Stack direction="column" gap="lg">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
         >
-          {DAYS.map((day, index) => (
-            <div key={day} style={{ display: "flex", flexDirection: "column", gap: "8px", height: "100%" }}>
-              <Typography variant="h4">{day}</Typography>
-              <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-                {isGeneratingPlan ? (
-                  <LoadingSkeleton ariaLabel={`Loading recipe for ${day}`} />
-                ) : meals[index] ? (
-                  <MemoizedMealCard 
-                    {...meals[index]!} 
-                    onSwapClick={onSwapClick ? () => onSwapClick(index) : undefined}
-                    onDeleteClick={onDeleteClick ? () => onDeleteClick(index) : undefined}
+          <SortableContext items={DAYS} strategy={rectSortingStrategy}>
+            <ResponsiveGrid 
+              cols={1} 
+              colsSm={2} 
+              colsMd={3} 
+              colsLg={4}
+              gapX={4}
+              gapY={8}
+            >
+              {DAYS.map((day, index) => {
+                // Show individual loading state for specific day
+                if (generatingDayIndex === index) {
+                  return (
+                    <div key={day} style={{ display: "flex", flexDirection: "column", gap: "8px", height: "100%" }}>
+                      <Typography variant="h4">{day}</Typography>
+                      <LoadingSkeleton ariaLabel={`Generating AI recipe for ${day}`} />
+                    </div>
+                  );
+                }
+
+                // Show sortable day (with or without meal)
+                return (
+                  <SortableDay
+                    key={day}
+                    id={day}
+                    day={day}
+                    index={index}
+                    meal={meals[index]}
+                    onSwapClick={onSwapClick}
+                    onDeleteClick={onDeleteClick}
+                    onGenerateClick={onGenerateClick}
+                    onAddSavedRecipeClick={onAddSavedRecipeClick}
                   />
-                ) : generatingDayIndex === index ? (
-                  <LoadingSkeleton ariaLabel={`Generating AI recipe for ${day}`} />
-                ) : (
-                  <Box 
-                    borderRadius="4"
-                    p="xl"
-                    bg="surface"
-                    border="subtle"
-                    minHeight="200px"
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "16px",
-                      alignItems: "center",
-                      flex: 1,
-                      justifyContent: "center",
-                      textAlign: "center",
-                      borderStyle: "dashed",
-                      borderWidth: "2px"
-                    }}
-                  >
-                    <Typography variant="label" color="subdued">
-                      No meal planned
-                    </Typography>
-                    <Box width="100%">
-                      <Stack direction="row" gap="sm" justifyContent="center">
-                        {onAddSavedRecipeClick && (
-                          <Button
-                            variant="secondary"
-                            size="small"
-                            onClick={() => onAddSavedRecipeClick(index)}
-                            iconName="add"
-                          >
-                            Add saved recipe
-                          </Button>
-                        )}
-                        {onGenerateClick && (
-                          <Button
-                            variant="primary"
-                            size="small"
-                            onClick={() => onGenerateClick(index)}
-                            disabled={generatingDayIndex === index}
-                          >
-                            {generatingDayIndex === index ? 'Generating...' : 'Generate with AI'}
-                          </Button>
-                        )}
-                      </Stack>
-                    </Box>
-                  </Box>
-                )}
-              </div>
-            </div>
-          ))}
-        </ResponsiveGrid>
+                );
+              })}
+            </ResponsiveGrid>
+          </SortableContext>
+        </DndContext>
       </Stack>
     </Box>
   );

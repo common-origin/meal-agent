@@ -38,7 +38,7 @@ const UNIT_CONVERSIONS: Record<string, { toBase: number; baseUnit: string }> = {
  * Normalize ingredient name for deduplication
  * Removes common variations and standardizes format
  */
-function normalizeIngredientName(name: string): string {
+export function normalizeIngredientName(name: string): string {
   // Handle missing or invalid name
   if (!name || typeof name !== 'string') {
     return '';

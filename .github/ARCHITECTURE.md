@@ -24,6 +24,7 @@ Meal Agent is a Next.js-based AI-powered meal planning application that helps ho
 │  │ • Cards      │    │ • aggregator.ts │    │ • Gemini API     │       │
 │  │              │    │ • colesMapping  │    │                  │       │
 │  │              │    │ • analytics.ts  │    │                  │       │
+│  │              │    │ • ingredientAnalytics                    │       │
 │  └──────────────┘    └─────────────────┘    └──────────────────┘       │
 │                                │                                         │
 │                                ▼                                         │
@@ -77,10 +78,12 @@ Meal Agent is a Next.js-based AI-powered meal planning application that helps ho
 **Pages**:
 - `/plan/page.tsx` - Weekly grid with wizard and AI swap functionality
 - `/plan/review/page.tsx` - Plan review with summary stats
-- `/shopping-list/page.tsx` - Aggregated shopping list
-- `/analytics/page.tsx` - Analytics dashboard
+- `/shopping-list/page.tsx` - Aggregated shopping list with Coles pricing
+- `/analytics/page.tsx` - Privacy-first analytics dashboard
 - `/settings/page.tsx` - Family preferences (household, cooking profile, location & seasonality, dietary needs) and GitHub sync
 - `/recipe/[id]/page.tsx` - Recipe details with context-aware navigation
+- `/debug/ingredient-analytics/page.tsx` - Ingredient usage tracking and price mapping analytics
+- `/recipes/add/page.tsx` - Add recipes via URL or image upload
 
 **Accessibility**: WCAG 2.1 AA compliant, keyboard navigation, screen readers
 
@@ -105,6 +108,9 @@ API Routes
     │                                       Input: Recipe URL
     │                                       Output: Structured recipe
     │
+    └──▶ /api/ingredient-analytics ──────── Analytics metadata
+                                            Returns client-side analytics info
+                                            Data stored in localStorage
     └──▶ /api/list-models ────────────── Model testing
                                           Validates Gemini API access
                                           Returns: Available models
@@ -156,6 +162,14 @@ analytics.ts
     ├──▶ Event tracking (11 types)
     ├──▶ Metric aggregation (5 functions)
     └──▶ localStorage persistence
+
+ingredientAnalytics.ts
+    │
+    ├──▶ trackIngredientUsage() - Automatic tracking on plan generation
+    ├──▶ getIngredientAnalytics() - Frequency analysis & coverage stats
+    ├──▶ generatePriorityReport() - Top unmapped ingredients report
+    ├──▶ exportIngredientData() - JSON export for analysis
+    └──▶ localStorage persistence (meal-agent:ingredient-frequency:v1)
     
 storage.ts
     │
@@ -173,11 +187,16 @@ storage.ts
 
 **Runtime Storage (localStorage)**:
 ```
-household_data       → Household preferences
-weekly_overrides_*   → Per-week constraints
-favorite_recipes     → Favorited recipe IDs
-recipe_history       → 3-week cooking history
-analytics_events     → Privacy-first event log
+household_data                          → Household preferences
+weekly_overrides_*                      → Per-week constraints
+favorite_recipes                        → Favorited recipe IDs
+recipe_history                          → 3-week cooking history
+analytics_events                        → Privacy-first event log
+meal-agent:ingredient-frequency:v1      → Ingredient usage frequency tracking
+meal-agent:analytics-timestamp:v1       → Last analytics update timestamp
+meal-agent:custom-recipes:v1            → User-added recipes
+meal-agent:confirmed-recipes:v1         → Recipes confirmed in plans
+meal-agent:ai-temp-recipes:v1           → Temporary AI-generated recipes
 ```
 
 ---
@@ -257,6 +276,58 @@ User clicks "Swap" on a recipe
            ▼
    Up to 3 alternative recipes
 ```
+
+### 4. Ingredient Analytics & Price Mapping (Automatic)
+
+```
+User generates/views meal plan
+        │
+        ▼
+┌──────────────────────────┐
+│ trackIngredientUsage()   │ ← Automatically called
+│                          │ ← Extracts all ingredients
+└──────────┬───────────────┘
+           │
+           ├─▶ Normalizes ingredient names
+           │   (removes "fresh", "chopped", etc.)
+           │
+           ├─▶ Increments frequency counters
+           │
+           ├─▶ Checks against 179 mapped Coles products
+           │
+           ├─▶ Stores in localStorage
+           │
+           ▼
+┌──────────────────────────────┐
+│ /debug/ingredient-analytics  │ ← Analytics dashboard
+│                              │
+│ • Total recipes tracked      │
+│ • Mapped vs unmapped %       │
+│ • Top 10 unmapped ingredients│
+│ • Priority report generation │
+│ • JSON export                │
+└──────────────────────────────┘
+           │
+           ▼
+    Priority list for expanding
+    colesMapping.ts with most
+    frequently used ingredients
+```
+
+**Data Flow**:
+1. Plan generation triggers `trackIngredientUsage(recipeIds[])`
+2. System extracts ingredients from all recipes
+3. Normalizes names using `normalizeIngredientName()`
+4. Checks each ingredient against `COLES_INGREDIENT_MAPPINGS`
+5. Updates frequency map with usage count + recipe sources
+6. Stores in localStorage key: `meal-agent:ingredient-frequency:v1`
+
+**Analytics Output**:
+- Coverage statistics (mapped vs unmapped %)
+- Top 50-100 unmapped ingredients by frequency
+- Recipe count per ingredient
+- First/last seen timestamps
+- Exportable JSON for external analysis
 
 ## Technology Stack
 
@@ -409,6 +480,14 @@ apps/web/src/lib/
 ├── schedule.ts ← Date/week calculations
 ├── constants.ts ← Centralized configuration
 ├── recipes.ts ← Static JSON import wrapper
+├── scoring.ts ← Recipe scoring with 10+ rules
+├── explainer.ts ← Human-readable reason chips
+├── colesMapping.ts ← 179 Coles product mappings + price estimation
+├── ingredientPricing.ts ← Category-based fallback pricing
+├── ingredientAnalytics.ts ← Ingredient usage frequency tracking
+├── shoppingListAggregator.ts ← Ingredient aggregation & deduplication
+├── analytics.ts ← Privacy-first event tracking
+├── storage.ts ← localStorage wrapper utilities
 └── types/
     └── recipe.ts ← TypeScript type definitions
 ```

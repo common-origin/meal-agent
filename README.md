@@ -17,6 +17,7 @@ A family meal planning application built with Common Origin Design System.
 - 👨‍👩‍👧‍👦 **Family Settings** - Customizable preferences for servings, dietary needs, budget, cook time, cooking skill, spice tolerance, and location
 - �📊 **Analytics** - Privacy-first local analytics tracking
 - ⚙️ **Regeneration** - Pin favorite meals and regenerate the rest with custom constraints
+- 📈 **Ingredient Analytics** - Automatic tracking of ingredient usage frequency to prioritize price mapping expansion
 
 ## Development
 

@@ -19,6 +19,7 @@ import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
 import { addToRecipeHistory, getRecipeIdsToExclude } from "@/lib/recipeHistory";
 import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
+import { trackIngredientUsage } from "@/lib/ingredientAnalytics";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -104,6 +105,12 @@ export default function PlanPage() {
       setWeekPlan(meals);
       setBudget({ current: totalCost, total: weeklyBudget });
       console.log('✅ Loaded saved week plan with', meals.filter(m => m !== null).length, 'meals');
+      
+      // Track ingredient usage from saved plan
+      const validRecipeIds = savedPlan.recipeIds.filter((id): id is string => id !== null);
+      if (validRecipeIds.length > 0) {
+        trackIngredientUsage(validRecipeIds);
+      }
       
       // Load pantry items if available
       if (savedPlan.pantryItems) {
@@ -323,6 +330,30 @@ export default function PlanPage() {
     });
   };
 
+  const handleReorder = (oldIndex: number, newIndex: number) => {
+    console.log(`🔄 Reordering: ${DAYS[oldIndex]} → ${DAYS[newIndex]}`);
+    
+    // Create new array with swapped meals
+    const newWeekPlan = [...weekPlan];
+    const [movedMeal] = newWeekPlan.splice(oldIndex, 1);
+    newWeekPlan.splice(newIndex, 0, movedMeal);
+    
+    setWeekPlan(newWeekPlan);
+    
+    // Save updated week plan
+    const nextWeekISO = nextWeekMondayISO();
+    const recipeIds = newWeekPlan.map(m => m?.recipeId || "");
+    saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
+    console.log('✅ Week plan reordered and saved');
+    
+    // Track analytics
+    track('meal_reordered', {
+      fromDay: DAYS[oldIndex],
+      toDay: DAYS[newIndex],
+      recipeId: movedMeal?.recipeId || 'none',
+    });
+  };
+
   const handleWizardComplete = async (wizardData: WeeklyPlanData) => {
     console.log('🧙 Wizard completed with data:', wizardData);
     
@@ -422,6 +453,9 @@ export default function PlanPage() {
       const nextWeekISO = nextWeekMondayISO();
       const recipeIds = data.recipes.map((r: Recipe) => r.id);
       saveCurrentWeekPlan(recipeIds, nextWeekISO, wizardData.pantryItems);
+      
+      // Track ingredient usage for analytics
+      trackIngredientUsage(recipeIds);
       
       // Update budget based on family settings
       const totalCost = data.recipes.reduce((sum: number, r: Recipe) => {
@@ -596,6 +630,8 @@ export default function PlanPage() {
       const planSaved = saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
       if (planSaved) {
         console.log('✅ Week plan saved for shopping list');
+        // Track ingredient usage for analytics
+        trackIngredientUsage(recipeIds);
       } else {
         console.warn('⚠️ Failed to save week plan');
       }
@@ -854,6 +890,7 @@ export default function PlanPage() {
           generatingDayIndex={generatingDayIndex}
           onDeleteClick={handleDeleteMeal}
           isGeneratingPlan={isGenerating}
+          onReorder={handleReorder}
         />
         
         {/* Actions */}
