@@ -1,6 +1,7 @@
 import { type PlanWeek } from "./types/recipe";
 import { RecipeLibrary } from "./library";
 import { track, type IngredientReusedMeta } from "./analytics";
+import { normalizeToBaseUnit, formatForDisplay } from "./unitConversion";
 
 export interface AggregatedIngredient {
   name: string;
@@ -11,26 +12,6 @@ export interface AggregatedIngredient {
   sourceRecipes: Array<{ recipeId: string; recipeTitle: string; qty: number }>;
   isPantryStaple?: boolean;
 }
-
-// Unit conversion constants
-const UNIT_CONVERSIONS: Record<string, { toBase: number; baseUnit: string }> = {
-  // Weight
-  'g': { toBase: 1, baseUnit: 'g' },
-  'kg': { toBase: 1000, baseUnit: 'g' },
-  
-  // Volume
-  'ml': { toBase: 1, baseUnit: 'ml' },
-  'l': { toBase: 1000, baseUnit: 'ml' },
-  'tsp': { toBase: 5, baseUnit: 'ml' },
-  'tbsp': { toBase: 15, baseUnit: 'ml' },
-  'cup': { toBase: 250, baseUnit: 'ml' },
-  
-  // Count
-  'unit': { toBase: 1, baseUnit: 'unit' },
-  'units': { toBase: 1, baseUnit: 'unit' },
-  'piece': { toBase: 1, baseUnit: 'unit' },
-  'pieces': { toBase: 1, baseUnit: 'unit' },
-};
 
 
 
@@ -103,45 +84,7 @@ function categorizeIngredient(name: string): string {
   return 'Other';
 }
 
-/**
- * Convert ingredient quantity to base unit
- */
-function convertToBaseUnit(qty: number, unit: string): { qty: number; unit: string } {
-  // Handle missing or invalid unit
-  if (!unit || typeof unit !== 'string') {
-    return { qty, unit: unit || '' };
-  }
-  
-  const normalized = unit.toLowerCase().trim();
-  const conversion = UNIT_CONVERSIONS[normalized];
-  
-  if (!conversion) {
-    // Unknown unit, return as-is
-    return { qty, unit };
-  }
-  
-  return {
-    qty: qty * conversion.toBase,
-    unit: conversion.baseUnit
-  };
-}
 
-/**
- * Format quantity for display (e.g., convert 1000g to 1kg)
- */
-function formatQuantity(qty: number, unit: string): { qty: number; unit: string } {
-  // Convert large gram quantities to kg
-  if (unit === 'g' && qty >= 1000) {
-    return { qty: qty / 1000, unit: 'kg' };
-  }
-  
-  // Convert large ml quantities to L
-  if (unit === 'ml' && qty >= 1000) {
-    return { qty: qty / 1000, unit: 'L' };
-  }
-  
-  return { qty, unit };
-}
 
 /**
  * Check if ingredient is in user's pantry inventory
@@ -191,31 +134,33 @@ export function aggregateShoppingList(
       const inUserPantry = isInUserPantry(ingredient.name, options.userPantryItems);
       
       // Convert to base unit for aggregation (handle missing unit)
-      const converted = convertToBaseUnit(
+      const converted = normalizeToBaseUnit(
         ingredient.qty * scaleFactor, 
         ingredient.unit || ''
       );
+      const convertedQty = converted.quantity;
+      const convertedUnit = converted.unit;
       
       // Check if already exists
       const existing = ingredientMap.get(normalizedName);
       
-      if (existing && existing.unit === converted.unit) {
+      if (existing && existing.unit === convertedUnit) {
         // Same ingredient, same unit - aggregate
-        existing.totalQty += converted.qty;
+        existing.totalQty += convertedQty;
         existing.sourceRecipes.push({
           recipeId: recipe.id,
           recipeTitle: recipe.title,
           qty: ingredient.qty * scaleFactor
         });
-      } else if (existing && existing.unit !== converted.unit) {
+      } else if (existing && existing.unit !== convertedUnit) {
         // Same ingredient, different unit - can't easily aggregate
         // Create a separate entry with modified name
-        const key = `${normalizedName}_${converted.unit}`;
+        const key = `${normalizedName}_${convertedUnit}`;
         ingredientMap.set(key, {
           name: ingredient.name,
           normalizedName,
-          totalQty: converted.qty,
-          unit: converted.unit,
+          totalQty: convertedQty,
+          unit: convertedUnit,
           category: categorizeIngredient(ingredient.name),
           sourceRecipes: [{
             recipeId: recipe.id,
@@ -229,8 +174,8 @@ export function aggregateShoppingList(
         ingredientMap.set(normalizedName, {
           name: ingredient.name,
           normalizedName,
-          totalQty: converted.qty,
-          unit: converted.unit,
+          totalQty: convertedQty,
+          unit: convertedUnit,
           category: categorizeIngredient(ingredient.name),
           sourceRecipes: [{
             recipeId: recipe.id,
@@ -243,12 +188,12 @@ export function aggregateShoppingList(
     }
   }
   
-  // Convert to array and format quantities
+  // Convert to array and format quantities for display
   const aggregated = Array.from(ingredientMap.values()).map(item => {
-    const formatted = formatQuantity(item.totalQty, item.unit);
+    const formatted = formatForDisplay(item.totalQty, item.unit);
     return {
       ...item,
-      totalQty: Math.round(formatted.qty * 10) / 10, // Round to 1 decimal
+      totalQty: Math.round(formatted.quantity * 10) / 10, // Round to 1 decimal
       unit: formatted.unit
     };
   });

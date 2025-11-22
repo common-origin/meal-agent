@@ -10,7 +10,6 @@
 export interface ReasonChip {
   text: string;
   variant?: 'default' | 'success' | 'warning' | 'info';
-  icon?: string; // Future: emoji or icon name
 }
 
 /**
@@ -20,54 +19,45 @@ const REASON_CHIP_MAP: Record<string, ReasonChip> = {
   // Time-based (only recipes under 25 mins are "quick")
   "quick": {
     text: "Quick",
-    variant: "success",
-    icon: "⚡"
+    variant: "success"
   },
   
   // Dietary
   "kid-friendly": {
     text: "Kid-friendly",
-    variant: "info",
-    icon: "👶"
+    variant: "info"
   },
   "vegetarian": {
     text: "Vegetarian",
-    variant: "info",
-    icon: "🥬"
+    variant: "info"
   },
   "high-protein": {
     text: "High protein",
-    variant: "info",
-    icon: "💪"
+    variant: "info"
   },
   
   // Value & Strategy
   "favorite": {
     text: "Your favorite",
-    variant: "success",
-    icon: "⭐"
+    variant: "success"
   },
   "best value": {
     text: "Best value",
-    variant: "success",
-    icon: "💰"
+    variant: "success"
   },
   "bulk cook": {
     text: "Bulk cook",
-    variant: "info",
-    icon: "🍲"
+    variant: "info"
   },
   "reuses ingredients": {
     text: "Reuses ingredients",
-    variant: "info",
-    icon: "♻️"
+    variant: "info"
   },
   
   // Simplicity
   "simple": {
     text: "Simple recipe",
-    variant: "default",
-    icon: "✨"
+    variant: "default"
   }
 };
 

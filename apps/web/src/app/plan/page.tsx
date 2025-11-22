@@ -5,7 +5,7 @@ import { Alert, Badge, Stack, Typography, Button } from "@common-origin/design-s
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import WeekPlannerGrid from "@/components/app/WeekPlannerGrid";
-import BudgetBar from "@/components/app/BudgetBar";
+import BudgetSummary from "@/components/app/BudgetSummary";
 import WeeklyOverridesSheet from "@/components/app/WeeklyOverridesSheet";
 import SwapDrawer from "@/components/app/SwapDrawer";
 import WeeklyPlanWizard, { type WeeklyPlanData } from "@/components/app/WeeklyPlanWizard";
@@ -877,9 +877,10 @@ export default function PlanPage() {
           </div>
         )}
         
-        <BudgetBar 
-          currentSpend={budget.current}
-          budget={budget.total}
+        <BudgetSummary 
+          weekPlan={weekPlan}
+          budget={budget}
+          dayNames={DAYS}
         />
         
         <WeekPlannerGrid 

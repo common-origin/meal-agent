@@ -124,9 +124,7 @@ export default function MealCard({
 
   // Get human-readable chip text from reasons
   const explainedReasons = explainReasons(reasons, title, 3);
-  const chipLabels = explainedReasons.map(chip => 
-    chip.icon ? `${chip.icon} ${chip.text}` : chip.text
-  );
+  const chipLabels = explainedReasons.map(chip => chip.text);
 
   const cardContent = (
     <div onClick={disableLink ? handleCardClick : undefined}>

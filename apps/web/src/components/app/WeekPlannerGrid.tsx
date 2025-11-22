@@ -78,7 +78,7 @@ export default function WeekPlannerGrid({
           >
             {DAYS.map((day) => (
               <div key={day} style={{ display: "flex", flexDirection: "column", gap: "8px", height: "100%" }}>
-                <Typography variant="h4">{day}</Typography>
+                <Typography variant="h5">{day}</Typography>
                 <LoadingSkeleton ariaLabel={`Loading recipe for ${day}`} />
               </div>
             ))}
@@ -110,7 +110,7 @@ export default function WeekPlannerGrid({
                 if (generatingDayIndex === index) {
                   return (
                     <div key={day} style={{ display: "flex", flexDirection: "column", gap: "8px", height: "100%" }}>
-                      <Typography variant="h4">{day}</Typography>
+                      <Typography variant="h5">{day}</Typography>
                       <LoadingSkeleton ariaLabel={`Generating AI recipe for ${day}`} />
                     </div>
                   );

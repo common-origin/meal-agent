@@ -5,6 +5,7 @@
  */
 
 import { estimateIngredientCostByCategory, type PriceEstimate } from './ingredientPricing';
+import { convertUnit, calculatePacksNeeded, areUnitsCompatible } from './unitConversion';
 
 export interface ColesProduct {
   sku: string;
@@ -3257,62 +3258,7 @@ export function findColesMapping(normalizedName: string): IngredientMapping | un
  * Calculate number of packs needed based on quantity and pack size
  * Uses PACK_SIZE_MULTIPLIER threshold to determine if multiple packs needed
  */
-export function calculatePacksNeeded(
-  quantityNeeded: number,
-  packSize: number
-): number {
-  if (quantityNeeded <= packSize) {
-    return 1;
-  }
-  
-  // If quantity > 1.5x pack size, buy multiple packs
-  if (quantityNeeded > packSize * PACK_SIZE_MULTIPLIER) {
-    return Math.ceil(quantityNeeded / packSize);
-  }
-  
-  // Otherwise, buy single larger pack (user can choose)
-  return 1;
-}
 
-/**
- * Convert quantity between units where possible
- */
-function convertUnit(quantity: number, fromUnit: string, toUnit: string): number {
-  const from = fromUnit.toLowerCase();
-  const to = toUnit.toLowerCase();
-  
-  // If units match, no conversion needed
-  if (from === to) return quantity;
-  
-  // ml to g conversion (assume 1:1 for most ingredients)
-  if ((from === 'ml' && to === 'g') || (from === 'g' && to === 'ml')) {
-    return quantity;
-  }
-  
-  // Conversions to grams
-  if (to === 'g') {
-    if (from === 'kg') return quantity * 1000;
-    if (from === 'l') return quantity * 1000;
-  }
-  
-  // Conversions from grams
-  if (from === 'g') {
-    if (to === 'kg') return quantity / 1000;
-    if (to === 'l') return quantity / 1000;
-  }
-  
-  // ml conversions
-  if (from === 'ml') {
-    if (to === 'l') return quantity / 1000;
-  }
-  
-  if (from === 'l') {
-    if (to === 'ml') return quantity * 1000;
-  }
-  
-  // No conversion available, return original
-  return quantity;
-}
 
 /**
  * Select best product from multiple options based on quantity needed
@@ -3322,19 +3268,12 @@ export function selectBestProduct(
   quantityNeeded: number,
   unit: string
 ): ColesProduct {
-  // Filter to products with matching unit
-  const matchingUnit = products.filter(p => p.packUnit === unit);
+  // Filter to products with compatible units
+  const matchingUnit = products.filter(p => areUnitsCompatible(p.packUnit, unit));
   
   if (matchingUnit.length === 0) {
-    // Try to convert units
-    for (const product of products) {
-      const convertedQty = convertUnit(quantityNeeded, unit, product.packUnit);
-      if (convertedQty !== quantityNeeded) {
-        // Conversion was successful, use this product
-        return product;
-      }
-    }
-    // No matching unit and no conversion available, return first product
+    // No compatible units, return first product (user may need to manually select)
+    console.warn(`No compatible unit found for ${unit}, using first product`);
     return products[0];
   }
   
@@ -3348,8 +3287,12 @@ export function selectBestProduct(
     const aPricePerUnit = a.price / a.packSize;
     const bPricePerUnit = b.price / b.packSize;
     
+    // Convert quantity to product's unit for comparison
+    const qtyInAUnit = convertUnit(quantityNeeded, unit, a.packUnit);
+    const qtyInBUnit = convertUnit(quantityNeeded, unit, b.packUnit);
+    
     // If quantity fits in single pack, prefer smaller pack
-    if (quantityNeeded <= a.packSize && quantityNeeded <= b.packSize) {
+    if (qtyInAUnit <= a.packSize && qtyInBUnit <= b.packSize) {
       return a.packSize - b.packSize;
     }
     
@@ -3376,11 +3319,13 @@ export function estimateIngredientCost(
   requiresChoice: boolean;
   confidence?: 'high' | 'medium' | 'low';
   priceEstimate?: PriceEstimate;
+  priceSource?: 'api' | 'static' | 'category';
 } {
+  // Tier 2: Static mapping (always check this synchronously)
   const mapping = findColesMapping(normalizedName);
   
   if (!mapping) {
-    // Use category-based pricing as fallback
+    // Tier 3: Use category-based pricing as fallback
     const estimate = estimateIngredientCostByCategory(normalizedName, quantity, unit);
     
     return {
@@ -3390,14 +3335,14 @@ export function estimateIngredientCost(
       requiresChoice: false,
       confidence: estimate.confidence,
       priceEstimate: estimate,
+      priceSource: 'category',
     };
   }
   
   const bestProduct = selectBestProduct(mapping.colesProducts, quantity, unit);
   
-  // Convert quantity to product's unit if needed
-  const convertedQuantity = convertUnit(quantity, unit, bestProduct.packUnit);
-  const packsNeeded = calculatePacksNeeded(convertedQuantity, bestProduct.packSize);
+  // Calculate packs needed (convertUnit is called inside calculatePacksNeeded)
+  const packsNeeded = calculatePacksNeeded(quantity, unit, bestProduct.packSize, bestProduct.packUnit, PACK_SIZE_MULTIPLIER);
   
   return {
     mapped: true,
@@ -3406,5 +3351,137 @@ export function estimateIngredientCost(
     packsNeeded,
     requiresChoice: mapping.requiresChoice,
     confidence: mapping.confidence,
+    priceSource: 'static',
+  };
+}
+
+/**
+ * Enhanced cost estimation with API integration (async version)
+ * 3-tier fallback: Persistent cache → API → Static mapping → Category estimate
+ */
+export async function estimateIngredientCostWithAPI(
+  normalizedName: string,
+  quantity: number,
+  unit: string
+): Promise<{
+  mapped: boolean;
+  estimatedCost: number;
+  product?: ColesProduct;
+  packsNeeded: number;
+  requiresChoice: boolean;
+  confidence?: 'high' | 'medium' | 'low';
+  priceEstimate?: PriceEstimate;
+  priceSource: 'api' | 'static' | 'category';
+  livePrice?: boolean;
+}> {
+  // Tier 0: Check persistent cache first
+  if (typeof window !== 'undefined') {
+    try {
+      const { getCachedProduct } = await import('./colesApiPersistentCache');
+      const cachedData = getCachedProduct(normalizedName);
+      
+      if (cachedData) {
+        const { parsePrice, parseSize } = await import('./colesApi');
+        const price = parsePrice(cachedData.product.currentPrice);
+        const { value: packSize, unit: packUnit } = parseSize(cachedData.product.size);
+        
+        if (price > 0 && packSize > 0) {
+          const packsNeeded = calculatePacksNeeded(quantity, unit, packSize, packUnit, PACK_SIZE_MULTIPLIER);
+          
+          const product: ColesProduct = {
+            sku: `CACHE-${Date.now()}`,
+            name: cachedData.product.productName,
+            brand: cachedData.product.brand,
+            packSize,
+            packUnit,
+            price,
+            lastUpdated: new Date(cachedData.timestamp).toISOString(),
+          };
+          
+          return {
+            mapped: true,
+            estimatedCost: price * packsNeeded,
+            product,
+            packsNeeded,
+            requiresChoice: false,
+            confidence: 'high',
+            priceSource: 'api',
+            livePrice: true,
+          };
+        }
+      }
+    } catch (error) {
+      console.warn('Persistent cache lookup failed:', error);
+    }
+  }
+  
+  // Tier 1: Try API (only if enabled and within quota)
+  if (typeof window !== 'undefined') {
+    try {
+      const { shouldMakeApiRequest } = await import('./apiQuota');
+      const { allowed, reason } = shouldMakeApiRequest();
+      
+      if (!allowed) {
+        console.log(`⏭️  Skipping API call: ${reason}`);
+        // Fall through to static mapping
+      } else {
+        const { searchColesProducts, parsePrice, parseSize } = await import('./colesApi');
+        const { categorizeIngredient } = await import('./ingredientPricing');
+        const category = categorizeIngredient(normalizedName);
+        const apiResult = await searchColesProducts(normalizedName, 3, category);
+        
+        if (apiResult && apiResult.results.length > 0) {
+          // Use the first matching product
+          const apiProduct = apiResult.results[0];
+          const price = parsePrice(apiProduct.currentPrice);
+          const { value: packSize, unit: packUnit } = parseSize(apiProduct.size);
+          
+          if (price > 0 && packSize > 0) {
+            // Save to persistent cache
+            try {
+              const { saveProductToCache } = await import('./colesApiPersistentCache');
+              saveProductToCache(normalizedName, apiProduct, quantity, unit, normalizedName);
+            } catch (cacheError) {
+              console.warn('Failed to save to persistent cache:', cacheError);
+            }
+            
+            // Calculate packs needed (convertUnit is called inside calculatePacksNeeded)
+            const packsNeeded = calculatePacksNeeded(quantity, unit, packSize, packUnit, PACK_SIZE_MULTIPLIER);
+            
+            // Create a ColesProduct-like object from API data
+            const product: ColesProduct = {
+              sku: `API-${Date.now()}`,
+              name: apiProduct.productName,
+              brand: apiProduct.brand,
+              packSize,
+              packUnit,
+              price,
+              lastUpdated: new Date().toISOString(),
+            };
+            
+            return {
+              mapped: true,
+              estimatedCost: price * packsNeeded,
+              product,
+              packsNeeded,
+              requiresChoice: false,
+              confidence: 'high',
+              priceSource: 'api',
+              livePrice: true,
+            };
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('API price lookup failed, falling back to static mapping:', error);
+    }
+  }
+  
+  // Tier 2 & 3: Fall back to synchronous method
+  const result = estimateIngredientCost(normalizedName, quantity, unit);
+  return {
+    ...result,
+    priceSource: result.priceSource || 'category',
+    livePrice: false,
   };
 }

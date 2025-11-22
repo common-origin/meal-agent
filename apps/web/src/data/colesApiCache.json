@@ -1,0 +1,9 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "lastUpdated": null,
+    "cacheTTL": 2592000000,
+    "description": "Persistent cache for Coles API product data. TTL: 30 days (2592000000ms)"
+  },
+  "products": {}
+}

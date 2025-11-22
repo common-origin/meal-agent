@@ -3,6 +3,8 @@
  * Categorizes ingredients and provides accurate price estimates
  */
 
+import { convertToGrams } from './unitConversion';
+
 export type IngredientCategory = 
   | 'protein'
   | 'seafood'
@@ -100,64 +102,7 @@ export function categorizeIngredient(ingredientName: string): IngredientCategory
   return 'pantry';
 }
 
-/**
- * Convert units to kilograms for standardized pricing
- * Handles common cooking units
- */
-function convertToKg(quantity: number, unit: string): number {
-  const normalized = unit.toLowerCase().trim();
-  
-  // Handle empty/missing unit - assume grams (most common in recipes)
-  if (!normalized || normalized === '') {
-    return quantity / 1000;
-  }
-  
-  // Already in kg
-  if (/kg|kilogram/.test(normalized)) {
-    return quantity;
-  }
-  
-  // Grams to kg
-  if (/^g$|gram/.test(normalized)) {
-    return quantity / 1000;
-  }
-  
-  // Liters/ml (assume 1L = 1kg for liquids)
-  if (/l|liter|litre/.test(normalized)) {
-    return quantity;
-  }
-  if (/ml|milliliter|millilitre/.test(normalized)) {
-    return quantity / 1000;
-  }
-  
-  // Tablespoons (approx 15ml)
-  if (/tbsp|tablespoon/.test(normalized)) {
-    return (quantity * 15) / 1000;
-  }
-  
-  // Teaspoons (approx 5ml)
-  if (/tsp|teaspoon/.test(normalized)) {
-    return (quantity * 5) / 1000;
-  }
-  
-  // Cups (approx 250ml)
-  if (/cup/.test(normalized)) {
-    return (quantity * 250) / 1000;
-  }
-  
-  // Units (treat as 100g average for items like onions, tomatoes)
-  if (/unit|whole|piece/.test(normalized)) {
-    return quantity * 0.1; // 100g per unit
-  }
-  
-  // Bunches (for herbs, typically 25-50g)
-  if (/bunch/.test(normalized)) {
-    return quantity * 0.035; // 35g per bunch
-  }
-  
-  // Default fallback for unknown units: assume it's grams
-  return quantity / 1000;
-}
+
 
 /**
  * Estimate ingredient cost using category-based pricing
@@ -181,8 +126,9 @@ export function estimateIngredientCostByCategory(
     // Per-unit pricing (e.g., bread, spice jars)
     estimatedPrice = baseRate.rate * quantity;
   } else {
-    // Weight/volume based pricing
-    const kgEquivalent = convertToKg(quantity, unit);
+    // Weight/volume based pricing - convert to grams then to kg
+    const grams = convertToGrams(quantity, unit, ingredientName);
+    const kgEquivalent = grams / 1000;
     estimatedPrice = baseRate.rate * kgEquivalent;
   }
   

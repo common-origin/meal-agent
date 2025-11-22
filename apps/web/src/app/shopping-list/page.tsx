@@ -12,12 +12,36 @@ import { nextWeekMondayISO } from "@/lib/schedule";
 import { track, type CostOptimizedMeta } from "@/lib/analytics";
 import { estimateIngredientCost } from "@/lib/colesMapping";
 import { RecipeLibrary } from "@/lib/library";
+import PriceSourceBadge from "@/components/app/PriceSourceBadge";
+import ApiQuotaWarning from "@/components/app/ApiQuotaWarning";
 
 export default function ShoppingListPage() {
   const [aggregatedItems, setAggregatedItems] = useState<AggregatedIngredient[]>([]);
   const [loading, setLoading] = useState(true);
   const [showColesModal, setShowColesModal] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [apiPrices, setApiPrices] = useState<Map<string, { cost: number; source: 'api' | 'static' | 'category'; livePrice?: boolean }>>(new Map());
+
+  const loadApiPrices = async (items: AggregatedIngredient[]) => {
+    const { estimateIngredientCostWithAPI } = await import('@/lib/colesMapping');
+    const priceMap = new Map<string, { cost: number; source: 'api' | 'static' | 'category'; livePrice?: boolean }>();
+    
+    // Load prices for each item (cached results will be instant)
+    for (const item of items) {
+      try {
+        const result = await estimateIngredientCostWithAPI(item.normalizedName, item.totalQty, item.unit);
+        priceMap.set(item.normalizedName, {
+          cost: result.estimatedCost,
+          source: result.priceSource,
+          livePrice: result.livePrice
+        });
+      } catch (error) {
+        console.warn(`Failed to get API price for ${item.name}:`, error);
+      }
+    }
+    
+    setApiPrices(priceMap);
+  };
 
   const generateShoppingList = () => {
     setLoading(true);
@@ -97,6 +121,9 @@ export default function ShoppingListPage() {
     
     setAggregatedItems(items);
     setLoading(false);
+    
+    // Load API prices asynchronously (non-blocking)
+    loadApiPrices(items);
     
     // Track cost optimization from ingredient reuse
     const reusedItems = items.filter(item => item.sourceRecipes.length >= 2);
@@ -189,6 +216,9 @@ export default function ShoppingListPage() {
                 </Button>
               </Stack>
             </Stack>
+            
+            {/* API Quota Warning */}
+            <ApiQuotaWarning />
           
             <Typography variant="body">
               Aggregated from your meal plan with de-duplicated ingredients.
@@ -251,31 +281,49 @@ export default function ShoppingListPage() {
             </Box>
 
             {/* Items to Buy - Grouped by Category */}
-            {categories.map((category) => {
-              const items = groupedNeedToBuy[category];
-              
-              return (
-                <Box 
-                  key={category}
-                  border="subtle"
-                  borderRadius="4"
-                  p="md"
-                  bg="default"
-                >
-                  <Stack direction="column" gap="md">
-                    <Stack direction="row"  alignItems="center">
-                      <Typography variant="h3">{category}</Typography>
-                      <Chip variant="dark">{items.length} items</Chip>
-                    </Stack>
-                    
-                    <List dividers spacing="comfortable">
-                      {items.map((item, index) => {
+            <Box 
+              border="subtle"
+              borderRadius="4"
+              p="md"
+              bg="default"
+            >
+              <Stack direction="column" gap="lg">
+                {categories.map((category, categoryIndex) => {
+                  const items = groupedNeedToBuy[category];
+                  
+                  return (
+                    <Stack key={category} direction="column" gap="md">
+                      {categoryIndex > 0 && (
+                        <Box style={{ height: '1px', backgroundColor: '#e5e7eb' }} />
+                      )}
+                      <Box px="lg">
+                        <Stack direction="row" alignItems="center" justifyContent="space-between">
+                          <Typography variant="caption">{category}</Typography>
+                          <Chip variant="dark" size="small">{items.length} items</Chip>
+                        </Stack>
+                      </Box>
+                      
+                      <List dividers spacing="comfortable">
+                        {items.map((item, index) => {
                         const hasMultipleRecipes = item.sourceRecipes.length > 1;
                         const itemKey = `${category}-${index}`;
                         const isExpanded = expandedItems.has(itemKey);
                         
-                        // Get price estimate with confidence
-                        const priceInfo = estimateIngredientCost(item.normalizedName, item.totalQty, item.unit);
+                        // Get price estimate - use API price if available, otherwise static
+                        const apiPrice = apiPrices.get(item.normalizedName);
+                        const staticPriceInfo = estimateIngredientCost(item.normalizedName, item.totalQty, item.unit);
+                        
+                        const priceInfo = apiPrice ? {
+                          estimatedCost: apiPrice.cost,
+                          priceSource: apiPrice.source,
+                          livePrice: apiPrice.livePrice,
+                          confidence: apiPrice.source === 'api' ? 'high' as const : staticPriceInfo.confidence
+                        } : {
+                          estimatedCost: staticPriceInfo.estimatedCost,
+                          priceSource: staticPriceInfo.priceSource,
+                          confidence: staticPriceInfo.confidence
+                        };
+                        
                         const priceDisplay = priceInfo.estimatedCost > 0 
                           ? `$${priceInfo.estimatedCost.toFixed(2)}` 
                           : '';
@@ -309,7 +357,10 @@ export default function ShoppingListPage() {
                                     <Typography variant="small" color={priceInfo.confidence === 'high' ? 'default' : 'subdued'}>
                                       {priceDisplay}
                                     </Typography>
-                                    {showConfidenceIcon && <Icon name="checkRing" iconColor="success" size="sm" />}
+                                    {priceInfo.priceSource && (
+                                      <PriceSourceBadge source={priceInfo.priceSource} livePrice={priceInfo.livePrice} />
+                                    )}
+                                    {showConfidenceIcon && !priceInfo.priceSource && <Icon name="checkRing" iconColor="success" size="sm" />}
                                   </Stack>
                                 )}
                               </Stack>
@@ -340,9 +391,10 @@ export default function ShoppingListPage() {
                       })}
                     </List>
                   </Stack>
-                </Box>
-              );
-            })}
+                );
+              })}
+            </Stack>
+          </Box>
 
             {/* Already Have Section */}
             {alreadyHave.length > 0 && (

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Alert, Box, Button, Chip, IconButton, Sheet, Stack, Typography } from "@common-origin/design-system";
 import { estimateIngredientCost } from "@/lib/colesMapping";
 import type { AggregatedIngredient } from "@/lib/shoppingListAggregator";
+import type { ColesApiProduct } from "@/lib/colesApi";
+import ColesProductCard from "./ColesProductCard";
 
 interface ColesShoppingModalProps {
   isOpen: boolean;
@@ -15,6 +17,8 @@ interface ShoppingItem {
   ingredient: AggregatedIngredient;
   colesSearchUrl: string;
   isCompleted: boolean;
+  products?: ColesApiProduct[];
+  loadingProducts?: boolean;
 }
 
 export default function ColesShoppingModal({ isOpen, onClose, items }: ColesShoppingModalProps) {
@@ -35,6 +39,53 @@ export default function ColesShoppingModal({ isOpen, onClose, items }: ColesShop
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hasStarted, setHasStarted] = useState(false);
+
+  // Load products for current item
+  useEffect(() => {
+    if (!hasStarted || !isOpen) return;
+    
+    const loadProducts = async () => {
+      const item = shoppingItems[currentIndex];
+      if (item.products || item.loadingProducts) return;
+      
+      // Mark as loading
+      setShoppingItems(prev => {
+        const updated = [...prev];
+        updated[currentIndex] = { ...updated[currentIndex], loadingProducts: true };
+        return updated;
+      });
+      
+      try {
+        const { searchColesProducts } = await import('@/lib/colesApi');
+        const colesInfo = estimateIngredientCost(item.ingredient.normalizedName, item.ingredient.totalQty, item.ingredient.unit);
+        const searchTerm = colesInfo.product?.name || item.ingredient.name;
+        
+        console.log('🔍 Loading products for:', searchTerm);
+        // Pass category for enhanced search term generation
+        const result = await searchColesProducts(searchTerm, 3, item.ingredient.category);
+        console.log('📦 Loaded products:', result);
+        
+        setShoppingItems(prev => {
+          const updated = [...prev];
+          updated[currentIndex] = {
+            ...updated[currentIndex],
+            products: result?.results || [],
+            loadingProducts: false
+          };
+          return updated;
+        });
+      } catch (error) {
+        console.error('Failed to load products:', error);
+        setShoppingItems(prev => {
+          const updated = [...prev];
+          updated[currentIndex] = { ...updated[currentIndex], loadingProducts: false };
+          return updated;
+        });
+      }
+    };
+    
+    loadProducts();
+  }, [currentIndex, hasStarted, isOpen, shoppingItems]);
 
   const completedCount = shoppingItems.filter(item => item.isCompleted).length;
   const totalCount = shoppingItems.length;
@@ -227,43 +278,40 @@ export default function ColesShoppingModal({ isOpen, onClose, items }: ColesShop
                   <Typography variant="body" color="subdued">
                     Quantity: {currentItem.ingredient.totalQty} {currentItem.ingredient.unit}
                   </Typography>
-                  
-                  {(() => {
-                    const colesInfo = estimateIngredientCost(
-                      currentItem.ingredient.normalizedName,
-                      currentItem.ingredient.totalQty,
-                      currentItem.ingredient.unit
-                    );
-                    
-                    if (colesInfo.mapped && colesInfo.product) {
-                      return (
-                        <Box bg="subtle" borderRadius="2" p="sm">
-                          <Stack direction="column" gap="xs">
-                            <Typography variant="small">
-                              <strong>Coles Product:</strong> {colesInfo.product.name}
-                            </Typography>
-                            <Typography variant="small">
-                              Est. Cost: ${colesInfo.estimatedCost.toFixed(2)}
-                            </Typography>
-                          </Stack>
-                        </Box>
-                      );
-                    }
-                    
-                    return (
-                      <Alert variant="warning" inline>
-                        Not in our database - search manually at Coles
-                      </Alert>
-                    );
-                  })()}
                 </Stack>
 
-                <Button
-                  variant="secondary"
-                  onClick={openCurrentItem}
-                >
-                  Re-open Coles Search
-                </Button>
+                {/* Product Options */}
+                {currentItem.loadingProducts ? (
+                  <Box bg="subtle" borderRadius="2" p="md">
+                    <Typography variant="body">Loading products from Coles...</Typography>
+                  </Box>
+                ) : currentItem.products && currentItem.products.length > 0 ? (
+                  <Stack direction="column" gap="sm">
+                    <Typography variant="subtitle">Available at Coles:</Typography>
+                    {currentItem.products.slice(0, 3).map((product, index) => (
+                      <ColesProductCard
+                        key={index}
+                        product={product}
+                        quantity={currentItem.ingredient.totalQty}
+                        unit={currentItem.ingredient.unit}
+                        isRecommended={index === 0}
+                        onSelect={() => window.open(product.url, '_blank')}
+                      />
+                    ))}
+                  </Stack>
+                ) : (
+                  <>
+                    <Alert variant="warning" inline>
+                      No products found. Try searching manually at Coles.
+                    </Alert>
+                    <Button
+                      variant="secondary"
+                      onClick={openCurrentItem}
+                    >
+                      Search on Coles
+                    </Button>
+                  </>
+                )}
               </Stack>
             </Box>
 

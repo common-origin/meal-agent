@@ -53,7 +53,7 @@ export default function SortableDay({
     >
       <div style={{ display: "flex", flexDirection: "column", gap: "8px", height: "100%" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Typography variant="h4">{day}</Typography>
+          <Typography variant="caption">{day}</Typography>
           {meal && (
             <button
               ref={setActivatorNodeRef}
