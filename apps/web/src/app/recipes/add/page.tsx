@@ -58,7 +58,15 @@ export default function AddRecipePage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to extract recipe');
+        // Check if it's a copyright/recitation block
+        if (data.blocked && data.reason === 'RECITATION') {
+          alert('⚠️ Copyright Detected\n\n' + data.details);
+        } else if (data.blocked) {
+          alert('⚠️ Content Blocked\n\n' + data.details);
+        } else {
+          throw new Error(data.error || 'Failed to extract recipe');
+        }
+        return;
       }
 
       const recipe = data.recipe;

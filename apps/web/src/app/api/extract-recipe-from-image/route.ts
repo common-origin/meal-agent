@@ -92,6 +92,38 @@ RULES:
     ]);
 
     const response = result.response;
+    
+    // Check for blocked responses (RECITATION, SAFETY, etc.)
+    const candidates = result.response.candidates;
+    if (candidates && candidates.length > 0) {
+      const candidate = candidates[0];
+      if (candidate.finishReason && candidate.finishReason !== 'STOP') {
+        console.log(`⚠️ Response blocked: ${candidate.finishReason}`, candidate);
+        
+        if (candidate.finishReason === 'RECITATION') {
+          return NextResponse.json(
+            {
+              error: 'Copyright Detection',
+              details: 'The image appears to contain copyrighted content. Please try:\n• Taking a photo of a handwritten recipe\n• Manually typing the recipe instead\n• Using a recipe you created yourself',
+              blocked: true,
+              reason: 'RECITATION'
+            },
+            { status: 422 }
+          );
+        }
+        
+        return NextResponse.json(
+          {
+            error: 'Content Blocked',
+            details: `The AI couldn't process this image (Reason: ${candidate.finishReason}). Please try a different image.`,
+            blocked: true,
+            reason: candidate.finishReason
+          },
+          { status: 422 }
+        );
+      }
+    }
+    
     const text = response.text();
 
     console.log('✅ Gemini Vision response received');
