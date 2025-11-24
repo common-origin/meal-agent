@@ -138,7 +138,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
                     justifyContent: 'center',
                   }}
                 >
-                  <Typography variant="body">
+                  <Typography variant="body" color={step === currentStep || step < currentStep ? 'inverse' : 'default'}>
                     {step < currentStep ? '✓' : step}
                   </Typography>
                 </Box>

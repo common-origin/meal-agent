@@ -2,6 +2,7 @@ import { type PlanWeek } from "./types/recipe";
 import { RecipeLibrary } from "./library";
 import { track, type IngredientReusedMeta } from "./analytics";
 import { normalizeToBaseUnit, formatForDisplay } from "./unitConversion";
+import { isInPantryPreferences } from "./pantryPreferences";
 
 export interface AggregatedIngredient {
   name: string;
@@ -130,8 +131,10 @@ export function aggregateShoppingList(
       // Skip empty normalized names
       if (!normalizedName) continue;
       
-      // Check if ingredient is in user's pantry
+      // Check if ingredient is in user's pantry or marked as pantry preference
       const inUserPantry = isInUserPantry(ingredient.name, options.userPantryItems);
+      const isUserPantryPref = isInPantryPreferences(normalizedName);
+      const isPantryItem = inUserPantry || isUserPantryPref;
       
       // Convert to base unit for aggregation (handle missing unit)
       const converted = normalizeToBaseUnit(
@@ -167,7 +170,7 @@ export function aggregateShoppingList(
             recipeTitle: recipe.title,
             qty: ingredient.qty * scaleFactor
           }],
-          isPantryStaple: inUserPantry
+          isPantryStaple: isPantryItem
         });
       } else {
         // New ingredient
@@ -182,7 +185,7 @@ export function aggregateShoppingList(
             recipeTitle: recipe.title,
             qty: ingredient.qty * scaleFactor
           }],
-          isPantryStaple: inUserPantry
+          isPantryStaple: isPantryItem
         });
       }
     }

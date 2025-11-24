@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Box, Button, Chip, Container, Icon, List, ListItem, ResponsiveGrid, Stack, Typography } from "@common-origin/design-system";
+import { Box, Button, Chip, Container, Icon, IconButton, List, ListItem, ResponsiveGrid, Stack, Typography } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ColesShoppingModal from "@/components/app/ColesShoppingModal";
 import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from "@/lib/shoppingListAggregator";
@@ -14,6 +14,7 @@ import { estimateIngredientCost } from "@/lib/colesMapping";
 import { RecipeLibrary } from "@/lib/library";
 import PriceSourceBadge from "@/components/app/PriceSourceBadge";
 import ApiQuotaWarning from "@/components/app/ApiQuotaWarning";
+import { addToPantryPreferences, removeFromPantryPreferences } from "@/lib/pantryPreferences";
 
 export default function ShoppingListPage() {
   const [aggregatedItems, setAggregatedItems] = useState<AggregatedIngredient[]>([]);
@@ -160,6 +161,7 @@ export default function ShoppingListPage() {
       generateShoppingList();
     };
     loadShoppingList();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleExportCSV = () => {
@@ -173,6 +175,22 @@ export default function ShoppingListPage() {
 
   const handleShopAtColes = () => {
     setShowColesModal(true);
+  };
+
+  const handleMarkAsPantry = (item: AggregatedIngredient) => {
+    // Add to pantry preferences
+    addToPantryPreferences(item.normalizedName);
+    
+    // Regenerate shopping list to reflect change
+    generateShoppingList();
+  };
+
+  const handleUnmarkAsPantry = (item: AggregatedIngredient) => {
+    // Remove from pantry preferences
+    removeFromPantryPreferences(item.normalizedName);
+    
+    // Regenerate shopping list to reflect change
+    generateShoppingList();
   };
 
   if (loading) {
@@ -288,6 +306,11 @@ export default function ShoppingListPage() {
               bg="default"
             >
               <Stack direction="column" gap="lg">
+                <Box px="lg">
+                  <Typography variant="small" color="subdued">
+                    💡 Tip: Click the ✓ button next to any item you already have to move it to your pantry list.
+                  </Typography>
+                </Box>
                 {categories.map((category, categoryIndex) => {
                   const items = groupedNeedToBuy[category];
                   
@@ -366,9 +389,18 @@ export default function ShoppingListPage() {
                               </Stack>
                             }
                             badge={
-                              <Chip variant="light" size="small">
-                                {item.totalQty.toFixed(1)} {item.unit}
-                              </Chip>
+                              <Stack direction="row" gap="xs" alignItems="center">
+                                <Chip variant="light" size="small">
+                                  {item.totalQty.toFixed(1)} {item.unit}
+                                </Chip>
+                                <IconButton
+                                  iconName="check"
+                                  size="small"
+                                  variant="naked"
+                                  onClick={() => handleMarkAsPantry(item)}
+                                  aria-label="Mark as pantry item"
+                                />
+                              </Stack>
                             }
                             expandable={hasMultipleRecipes}
                             expanded={isExpanded}
@@ -411,7 +443,7 @@ export default function ShoppingListPage() {
                   </Stack>
                   
                   <Typography variant="small" color="subdued">
-                    These ingredients were in your pantry inventory, so they&apos;re excluded from your shopping list.
+                    These ingredients are in your pantry inventory or marked as items you always have. They&apos;re excluded from your shopping list. Click ✕ to move back to the shopping list.
                   </Typography>
                   
                   <List dividers spacing="compact">
@@ -420,9 +452,18 @@ export default function ShoppingListPage() {
                         key={index}
                         primary={item.name}
                         badge={
-                          <Chip variant="light" size="small">
-                            {item.totalQty.toFixed(1)} {item.unit}
-                          </Chip>
+                          <Stack direction="row" gap="xs" alignItems="center">
+                            <Chip variant="light" size="small">
+                              {item.totalQty.toFixed(1)} {item.unit}
+                            </Chip>
+                            <IconButton
+                              iconName="close"
+                              size="small"
+                              variant="naked"
+                              onClick={() => handleUnmarkAsPantry(item)}
+                              aria-label="Remove from pantry"
+                            />
+                          </Stack>
                         }
                       />
                     ))}
