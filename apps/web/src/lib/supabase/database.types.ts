@@ -243,7 +243,7 @@ export type Database = {
           cost_per_serve_est?: number | null
           created_at?: string
           household_id: string
-          id?: string
+          id: string
           ingredients: Json
           instructions?: string[] | null
           serves: number

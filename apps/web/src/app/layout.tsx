@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
 import Header from "@/components/navigation/Header";
-import DataMigrationPrompt from "@/components/app/DataMigrationPrompt";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +30,6 @@ export default function RootLayout({
         <Providers>
           <Header />
           {children}
-          <DataMigrationPrompt />
         </Providers>
       </body>
     </html>
