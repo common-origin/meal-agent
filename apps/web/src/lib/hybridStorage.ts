@@ -273,17 +273,21 @@ export async function migrateLocalStorageToSupabase(): Promise<{
       else console.log('✓ Migrated current week meal plan');
     }
     
-    // Migrate recipes from RecipeLibrary
-    const recipes = RecipeLibrary.getAll();
+    // Migrate only custom recipes (not built-in library recipes)
+    const customRecipes = RecipeLibrary.getCustomRecipes();
     let recipeMigrated = 0;
     let recipeFailed = 0;
     
-    for (const recipe of recipes) {
-      const success = await SupabaseStorage.saveRecipe(recipe);
-      if (success) {
-        recipeMigrated++;
-      } else {
-        recipeFailed++;
+    if (customRecipes.length > 0) {
+      console.log(`Migrating ${customRecipes.length} custom recipes...`);
+      for (const recipe of customRecipes) {
+        const success = await SupabaseStorage.saveRecipe(recipe);
+        if (success) {
+          recipeMigrated++;
+        } else {
+          console.error('Failed to migrate recipe:', recipe.id, recipe.title);
+          recipeFailed++;
+        }
       }
     }
     

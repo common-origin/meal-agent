@@ -234,10 +234,13 @@ export async function saveRecipe(recipe: Recipe): Promise<boolean> {
     
     const { error } = await supabase
       .from('recipes')
-      .upsert(recipeData);
+      .upsert(recipeData, {
+        onConflict: 'id',
+      });
     
     if (error) {
       console.error('Error saving recipe:', error);
+      console.error('Recipe data:', { id: recipe.id, title: recipe.title });
       return false;
     }
     
@@ -415,10 +418,13 @@ export async function savePantryItems(items: string[]): Promise<boolean> {
         household_id: householdId,
         items,
         updated_at: new Date().toISOString(),
+      }, {
+        onConflict: 'household_id',
       });
     
     if (error) {
       console.error('Error saving pantry items:', error);
+      console.error('Pantry data:', { household_id: householdId, items });
       return false;
     }
     
