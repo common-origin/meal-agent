@@ -110,16 +110,16 @@ export default function SearchMappingTestPage() {
                         </Typography>
                       )}
                       
-                      <Box mt="xs">
+                      <Stack direction="column" gap="xs">
                         <Typography variant="small" color="subdued">Search Variations:</Typography>
-                        <Stack direction="column" gap="xs" mt="xs">
+                        <Stack direction="column" gap="xs">
                           {result.variations.map((variation, index) => (
                             <Typography key={index} variant="small">
                               {index + 1}. &quot;{variation}&quot;
                             </Typography>
                           ))}
                         </Stack>
-                      </Box>
+                      </Stack>
                     </Stack>
                   </Box>
                 )}
@@ -184,12 +184,8 @@ export default function SearchMappingTestPage() {
                   {exampleIngredients.map((example, index) => {
                     const enhanced = generateSearchTerm(example, 'protein');
                     return (
-                      <Box 
+                      <button
                         key={index}
-                        p="sm" 
-                        bg="default" 
-                        borderRadius="2"
-                        style={{ cursor: 'pointer' }}
                         onClick={() => {
                           setIngredient(example);
                           const result = {
@@ -199,12 +195,21 @@ export default function SearchMappingTestPage() {
                           };
                           setResult(result);
                         }}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          border: 'none',
+                          borderRadius: '4px',
+                          backgroundColor: '#f5f5f5',
+                          cursor: 'pointer',
+                          textAlign: 'left'
+                        }}
                       >
                         <Stack direction="row" justifyContent="space-between" alignItems="center">
                           <Typography variant="small">&quot;{example}&quot;</Typography>
                           <Typography variant="small" color="subdued">→ &quot;{enhanced}&quot;</Typography>
                         </Stack>
-                      </Box>
+                      </button>
                     );
                   })}
                 </Stack>
