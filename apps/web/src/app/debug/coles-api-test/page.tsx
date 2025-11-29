@@ -113,8 +113,9 @@ export default function ColesApiTestPage() {
           </Box>
 
           <Box bg="surface" p="md" style={{ borderRadius: '8px' }}>
-            <Typography variant="h2" style={{ marginBottom: '16px' }}>Cache Stats</Typography>
-            <Stack direction="column" gap="sm">
+            <Stack direction="column" gap="md">
+              <Typography variant="h2">Cache Stats</Typography>
+              <Stack direction="column" gap="sm">
               <Typography variant="body">
                 <strong>Entries:</strong> {cacheStats.entries}
               </Typography>
@@ -124,6 +125,7 @@ export default function ColesApiTestPage() {
               <Button onClick={handleClearCache} variant="secondary" size="medium">
                 Clear Cache
               </Button>
+              </Stack>
             </Stack>
           </Box>
         </ResponsiveGrid>
@@ -131,8 +133,8 @@ export default function ColesApiTestPage() {
         <Divider />
 
         {/* Search Interface */}
-        <Box>
-          <Typography variant="h2" style={{ marginBottom: '16px' }}>Product Search</Typography>
+        <Stack direction="column" gap="md">
+          <Typography variant="h2">Product Search</Typography>
           <Stack direction="column" gap="md">
             <Box style={{ display: 'flex', gap: '12px' }}>
               <input
@@ -158,7 +160,7 @@ export default function ColesApiTestPage() {
             </Box>
 
             {searchTime !== null && (
-              <Typography variant="caption" style={{ opacity: 0.7 }}>
+              <Typography variant="caption" color="subdued">
                 Search completed in {searchTime}ms
               </Typography>
             )}
@@ -168,8 +170,8 @@ export default function ColesApiTestPage() {
             )}
 
             {results.length > 0 && (
-              <Box>
-                <Typography variant="h3" style={{ marginBottom: '16px' }}>
+              <Stack direction="column" gap="md">
+                <Typography variant="h3">
                   Found {results.length} products:
                 </Typography>
                 <Stack direction="column" gap="md">
@@ -181,7 +183,7 @@ export default function ColesApiTestPage() {
                       <Box key={index} bg="surface" p="md" style={{ borderRadius: '8px', border: '1px solid #e0e0e0' }}>
                         <Stack direction="column" gap="sm">
                           <Typography variant="h4">{product.productName}</Typography>
-                          <Typography variant="body" style={{ opacity: 0.7 }}>
+                          <Typography variant="body" color="subdued">
                             <strong>Brand:</strong> {product.brand}
                           </Typography>
                           <Typography variant="body">
@@ -190,7 +192,7 @@ export default function ColesApiTestPage() {
                           <Typography variant="body">
                             <strong>Size:</strong> {product.size}
                           </Typography>
-                          <Typography variant="caption" style={{ opacity: 0.6 }}>
+                          <Typography variant="caption" color="subdued">
                             Price per 100g/ml: ${pricePerUnit.toFixed(2)}
                           </Typography>
                           <a 
@@ -206,14 +208,14 @@ export default function ColesApiTestPage() {
                     );
                   })}
                 </Stack>
-              </Box>
+              </Stack>
             )}
           </Stack>
-        </Box>
+        </Stack>
 
         {/* Quick Test Buttons */}
-        <Box>
-          <Typography variant="h2" style={{ marginBottom: '16px' }}>Quick Tests</Typography>
+        <Stack direction="column" gap="md">
+          <Typography variant="h2">Quick Tests</Typography>
           <Box style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             <Button 
               onClick={() => handleQuickTest('chicken breast')}
@@ -251,7 +253,7 @@ export default function ColesApiTestPage() {
               Eggs
             </Button>
           </Box>
-        </Box>
+        </Stack>
       </Stack>
     </Main>
   );
