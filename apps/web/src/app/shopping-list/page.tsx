@@ -283,21 +283,6 @@ export default function ShoppingListPage() {
               </Box>
             </ResponsiveGrid>
 
-            {/* Price confidence legend */}
-            <Box bg="default" borderRadius="4" border="subtle" p="sm">
-              <Stack direction="row" gap="lg" alignItems="center">
-                <Typography variant="small" color="subdued">
-                  Price indicators:
-                </Typography>
-                <Stack direction="row" gap="sm" alignItems="center">
-                  <Icon name="checkRing" iconColor="success" size="sm" />
-                  <Typography variant="small">
-                    Verified price
-                  </Typography>
-                </Stack>
-              </Stack>
-            </Box>
-
             {/* Items to Buy - Grouped by Category */}
             <Box 
               border="subtle"
@@ -306,11 +291,6 @@ export default function ShoppingListPage() {
               bg="default"
             >
               <Stack direction="column" gap="lg">
-                <Box px="lg">
-                  <Typography variant="small" color="subdued">
-                    💡 Tip: Click the ✓ button next to any item you already have to move it to your pantry list.
-                  </Typography>
-                </Box>
                 {categories.map((category, categoryIndex) => {
                   const items = groupedNeedToBuy[category];
                   
