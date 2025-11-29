@@ -1,8 +1,11 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Stack, Typography } from "@common-origin/design-system";
+import { usePathname, useRouter } from "next/navigation";
+import { Box, Stack, Typography, Button } from "@common-origin/design-system";
+import { createClient } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 interface NavLinkProps {
   href: string;
@@ -36,9 +39,37 @@ function NavLink({ href, children, isActive }: NavLinkProps) {
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // Don't show header on landing page
-  if (pathname === "/") {
+  useEffect(() => {
+    const supabase = createClient();
+    
+    // Get initial user
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    setLoading(true);
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
+
+  // Don't show header on landing, login, or signup pages
+  if (pathname === "/" || pathname === "/login" || pathname === "/signup") {
     return null;
   }
 
@@ -69,23 +100,31 @@ export default function Header() {
         </Link>
 
         {/* Navigation Links */}
-        <Stack direction="row" gap="sm">
-          <NavLink href="/plan" isActive={pathname === "/plan"}>
-            Plan
-          </NavLink>
-          <NavLink href="/recipes" isActive={pathname === "/recipes"}>
-            My Recipes
-          </NavLink>
-          <NavLink href="/recipes/add" isActive={pathname === "/recipes/add"}>
-            Add Recipe
+        <Box style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <NavLink href="/meal-plan" isActive={pathname === "/meal-plan"}>
+            Meal Plan
           </NavLink>
           <NavLink href="/shopping-list" isActive={pathname === "/shopping-list"}>
-            Shopping List
+            Shopping
+          </NavLink>
+          <NavLink href="/recipe-library" isActive={pathname === "/recipe-library"}>
+            Recipes
           </NavLink>
           <NavLink href="/settings" isActive={pathname === "/settings"}>
             Settings
           </NavLink>
-        </Stack>
+          
+          {user && (
+            <Button
+              variant="secondary"
+              size="small"
+              onClick={handleSignOut}
+              disabled={loading}
+            >
+              {loading ? 'Signing out...' : 'Sign out'}
+            </Button>
+          )}
+        </Box>
       </div>
     </header>
   );

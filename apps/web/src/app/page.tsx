@@ -1,14 +1,30 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Stack, Typography, Button, ResponsiveGrid, Box } from "@common-origin/design-system";
 import { track } from "@/lib/analytics";
+import { createClient } from "@/lib/supabase/client";
 
 export default function HomePage() {
+  const router = useRouter();
+  
   useEffect(() => {
     track('page_view', { page: '/' });
-  }, []);
+    
+    // Check if user is authenticated and redirect to meal-plan
+    const checkAuth = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        router.push('/meal-plan');
+      }
+    };
+    
+    checkAuth();
+  }, [router]);
 
   return (
     <main
@@ -38,14 +54,14 @@ export default function HomePage() {
             <Typography>Plan your week, get a shopping list, and order—all in one place.</Typography>
             
             <div style={{ display: "flex", gap: "16px", justifyContent: "center", marginTop: "24px" }}>
-              <Link href="/plan" style={{ textDecoration: "none" }}>
+              <Link href="/signup" style={{ textDecoration: "none" }}>
                 <Button variant="primary" size="large">
-                  Plan your week
+                  Get started
                 </Button>
               </Link>
-              <Link href="/about" style={{ textDecoration: "none" }}>
+              <Link href="/login" style={{ textDecoration: "none" }}>
                 <Button variant="secondary" size="large">
-                  Learn more
+                  Sign in
                 </Button>
               </Link>
             </div>
