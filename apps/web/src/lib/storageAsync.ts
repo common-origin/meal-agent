@@ -148,15 +148,3 @@ export const {
   saveWeeklyOverrides,
   loadWeeklyOverrides,
 } = LocalStorage;
-
-/**
- * Migration Helper
- * 
- * Call this once when a user logs in to migrate their localStorage data to Supabase
- */
-export async function migrateToSupabase(): Promise<{
-  success: boolean;
-  errors: string[];
-}> {
-  return await HybridStorage.migrateLocalStorageToSupabase();
-}
