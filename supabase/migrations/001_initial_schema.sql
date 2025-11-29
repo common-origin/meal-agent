@@ -53,10 +53,10 @@ CREATE TABLE IF NOT EXISTS public.family_settings (
 
 -- ============================================================================
 -- RECIPES TABLE
--- Stores recipes (AI-generated or user-added)
+-- Stores AI-generated and user-added recipes
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS public.recipes (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id TEXT PRIMARY KEY, -- Use TEXT to support both UUIDs and semantic IDs like "ai-recipe-name"
   household_id UUID NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   source_url TEXT,
