@@ -281,11 +281,18 @@ export async function migrateLocalStorageToSupabase(): Promise<{
     if (customRecipes.length > 0) {
       console.log(`Migrating ${customRecipes.length} custom recipes...`);
       for (const recipe of customRecipes) {
-        const success = await SupabaseStorage.saveRecipe(recipe);
-        if (success) {
-          recipeMigrated++;
-        } else {
-          console.error('Failed to migrate recipe:', recipe.id, recipe.title);
+        try {
+          console.log('Attempting to migrate recipe:', recipe.id, recipe.title);
+          const success = await SupabaseStorage.saveRecipe(recipe);
+          if (success) {
+            recipeMigrated++;
+          } else {
+            console.error('Failed to migrate recipe:', recipe.id, recipe.title);
+            console.error('Recipe data:', recipe);
+            recipeFailed++;
+          }
+        } catch (err) {
+          console.error('Exception migrating recipe:', recipe.id, recipe.title, err);
           recipeFailed++;
         }
       }

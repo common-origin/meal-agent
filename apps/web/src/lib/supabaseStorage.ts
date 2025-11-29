@@ -216,17 +216,23 @@ export async function saveRecipe(recipe: Recipe): Promise<boolean> {
     
     const supabase = createBrowserClient();
     
+    // Validate required fields
+    if (!recipe.ingredients || !Array.isArray(recipe.ingredients)) {
+      console.error('Invalid recipe: missing or invalid ingredients', recipe.id);
+      return false;
+    }
+    
     const recipeData: Database['public']['Tables']['recipes']['Insert'] = {
       id: recipe.id,
       household_id: householdId,
-      title: recipe.title,
+      title: recipe.title || 'Untitled Recipe',
       source_url: recipe.source?.url || null,
       source_domain: recipe.source?.domain || 'unknown',
       source_chef: recipe.source?.chef || null,
       time_mins: recipe.timeMins || 30,
       serves: recipe.serves || 4,
       tags: recipe.tags || [],
-      ingredients: recipe.ingredients,
+      ingredients: recipe.ingredients as unknown as Database['public']['Tables']['recipes']['Insert']['ingredients'],
       instructions: recipe.instructions || null,
       cost_per_serve_est: recipe.costPerServeEst || null,
       updated_at: new Date().toISOString(),
@@ -240,7 +246,8 @@ export async function saveRecipe(recipe: Recipe): Promise<boolean> {
     
     if (error) {
       console.error('Error saving recipe:', error);
-      console.error('Recipe data:', { id: recipe.id, title: recipe.title });
+      console.error('Recipe ID:', recipe.id, 'Title:', recipe.title);
+      console.error('Full recipe data:', recipeData);
       return false;
     }
     
