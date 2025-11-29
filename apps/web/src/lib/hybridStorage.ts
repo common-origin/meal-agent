@@ -231,9 +231,14 @@ export async function migrateLocalStorageToSupabase(): Promise<{
     // Migrate family settings
     const familySettings = LocalStorage.loadFamilySettings();
     if (familySettings) {
+      console.log('Migrating family settings:', familySettings);
       const success = await SupabaseStorage.saveFamilySettingsToDb(familySettings);
-      if (!success) errors.push('Failed to migrate family settings');
-      else console.log('✓ Migrated family settings');
+      if (!success) {
+        console.error('Failed to migrate family settings');
+        errors.push('Failed to migrate family settings');
+      } else {
+        console.log('✓ Migrated family settings');
+      }
     }
     
     // Migrate pantry preferences

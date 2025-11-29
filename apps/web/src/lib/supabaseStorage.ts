@@ -47,24 +47,27 @@ export async function saveFamilySettingsToDb(settings: FamilySettings): Promise<
       adults: settings.adults,
       kids: settings.children.length,
       kids_ages: settings.children.map(c => c.age),
-      cuisines: settings.cuisines,
+      cuisines: settings.cuisines || [],
       dietary_restrictions: [
         ...(settings.glutenFreePreference ? ['gluten-free-preference'] : []),
         ...(settings.proteinFocus ? ['high-protein'] : []),
-        ...settings.allergies,
-        ...settings.avoidFoods,
+        ...(settings.allergies || []),
+        ...(settings.avoidFoods || []),
       ],
-      cooking_time_preference: settings.maxCookTime.weeknight <= 30 ? 'quick' : 'standard',
-      skill_level: settings.cookingSkill,
+      cooking_time_preference: (settings.maxCookTime?.weeknight || 45) <= 30 ? 'quick' : 'standard',
+      skill_level: settings.cookingSkill || 'intermediate',
       updated_at: new Date().toISOString(),
     };
     
     const { error } = await supabase
       .from('family_settings')
-      .upsert(dbSettings);
+      .upsert(dbSettings, {
+        onConflict: 'household_id',
+      });
     
     if (error) {
       console.error('Error saving family settings:', error);
+      console.error('Settings data:', dbSettings);
       return false;
     }
     
