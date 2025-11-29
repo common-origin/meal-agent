@@ -45,7 +45,7 @@ export async function generateRecipes(
     const model = genAI.getGenerativeModel({ 
       model: 'gemini-2.5-flash',
       generationConfig: {
-        temperature: 0.9, // Higher temperature for more creative but still grounded recipes
+        temperature: 0.8, // Balanced creativity - reliable and family-friendly recipes
         topK: 40,
         topP: 0.95,
         maxOutputTokens: 16384, // Ensures complete responses with detailed instructions
