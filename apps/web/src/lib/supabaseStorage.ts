@@ -1,0 +1,451 @@
+/**
+ * Supabase Storage Layer
+ * 
+ * This replaces localStorage with PostgreSQL database storage.
+ * All data is scoped to the user's household for proper isolation.
+ */
+
+import { createClient as createBrowserClient } from '@/lib/supabase/client';
+import type { FamilySettings } from './types/settings';
+import type { Recipe } from './types/recipe';
+import type { Database } from './supabase/database.types';
+
+/**
+ * Get the current user's household ID
+ */
+async function getHouseholdId(): Promise<string | null> {
+  const supabase = createBrowserClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) return null;
+  
+  const { data } = await supabase
+    .from('household_members')
+    .select('household_id')
+    .eq('user_id', user.id)
+    .single();
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data as any)?.household_id || null;
+}
+
+/**
+ * Family Settings
+ * Note: We store a simplified version in the database. Full settings remain in localStorage for now.
+ */
+export async function saveFamilySettingsToDb(settings: FamilySettings): Promise<boolean> {
+  try {
+    const householdId = await getHouseholdId();
+    if (!householdId) return false;
+    
+    const supabase = createBrowserClient();
+    
+    // Map FamilySettings to database schema
+    const dbSettings: Database['public']['Tables']['family_settings']['Insert'] = {
+      household_id: householdId,
+      total_servings: settings.totalServings,
+      adults: settings.adults,
+      kids: settings.children.length,
+      kids_ages: settings.children.map(c => c.age),
+      cuisines: settings.cuisines,
+      dietary_restrictions: [
+        ...(settings.glutenFreePreference ? ['gluten-free-preference'] : []),
+        ...(settings.proteinFocus ? ['high-protein'] : []),
+        ...settings.allergies,
+        ...settings.avoidFoods,
+      ],
+      cooking_time_preference: settings.maxCookTime.weeknight <= 30 ? 'quick' : 'standard',
+      skill_level: settings.cookingSkill,
+      updated_at: new Date().toISOString(),
+    };
+    
+    const { error } = await supabase
+      .from('family_settings')
+      .upsert(dbSettings);
+    
+    if (error) {
+      console.error('Error saving family settings:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in saveFamilySettingsToDb:', error);
+    return false;
+  }
+}
+
+export async function loadFamilySettingsFromDb(): Promise<FamilySettings | null> {
+  try {
+    const householdId = await getHouseholdId();
+    if (!householdId) return null;
+    
+    const supabase = createBrowserClient();
+    
+    const { data, error } = await supabase
+      .from('family_settings')
+      .select('*')
+      .eq('household_id', householdId)
+      .single();
+    
+    if (error || !data) {
+      return null;
+    }
+    
+    return {
+      totalServings: data.total_servings,
+      adults: data.adults,
+      children: data.kids_ages.map(age => ({ age })),
+      cuisines: data.cuisines,
+      customCuisines: [],
+      glutenFreePreference: false,
+      proteinFocus: false,
+      allergies: [],
+      avoidFoods: data.dietary_restrictions,
+      favoriteIngredients: [],
+      spiceTolerance: 'medium' as const,
+      cookingSkill: data.skill_level as 'beginner' | 'intermediate' | 'confident_home_cook' | 'advanced',
+      effortPreference: 'balanced' as const,
+      flavorProfileDescription: '',
+      location: {
+        city: '',
+        country: '',
+        hemisphere: 'northern' as const,
+      },
+      dislikedRecipeIds: [],
+      budgetPerMeal: { min: 0, max: 100 },
+      maxCookTime: {
+        weeknight: data.cooking_time_preference === 'quick' ? 30 : data.cooking_time_preference === 'moderate' ? 45 : 60,
+        weekend: 90,
+      },
+      batchCooking: {
+        enabled: false,
+        frequency: 'none' as const,
+        preferredDay: 'sunday' as const,
+      },
+      varietyLevel: 3,
+      leftoverFriendly: false,
+      pantryPreference: 'soft' as const,
+      lastUpdated: data.updated_at,
+    };
+  } catch (error) {
+    console.error('Error in loadFamilySettingsFromDb:', error);
+    return null;
+  }
+}
+
+/**
+ * Meal Plans
+ */
+export interface MealPlan {
+  weekStart: string; // ISO date string (YYYY-MM-DD)
+  meals: {
+    [day: string]: {
+      recipeId: string;
+      servings?: number;
+    } | null;
+  };
+}
+
+export async function saveMealPlan(plan: MealPlan): Promise<boolean> {
+  try {
+    const householdId = await getHouseholdId();
+    if (!householdId) return false;
+    
+    const supabase = createBrowserClient();
+    
+    const { error } = await supabase
+      .from('meal_plans')
+      .upsert({
+        household_id: householdId,
+        week_start: plan.weekStart,
+        meals: plan.meals,
+        updated_at: new Date().toISOString(),
+      });
+    
+    if (error) {
+      console.error('Error saving meal plan:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in saveMealPlan:', error);
+    return false;
+  }
+}
+
+export async function loadMealPlan(weekStart: string): Promise<MealPlan | null> {
+  try {
+    const householdId = await getHouseholdId();
+    if (!householdId) return null;
+    
+    const supabase = createBrowserClient();
+    
+    const { data, error } = await supabase
+      .from('meal_plans')
+      .select('*')
+      .eq('household_id', householdId)
+      .eq('week_start', weekStart)
+      .single();
+    
+    if (error || !data) {
+      return null;
+    }
+    
+    return {
+      weekStart: data.week_start,
+      meals: data.meals as MealPlan['meals'],
+    };
+  } catch (error) {
+    console.error('Error in loadMealPlan:', error);
+    return null;
+  }
+}
+
+/**
+ * Recipes
+ */
+export async function saveRecipe(recipe: Recipe): Promise<boolean> {
+  try {
+    const householdId = await getHouseholdId();
+    if (!householdId) return false;
+    
+    const supabase = createBrowserClient();
+    
+    const recipeData: Database['public']['Tables']['recipes']['Insert'] = {
+      id: recipe.id,
+      household_id: householdId,
+      title: recipe.title,
+      source_url: recipe.source?.url || null,
+      source_domain: recipe.source?.domain || 'unknown',
+      source_chef: recipe.source?.chef || null,
+      time_mins: recipe.timeMins || 30,
+      serves: recipe.serves || 4,
+      tags: recipe.tags || [],
+      ingredients: recipe.ingredients,
+      instructions: recipe.instructions || null,
+      cost_per_serve_est: recipe.costPerServeEst || null,
+      updated_at: new Date().toISOString(),
+    };
+    
+    const { error } = await supabase
+      .from('recipes')
+      .upsert(recipeData);
+    
+    if (error) {
+      console.error('Error saving recipe:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in saveRecipe:', error);
+    return false;
+  }
+}
+
+export async function loadRecipe(recipeId: string): Promise<Recipe | null> {
+  try {
+    const householdId = await getHouseholdId();
+    if (!householdId) return null;
+    
+    const supabase = createBrowserClient();
+    
+    const { data, error } = await supabase
+      .from('recipes')
+      .select('*')
+      .eq('id', recipeId)
+      .eq('household_id', householdId)
+      .single();
+    
+    if (error || !data) {
+      return null;
+    }
+    
+    return {
+      id: data.id,
+      title: data.title,
+      source: {
+        url: data.source_url || '',
+        domain: data.source_domain,
+        chef: data.source_chef || '',
+        license: 'unknown',
+        fetchedAt: data.created_at,
+      },
+      timeMins: data.time_mins,
+      serves: data.serves,
+      tags: data.tags,
+      ingredients: data.ingredients as Recipe['ingredients'],
+      instructions: data.instructions || undefined,
+      costPerServeEst: data.cost_per_serve_est || undefined,
+    };
+  } catch (error) {
+    console.error('Error in loadRecipe:', error);
+    return null;
+  }
+}
+
+export async function loadAllRecipes(): Promise<Recipe[]> {
+  try {
+    const householdId = await getHouseholdId();
+    if (!householdId) return [];
+    
+    const supabase = createBrowserClient();
+    
+    const { data, error } = await supabase
+      .from('recipes')
+      .select('*')
+      .eq('household_id', householdId)
+      .order('created_at', { ascending: false });
+    
+    if (error || !data) {
+      return [];
+    }
+    
+    return data.map(row => ({
+      id: row.id,
+      title: row.title,
+      source: {
+        url: row.source_url || '',
+        domain: row.source_domain,
+        chef: row.source_chef || '',
+        license: 'unknown',
+        fetchedAt: row.created_at,
+      },
+      timeMins: row.time_mins,
+      serves: row.serves,
+      tags: row.tags,
+      ingredients: row.ingredients as Recipe['ingredients'],
+      instructions: row.instructions || undefined,
+      costPerServeEst: row.cost_per_serve_est || undefined,
+    }));
+  } catch (error) {
+    console.error('Error in loadAllRecipes:', error);
+    return [];
+  }
+}
+
+/**
+ * Shopping Lists
+ */
+export interface ShoppingList {
+  weekStart: string;
+  items: {
+    name: string;
+    qty: number;
+    unit: string;
+    checked?: boolean;
+    recipeIds?: string[];
+  }[];
+}
+
+export async function saveShoppingList(list: ShoppingList): Promise<boolean> {
+  try {
+    const householdId = await getHouseholdId();
+    if (!householdId) return false;
+    
+    const supabase = createBrowserClient();
+    
+    const { error } = await supabase
+      .from('shopping_lists')
+      .upsert({
+        household_id: householdId,
+        week_start: list.weekStart,
+        items: list.items,
+        updated_at: new Date().toISOString(),
+      });
+    
+    if (error) {
+      console.error('Error saving shopping list:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in saveShoppingList:', error);
+    return false;
+  }
+}
+
+export async function loadShoppingList(weekStart: string): Promise<ShoppingList | null> {
+  try {
+    const householdId = await getHouseholdId();
+    if (!householdId) return null;
+    
+    const supabase = createBrowserClient();
+    
+    const { data, error } = await supabase
+      .from('shopping_lists')
+      .select('*')
+      .eq('household_id', householdId)
+      .eq('week_start', weekStart)
+      .single();
+    
+    if (error || !data) {
+      return null;
+    }
+    
+    return {
+      weekStart: data.week_start,
+      items: data.items as ShoppingList['items'],
+    };
+  } catch (error) {
+    console.error('Error in loadShoppingList:', error);
+    return null;
+  }
+}
+
+/**
+ * Pantry Preferences
+ */
+export async function savePantryItems(items: string[]): Promise<boolean> {
+  try {
+    const householdId = await getHouseholdId();
+    if (!householdId) return false;
+    
+    const supabase = createBrowserClient();
+    
+    const { error } = await supabase
+      .from('pantry_preferences')
+      .upsert({
+        household_id: householdId,
+        items,
+        updated_at: new Date().toISOString(),
+      });
+    
+    if (error) {
+      console.error('Error saving pantry items:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in savePantryItems:', error);
+    return false;
+  }
+}
+
+export async function loadPantryItems(): Promise<string[]> {
+  try {
+    const householdId = await getHouseholdId();
+    if (!householdId) return [];
+    
+    const supabase = createBrowserClient();
+    
+    const { data, error } = await supabase
+      .from('pantry_preferences')
+      .select('items')
+      .eq('household_id', householdId)
+      .single();
+    
+    if (error || !data) {
+      return [];
+    }
+    
+    return data.items;
+  } catch (error) {
+    console.error('Error in loadPantryItems:', error);
+    return [];
+  }
+}

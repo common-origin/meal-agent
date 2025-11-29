@@ -2,6 +2,15 @@
 import type { FamilySettings } from "./types/settings";
 import { DEFAULT_FAMILY_SETTINGS } from "./types/settings";
 
+/**
+ * NOTE: This module provides localStorage-only operations.
+ * For hybrid localStorage + Supabase storage (authenticated users),
+ * import from './hybridStorage' instead.
+ * 
+ * Current usage: Internal use by hybridStorage.ts
+ * Future: Components should migrate to hybridStorage for multi-account support
+ */
+
 export class Storage {
   static get<T>(key: string, defaultValue: T): T {
     if (typeof window === "undefined") {

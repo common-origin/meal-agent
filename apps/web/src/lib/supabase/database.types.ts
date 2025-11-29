@@ -1,13 +1,3 @@
-/**
- * Database Type Definitions
- * 
- * This file will be auto-generated from your Supabase schema.
- * For now, we'll define the basic structure manually.
- * 
- * To auto-generate in the future, run:
- * npx supabase gen types typescript --project-id migfbyyftwgidbkwwyst > src/lib/supabase/database.types.ts
- */
-
 export type Json =
   | string
   | number
@@ -16,256 +6,451 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export interface Database {
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "13.0.5"
+  }
   public: {
     Tables: {
-      households: {
+      api_usage: {
         Row: {
+          cost_usd: number | null
+          endpoint: string
+          household_id: string
           id: string
-          name: string
-          created_at: string
-          updated_at: string
+          timestamp: string
+          tokens_used: number | null
         }
         Insert: {
+          cost_usd?: number | null
+          endpoint: string
+          household_id: string
           id?: string
-          name: string
-          created_at?: string
-          updated_at?: string
+          timestamp?: string
+          tokens_used?: number | null
         }
         Update: {
-          id?: string
-          name?: string
-          created_at?: string
-          updated_at?: string
-        }
-      }
-      household_members: {
-        Row: {
-          id: string
-          household_id: string
-          user_id: string
-          role: 'owner' | 'member'
-          joined_at: string
-        }
-        Insert: {
-          id?: string
-          household_id: string
-          user_id: string
-          role?: 'owner' | 'member'
-          joined_at?: string
-        }
-        Update: {
-          id?: string
+          cost_usd?: number | null
+          endpoint?: string
           household_id?: string
-          user_id?: string
-          role?: 'owner' | 'member'
-          joined_at?: string
+          id?: string
+          timestamp?: string
+          tokens_used?: number | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "api_usage_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       family_settings: {
         Row: {
-          id: string
-          household_id: string
-          total_servings: number
           adults: number
-          kids: number
-          kids_ages: number[]
+          cooking_time_preference: string
+          created_at: string
           cuisines: string[]
           dietary_restrictions: string[]
-          cooking_time_preference: string
-          skill_level: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
           household_id: string
-          total_servings?: number
-          adults?: number
-          kids?: number
-          kids_ages?: number[]
-          cuisines?: string[]
-          dietary_restrictions?: string[]
-          cooking_time_preference?: string
-          skill_level?: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          household_id?: string
-          total_servings?: number
-          adults?: number
-          kids?: number
-          kids_ages?: number[]
-          cuisines?: string[]
-          dietary_restrictions?: string[]
-          cooking_time_preference?: string
-          skill_level?: string
-          created_at?: string
-          updated_at?: string
-        }
-      }
-      recipes: {
-        Row: {
           id: string
-          household_id: string
-          title: string
-          source_url: string | null
-          source_domain: string
-          source_chef: string | null
-          time_mins: number
-          serves: number
-          tags: string[]
-          ingredients: Json
-          instructions: string[] | null
-          cost_per_serve_est: number | null
-          created_at: string
+          kids: number
+          kids_ages: number[]
+          skill_level: string
+          total_servings: number
           updated_at: string
         }
         Insert: {
-          id?: string
-          household_id: string
-          title: string
-          source_url?: string | null
-          source_domain?: string
-          source_chef?: string | null
-          time_mins: number
-          serves: number
-          tags?: string[]
-          ingredients: Json
-          instructions?: string[] | null
-          cost_per_serve_est?: number | null
+          adults?: number
+          cooking_time_preference?: string
           created_at?: string
+          cuisines?: string[]
+          dietary_restrictions?: string[]
+          household_id: string
+          id?: string
+          kids?: number
+          kids_ages?: number[]
+          skill_level?: string
+          total_servings?: number
           updated_at?: string
         }
         Update: {
-          id?: string
-          household_id?: string
-          title?: string
-          source_url?: string | null
-          source_domain?: string
-          source_chef?: string | null
-          time_mins?: number
-          serves?: number
-          tags?: string[]
-          ingredients?: Json
-          instructions?: string[] | null
-          cost_per_serve_est?: number | null
+          adults?: number
+          cooking_time_preference?: string
           created_at?: string
+          cuisines?: string[]
+          dietary_restrictions?: string[]
+          household_id?: string
+          id?: string
+          kids?: number
+          kids_ages?: number[]
+          skill_level?: string
+          total_servings?: number
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "family_settings_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: true
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      household_members: {
+        Row: {
+          household_id: string
+          id: string
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          household_id: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          household_id?: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_members_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      households: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       meal_plans: {
         Row: {
-          id: string
-          household_id: string
-          week_start: string
-          meals: Json
           created_at: string
+          household_id: string
+          id: string
+          meals: Json
           updated_at: string
+          week_start: string
         }
         Insert: {
-          id?: string
-          household_id: string
-          week_start: string
-          meals: Json
           created_at?: string
+          household_id: string
+          id?: string
+          meals: Json
           updated_at?: string
+          week_start: string
         }
         Update: {
-          id?: string
+          created_at?: string
           household_id?: string
-          week_start?: string
+          id?: string
           meals?: Json
-          created_at?: string
           updated_at?: string
-        }
-      }
-      shopping_lists: {
-        Row: {
-          id: string
-          household_id: string
-          week_start: string
-          items: Json
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          household_id: string
-          week_start: string
-          items: Json
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          household_id?: string
           week_start?: string
-          items?: Json
-          created_at?: string
-          updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "meal_plans_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pantry_preferences: {
         Row: {
-          id: string
-          household_id: string
-          items: string[]
           created_at: string
+          household_id: string
+          id: string
+          items: string[]
           updated_at: string
         }
         Insert: {
-          id?: string
-          household_id: string
-          items?: string[]
           created_at?: string
+          household_id: string
+          id?: string
+          items?: string[]
           updated_at?: string
         }
         Update: {
-          id?: string
-          household_id?: string
-          items?: string[]
           created_at?: string
+          household_id?: string
+          id?: string
+          items?: string[]
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "pantry_preferences_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: true
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      api_usage: {
+      recipes: {
         Row: {
-          id: string
+          cost_per_serve_est: number | null
+          created_at: string
           household_id: string
-          endpoint: string
-          tokens_used: number | null
-          cost_usd: number | null
-          timestamp: string
+          id: string
+          ingredients: Json
+          instructions: string[] | null
+          serves: number
+          source_chef: string | null
+          source_domain: string
+          source_url: string | null
+          tags: string[]
+          time_mins: number
+          title: string
+          updated_at: string
         }
         Insert: {
-          id?: string
+          cost_per_serve_est?: number | null
+          created_at?: string
           household_id: string
-          endpoint: string
-          tokens_used?: number | null
-          cost_usd?: number | null
-          timestamp?: string
+          id?: string
+          ingredients: Json
+          instructions?: string[] | null
+          serves: number
+          source_chef?: string | null
+          source_domain?: string
+          source_url?: string | null
+          tags?: string[]
+          time_mins: number
+          title: string
+          updated_at?: string
         }
         Update: {
-          id?: string
+          cost_per_serve_est?: number | null
+          created_at?: string
           household_id?: string
-          endpoint?: string
-          tokens_used?: number | null
-          cost_usd?: number | null
-          timestamp?: string
+          id?: string
+          ingredients?: Json
+          instructions?: string[] | null
+          serves?: number
+          source_chef?: string | null
+          source_domain?: string
+          source_url?: string | null
+          tags?: string[]
+          time_mins?: number
+          title?: string
+          updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "recipes_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopping_lists: {
+        Row: {
+          created_at: string
+          household_id: string
+          id: string
+          items: Json
+          updated_at: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          household_id: string
+          id?: string
+          items: Json
+          updated_at?: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          household_id?: string
+          id?: string
+          items?: Json
+          updated_at?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_lists_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_household_id: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
     }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
 }
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const
