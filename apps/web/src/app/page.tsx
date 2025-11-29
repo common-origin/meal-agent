@@ -19,7 +19,7 @@ export default function HomePage() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        router.push('/meal-plan');
+        router.push('/plan');
       }
     };
     

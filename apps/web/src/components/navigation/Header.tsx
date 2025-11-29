@@ -101,13 +101,13 @@ export default function Header() {
 
         {/* Navigation Links */}
         <Box style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <NavLink href="/meal-plan" isActive={pathname === "/meal-plan"}>
-            Meal Plan
+          <NavLink href="/plan" isActive={pathname === "/plan"}>
+            Plan
           </NavLink>
           <NavLink href="/shopping-list" isActive={pathname === "/shopping-list"}>
             Shopping
           </NavLink>
-          <NavLink href="/recipe-library" isActive={pathname === "/recipe-library"}>
+          <NavLink href="/recipes" isActive={pathname === "/recipes"}>
             Recipes
           </NavLink>
           <NavLink href="/settings" isActive={pathname === "/settings"}>

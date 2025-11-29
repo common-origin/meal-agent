@@ -45,9 +45,9 @@ export async function middleware(request: NextRequest) {
 
   // Protected routes - require authentication
   const protectedPaths = [
-    '/meal-plan',
+    '/plan',
     '/shopping-list',
-    '/recipe-library',
+    '/recipes',
     '/settings',
     '/debug',
   ];
@@ -64,10 +64,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect to meal-plan if accessing login/signup while authenticated
+  // Redirect to plan if accessing login/signup while authenticated
   if ((request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup') && user) {
     const url = request.nextUrl.clone();
-    url.pathname = '/meal-plan';
+    url.pathname = '/plan';
     return NextResponse.redirect(url);
   }
 
