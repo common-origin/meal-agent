@@ -300,8 +300,9 @@ export default function PlanPage() {
     // Update budget (recalculate total based on number of meals)
     const familySettings = await getFamilySettings();
     const numberOfMeals = newWeekPlan.filter(m => m !== null).length;
-    const oldCost = oldMeal ? (RecipeLibrary.getById(oldMeal.recipeId)?.costPerServeEst || 0) * 4 : 0;
-    const newCost = (recipe.costPerServeEst || 0) * 4;
+    const oldRecipe = oldMeal ? RecipeLibrary.getById(oldMeal.recipeId) : null;
+    const oldCost = oldRecipe ? (oldRecipe.costPerServeEst || 0) * (oldRecipe.serves || 4) : 0;
+    const newCost = (recipe.costPerServeEst || 0) * (recipe.serves || 4);
     const budgetDiff = newCost - oldCost;
     const weeklyBudget = numberOfMeals * familySettings.budgetPerMeal.max;
     setBudget(prev => ({ current: prev.current + budgetDiff, total: weeklyBudget }));

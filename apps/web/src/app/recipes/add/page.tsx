@@ -162,6 +162,12 @@ export default function AddRecipePage() {
     setSaving(true);
 
     try {
+      // Estimate cost per serve based on number of ingredients (rough heuristic)
+      // Average $1.50 per ingredient, divided by servings
+      const estimatedCost = ingredients.length > 0 
+        ? (ingredients.length * 1.5) / (parseInt(serves) || 4)
+        : undefined;
+      
       const recipe: Recipe = {
         id: `custom-${Date.now()}-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
         title,
@@ -177,6 +183,7 @@ export default function AddRecipePage() {
         tags: [],
         ingredients,
         instructions: instructions.length > 0 ? instructions : undefined,
+        costPerServeEst: estimatedCost,
       };
 
       RecipeLibrary.addCustomRecipes([recipe]);
