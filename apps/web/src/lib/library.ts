@@ -239,6 +239,22 @@ export class RecipeLibrary {
   }
 
   /**
+   * Sync Supabase recipes to localStorage cache
+   * Used on page load to ensure RecipeLibrary has access to all recipes from Supabase
+   */
+  static syncSupabaseRecipes(supabaseRecipes: Recipe[]): boolean {
+    try {
+      // Replace the entire temp AI recipes cache with Supabase recipes
+      this.saveTempAIRecipes(supabaseRecipes);
+      console.log(`✅ Synced ${supabaseRecipes.length} recipes from Supabase to localStorage cache`);
+      return true;
+    } catch (error) {
+      console.error('Failed to sync Supabase recipes:', error);
+      return false;
+    }
+  }
+
+  /**
    * Add custom recipes (user-added via URL/image/manual entry)
    * These recipes will appear in "My Recipes"
    * Merges with existing custom recipes, avoiding duplicates by ID

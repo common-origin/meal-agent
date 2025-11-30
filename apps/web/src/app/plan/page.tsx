@@ -51,6 +51,16 @@ export default function PlanPage() {
     scheduleSundayToast();
     
     (async () => {
+      // First, load all recipes from Supabase to populate RecipeLibrary cache
+      console.log('📚 Loading recipes from Supabase...');
+      const { loadAllRecipes } = await import('@/lib/hybridStorage');
+      const supabaseRecipes = await loadAllRecipes();
+      if (supabaseRecipes.length > 0) {
+        console.log(`✅ Loaded ${supabaseRecipes.length} recipes from Supabase`);
+        // Sync to localStorage so RecipeLibrary.getById() can find them
+        RecipeLibrary.syncSupabaseRecipes(supabaseRecipes);
+      }
+      
       const household = loadHousehold() || getDefaultHousehold();
       const familySettings = await getFamilySettings();
       const nextWeekISO = nextWeekMondayISO();
