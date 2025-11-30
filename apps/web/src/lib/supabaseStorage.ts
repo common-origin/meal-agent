@@ -100,8 +100,8 @@ export async function loadFamilySettingsFromDb(): Promise<FamilySettings | null>
     }
     
     // If full_settings exists, use it (new format)
-    if (data.full_settings && typeof data.full_settings === 'object') {
-      return data.full_settings as FamilySettings;
+    if (data.full_settings && typeof data.full_settings === 'object' && !Array.isArray(data.full_settings)) {
+      return data.full_settings as unknown as FamilySettings;
     }
     
     // Fallback: reconstruct from simplified columns (backward compatibility)
