@@ -209,31 +209,35 @@ export class RecipeLibrary {
    * Now saves to Supabase for authenticated users so recipes persist across sessions
    */
   static async addTempAIRecipes(newRecipes: Recipe[]): Promise<boolean> {
-    const existingTemp = this.loadTempAIRecipes();
-    const existingIds = new Set(existingTemp.map(r => r.id));
-    
-    // Filter out duplicates
-    const recipesToAdd = newRecipes.filter(r => !existingIds.has(r.id));
-    
-    if (recipesToAdd.length === 0) {
-      console.log('No new temporary AI recipes to add (all duplicates)');
+    if (newRecipes.length === 0) {
+      console.log('No recipes to add');
       return true;
     }
     
-    // Enhance new recipes with tags
-    const enhancedNewRecipes = recipesToAdd.map(r => enhanceRecipeWithTags(r));
+    // Enhance all recipes with tags
+    const enhancedNewRecipes = newRecipes.map(r => enhanceRecipeWithTags(r));
     
-    // Save to localStorage for backward compatibility
-    const allTemp = [...existingTemp, ...enhancedNewRecipes];
-    this.saveTempAIRecipes(allTemp);
-    
-    // Also save to Supabase for authenticated users
+    // Save to Supabase FIRST for authenticated users (always attempt)
     const HybridStorage = await import('./hybridStorage');
+    let savedCount = 0;
     for (const recipe of enhancedNewRecipes) {
-      await HybridStorage.saveRecipe(recipe);
+      const saved = await HybridStorage.saveRecipe(recipe);
+      if (saved) savedCount++;
     }
+    console.log(`💾 Saved ${savedCount}/${enhancedNewRecipes.length} recipes to Supabase`);
     
-    console.log(`✅ Added ${recipesToAdd.length} temporary AI recipes (saved to both localStorage and Supabase)`);
+    // Then update localStorage cache (check for duplicates here)
+    const existingTemp = this.loadTempAIRecipes();
+    const existingIds = new Set(existingTemp.map(r => r.id));
+    const recipesToAdd = enhancedNewRecipes.filter(r => !existingIds.has(r.id));
+    
+    if (recipesToAdd.length > 0) {
+      const allTemp = [...existingTemp, ...recipesToAdd];
+      this.saveTempAIRecipes(allTemp);
+      console.log(`✅ Added ${recipesToAdd.length} new recipes to localStorage cache`);
+    } else {
+      console.log('ℹ️ All recipes already exist in localStorage cache');
+    }
 
     return true;
   }

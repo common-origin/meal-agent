@@ -56,6 +56,7 @@ export default function PlanPage() {
       const { loadAllRecipes } = await import('@/lib/hybridStorage');
       const supabaseRecipes = await loadAllRecipes();
       console.log(`📚 Loaded ${supabaseRecipes.length} recipes from Supabase`);
+      console.log('📚 Recipe IDs from Supabase:', supabaseRecipes.map(r => r.id).slice(0, 10));
       
       // Sync to localStorage so RecipeLibrary.getById() can find them
       if (supabaseRecipes.length > 0) {
