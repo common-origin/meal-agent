@@ -227,15 +227,20 @@ export async function loadMealPlan(weekStart: string): Promise<MealPlan | null> 
 export async function saveRecipe(recipe: Recipe): Promise<boolean> {
   try {
     const householdId = await getHouseholdId();
-    if (!householdId) return false;
+    if (!householdId) {
+      console.error('❌ Cannot save recipe: no household ID');
+      return false;
+    }
     
     const supabase = createBrowserClient();
     
     // Validate required fields
     if (!recipe.ingredients || !Array.isArray(recipe.ingredients)) {
-      console.error('Invalid recipe: missing or invalid ingredients', recipe.id);
+      console.error('❌ Invalid recipe: missing or invalid ingredients', recipe.id);
       return false;
     }
+    
+    console.log(`💾 Saving recipe to Supabase: ${recipe.title} (${recipe.id})`);
     
     const recipeData: Database['public']['Tables']['recipes']['Insert'] = {
       id: recipe.id,
@@ -260,12 +265,13 @@ export async function saveRecipe(recipe: Recipe): Promise<boolean> {
       });
     
     if (error) {
-      console.error('Error saving recipe:', error);
+      console.error('❌ Error saving recipe:', error);
       console.error('Recipe ID:', recipe.id, 'Title:', recipe.title);
       console.error('Full recipe data:', recipeData);
       return false;
     }
     
+    console.log(`✅ Recipe saved successfully: ${recipe.title}`);
     return true;
   } catch (error) {
     console.error('Error in saveRecipe:', error);
@@ -317,20 +323,31 @@ export async function loadRecipe(recipeId: string): Promise<Recipe | null> {
 export async function loadAllRecipes(): Promise<Recipe[]> {
   try {
     const householdId = await getHouseholdId();
-    if (!householdId) return [];
+    if (!householdId) {
+      console.warn('⚠️ Cannot load recipes: no household ID');
+      return [];
+    }
     
     const supabase = createBrowserClient();
     
+    console.log(`📚 Loading all recipes for household: ${householdId}`);
     const { data, error } = await supabase
       .from('recipes')
       .select('*')
       .eq('household_id', householdId)
       .order('created_at', { ascending: false });
     
-    if (error || !data) {
+    if (error) {
+      console.error('❌ Error loading recipes:', error);
       return [];
     }
     
+    if (!data) {
+      console.log('📚 No recipes found in database');
+      return [];
+    }
+    
+    console.log(`✅ Loaded ${data.length} recipes from Supabase`);
     return data.map(row => ({
       id: row.id,
       title: row.title,

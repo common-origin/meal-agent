@@ -55,10 +55,12 @@ export default function PlanPage() {
       console.log('📚 Loading recipes from Supabase...');
       const { loadAllRecipes } = await import('@/lib/hybridStorage');
       const supabaseRecipes = await loadAllRecipes();
+      console.log(`📚 Loaded ${supabaseRecipes.length} recipes from Supabase`);
+      
+      // Sync to localStorage so RecipeLibrary.getById() can find them
       if (supabaseRecipes.length > 0) {
-        console.log(`✅ Loaded ${supabaseRecipes.length} recipes from Supabase`);
-        // Sync to localStorage so RecipeLibrary.getById() can find them
         RecipeLibrary.syncSupabaseRecipes(supabaseRecipes);
+        console.log(`✅ Synced ${supabaseRecipes.length} recipes to localStorage cache`);
       }
       
       const household = loadHousehold() || getDefaultHousehold();
@@ -70,17 +72,23 @@ export default function PlanPage() {
     
     if (savedPlan && savedPlan.recipeIds.length > 0) {
       // Use the saved plan
-      console.log('📋 Plan page: Loading saved week plan');
+      console.log('📋 Plan page: Loading saved week plan with recipe IDs:', savedPlan.recipeIds);
       setShowWizard(false);
+      
+      // Build a recipe lookup map from Supabase recipes for immediate access
+      const recipeMap = new Map(supabaseRecipes.map(r => [r.id, r]));
       
       const meals: (MealCardProps | null)[] = savedPlan.recipeIds.map(recipeId => {
         if (!recipeId) return null;
         
-        const recipe = RecipeLibrary.getById(recipeId);
+        // Try Supabase recipes first, then fall back to RecipeLibrary
+        const recipe = recipeMap.get(recipeId) || RecipeLibrary.getById(recipeId);
         if (!recipe) {
-          console.warn(`Recipe ${recipeId} not found in library`);
+          console.warn(`❌ Recipe ${recipeId} not found in Supabase or localStorage`);
           return null;
         }
+        console.log(`✅ Found recipe: ${recipe.title} (${recipeId})`);
+
         
         // Generate reasons for this meal
         const reasons: string[] = [];
