@@ -99,46 +99,51 @@ export async function loadFamilySettingsFromDb(): Promise<FamilySettings | null>
       return null;
     }
     
-    // If full_settings exists, use it (new format)
+    // Get defaults to merge with
+    const { DEFAULT_FAMILY_SETTINGS } = await import('./types/settings');
+    
+    // If full_settings exists, use it (new format) and merge with defaults
     if (data.full_settings && typeof data.full_settings === 'object' && !Array.isArray(data.full_settings)) {
-      return data.full_settings as unknown as FamilySettings;
+      const loadedSettings = data.full_settings as unknown as FamilySettings;
+      // Merge with defaults to ensure all fields exist
+      return {
+        ...DEFAULT_FAMILY_SETTINGS,
+        ...loadedSettings,
+        // Ensure nested objects are properly merged
+        location: {
+          ...DEFAULT_FAMILY_SETTINGS.location,
+          ...(loadedSettings.location || {}),
+        },
+        budgetPerMeal: {
+          ...DEFAULT_FAMILY_SETTINGS.budgetPerMeal,
+          ...(loadedSettings.budgetPerMeal || {}),
+        },
+        maxCookTime: {
+          ...DEFAULT_FAMILY_SETTINGS.maxCookTime,
+          ...(loadedSettings.maxCookTime || {}),
+        },
+        batchCooking: {
+          ...DEFAULT_FAMILY_SETTINGS.batchCooking,
+          ...(loadedSettings.batchCooking || {}),
+        },
+      };
     }
     
     // Fallback: reconstruct from simplified columns (backward compatibility)
     return {
+      ...DEFAULT_FAMILY_SETTINGS,
       totalServings: data.total_servings,
       adults: data.adults,
       children: data.kids_ages.map(age => ({ age })),
       cuisines: data.cuisines,
-      customCuisines: [],
       glutenFreePreference: data.dietary_restrictions.includes('gluten-free-preference'),
       proteinFocus: data.dietary_restrictions.includes('high-protein'),
-      allergies: [],
       avoidFoods: data.dietary_restrictions.filter(r => !['gluten-free-preference', 'high-protein'].includes(r)),
-      favoriteIngredients: [],
-      spiceTolerance: 'medium' as const,
       cookingSkill: data.skill_level as 'beginner' | 'intermediate' | 'confident_home_cook' | 'advanced',
-      effortPreference: 'balanced' as const,
-      flavorProfileDescription: '',
-      location: {
-        city: '',
-        country: '',
-        hemisphere: 'northern' as const,
-      },
-      dislikedRecipeIds: [],
-      budgetPerMeal: { min: 0, max: 100 },
       maxCookTime: {
         weeknight: data.cooking_time_preference === 'quick' ? 30 : data.cooking_time_preference === 'moderate' ? 45 : 60,
         weekend: 90,
       },
-      batchCooking: {
-        enabled: false,
-        frequency: 'none' as const,
-        preferredDay: 'sunday' as const,
-      },
-      varietyLevel: 3,
-      leftoverFriendly: false,
-      pantryPreference: 'soft' as const,
       lastUpdated: data.updated_at,
     };
   } catch (error) {
