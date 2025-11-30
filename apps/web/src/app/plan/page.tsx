@@ -86,6 +86,7 @@ export default function PlanPage() {
         const recipe = recipeMap.get(recipeId) || RecipeLibrary.getById(recipeId);
         if (!recipe) {
           console.warn(`❌ Recipe ${recipeId} not found in Supabase or localStorage`);
+          console.warn(`⚠️ This meal plan may be from before the persistence fix. Generate a new plan to fix.`);
           return null;
         }
         console.log(`✅ Found recipe: ${recipe.title} (${recipeId})`);
@@ -448,11 +449,15 @@ export default function PlanPage() {
       }
 
       console.log('✅ [6/6] Generated recipes:', data.recipes.length, 'recipes');
+      console.log('📋 Recipe IDs:', data.recipes.map((r: Recipe) => r.id));
 
       // Save AI recipes to Supabase (and localStorage for backward compatibility)
+      console.log('💾 Saving recipes to Supabase...');
       const saved = await RecipeLibrary.addTempAIRecipes(data.recipes);
       if (saved) {
-        console.log('✅ Recipes saved to Supabase and localStorage');
+        console.log('✅ All recipes saved successfully');
+      } else {
+        console.error('❌ Failed to save some recipes');
       }
       
       // Add to recipe history
