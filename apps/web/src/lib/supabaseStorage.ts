@@ -31,7 +31,8 @@ async function getHouseholdId(): Promise<string | null> {
 
 /**
  * Family Settings
- * Note: We store a simplified version in the database. Full settings remain in localStorage for now.
+ * Stores the complete FamilySettings object in full_settings JSONB column
+ * Also maintains backward compatibility by updating the simplified columns
  */
 export async function saveFamilySettingsToDb(settings: FamilySettings): Promise<boolean> {
   try {
@@ -40,7 +41,8 @@ export async function saveFamilySettingsToDb(settings: FamilySettings): Promise<
     
     const supabase = createBrowserClient();
     
-    // Map FamilySettings to database schema
+    // Store complete settings in JSONB column
+    // Also update simplified columns for backward compatibility
     const dbSettings: Database['public']['Tables']['family_settings']['Insert'] = {
       household_id: householdId,
       total_servings: settings.totalServings,
@@ -57,6 +59,8 @@ export async function saveFamilySettingsToDb(settings: FamilySettings): Promise<
       cooking_time_preference: (settings.maxCookTime?.weeknight || 45) <= 30 ? 'quick' : 'standard',
       skill_level: settings.cookingSkill || 'intermediate',
       updated_at: new Date().toISOString(),
+      // Store complete settings object
+      full_settings: settings as any,
     };
     
     const { error } = await supabase
@@ -95,16 +99,22 @@ export async function loadFamilySettingsFromDb(): Promise<FamilySettings | null>
       return null;
     }
     
+    // If full_settings exists, use it (new format)
+    if (data.full_settings && typeof data.full_settings === 'object') {
+      return data.full_settings as FamilySettings;
+    }
+    
+    // Fallback: reconstruct from simplified columns (backward compatibility)
     return {
       totalServings: data.total_servings,
       adults: data.adults,
       children: data.kids_ages.map(age => ({ age })),
       cuisines: data.cuisines,
       customCuisines: [],
-      glutenFreePreference: false,
-      proteinFocus: false,
+      glutenFreePreference: data.dietary_restrictions.includes('gluten-free-preference'),
+      proteinFocus: data.dietary_restrictions.includes('high-protein'),
       allergies: [],
-      avoidFoods: data.dietary_restrictions,
+      avoidFoods: data.dietary_restrictions.filter(r => !['gluten-free-preference', 'high-protein'].includes(r)),
       favoriteIngredients: [],
       spiceTolerance: 'medium' as const,
       cookingSkill: data.skill_level as 'beginner' | 'intermediate' | 'confident_home_cook' | 'advanced',

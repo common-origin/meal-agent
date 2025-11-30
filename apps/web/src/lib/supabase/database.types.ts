@@ -56,6 +56,7 @@ export type Database = {
           created_at: string
           cuisines: string[]
           dietary_restrictions: string[]
+          full_settings: Json | null
           household_id: string
           id: string
           kids: number
@@ -70,6 +71,7 @@ export type Database = {
           created_at?: string
           cuisines?: string[]
           dietary_restrictions?: string[]
+          full_settings?: Json | null
           household_id: string
           id?: string
           kids?: number
@@ -84,6 +86,7 @@ export type Database = {
           created_at?: string
           cuisines?: string[]
           dietary_restrictions?: string[]
+          full_settings?: Json | null
           household_id?: string
           id?: string
           kids?: number
