@@ -152,6 +152,17 @@ export async function loadAllRecipes(): Promise<Recipe[]> {
   }
 }
 
+export async function deleteRecipe(recipeId: string): Promise<boolean> {
+  const authed = await isAuthenticated();
+  
+  if (authed) {
+    return await SupabaseStorage.deleteRecipe(recipeId);
+  } else {
+    // For localStorage, recipes are managed by RecipeLibrary
+    return true;
+  }
+}
+
 /**
  * Shopping Lists
  */

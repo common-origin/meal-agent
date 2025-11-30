@@ -164,8 +164,8 @@ export default function RecipesPage() {
       const isUserAdded = recipeId.startsWith('custom-') || recipeId.startsWith('ai-');
       
       if (isUserAdded) {
-        // Actually delete user-added recipes
-        const success = RecipeLibrary.removeCustomRecipe(recipeId);
+        // Actually delete user-added recipes (from localStorage and Supabase)
+        const success = await RecipeLibrary.removeCustomRecipe(recipeId);
         if (success) {
           setRecipes(prev => prev.filter(r => r.id !== recipeId));
           alert(`Recipe "${recipeTitle}" has been deleted`);

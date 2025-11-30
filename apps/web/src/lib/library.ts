@@ -299,19 +299,47 @@ export class RecipeLibrary {
 
   /**
    * Remove custom recipe by ID
+   * Removes from custom recipes, temp AI recipes, and Supabase
    */
-  static removeCustomRecipe(id: string): boolean {
-    const existingCustom = this.loadCustomRecipes();
-    const filtered = existingCustom.filter(r => r.id !== id);
+  static async removeCustomRecipe(id: string): Promise<boolean> {
+    let removed = false;
     
-    if (filtered.length === existingCustom.length) {
-      console.warn(`Recipe ${id} not found in custom recipes`);
-      return false;
+    // Remove from custom recipes
+    const existingCustom = this.loadCustomRecipes();
+    const filteredCustom = existingCustom.filter(r => r.id !== id);
+    if (filteredCustom.length < existingCustom.length) {
+      this.saveCustomRecipes(filteredCustom);
+      removed = true;
+      console.log(`✅ Removed ${id} from custom recipes`);
     }
     
-    const success = this.saveCustomRecipes(filtered);
+    // Remove from temp AI recipes
+    const existingTemp = this.loadTempAIRecipes();
+    const filteredTemp = existingTemp.filter(r => r.id !== id);
+    if (filteredTemp.length < existingTemp.length) {
+      this.saveTempAIRecipes(filteredTemp);
+      removed = true;
+      console.log(`✅ Removed ${id} from temp AI recipes`);
+    }
+    
+    // Remove from Supabase for authenticated users
+    try {
+      const HybridStorage = await import('./hybridStorage');
+      const supabaseDeleted = await HybridStorage.deleteRecipe(id);
+      if (supabaseDeleted) {
+        console.log(`✅ Removed ${id} from Supabase`);
+        removed = true;
+      }
+    } catch (error) {
+      console.warn('Failed to remove from Supabase:', error);
+    }
+    
+    if (!removed) {
+      console.warn(`Recipe ${id} not found in any storage location`);
+      return false;
+    }
 
-    return success;
+    return true;
   }
 
   /**

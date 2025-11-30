@@ -373,6 +373,36 @@ export async function loadAllRecipes(): Promise<Recipe[]> {
   }
 }
 
+export async function deleteRecipe(recipeId: string): Promise<boolean> {
+  try {
+    const householdId = await getHouseholdId();
+    if (!householdId) {
+      console.warn('⚠️ Cannot delete recipe: no household ID');
+      return false;
+    }
+    
+    const supabase = createBrowserClient();
+    
+    console.log(`🗑️ Deleting recipe from Supabase: ${recipeId}`);
+    const { error } = await supabase
+      .from('recipes')
+      .delete()
+      .eq('id', recipeId)
+      .eq('household_id', householdId);
+    
+    if (error) {
+      console.error('❌ Error deleting recipe:', error);
+      return false;
+    }
+    
+    console.log(`✅ Recipe deleted successfully: ${recipeId}`);
+    return true;
+  } catch (error) {
+    console.error('Error in deleteRecipe:', error);
+    return false;
+  }
+}
+
 /**
  * Shopping Lists
  */
