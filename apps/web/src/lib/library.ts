@@ -120,7 +120,17 @@ export class RecipeLibrary {
     // Combine built-in recipes with custom recipes and temporary AI recipes
     const customRecipes = this.loadCustomRecipes();
     const tempAIRecipes = this.loadTempAIRecipes();
-    return [...this.recipes, ...customRecipes, ...tempAIRecipes];
+    const allRecipes = [...this.recipes, ...customRecipes, ...tempAIRecipes];
+    
+    // Deduplicate by ID (prefer custom > temp AI > built-in)
+    const recipeMap = new Map<string, Recipe>();
+    for (const recipe of allRecipes) {
+      if (!recipeMap.has(recipe.id)) {
+        recipeMap.set(recipe.id, recipe);
+      }
+    }
+    
+    return Array.from(recipeMap.values());
   }
 
   /**
