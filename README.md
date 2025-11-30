@@ -2,117 +2,291 @@
 
 **Production URL**: https://meal-agent-gvvyzmw1k-commonorigins-projects.vercel.app
 
-A family meal planning application built with Common Origin Design System.
+An AI-powered multi-user meal planning application that helps households plan weekly dinners with authentication, persistent storage, and intelligent recipe recommendations.
 
-## Features
+## ✨ Key Features
 
-- 📅 **Weekly Meal Planning** - Plan dinners for the week with an intuitive responsive grid
-- 🤖 **AI Recipe Generation** - Gemini-powered personalized recipe creation based on family preferences
-- 🍳 **Real Recipes** - 50+ curated recipes from RecipeTin Eats and Jamie Oliver with real ingredients
-- 🔄 **Intelligent Swapping** - Swap meals with AI-generated suggestions or curated alternatives
-- 💰 **Budget Tracking** - Track spending against your weekly food budget with cost estimates
-- 🛒 **Smart Shopping Lists** - Aggregated ingredient lists with pantry awareness and CSV export
-- � **Pantry Scanning** - AI-powered image recognition to detect ingredients from photos
-- 🎯 **Weekly Planning Wizard** - Interactive wizard for cuisine selection and pantry management
-- 👨‍👩‍👧‍👦 **Family Settings** - Customizable preferences for servings, dietary needs, budget, cook time, cooking skill, spice tolerance, and location
-- �📊 **Analytics** - Privacy-first local analytics tracking
-- ⚙️ **Regeneration** - Pin favorite meals and regenerate the rest with custom constraints
-- 📈 **Ingredient Analytics** - Automatic tracking of ingredient usage frequency to prioritize price mapping expansion
+### Core Functionality
+- 📅 **Weekly Meal Planning** - Visual calendar with drag-and-drop meal scheduling
+- 🔐 **User Authentication** - Google OAuth + Magic Link email authentication
+- 👥 **Multi-User Households** - Household-based data isolation with Row-Level Security
+- 💾 **Persistent Storage** - PostgreSQL database with automatic synchronization
+- 🤖 **AI Recipe Generation** - Gemini-powered personalized recipes based on family preferences
+- 🍳 **Curated Recipe Library** - 50+ real recipes from RecipeTin Eats
+- 🔄 **Intelligent Swapping** - Swap meals with AI suggestions or curated alternatives
+- 💰 **Budget Tracking** - Real-time cost estimates with 179 mapped Coles products
 
-## Development
+### Advanced Features
+- 📸 **Pantry Scanning** - AI image recognition to detect ingredients from photos
+- 🔗 **URL Recipe Extraction** - Import recipes from any website
+- 🎯 **Weekly Planning Wizard** - Step-by-step guided meal plan generation
+- 🛒 **Smart Shopping Lists** - Aggregated ingredients with Coles pricing and CSV export
+- 📊 **Analytics Dashboard** - Privacy-first local analytics tracking
+- ⚙️ **Regeneration** - Pin favorite meals and regenerate others with custom constraints
+- 📈 **Ingredient Analytics** - Track usage frequency to prioritize price mapping
 
-This is a PNPM monorepo with the following structure:
+### Family Customization
+- 👨‍👩‍👧‍👦 **Household Settings** - Servings, adults, children with ages
+- 🌍 **Cuisine Preferences** - Select favorite cuisines and dietary restrictions
+- ⏱️ **Cooking Constraints** - Budget ranges, time limits, skill level
+- 🌶️ **Spice Tolerance** - Customize heat levels
+- 🏪 **Location Settings** - Seasonal and regional ingredient preferences
 
-```
-meal-agent/
-├── apps/
-│   └── web/           # Next.js application
-├── packages/
-│   └── utils/         # Shared utilities
-└── .github/
-    └── workflows/     # CI/CD pipelines
-```
+## 🛠️ Technology Stack
+
+### Core Framework
+- **Next.js 16.0.0** - React framework with App Router and Server Components
+- **React 19.2.0** - Latest React with concurrent features
+- **TypeScript 5.9.3** - Strict type safety with auto-generated database types
+- **PNPM 10.19.0** - Fast, efficient package manager
+
+### Database & Authentication
+- **Supabase PostgreSQL** - Production database with automatic backups
+- **Supabase Auth** - Google OAuth + Magic Link authentication
+- **Row-Level Security** - Database-level data isolation by household
+- **8 Tables** - Complete schema with relationships and indexes
+
+### AI & Machine Learning
+- **Google Gemini API** - gemini-2.0-flash-exp model
+  - Recipe generation
+  - Image recognition (pantry scanning)
+  - URL extraction and parsing
+
+### UI & Design
+- **@common-origin/design-system v1.14.0** - 15+ production components
+- **WCAG 2.1 AA Compliant** - Fully accessible
+- **Responsive Design** - Mobile-first approach
+
+### Data & Pricing
+- **179 Coles Products** - Manually mapped with SKUs and pricing
+- **Ingredient Analytics** - Automatic usage frequency tracking
+- **Category-Based Fallback** - Price estimation for unmapped items
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 20+
-- PNPM 9+ (`corepack enable && corepack prepare pnpm@latest --activate`)
+- **Node.js 20+**
+- **PNPM 9+** (`corepack enable && corepack prepare pnpm@latest --activate`)
+- **Supabase Account** (for database access)
+- **Google Cloud Account** (for Gemini API)
 
-### Getting Started
+### Environment Variables
 
-1. **Clone and install**
+Create `.env.local` in `apps/web/`:
+
+```bash
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://migfbyyftwgidbkwwyst.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Google Gemini AI
+GOOGLE_API_KEY=your_gemini_api_key
+
+# Optional: GitHub Integration
+GITHUB_TOKEN=your_github_token
+```
+
+### Installation
+
+1. **Clone the repository**
    ```bash
    git clone https://github.com/common-origin/meal-agent.git
    cd meal-agent
+   ```
+
+2. **Install dependencies**
+   ```bash
    pnpm install
    ```
 
-2. **Start development server**
+3. **Run database migrations**
+   
+   Open [Supabase SQL Editor](https://supabase.com/dashboard/project/migfbyyftwgidbkwwyst/sql) and execute:
+   - `supabase/migrations/001_initial_schema.sql`
+   - `supabase/migrations/002_rls_policies.sql`
+   - `supabase/migrations/003_alter_recipes_id_to_text.sql`
+   - `supabase/migrations/004_add_full_settings_to_family_settings.sql`
+
+4. **Generate database types**
+   ```bash
+   supabase gen types typescript --project-id migfbyyftwgidbkwwyst > apps/web/src/lib/supabase/database.types.ts
+   ```
+
+5. **Start development server**
    ```bash
    pnpm -F web dev
    ```
 
-3. **Open your browser**
+6. **Open your browser**
    ```
    http://localhost:3000
    ```
 
-### Available Scripts
+### Available Commands
 
 ```bash
 # Development
-pnpm -F web dev          # Start dev server
+pnpm -F web dev          # Start dev server with hot reload
 pnpm -F web build        # Build for production  
 pnpm -F web start        # Start production server
 
 # Quality Assurance
 pnpm -F web lint         # Run ESLint
-pnpm -F web typecheck    # Run TypeScript checking
+pnpm -F web typecheck    # TypeScript type checking
+pnpm test                # Run Vitest unit tests
+
+# Database
+supabase gen types typescript --project-id migfbyyftwgidbkwwyst > apps/web/src/lib/supabase/database.types.ts
+
+# Recipe Indexing
+pnpm index-chefs         # Index new recipes from chef websites
 ```
 
-## Design System
+## 📁 Project Structure
 
-This project uses the [Common Origin Design System v1.14.0](https://common-origin-design-system.vercel.app/) with components including:
+```
+meal-agent/
+├── apps/
+│   └── web/                      # Next.js application
+│       ├── src/
+│       │   ├── app/              # App Router pages & API routes
+│       │   │   ├── (auth)        # Auth pages (login, signup)
+│       │   │   ├── plan/         # Meal planning pages
+│       │   │   ├── recipes/      # Recipe library
+│       │   │   ├── settings/     # Settings pages
+│       │   │   └── api/          # AI API endpoints
+│       │   ├── components/       # React components
+│       │   └── lib/              # Core logic & utilities
+│       │       ├── supabase/     # Database clients & types
+│       │       ├── supabaseStorage.ts    # PostgreSQL CRUD
+│       │       ├── hybridStorage.ts      # Storage router
+│       │       ├── compose.ts            # Meal planning algorithm
+│       │       ├── scoring.ts            # Recipe scoring
+│       │       └── colesMapping.ts       # Price mappings
+├── supabase/
+│   ├── migrations/               # Database migrations
+│   └── README.md                 # Database setup guide
+├── data/
+│   └── library/                  # Curated recipe files
+├── scripts/
+│   └── indexChefs.ts             # Recipe indexer
+└── .github/
+    ├── workflows/                # CI/CD pipelines
+    └── *.md                      # Documentation
+```
 
-### Core Components
-- `Sheet` - Side and bottom drawers with overlay (used for Pantry, Swap, Regenerate, WeeklyOverrides)
-- `Slider` - Range input for budget and cook time settings
-- `PasswordField` - Secure input with show/hide toggle
-- `ResponsiveGrid` - Adaptive grid layout (1/2/3/4 columns based on breakpoints)
-- `IconButton` - Accessible icon-only buttons
-- `Avatar` - User profile pictures with initials fallback
-- `Stack` - Flexible layout primitive with gap control
-- `Typography` - Semantic text hierarchy (h1-h6, body, small, label)
-- `Button` - Primary, secondary, and naked variants
-- `TextField` - Text input with label and helper text
-- `Dropdown` - Select input with label
-- `Checkbox` - Boolean input
-- `Box` - Layout primitive with spacing and borders
+## 🎨 Design System
 
-### Design Tokens
-Full access to design tokens for spacing, colors, typography, and breakpoints.
+Built with [Common Origin Design System v1.14.0](https://common-origin-design-system.vercel.app/)
 
-## Deployment
+### Components Used
+- **Sheet** - Drawers (Pantry, Swap, Regenerate, Weekly Overrides)
+- **Slider** - Budget and time range controls
+- **PasswordField** - Secure input with visibility toggle
+- **ResponsiveGrid** - Adaptive 1→2→3→4 column layouts
+- **Button** - Primary, secondary, and naked variants
+- **TextField** - Text inputs with validation
+- **NumberInput** - Number inputs with min/max
+- **Dropdown** - Select menus
+- **Checkbox** - Boolean toggles
+- **Typography** - Semantic text hierarchy
+- **Avatar** - User profile images
+- **Stack** - Layout primitive
+- **Box** - Flexible containers
+- **Chip** - Tags and labels
+- **IconButton** - Icon-only buttons
+- **Divider** - Visual separators
+- **Container** - Page width constraints
 
-### Vercel (Recommended)
+All components are WCAG 2.1 AA accessible with full keyboard navigation and screen reader support.
 
-1. **Connect your repository** to Vercel
-2. **Import the project** with these settings:
+## 🔒 Security & Privacy
+
+### Data Isolation
+- **Row-Level Security (RLS)** - PostgreSQL policies enforce household data isolation
+- **No Cross-Household Access** - Users can only see their own household's data
+- **Automatic Enforcement** - Security enforced at database level, not just application
+
+### Authentication
+- **Google OAuth** - Secure authentication via Supabase Auth
+- **Magic Link** - Passwordless email authentication
+- **Session Management** - Cookie-based sessions with automatic refresh
+- **Protected Routes** - All data pages require authentication
+
+### Privacy
+- **Privacy-First Analytics** - All analytics stored locally, never sent to servers
+- **Fresh Start** - New users start with empty household (no localStorage migration)
+- **Data Export** - Users can export all their data as JSON
+- **Complete Control** - Users can delete their account and all associated data
+
+## 📦 Deployment
+
+### Vercel (Production)
+
+1. **Connect repository** to Vercel
+2. **Configure settings**:
    - Framework: Next.js
    - Root Directory: `apps/web`
-   - Build Command: `cd apps/web && pnpm build`
+   - Build Command: `pnpm build`
    - Install Command: `pnpm install`
+3. **Add environment variables** (see Environment Variables section above)
+4. **Deploy** - Automatic deployments on every push to main
 
-3. **Deploy** - Vercel will automatically deploy on every push to main
+### Database Setup (Supabase)
+
+1. Create Supabase project
+2. Run migrations in SQL Editor (see Installation section)
+3. Configure Auth providers (Google OAuth)
+4. Add redirect URLs to Auth settings:
+   - `https://your-domain.vercel.app/auth/callback`
+   - `http://localhost:3000/auth/callback`
 
 ### Manual Deployment
 
 ```bash
+# Build for production
 pnpm -F web build
+
+# Start production server
 pnpm -F web start
 ```
 
-## Contributing
+## 📚 Documentation
+
+- **[PROJECT_STATUS.md](./.github/PROJECT_STATUS.md)** - Complete project status and feature list
+- **[ARCHITECTURE.md](./.github/ARCHITECTURE.md)** - System architecture and data flow
+- **[DEVELOPMENT.md](./.github/DEVELOPMENT.md)** - Development workflows and testing
+- **[PROJECT_INSTRUCTIONS.md](./.github/PROJECT_INSTRUCTIONS.md)** - Development guidelines
+- **[QUICK_START.md](./.github/QUICK_START.md)** - Quick setup guide
+- **[supabase/README.md](./supabase/README.md)** - Database setup instructions
+- **[Design System Docs](https://common-origin-design-system.vercel.app/)** - Component library documentation
+
+## 🎯 Roadmap
+
+### Current (Phase 3) ✅
+- [x] Multi-user authentication (Google OAuth + Magic Link)
+- [x] PostgreSQL database with Row-Level Security
+- [x] Household-based data isolation
+- [x] Recipe, meal plan, and settings persistence
+- [x] 4-layer hybrid storage architecture
+
+### Next (Phase 4)
+- [ ] Household member invitation system
+- [ ] Member management UI
+- [ ] Transfer ownership functionality
+- [ ] Favorites migration to database
+
+### Future (Phase 5+)
+- [ ] Coles checkout integration (deep links + browser extension)
+- [ ] Advanced LLM-powered meal reasoning
+- [ ] Real-time Coles API pricing
+- [ ] Nutrition tracking and goals
+- [ ] Social features (share plans, rate recipes)
+- [ ] Mobile native apps (iOS/Android)
+
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feat/new-feature`
@@ -120,67 +294,20 @@ pnpm -F web start
 4. Push to the branch: `git push origin feat/new-feature`
 5. Submit a pull request
 
-## License
+Please ensure:
+- TypeScript strict mode compliance
+- WCAG 2.1 AA accessibility standards
+- Unit tests for new features
+- Documentation updates
+
+## 📝 License
 
 [MIT License](LICENSE)
 
 ---
 
-Built with ❤️ using Common Origin Design System
+**Built with ❤️ by Common Origin**
 
-## Features
-
-- Weekly meal planning with visual calendar
-- Chef-based recipe categorization  
-- Smart shopping list generation with aisle grouping
-- CSV export for grocery pickup services
-- Budget tracking and meal cost estimation
-- Mobile-responsive design with swap functionality
-
-## Tech Stack
-
-- **Framework**: Next.js 16 with App Router
-- **Language**: TypeScript (strict mode)
-- **Design System**: [@common-origin/design-system v1.14.0](https://www.npmjs.com/package/@common-origin/design-system)
-- **AI**: Google Gemini 2.0 Flash Experimental (recipe generation, image recognition, URL extraction)
-- **Package Manager**: PNPM 10.19.0
-- **Deployment**: Vercel
-- **Analytics**: Privacy-first local tracking
-
-## Architecture
-
-### Component Pattern
-- **Shared Components**: Reusable MealCard component with customizable props for different contexts
-- **Sheet Components**: Consistent drawer UX using design system Sheet component
-- **Responsive Grid**: Mobile-first 1→2→3→4 column layout
-- **Context-Aware Navigation**: Browser history-based navigation for proper back button behavior
-
-### State Management
-- **Local Storage**: Recipe library, family settings, week plans, pantry items, recipe history
-- **URL State**: Recipe detail pages
-- **React State**: UI interactions, form inputs, drawer visibility
-
-### AI Integration
-- **Recipe Generation**: Gemini generates personalized recipes based on family settings
-- **Image Recognition**: Detects ingredients from pantry/fridge photos  
-- **URL Extraction**: Scrapes and parses recipes from external websites
-- **Context Awareness**: Excludes recently used recipes, respects pantry items, follows dietary preferences
-
-## Getting Started
-
-```bash
-# Install dependencies
-pnpm install
-
-# Start development server
-pnpm -F web dev
-
-# Build for production
-pnpm -F web build
-```
-
-## Documentation
-
-- [Design System](https://common-origin-design-system.vercel.app/)
-- [Project Instructions](./PROJECT_INSTRUCTIONS.md)
-- [Build Guide](./# COPILOT_BUILD.md)
+- Design System: [@common-origin/design-system](https://www.npmjs.com/package/@common-origin/design-system)
+- Powered by: Next.js, Supabase, Google Gemini AI
+- Deployed on: Vercel

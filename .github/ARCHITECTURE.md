@@ -1,38 +1,55 @@
 # Architecture Documentation
 
-**Last Updated**: 6 November 2025  
-**Version**: Phase 1 & 2 Complete
+**Last Updated**: 30 November 2025  
+**Version**: Phase 1, 2 & 3 Complete
 
 ## System Overview
 
-Meal Agent is a Next.js-based AI-powered meal planning application that helps households plan weekly dinners using a combination of curated recipes and AI-generated meals. The system integrates Google's Gemini API for recipe generation, pantry scanning, and URL extraction, combined with deterministic scoring algorithms, explainability, cost transparency, and privacy-first analytics.
+Meal Agent is a Next.js-based multi-user AI-powered meal planning application that helps households plan weekly dinners using a combination of curated recipes and AI-generated meals. The system features:
+
+- **Supabase PostgreSQL database** with Row-Level Security for household data isolation
+- **Google OAuth + Magic Link** authentication via Supabase Auth
+- **Google Gemini API** integration for recipe generation, pantry scanning, and URL extraction
+- **4-layer hybrid storage architecture** routing between localStorage (anonymous) and PostgreSQL (authenticated)
+- **Deterministic scoring algorithms** with explainability and cost transparency
+- **Privacy-first analytics** with local event tracking
 
 ## High-Level Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                            MEAL AGENT                                    │
-│                        (Next.js 16 / React 19)                          │
+│                    (Next.js 16 / React 19 / TypeScript)                 │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                           │
 │  ┌──────────────┐    ┌─────────────────┐    ┌──────────────────┐       │
-│  │  UI Layer    │───▶│  Logic Layer    │───▶│   Data Layer     │       │
+│  │  UI Layer    │───▶│  Logic Layer    │───▶│  Storage Layer   │       │
 │  │              │    │                 │    │                  │       │
-│  │ • Pages      │    │ • compose.ts    │    │ • library.ts     │       │
-│  │ • Components │    │ • scoring.ts    │    │ • recipes.json   │       │
+│  │ • Pages      │    │ • compose.ts    │    │ • hybridStorage  │       │
+│  │ • Components │    │ • scoring.ts    │    │ • supabaseStorage│       │
 │  │ • Drawers    │    │ • explainer.ts  │    │ • localStorage   │       │
-│  │ • Cards      │    │ • aggregator.ts │    │ • Gemini API     │       │
-│  │              │    │ • colesMapping  │    │                  │       │
-│  │              │    │ • analytics.ts  │    │                  │       │
-│  │              │    │ • ingredientAnalytics                    │       │
-│  └──────────────┘    └─────────────────┘    └──────────────────┘       │
-│                                │                                         │
+│  │ • Cards      │    │ • aggregator.ts │    │                  │       │
+│  │ • Auth UI    │    │ • colesMapping  │    └────────┬─────────┘       │
+│  │              │    │ • analytics.ts  │             │                  │
+│  └──────────────┘    └─────────────────┘             │                  │
+│                                │                      │                  │
+│                                │                      ▼                  │
+│                                │         ┌──────────────────────┐       │
+│                                │         │  Supabase Backend    │       │
+│                                │         │                      │       │
+│                                │         │ • PostgreSQL DB      │       │
+│                                │         │ • Row-Level Security │       │
+│                                │         │ • Auth (OAuth +      │       │
+│                                │         │   Magic Link)        │       │
+│                                │         │ • 8 Tables           │       │
+│                                │         └──────────────────────┘       │
 │                                ▼                                         │
 │                      ┌──────────────────┐                                │
 │                      │   AI Layer       │                                │
+│                      │                  │                                │
 │                      │ • Gemini API     │                                │
 │                      │ • Recipe Gen     │                                │
-│                      │ • Image OCR      │                                │
+│                      │ • Vision API     │                                │
 │                      │ • URL Extract    │                                │
 │                      └──────────────────┘                                │
 │                                                                           │
@@ -57,7 +74,7 @@ Meal Agent is a Next.js-based AI-powered meal planning application that helps ho
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Phase 1 & 2 Architecture Layers
+## Architecture Layers (Phases 1, 2 & 3)
 
 ### 1. UI Layer (`apps/web/src/components/` & `apps/web/src/app/`)
 
@@ -76,14 +93,21 @@ Meal Agent is a Next.js-based AI-powered meal planning application that helps ho
 - `WeeklyOverridesSheet.tsx` - Week-specific overrides (Sheet component)
 
 **Pages**:
+- `/page.tsx` - Landing page with auth check and redirect
+- `/login/page.tsx` - Login with Google OAuth and Magic Link
+- `/signup/page.tsx` - Signup with authentication options
+- `/auth/callback/route.ts` - OAuth callback handler
 - `/plan/page.tsx` - Weekly grid with wizard and AI swap functionality
 - `/plan/review/page.tsx` - Plan review with summary stats
+- `/recipes/page.tsx` - Recipe library ("My Recipes")
+- `/recipes/add/page.tsx` - Add recipes via URL, image, or manual entry
+- `/recipe/[id]/page.tsx` - Recipe details with context-aware navigation
 - `/shopping-list/page.tsx` - Aggregated shopping list with Coles pricing
 - `/analytics/page.tsx` - Privacy-first analytics dashboard
-- `/settings/page.tsx` - Family preferences (household, cooking profile, location & seasonality, dietary needs) and GitHub sync
-- `/recipe/[id]/page.tsx` - Recipe details with context-aware navigation
-- `/debug/ingredient-analytics/page.tsx` - Ingredient usage tracking and price mapping analytics
-- `/recipes/add/page.tsx` - Add recipes via URL or image upload
+- `/settings/page.tsx` - Family preferences and GitHub sync
+- `/settings/data-export/page.tsx` - Export household data
+- `/about/page.tsx` - About page with tech stack and privacy info
+- `/debug/ingredient-analytics/page.tsx` - Ingredient usage tracking analytics
 
 **Accessibility**: WCAG 2.1 AA compliant, keyboard navigation, screen readers
 
@@ -179,25 +203,218 @@ storage.ts
     └──▶ Recipe history
 ```
 
-### 3. Data Layer
+### 4. Storage Layer (4-Layer Hybrid Architecture)
+
+The application uses a sophisticated 4-layer storage architecture that seamlessly routes between localStorage (anonymous users) and Supabase PostgreSQL (authenticated users):
+
+```
+Application Code
+      │
+      ▼
+┌──────────────────────────────────────┐
+│  Layer 1: storage.ts                 │  ← Synchronous localStorage utils
+│  • loadHousehold()                   │  ← Legacy/fallback layer
+│  • saveHousehold()                   │
+│  • loadWeeklyOverrides()             │
+└──────────────┬───────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────┐
+│  Layer 2: storageAsync.ts            │  ← Async wrappers
+│  • getFamilySettings()               │  ← Adds Promise interface
+│  • saveFamilySettings()              │
+└──────────────┬───────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────┐
+│  Layer 3: hybridStorage.ts           │  ← Smart Router
+│  • Routes based on auth state        │
+│  • Authenticated → Supabase          │
+│  • Anonymous → localStorage          │
+└──────────────┬───────────────────────┘
+               │
+         ┌─────┴─────┐
+         ▼           ▼
+┌─────────────┐  ┌──────────────────────┐
+│localStorage │  │ Layer 4: supabase    │  ← PostgreSQL CRUD
+│(anonymous)  │  │ Storage.ts           │
+│             │  │                      │
+│• Quick data │  │• saveMealPlan()      │
+│• No auth    │  │• loadMealPlan()      │
+│  required   │  │• saveRecipe()        │
+│             │  │• loadAllRecipes()    │
+│             │  │• saveFamilySettings()│
+│             │  │• getHouseholdId()    │
+└─────────────┘  └──────────┬───────────┘
+                            │
+                            ▼
+                 ┌──────────────────────┐
+                 │  Supabase PostgreSQL │
+                 │                      │
+                 │ • 8 Tables           │
+                 │ • RLS Policies       │
+                 │ • Automatic triggers │
+                 │ • Type safety        │
+                 └──────────────────────┘
+```
+
+**Key Features:**
+- **Automatic Routing**: Based on `supabase.auth.getUser()` - no manual checks needed
+- **Type Safety**: Auto-generated TypeScript types from database schema
+- **Deduplication**: Map-based deduplication in `getEnhancedRecipes()`
+- **Conflict Resolution**: Upsert with `onConflict` parameter for meal plans
+- **Multi-Source Recipes**: Handles Supabase recipes, custom recipes, temp AI recipes
+- **Comprehensive Logging**: Debug logging throughout storage operations
+
+### 5. Database Layer (Supabase PostgreSQL)
+
+**Schema: 8 Tables with Row-Level Security**
+
+```sql
+households
+├── id (UUID, PK)
+├── name (TEXT)
+├── created_at, updated_at
+└── Relations:
+    ├─▶ household_members (1:many)
+    ├─▶ family_settings (1:1)
+    ├─▶ recipes (1:many)
+    ├─▶ meal_plans (1:many)
+    ├─▶ shopping_lists (1:many)
+    ├─▶ pantry_preferences (1:1)
+    └─▶ api_usage (1:many)
+
+household_members
+├── id (UUID, PK)
+├── household_id (UUID, FK → households)
+├── user_id (UUID, FK → auth.users)
+├── role (TEXT: 'owner' | 'member')
+└── joined_at
+
+family_settings
+├── id (UUID, PK)
+├── household_id (UUID, FK → households, UNIQUE)
+├── total_servings (INTEGER)
+├── adults, kids, kids_ages
+├── cuisines, dietary_restrictions (TEXT[])
+├── cooking_time_preference, skill_level
+├── full_settings (JSONB) ← Migration 004
+└── created_at, updated_at
+
+recipes
+├── id (TEXT, PK) ← Supports UUIDs and semantic IDs
+├── household_id (UUID, FK → households)
+├── title, source_url, source_domain, source_chef
+├── time_mins, serves, tags (TEXT[])
+├── ingredients (JSONB)
+├── instructions (TEXT[])
+├── cost_per_serve_est (NUMERIC)
+└── created_at, updated_at
+
+meal_plans
+├── id (UUID, PK)
+├── household_id (UUID, FK → households)
+├── week_start (DATE)
+├── meals (JSONB) ← Complete week structure
+├── UNIQUE(household_id, week_start) ← Upsert key
+└── created_at, updated_at
+
+shopping_lists
+├── id (UUID, PK)
+├── household_id (UUID, FK → households)
+├── week_start (DATE)
+├── items (JSONB)
+├── UNIQUE(household_id, week_start)
+└── created_at, updated_at
+
+pantry_preferences
+├── id (UUID, PK)
+├── household_id (UUID, FK → households, UNIQUE)
+├── items (TEXT[])
+└── created_at, updated_at
+
+api_usage
+├── id (UUID, PK)
+├── household_id (UUID, FK → households)
+├── endpoint (TEXT)
+├── tokens_used (INTEGER)
+├── cost_usd (NUMERIC)
+└── timestamp
+```
+
+**Row-Level Security (RLS) Policies:**
+
+All tables have RLS enabled with policies that enforce:
+- Users can only access data from their own household
+- Helper function: `get_user_household_id()` returns current user's household
+- Owner role can invite/remove members
+- All household members have equal access to recipes, plans, shopping lists
+- Complete data isolation between households
+
+**Automatic Behaviors:**
+- **New User Signup Trigger**: Creates household, adds user as owner, creates default settings
+- **Updated Timestamps**: `handle_updated_at()` trigger on all tables
+- **Cascade Deletes**: Removing household deletes all related data
+- **Type Generation**: `supabase gen types typescript` creates TypeScript types
+
+**Migrations:**
+1. **001_initial_schema.sql** - Create 8 tables with indexes and triggers
+2. **002_rls_policies.sql** - Row-Level Security policies on all tables
+3. **003_alter_recipes_id_to_text.sql** - Change recipe ID from UUID to TEXT
+4. **004_add_full_settings_to_family_settings.sql** - Add JSONB column (pending)
+
+### 6. Authentication Layer (Supabase Auth)
+
+```
+User Authentication Flow
+      │
+      ├─▶ Google OAuth
+      │   └─▶ Redirects to /auth/callback
+      │       └─▶ Sets auth cookie
+      │           └─▶ Redirects to /plan
+      │
+      ├─▶ Magic Link (Email)
+      │   └─▶ Sends email with link
+      │       └─▶ Clicks link → /auth/callback
+      │           └─▶ Sets auth cookie
+      │               └─▶ Redirects to /plan
+      │
+      └─▶ Session Management
+          ├─▶ Browser: createClient() (client.ts)
+          ├─▶ Server: createClient() (server.ts)
+          ├─▶ Admin: createAdminClient() (bypasses RLS)
+          └─▶ Cookie-based sessions (@supabase/ssr)
+```
+
+**Security Features:**
+- Session cookies stored securely with HttpOnly flag
+- PKCE (Proof Key for Code Exchange) for OAuth
+- Automatic session refresh
+- Server-side session validation
+- Protected API routes check authentication
+
+### 7. Data Layer (Static & Runtime)
 
 **Static Data**:
-- `data/library/recipes.generated.json` - 50+ recipes
-- `data/library/nagi/*.json` - Individual recipe files
+- `data/library/recipes.generated.json` - 50+ curated recipes
+- `data/library/nagi/*.json` - Individual recipe files (JSON-LD format)
 
-**Runtime Storage (localStorage)**:
+**Runtime Storage (localStorage - Anonymous Users)**:
 ```
 household_data                          → Household preferences
 weekly_overrides_*                      → Per-week constraints
-favorite_recipes                        → Favorited recipe IDs
+favorite_recipes                        → Favorited recipe IDs (not yet migrated)
 recipe_history                          → 3-week cooking history
 analytics_events                        → Privacy-first event log
-meal-agent:ingredient-frequency:v1      → Ingredient usage frequency tracking
-meal-agent:analytics-timestamp:v1       → Last analytics update timestamp
-meal-agent:custom-recipes:v1            → User-added recipes
+meal-agent:ingredient-frequency:v1      → Ingredient usage tracking
+meal-agent:analytics-timestamp:v1       → Last analytics update
+meal-agent:custom-recipes:v1            → User-added recipes (cache)
 meal-agent:confirmed-recipes:v1         → Recipes confirmed in plans
 meal-agent:ai-temp-recipes:v1           → Temporary AI-generated recipes
 ```
+
+**Runtime Storage (PostgreSQL - Authenticated Users)**:
+All data persisted in household-scoped tables with automatic sync on changes
 
 ---
 
@@ -332,28 +549,128 @@ User generates/views meal plan
 ## Technology Stack
 
 ### Core Framework
-- **Next.js 16** - React framework with App Router
-- **React 19.2.0** - UI components with hooks
-- **TypeScript 5.9.3** - Strict mode type safety
+- **Next.js 16.0.0** - React framework with App Router and Server Components
+- **React 19.2.0** - UI library with latest concurrent features
+- **TypeScript 5.9.3** - Strict mode type safety with auto-generated database types
+- **PNPM 10.19.0** - Fast, disk-efficient monorepo package manager
 
-### Package Management
-- **PNPM 10.19.0** - Monorepo workspace manager
-- **Workspace Structure**:
-  - `apps/web` - Next.js application
-  - `scripts/` - Build-time tools
+### Database & Authentication
+- **Supabase PostgreSQL** - Production-grade PostgreSQL database
+  - Project ID: `migfbyyftwgidbkwwyst`
+  - Region: AWS ap-southeast-2 (Sydney)
+- **Supabase Auth** - Authentication service
+  - Google OAuth provider
+  - Magic Link email authentication  
+  - Cookie-based session management
+- **Row-Level Security (RLS)** - Database-level security policies
+  - 30+ policies across 8 tables
+  - Household-scoped data isolation
+  - Owner/member role enforcement
+- **@supabase/ssr** - Server-side rendering support for auth
+- **@supabase/supabase-js** - Supabase JavaScript client library
 
-### Testing
+### AI & Machine Learning
+- **Google Gemini API** - AI recipe generation and analysis
+  - Model: `gemini-2.0-flash-exp`
+  - Vision API for image recognition
+  - Text generation for recipes
+- **@google/generative-ai** - Official Gemini SDK
+
+### UI Framework & Design System
+- **@common-origin/design-system v1.14.0** - Component library
+  - 15+ production-ready components
+  - Complete design token system
+  - WCAG 2.1 AA accessible
+  - Responsive grid system
+- **Key Components**: Sheet, Slider, Button, TextField, Dropdown, Checkbox, Typography, Avatar, Stack, Box, Chip, Divider, NumberInput, PasswordField, IconButton, ResponsiveGrid, Container
+
+### Data & Storage
+- **PostgreSQL (Supabase)** - Primary database for authenticated users
+  - 8 tables with complete schema
+  - JSONB columns for flexible data
+  - Automatic timestamps and triggers
+- **localStorage** - Client-side fallback for anonymous users
+  - Privacy-first analytics
+  - Temporary data cache
+  - Recipe deduplication support
+
+### Development Tools
 - **Vitest 4.0.3** - Fast unit testing framework
-- **@testing-library/react 16.3.0** - Component testing
-- **happy-dom 20.0.8** - Lightweight DOM environment
+- **@testing-library/react 16.3.0** - Component testing utilities
+- **happy-dom 20.0.8** - Lightweight DOM environment for tests
+- **ESLint** - Code linting with strict rules
+- **GitHub Actions** - CI/CD pipeline
+- **Vercel** - Deployment platform with preview environments
 
 ### Build Tools
-- **@vitejs/plugin-react** - Vite React plugin for tests
-- **tsx** - TypeScript execution for scripts
+- **@vitejs/plugin-react** - Vite React plugin for fast tests
+- **tsx** - TypeScript execution for build scripts
+- **Turbopack** - Next.js 16 build system (experimental)
+
+### Key Dependencies
+- **zod** - Runtime type validation
+- **dayjs** - Date manipulation and formatting
+- **cheerio** - HTML parsing for recipe indexer
+- **robots-parser** - Respectful web scraping compliance
+
+### Deployment
+- **Vercel** - Production hosting
+  - Automatic deployments from main branch
+  - Preview deployments for PRs
+  - Environment variable management
+- **Supabase Cloud** - Database hosting
+  - Automatic backups
+  - Connection pooling
+  - Database migrations via SQL editor
 
 ## Key Design Decisions
 
-### 1. Build-Time vs Runtime Recipe Generation
+### 1. 4-Layer Hybrid Storage Architecture
+
+**Decision**: Implement a 4-layer storage system that automatically routes between localStorage (anonymous) and Supabase (authenticated) based on auth state.
+
+**Rationale**:
+- **Progressive Enhancement**: App works without authentication, then upgrades seamlessly
+- **Type Safety**: Supabase auto-generates TypeScript types from database schema
+- **Performance**: localStorage for anonymous users (no network latency), PostgreSQL for persistence
+- **Security**: Row-Level Security ensures complete household data isolation
+- **Flexibility**: Can add new storage backends without changing application code
+
+**Architecture**:
+```
+Application → storage.ts → storageAsync.ts → hybridStorage.ts → supabaseStorage.ts → PostgreSQL
+                                                              ↘ localStorage (fallback)
+```
+
+**Trade-offs**:
+- More complex than single storage solution
+- Need to maintain compatibility between localStorage and PostgreSQL schemas
+- localStorage data doesn't migrate automatically (fresh start for new users)
+
+### 2. Row-Level Security for Multi-Tenant Data Isolation
+
+**Decision**: Use PostgreSQL Row-Level Security policies instead of application-level authorization.
+
+**Rationale**:
+- **Defense in Depth**: Security enforced at database level, not just application code
+- **SQL Injection Protection**: RLS policies work even if SQL injection occurs
+- **Zero Trust**: Cannot accidentally query wrong household's data
+- **Audit Trail**: PostgreSQL logs show all access attempts
+- **Performance**: Policies use indexes efficiently
+
+**Implementation**:
+```sql
+CREATE POLICY "Users can view their household recipes"
+  ON public.recipes FOR SELECT
+  USING (household_id = get_user_household_id());
+```
+
+**Trade-offs**:
+- Slightly more complex database setup
+- Policies must be tested carefully
+- Cannot use service role key in client code (must use anon key)
+
+### 3. Build-Time vs Runtime Recipe Generation
 
 **Decision**: Generate static `recipes.generated.json` at build time instead of loading recipes at runtime.
 

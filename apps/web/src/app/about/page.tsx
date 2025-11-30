@@ -99,10 +99,11 @@ export default function AboutPage() {
               </Box>
 
               <Box>
-                <Typography variant="h4">☁️ Cloud Sync with Supabase</Typography>
+                <Typography variant="h4">🔐 Secure Authentication & Cloud Sync</Typography>
                 <Typography variant="body" color="subdued">
-                  Your recipes, meal plans, and settings are automatically synced to Supabase 
-                  for backup and cross-device access. Sign in with Google to get started.
+                  Sign in with Google OAuth or Magic Link (passwordless email) to access your household's 
+                  data. All recipes, meal plans, and settings are automatically synced to Supabase PostgreSQL 
+                  with Row-Level Security for complete data isolation. Works seamlessly across devices.
                 </Typography>
               </Box>
             </Stack>
@@ -235,12 +236,14 @@ export default function AboutPage() {
               </Box>
 
               <Box>
-                <Typography variant="h4">👥 Multi-User Support</Typography>
+                <Typography variant="h4">👥 Multi-User Household Support</Typography>
                 <Typography variant="body" color="subdued">
-                  <strong>Now:</strong> Supabase authentication with Google OAuth<br/>
-                  <strong>Future:</strong> Multi-user accounts with authentication, family sharing 
-                  (assign cooking duties), meal plan collaboration, shopping list delegation, 
-                  shared recipe collections, and social features to share plans with friends.
+                  <strong>Now:</strong> Complete authentication system (Google OAuth + Magic Link), 
+                  household-based data model with owner/member roles, automatic household creation 
+                  on signup, Row-Level Security for data isolation<br/>
+                  <strong>Future:</strong> Household member invitation UI, email-based invites to join 
+                  household, transfer ownership functionality, collaborative cooking duty assignments, 
+                  shopping list delegation, and social features to share plans with friends.
                 </Typography>
               </Box>
 
@@ -276,22 +279,54 @@ export default function AboutPage() {
               <Box>
                 <Typography variant="h4">Technology Stack</Typography>
                 <Typography variant="body" color="subdued">
-                  • <strong>Framework:</strong> Next.js 16 (React 19, App Router)<br/>
-                  • <strong>UI:</strong> Custom design system with styled-components<br/>
-                  • <strong>AI:</strong> Google Gemini 2.5 Flash via API<br/>
-                  • <strong>Database:</strong> Supabase PostgreSQL with row-level security<br/>
+                  • <strong>Framework:</strong> Next.js 16.0.0 (React 19, TypeScript 5.9.3)<br/>
+                  • <strong>UI:</strong> Common Origin Design System v1.14.0 (15+ components)<br/>
+                  • <strong>AI:</strong> Google Gemini 2.0 Flash Experimental (gemini-2.0-flash-exp)<br/>
+                  • <strong>Database:</strong> Supabase PostgreSQL (8 tables, 30+ RLS policies)<br/>
                   • <strong>Authentication:</strong> Supabase Auth (Google OAuth + Magic Link)<br/>
-                  • <strong>Pricing Data:</strong> Manually curated Coles product database (179 items)<br/>
-                  • <strong>Analytics:</strong> Hotjar for user behavior tracking
+                  • <strong>Storage:</strong> 4-layer hybrid architecture (PostgreSQL + localStorage)<br/>
+                  • <strong>Pricing Data:</strong> 179 manually-mapped Coles products with SKUs<br/>
+                  • <strong>Analytics:</strong> Privacy-first local tracking (Hotjar for behavior insights)<br/>
+                  • <strong>Deployment:</strong> Vercel (auto-deploy from GitHub)
                 </Typography>
               </Box>
 
               <Box>
-                <Typography variant="h4">Data Privacy</Typography>
+                <Typography variant="h4">Security & Authentication</Typography>
                 <Typography variant="body" color="subdued">
-                  Your data is securely stored in Supabase with row-level security, ensuring household 
-                  isolation. Only you and your household members can access your data. AI recipe generation 
-                  uses the Gemini API. You have full control over your data and can delete it at any time.
+                  • <strong>Authentication Methods:</strong> Google OAuth 2.0 and Magic Link email<br/>
+                  • <strong>Session Management:</strong> Secure cookie-based sessions with automatic refresh<br/>
+                  • <strong>Row-Level Security:</strong> Database policies enforce household data isolation<br/>
+                  • <strong>Zero Cross-Household Access:</strong> PostgreSQL RLS prevents any data leakage<br/>
+                  • <strong>HTTPS Only:</strong> All connections encrypted in transit<br/>
+                  • <strong>Owner Controls:</strong> Household owners can manage member access
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="h4">Data Privacy & Storage</Typography>
+                <Typography variant="body" color="subdued">
+                  <strong>Your Data is Protected:</strong><br/>
+                  • All household data stored in Supabase PostgreSQL with Row-Level Security<br/>
+                  • Complete isolation between households - users only access their own data<br/>
+                  • Analytics stored locally on your device, never sent to servers<br/>
+                  • AI recipe generation uses Gemini API (Google's standard privacy terms apply)<br/>
+                  • No cross-household access possible - enforced at database level<br/>
+                  • Automatic data cleanup when household or user is deleted (CASCADE)<br/>
+                  • Fresh start for new users - no localStorage migration<br/>
+                  • Full data export available anytime (Settings → Data Export)<br/>
+                  • You control your data and can delete your account at any time
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="h4">Multi-User Households</Typography>
+                <Typography variant="body" color="subdued">
+                  • <strong>Household Model:</strong> Each user belongs to one household<br/>
+                  • <strong>Automatic Creation:</strong> New users get their own household automatically<br/>
+                  • <strong>Roles:</strong> Owner (full control) and Member (collaborative access)<br/>
+                  • <strong>Shared Data:</strong> Recipes, meal plans, shopping lists, and settings<br/>
+                  • <strong>Future:</strong> Invitation system to add family members to household
                 </Typography>
               </Box>
             </Stack>
