@@ -6,7 +6,8 @@ import Main from "@/components/app/Main";
 import ColesShoppingModal from "@/components/app/ColesShoppingModal";
 import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from "@/lib/shoppingListAggregator";
 import { generateShoppingListCSV, downloadCSV } from "@/lib/csv";
-import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides, loadCurrentWeekPlan } from "@/lib/storage";
+import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides } from "@/lib/storage";
+import { loadCurrentWeekPlan } from "@/lib/storageAsync";
 import { composeWeek } from "@/lib/compose";
 import { nextWeekMondayISO } from "@/lib/schedule";
 import { track, type CostOptimizedMeta } from "@/lib/analytics";
@@ -44,7 +45,7 @@ export default function ShoppingListPage() {
     setApiPrices(priceMap);
   };
 
-  const generateShoppingList = () => {
+  const generateShoppingList = async () => {
     setLoading(true);
     
     // Get current plan
@@ -52,7 +53,7 @@ export default function ShoppingListPage() {
     const nextWeekISO = nextWeekMondayISO();
     
     // Check if user has a saved week plan (from AI generation or manual selection)
-    const savedPlan = loadCurrentWeekPlan(nextWeekISO);
+    const savedPlan = await loadCurrentWeekPlan(nextWeekISO);
     
     let plan;
     let weeklyPantryItems: Array<{ name: string; qty: number; unit: string }> = [];
@@ -158,7 +159,7 @@ export default function ShoppingListPage() {
     
     // Generate shopping list on mount
     const loadShoppingList = async () => {
-      generateShoppingList();
+      await generateShoppingList();
     };
     loadShoppingList();
   // eslint-disable-next-line react-hooks/exhaustive-deps

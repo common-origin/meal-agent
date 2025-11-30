@@ -99,10 +99,10 @@ export default function AboutPage() {
               </Box>
 
               <Box>
-                <Typography variant="h4">☁️ GitHub Sync (Optional)</Typography>
+                <Typography variant="h4">☁️ Cloud Sync with Supabase</Typography>
                 <Typography variant="body" color="subdued">
-                  Optionally sync your custom recipes to a private GitHub repository for backup and 
-                  cross-device access. Your data stays under your control.
+                  Your recipes, meal plans, and settings are automatically synced to Supabase 
+                  for backup and cross-device access. Sign in with Google to get started.
                 </Typography>
               </Box>
             </Stack>
@@ -235,9 +235,9 @@ export default function AboutPage() {
               </Box>
 
               <Box>
-                <Typography variant="h4">👥 Current: Single User</Typography>
+                <Typography variant="h4">👥 Multi-User Support</Typography>
                 <Typography variant="body" color="subdued">
-                  <strong>Now:</strong> Local storage, optional GitHub backup<br/>
+                  <strong>Now:</strong> Supabase authentication with Google OAuth<br/>
                   <strong>Future:</strong> Multi-user accounts with authentication, family sharing 
                   (assign cooking duties), meal plan collaboration, shopping list delegation, 
                   shared recipe collections, and social features to share plans with friends.
@@ -279,7 +279,8 @@ export default function AboutPage() {
                   • <strong>Framework:</strong> Next.js 16 (React 19, App Router)<br/>
                   • <strong>UI:</strong> Custom design system with styled-components<br/>
                   • <strong>AI:</strong> Google Gemini 2.5 Flash via API<br/>
-                  • <strong>Storage:</strong> Browser localStorage with optional GitHub sync<br/>
+                  • <strong>Database:</strong> Supabase PostgreSQL with row-level security<br/>
+                  • <strong>Authentication:</strong> Supabase Auth (Google OAuth + Magic Link)<br/>
                   • <strong>Pricing Data:</strong> Manually curated Coles product database (179 items)<br/>
                   • <strong>Analytics:</strong> Hotjar for user behavior tracking
                 </Typography>
@@ -288,9 +289,9 @@ export default function AboutPage() {
               <Box>
                 <Typography variant="h4">Data Privacy</Typography>
                 <Typography variant="body" color="subdued">
-                  All your data is stored locally in your browser. Nothing is sent to external servers 
-                  except when using AI recipe generation (Gemini API) or optional GitHub backup. 
-                  You have full control over your data and can export or delete it at any time.
+                  Your data is securely stored in Supabase with row-level security, ensuring household 
+                  isolation. Only you and your household members can access your data. AI recipe generation 
+                  uses the Gemini API. You have full control over your data and can delete it at any time.
                 </Typography>
               </Box>
             </Stack>

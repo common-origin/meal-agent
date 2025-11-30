@@ -1,43 +1,33 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import styled from "styled-components";
-import { Alert, Box, Button, Checkbox, Chip, Container, Divider, Dropdown, NumberInput, PasswordField, Slider, Stack, TextField, Typography } from "@common-origin/design-system";
-import { tokens } from "@common-origin/design-system";
-import Main from "@/components/app/Main";
-import { 
+import { Alert, Box, Button, Checkbox, Chip, Container, Divider, Dropdown, NumberInput, Slider, Stack, TextField, Typography } from "@common-origin/design-system";
+import Main from "@/components/app/Main";import { 
   getFamilySettings, 
   saveFamilySettings, 
   resetFamilySettings 
-} from "@/lib/storage";
+} from "@/lib/storageAsync";
 import type { FamilySettings } from "@/lib/types/settings";
-import { validateFamilySettings } from "@/lib/types/settings";
+import { validateFamilySettings, DEFAULT_FAMILY_SETTINGS } from "@/lib/types/settings";
 import { track } from "@/lib/analytics";
-import { GitHubClient } from "@/lib/github/client";
-import { RecipeLibrary } from "@/lib/library";
-import Link from "next/link";
-
-const StyledHelperText = styled.div`
-	font: ${tokens.semantic.typography.caption};
-	color: ${tokens.semantic.color.text.subdued};
-
-	> a {
-		text-decoration: underline;
-	}
-`
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState<FamilySettings>(getFamilySettings());
+  const [settings, setSettings] = useState<FamilySettings>(DEFAULT_FAMILY_SETTINGS);
   const [saved, setSaved] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
-  const [githubTesting, setGithubTesting] = useState(false);
-  const [githubStatus, setGithubStatus] = useState<string>('');
 
   useEffect(() => {
     track('page_view', { page: '/settings' });
+    
+    // Load settings from Supabase
+    const loadSettings = async () => {
+      const loadedSettings = await getFamilySettings();
+      setSettings(loadedSettings);
+    };
+    loadSettings();
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const validationErrors = validateFamilySettings(settings);
     
     if (validationErrors.length > 0) {
@@ -47,7 +37,7 @@ export default function SettingsPage() {
       return;
     }
 
-    const success = saveFamilySettings(settings);
+    const success = await saveFamilySettings(settings);
     if (success) {
       setSaved(true);
       setErrors([]);
@@ -66,10 +56,11 @@ export default function SettingsPage() {
     }
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
     if (confirm('Are you sure you want to reset all settings to defaults?')) {
-      resetFamilySettings();
-      setSettings(getFamilySettings());
+      await resetFamilySettings();
+      const resetSettings = await getFamilySettings();
+      setSettings(resetSettings);
       track('override_saved', { reset: true });
     }
   };
@@ -97,141 +88,6 @@ export default function SettingsPage() {
         i === index ? { age } : child
       )
     }));
-  };
-
-    const handleTestGitHubConnection = async () => {
-    const { github } = settings;
-    
-    if (!github?.enabled || !github.token || !github.owner || !github.repo) {
-      setGithubStatus('⚠️ Please fill in all GitHub fields');
-      return;
-    }
-
-    setGithubTesting(true);
-    setGithubStatus('🔄 Testing connection...');
-
-    try {
-      const client = new GitHubClient(github.token, github.owner, github.repo);
-      
-      // Test authentication
-      const authResult = await client.testConnection();
-      if (!authResult.success) {
-        setGithubStatus(`❌ ${authResult.error}`);
-        return;
-      }
-
-      // Check if repo exists
-      const repoResult = await client.checkRepo();
-      
-      if (repoResult.exists) {
-        setGithubStatus('✅ Connected successfully! Repository exists.');
-      } else {
-        setGithubStatus('✅ Connected! Repository not found. Click Create Repository.');
-      }
-
-      // Save settings after successful connection test
-      saveFamilySettings(settings);
-    } catch (error) {
-      setGithubStatus(`❌ ${error instanceof Error ? error.message : 'Connection failed'}`);
-    } finally {
-      setGithubTesting(false);
-    }
-  };
-
-  const handleCreateGitHubRepo = async () => {
-    const github = settings.github;
-    if (!github?.token || !github?.owner || !github?.repo) {
-      return;
-    }
-
-    setGithubTesting(true);
-    setGithubStatus('🔄 Creating repository...');
-
-    try {
-      const client = new GitHubClient(github.token, github.owner, github.repo);
-      const result = await client.createRepo(true);
-      
-      if (!result.success) {
-        setGithubStatus(`❌ ${result.error}`);
-      } else {
-        setGithubStatus('✅ Repository created successfully!');
-      }
-    } catch (error) {
-      setGithubStatus(`❌ ${error instanceof Error ? error.message : 'Failed to create repo'}`);
-    } finally {
-      setGithubTesting(false);
-    }
-  };
-
-  const handleSyncWithGitHub = async () => {
-    setGithubTesting(true);
-    setGithubStatus('🔄 Syncing recipes...');
-
-    try {
-      const result = await RecipeLibrary.syncWithGitHub();
-      
-      if (result.success) {
-        setGithubStatus(`✅ Synced successfully! Added ${result.added || 0} recipes from GitHub`);
-        
-        // Update last synced timestamp
-        const updatedSettings = {
-          ...settings,
-          github: {
-            ...settings.github!,
-            lastSynced: new Date().toISOString(),
-          }
-        };
-        setSettings(updatedSettings);
-        saveFamilySettings(updatedSettings);
-      } else {
-        setGithubStatus(`❌ ${result.error}`);
-      }
-    } catch (error) {
-      setGithubStatus(`❌ ${error instanceof Error ? error.message : 'Sync failed'}`);
-    } finally {
-      setGithubTesting(false);
-    }
-  };
-
-  const handleMigrateToGitHub = async () => {
-    const customRecipes = RecipeLibrary.getCustomRecipes();
-    
-    if (customRecipes.length === 0) {
-      setGithubStatus('⚠️ No recipes to migrate');
-      return;
-    }
-
-    if (!confirm(`Migrate ${customRecipes.length} recipes to GitHub?`)) {
-      return;
-    }
-
-    setGithubTesting(true);
-    setGithubStatus(`🔄 Migrating ${customRecipes.length} recipes...`);
-
-    try {
-      const result = await RecipeLibrary.migrateToGitHub();
-      
-      if (result.success) {
-        setGithubStatus(`✅ Migrated ${result.count} recipes to GitHub!`);
-        
-        // Update last synced timestamp
-        const updatedSettings = {
-          ...settings,
-          github: {
-            ...settings.github!,
-            lastSynced: new Date().toISOString(),
-          }
-        };
-        setSettings(updatedSettings);
-        saveFamilySettings(updatedSettings);
-      } else {
-        setGithubStatus(`❌ ${result.error}`);
-      }
-    } catch (error) {
-      setGithubStatus(`❌ ${error instanceof Error ? error.message : 'Migration failed'}`);
-    } finally {
-      setGithubTesting(false);
-    }
   };
 
   return (
@@ -701,166 +557,6 @@ export default function SettingsPage() {
 							</Stack>
 						</Box>
 
-						{/* GitHub Recipe Sync */}
-						<Box border="default" borderRadius="3" p="xl" bg="default">
-							<Stack direction="column" gap="md">
-								<Typography variant="h3">GitHub recipe sync</Typography>
-								<Typography variant="body">
-									Backup and sync your custom recipes to a GitHub repository. This keeps your recipes safe and accessible across devices.
-								</Typography>
-
-								<Checkbox
-									label="Enable GitHub sync"
-									checked={settings.github?.enabled || false}
-									onChange={(e) => setSettings(prev => ({
-										...prev,
-										github: {
-											...prev.github,
-											enabled: e.target.checked,
-											token: prev.github?.token || '',
-											owner: prev.github?.owner || '',
-											repo: prev.github?.repo || 'my-recipes',
-											autoSync: prev.github?.autoSync || true,
-										}
-									}))}
-								/>
-
-								{settings.github?.enabled && (
-									<Box maxWidth="400px">
-										<Stack direction="column" gap="lg">
-											<Stack direction="column" gap="xs">
-											<PasswordField
-												label="GitHub Personal Access Token"
-												value={settings.github?.token || ''}
-												onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSettings(prev => ({
-													...prev,
-													github: {
-														...prev.github!,
-														token: e.target.value,
-													}
-												}))}
-												placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-											/>
-											<StyledHelperText>
-												<Link href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer">
-													Create a token
-												</Link> with &apos;repo&apos; scope
-											</StyledHelperText>
-											</Stack>
-
-											<TextField
-												label="GitHub Username"
-												type="text"
-												value={settings.github?.owner || ''}
-												onChange={(e) => setSettings(prev => ({
-													...prev,
-													github: {
-														...prev.github!,
-														owner: e.target.value,
-													}
-												}))}
-												placeholder="your-username"
-												style={{
-													width: '100%',
-												}}
-											/>
-
-											<Stack direction="column" gap="sm">
-												<TextField
-													label="Repository name"
-													type="text"
-													value={settings.github?.repo || ''}
-													onChange={(e) => setSettings(prev => ({
-														...prev,
-														github: {
-															...prev.github!,
-															repo: e.target.value,
-														}
-													}))}
-													placeholder="my-recipes"
-													style={{
-														width: '100%',
-													}}
-												/>
-
-												<Stack direction="row" gap="sm" alignItems="center">
-													<Button
-														variant="secondary"
-														size="small"
-														onClick={handleTestGitHubConnection}
-														disabled={githubTesting}
-													>
-														{githubTesting ? 'Testing...' : 'Test Connection'}
-													</Button>
-													
-													{githubStatus.includes('not found') && (
-														<Button
-															variant="primary"
-															size="small"
-															onClick={handleCreateGitHubRepo}
-															disabled={githubTesting}
-														>
-															Create Repository
-														</Button>
-													)}
-
-													{githubStatus.includes('Connected') && (
-														<>
-															<Button
-																variant="primary"
-																size="small"
-																onClick={handleSyncWithGitHub}
-																disabled={githubTesting}
-															>
-																Sync Now
-															</Button>
-															<Button
-																variant="secondary"
-																size="small"
-																onClick={handleMigrateToGitHub}
-																disabled={githubTesting}
-															>
-																Migrate Recipes
-															</Button>
-														</>
-													)}
-												</Stack>
-											</Stack>
-
-										{githubStatus && (
-											<Alert 
-												variant={
-													githubStatus.startsWith('✅') ? 'success' :
-													githubStatus.startsWith('❌') ? 'error' :
-													githubStatus.startsWith('⚠️') ? 'warning' :
-													'info'
-												}
-												inline
-											>
-												{githubStatus.replace(/^[✅❌⚠️🔄]\s*/, '')}
-											</Alert>
-										)}											{settings.github?.lastSynced && (
-												<Typography variant="small" color="subdued">
-													Last synced: {new Date(settings.github.lastSynced).toLocaleString()}
-												</Typography>
-											)}
-
-											<Checkbox
-												label="Auto-sync when recipes change"
-												checked={settings.github?.autoSync || false}
-												onChange={(e) => setSettings(prev => ({
-													...prev,
-													github: {
-														...prev.github!,
-														autoSync: e.target.checked,
-													}
-												}))}
-											/>
-										</Stack>
-									</Box>
-								)}
-							</Stack>
-						</Box>
 
 						{/* Actions */}
 						<Stack direction="row" gap="md" justifyContent="flex-end">

@@ -13,7 +13,8 @@ import PantrySheet from "@/components/app/PantrySheet";
 import { type MealCardProps } from "@/components/app/MealCard";
 import { type Recipe } from "@/lib/types/recipe";
 import { scheduleSundayToast, isSaturdayAfter4, nextWeekMondayISO } from "@/lib/schedule";
-import { loadHousehold, getDefaultHousehold, getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan } from "@/lib/storage";
+import { loadHousehold, getDefaultHousehold } from "@/lib/storage";
+import { getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan } from "@/lib/storageAsync";
 import { getSuggestedSwaps } from "@/lib/compose";
 import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
@@ -49,12 +50,13 @@ export default function PlanPage() {
     track('page_view', { page: '/plan' });
     scheduleSundayToast();
     
-    const household = loadHousehold() || getDefaultHousehold();
-    const familySettings = getFamilySettings();
-    const nextWeekISO = nextWeekMondayISO();
-    
-    // Check if there's a saved week plan first
-    const savedPlan = loadCurrentWeekPlan(nextWeekISO);
+    (async () => {
+      const household = loadHousehold() || getDefaultHousehold();
+      const familySettings = await getFamilySettings();
+      const nextWeekISO = nextWeekMondayISO();
+      
+      // Check if there's a saved week plan first
+      const savedPlan = await loadCurrentWeekPlan(nextWeekISO);
     
     if (savedPlan && savedPlan.recipeIds.length > 0) {
       // Use the saved plan
@@ -118,21 +120,22 @@ export default function PlanPage() {
         console.log('✅ Loaded', savedPlan.pantryItems.length, 'pantry items');
       }
       
-    } else {
-      // No saved plan - show wizard instead of auto-generating
-      console.log('🧙 Plan page: No saved plan, showing wizard');
-      setShowWizard(true);
-    }
+      } else {
+        // No saved plan - show wizard instead of auto-generating
+        console.log('🧙 Plan page: No saved plan, showing wizard');
+        setShowWizard(true);
+      }
+    })();
   }, []);
 
   // Handler for updating pantry items
-  const handleUpdatePantryItems = (items: string[]) => {
+  const handleUpdatePantryItems = async (items: string[]) => {
     setPantryItems(items);
     
     // Save updated pantry items to storage
     const nextWeekISO = nextWeekMondayISO();
     const recipeIds = weekPlan.map(m => m?.recipeId || "");
-    saveCurrentWeekPlan(recipeIds, nextWeekISO, items);
+    await saveCurrentWeekPlan(recipeIds, nextWeekISO, items);
     console.log('✅ Pantry items updated and saved');
   };
 
@@ -163,7 +166,7 @@ export default function PlanPage() {
       const dayName = DAYS[swapDayIndex];
       console.log(`🤖 Generating AI swap suggestions for ${dayName}...`);
       
-      const familySettings = getFamilySettings();
+      const familySettings = await getFamilySettings();
       const dayType = swapDayIndex >= 5 ? 'weekend' : 'weeknight';
       
       // Get existing recipe IDs to avoid duplicates
@@ -229,7 +232,7 @@ export default function PlanPage() {
     }
   };
 
-  const handleSelectSwap = (recipe: Recipe) => {
+  const handleSelectSwap = async (recipe: Recipe) => {
     if (swapDayIndex === null) return;
     
     const isAddingNew = weekPlan[swapDayIndex] === null;
@@ -270,7 +273,7 @@ export default function PlanPage() {
     setWeekPlan(newWeekPlan);
     
     // Update budget (recalculate total based on number of meals)
-    const familySettings = getFamilySettings();
+    const familySettings = await getFamilySettings();
     const numberOfMeals = newWeekPlan.filter(m => m !== null).length;
     const oldCost = oldMeal ? (RecipeLibrary.getById(oldMeal.recipeId)?.costPerServeEst || 0) * 4 : 0;
     const newCost = (recipe.costPerServeEst || 0) * 4;
@@ -281,7 +284,7 @@ export default function PlanPage() {
     // Save updated week plan
     const nextWeekISO = nextWeekMondayISO();
     const recipeIds = newWeekPlan.map(meal => meal?.recipeId || "");
-    saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
+    await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
     console.log('✅ Week plan updated after swap');
     
     // Close drawer
@@ -298,7 +301,7 @@ export default function PlanPage() {
     track('page_view', { page: 'add_saved_recipe', day: DAYS[dayIndex] });
   };
 
-  const handleDeleteMeal = (dayIndex: number) => {
+  const handleDeleteMeal = async (dayIndex: number) => {
     const meal = weekPlan[dayIndex];
     if (!meal) return;
     
@@ -310,7 +313,7 @@ export default function PlanPage() {
     setWeekPlan(newWeekPlan);
     
     // Update budget (recalculate total based on number of meals)
-    const familySettings = getFamilySettings();
+    const familySettings = await getFamilySettings();
     const numberOfMeals = newWeekPlan.filter(m => m !== null).length;
     const recipe = RecipeLibrary.getById(meal.recipeId);
     const costToRemove = recipe ? (recipe.costPerServeEst || 0) * (recipe.serves || 4) : 0;
@@ -320,7 +323,7 @@ export default function PlanPage() {
     // Save updated week plan
     const nextWeekISO = nextWeekMondayISO();
     const recipeIds = newWeekPlan.map(m => m?.recipeId || "");
-    saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
+    await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
     console.log('✅ Week plan updated after deletion');
     
     track('swap', {
@@ -330,7 +333,7 @@ export default function PlanPage() {
     });
   };
 
-  const handleReorder = (oldIndex: number, newIndex: number) => {
+  const handleReorder = async (oldIndex: number, newIndex: number) => {
     console.log(`🔄 Reordering: ${DAYS[oldIndex]} → ${DAYS[newIndex]}`);
     
     // Create new array with swapped meals
@@ -343,7 +346,7 @@ export default function PlanPage() {
     // Save updated week plan
     const nextWeekISO = nextWeekMondayISO();
     const recipeIds = newWeekPlan.map(m => m?.recipeId || "");
-    saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
+    await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
     console.log('✅ Week plan reordered and saved');
     
     // Track analytics
@@ -374,7 +377,7 @@ export default function PlanPage() {
     try {
       console.log('🤖 [1/6] Starting AI meal plan generation from wizard...');
       
-      const familySettings = getFamilySettings();
+      const familySettings = await getFamilySettings();
       
       // Override cuisines with wizard selection for this week only
       const weeklySettings = {
@@ -452,7 +455,7 @@ export default function PlanPage() {
       // Save week plan
       const nextWeekISO = nextWeekMondayISO();
       const recipeIds = data.recipes.map((r: Recipe) => r.id);
-      saveCurrentWeekPlan(recipeIds, nextWeekISO, wizardData.pantryItems);
+      await saveCurrentWeekPlan(recipeIds, nextWeekISO, wizardData.pantryItems);
       
       // Track ingredient usage for analytics
       trackIngredientUsage(recipeIds);
@@ -551,7 +554,7 @@ export default function PlanPage() {
     try {
       console.log('🤖 [1/6] Starting AI meal plan generation...');
       
-      const familySettings = getFamilySettings();
+      const familySettings = await getFamilySettings();
       console.log('✅ [2/6] Family settings loaded:', {
         servings: familySettings.totalServings,
         cuisines: familySettings.cuisines,
@@ -627,7 +630,7 @@ export default function PlanPage() {
       // Save week plan to storage for shopping list
       const nextWeekISO = nextWeekMondayISO();
       const recipeIds = data.recipes.map((r: Recipe) => r.id);
-      const planSaved = saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
+      const planSaved = await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
       if (planSaved) {
         console.log('✅ Week plan saved for shopping list');
         // Track ingredient usage for analytics
@@ -673,7 +676,7 @@ export default function PlanPage() {
       console.log(`🤖 Generating single recipe for ${dayName}...`);
       setAriaLiveMessage(`Generating AI recipe for ${dayName}...`);
       
-      const familySettings = getFamilySettings();
+      const familySettings = await getFamilySettings();
       
       // Determine if it's a weekend or weeknight
       const dayType = dayIndex >= 5 ? 'weekend' : 'weeknight';
@@ -770,7 +773,7 @@ export default function PlanPage() {
       // Save updated week plan
       const nextWeekISO = nextWeekMondayISO();
       const recipeIds = newWeekPlan.map(meal => meal?.recipeId || "");
-      saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
+      await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
       console.log('✅ Week plan updated');
       setAriaLiveMessage(`Recipe generated for ${dayName}: ${recipe.title}`);
 

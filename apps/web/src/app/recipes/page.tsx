@@ -69,9 +69,6 @@ export default function RecipesPage() {
     const loadRecipes = async () => {
       setLoading(true);
       try {
-        // Load from GitHub if configured
-        await RecipeLibrary.loadFromGitHub();
-        
         const customRecipes = RecipeLibrary.getCustomRecipes();
         setRecipes(customRecipes);
         setFavorites(getFavorites());
@@ -137,29 +134,14 @@ export default function RecipesPage() {
     router.push("/recipes/add");
   };
 
-  const handleSyncGitHub = async () => {
-    try {
-      await RecipeLibrary.syncWithGitHub();
-      const customRecipes = RecipeLibrary.getCustomRecipes();
-      setRecipes(customRecipes);
-      alert("Successfully synced with GitHub!");
-    } catch (error) {
-      console.error("Failed to sync:", error);
-      alert("Failed to sync with GitHub. Check settings.");
-    }
-  };
-
   const handleClearAllRecipes = async () => {
-    if (!confirm("Are you sure you want to delete ALL saved recipes? This will clear them from localStorage and GitHub. This action cannot be undone.")) {
+    if (!confirm("Are you sure you want to delete ALL saved recipes? This action cannot be undone.")) {
       return;
     }
 
     try {
       // Clear from localStorage
       RecipeLibrary.clearCustomRecipes();
-      
-      // Clear from GitHub (save empty array)
-      await RecipeLibrary.saveToGitHub();
       
       // Update UI
       setRecipes([]);
@@ -367,13 +349,6 @@ export default function RecipesPage() {
                 Clear All
               </Button>
             )}
-            <Button
-              variant="secondary"
-              size="large"
-              onClick={handleSyncGitHub}
-            >
-              Sync GitHub
-            </Button>
             <Button
               variant="primary"
               size="large"

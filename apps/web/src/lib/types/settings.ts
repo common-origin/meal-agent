@@ -29,15 +29,6 @@ export interface LocationSettings {
   hemisphere: 'northern' | 'southern';
 }
 
-export interface GitHubSyncSettings {
-  enabled: boolean;
-  token: string; // GitHub Personal Access Token
-  owner: string; // GitHub username
-  repo: string; // Repository name (without owner)
-  lastSynced?: string; // ISO timestamp
-  autoSync: boolean; // Auto-sync on changes
-}
-
 export interface FamilySettings {
   // Household
   adults: number;
@@ -80,9 +71,6 @@ export interface FamilySettings {
   pantryPreference: 'hard' | 'soft'; // How strongly to prioritize pantry items
   weeklyReminderTime?: string; // HH:MM format, e.g., "18:00" for 6pm reminder to plan the week
   weeklyReminderDay?: 'saturday' | 'sunday' | 'monday'; // Day to send weekly reminder
-  
-  // GitHub Sync (optional)
-  github?: GitHubSyncSettings;
   
   // Metadata
   lastUpdated: string; // ISO date
