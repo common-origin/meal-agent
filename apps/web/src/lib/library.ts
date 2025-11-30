@@ -205,8 +205,10 @@ export class RecipeLibrary {
    * Add temporary AI recipes (for current meal plans only, not "My Recipes")
    * These recipes are available for searching and planning but won't appear in "My Recipes"
    * unless explicitly favorited or added via other methods
+   * 
+   * Now saves to Supabase for authenticated users so recipes persist across sessions
    */
-  static addTempAIRecipes(newRecipes: Recipe[]): boolean {
+  static async addTempAIRecipes(newRecipes: Recipe[]): Promise<boolean> {
     const existingTemp = this.loadTempAIRecipes();
     const existingIds = new Set(existingTemp.map(r => r.id));
     
@@ -221,13 +223,19 @@ export class RecipeLibrary {
     // Enhance new recipes with tags
     const enhancedNewRecipes = recipesToAdd.map(r => enhanceRecipeWithTags(r));
     
-    // Merge and save
+    // Save to localStorage for backward compatibility
     const allTemp = [...existingTemp, ...enhancedNewRecipes];
-    const success = this.saveTempAIRecipes(allTemp);
+    this.saveTempAIRecipes(allTemp);
     
-    console.log(`✅ Added ${recipesToAdd.length} temporary AI recipes (for planning only)`);
+    // Also save to Supabase for authenticated users
+    const HybridStorage = await import('./hybridStorage');
+    for (const recipe of enhancedNewRecipes) {
+      await HybridStorage.saveRecipe(recipe);
+    }
+    
+    console.log(`✅ Added ${recipesToAdd.length} temporary AI recipes (saved to both localStorage and Supabase)`);
 
-    return success;
+    return true;
   }
 
   /**

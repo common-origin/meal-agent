@@ -206,9 +206,9 @@ export default function PlanPage() {
 
       console.log('✅ Generated', data.recipes.length, 'AI swap suggestions');
 
-      // Save to temporary storage (not "My Recipes")
-      RecipeLibrary.addTempAIRecipes(data.recipes);
-      console.log('✅ AI swaps saved to temporary storage');
+      // Save to Supabase and localStorage
+      await RecipeLibrary.addTempAIRecipes(data.recipes);
+      console.log('✅ AI swaps saved to Supabase and localStorage');
       
       // Add to recipe history
       const newRecipeIds = data.recipes.map((r: Recipe) => r.id);
@@ -430,10 +430,10 @@ export default function PlanPage() {
 
       console.log('✅ [6/6] Generated recipes:', data.recipes.length, 'recipes');
 
-      // Save AI recipes to temporary storage (not "My Recipes")
-      const saved = RecipeLibrary.addTempAIRecipes(data.recipes);
+      // Save AI recipes to Supabase (and localStorage for backward compatibility)
+      const saved = await RecipeLibrary.addTempAIRecipes(data.recipes);
       if (saved) {
-        console.log('✅ Recipes saved to temporary storage');
+        console.log('✅ Recipes saved to Supabase and localStorage');
       }
       
       // Add to recipe history
@@ -599,13 +599,13 @@ export default function PlanPage() {
       console.log('✅ [6/6] Generated recipes:', data.recipes.length, 'recipes');
       console.log('Recipe titles:', data.recipes.map((r: Recipe) => r.title));
 
-      // Save AI recipes to temporary storage (not "My Recipes")
-      console.log('💾 Saving AI recipes to temporary storage...');
-      const saved = RecipeLibrary.addTempAIRecipes(data.recipes);
+      // Save AI recipes to Supabase and localStorage
+      console.log('💾 Saving AI recipes to Supabase...');
+      const saved = await RecipeLibrary.addTempAIRecipes(data.recipes);
       if (saved) {
-        console.log('✅ Recipes saved to temporary storage and will persist for planning');
+        console.log('✅ Recipes saved to Supabase and will persist across sessions');
       } else {
-        console.warn('⚠️ Failed to save recipes to temporary storage (localStorage issue?)');
+        console.warn('⚠️ Failed to save recipes');
       }
       
       // Add to recipe history to avoid repetition
@@ -735,9 +735,9 @@ export default function PlanPage() {
       const recipe: Recipe = data.recipes[0];
       console.log('✅ Generated recipe:', recipe.title);
 
-      // Save to temporary storage (not "My Recipes")
-      RecipeLibrary.addTempAIRecipes([recipe]);
-      console.log('✅ Recipe saved to temporary storage');
+      // Save to Supabase and localStorage
+      await RecipeLibrary.addTempAIRecipes([recipe]);
+      console.log('✅ Recipe saved to Supabase and localStorage');
       
       // Add to recipe history
       addToRecipeHistory([recipe.id], 'ai-generated');
