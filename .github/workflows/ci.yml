@@ -34,9 +34,11 @@ jobs:
       - name: TypeScript check
         run: pnpm -C apps/web typecheck
         
-      # Note: Build disabled temporarily due to React version compatibility
-      # - name: Build
-      #   run: pnpm -C apps/web build
+      - name: Build
+        run: pnpm -C apps/web build
+        env:
+          # Prevent Next.js telemetry during CI
+          NEXT_TELEMETRY_DISABLED: 1
       
       # Future: Add accessibility testing
       # - name: A11y tests

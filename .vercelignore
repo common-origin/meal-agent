@@ -1,0 +1,59 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Testing
+coverage
+.nyc_output
+
+# Build outputs (will be rebuilt)
+.next
+out
+dist
+build
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Documentation (not needed for deployment)
+*.md
+!README.md
+
+# Scripts (not needed for deployment)
+scripts/
+
+# Data files (recipes are compiled into the app)
+data/
+
+# Tests
+**/*.test.ts
+**/*.test.tsx
+**/__tests__
+
+# Supabase migrations (already applied)
+supabase/migrations/

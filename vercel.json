@@ -1,8 +1,8 @@
 {
-  "buildCommand": "pnpm build",
+  "buildCommand": "cd apps/web && pnpm build",
   "devCommand": "pnpm dev",
-  "installCommand": "npm install -g pnpm@10.19.0 && npx pnpm@10.19.0 install",
-  "outputDirectory": ".next",
+  "installCommand": "npm install -g pnpm@10.19.0 && pnpm install --frozen-lockfile",
+  "outputDirectory": "apps/web/.next",
   "framework": "nextjs",
   "git": {
     "deploymentEnabled": {
