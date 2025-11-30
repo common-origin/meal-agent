@@ -179,6 +179,8 @@ export async function saveMealPlan(plan: MealPlan): Promise<boolean> {
         week_start: plan.weekStart,
         meals: plan.meals,
         updated_at: new Date().toISOString(),
+      }, {
+        onConflict: 'household_id,week_start',
       });
     
     if (error) {
