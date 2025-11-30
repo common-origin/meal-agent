@@ -39,6 +39,7 @@ export default function PlanPage() {
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [generatingDayIndex, setGeneratingDayIndex] = useState<number | null>(null);
   const [ariaLiveMessage, setAriaLiveMessage] = useState<string>("");
+  const [isLoadingInitial, setIsLoadingInitial] = useState(true);
 
   
   // Pantry items state
@@ -51,6 +52,7 @@ export default function PlanPage() {
     scheduleSundayToast();
     
     (async () => {
+      setIsLoadingInitial(true);
       // First, load all recipes from Supabase to populate RecipeLibrary cache
       console.log('📚 Loading recipes from Supabase...');
       const { loadAllRecipes } = await import('@/lib/hybridStorage');
@@ -145,6 +147,9 @@ export default function PlanPage() {
         console.log('🧙 Plan page: No saved plan, showing wizard');
         setShowWizard(true);
       }
+      
+      // Loading complete
+      setIsLoadingInitial(false);
     })();
   }, []);
 
@@ -917,7 +922,7 @@ export default function PlanPage() {
           onAddSavedRecipeClick={handleAddSavedRecipe}
           generatingDayIndex={generatingDayIndex}
           onDeleteClick={handleDeleteMeal}
-          isGeneratingPlan={isGenerating}
+          isGeneratingPlan={isGenerating || isLoadingInitial}
           onReorder={handleReorder}
         />
         
