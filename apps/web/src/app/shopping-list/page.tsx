@@ -182,16 +182,28 @@ export default function ShoppingListPage() {
     // Add to pantry preferences
     addToPantryPreferences(item.normalizedName);
     
-    // Regenerate shopping list to reflect change
-    generateShoppingList();
+    // Update UI immediately by moving item to pantry section
+    setAggregatedItems(prevItems => 
+      prevItems.map(i => 
+        i.normalizedName === item.normalizedName 
+          ? { ...i, inPantry: true }
+          : i
+      )
+    );
   };
 
   const handleUnmarkAsPantry = (item: AggregatedIngredient) => {
     // Remove from pantry preferences
     removeFromPantryPreferences(item.normalizedName);
     
-    // Regenerate shopping list to reflect change
-    generateShoppingList();
+    // Update UI immediately by moving item back to shopping list
+    setAggregatedItems(prevItems => 
+      prevItems.map(i => 
+        i.normalizedName === item.normalizedName 
+          ? { ...i, inPantry: false }
+          : i
+      )
+    );
   };
 
   if (loading) {
