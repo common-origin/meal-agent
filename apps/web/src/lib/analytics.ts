@@ -20,6 +20,7 @@ export type AnalyticsEventType =
   | 'export_csv'
   | 'ingredient_reused'
   | 'cost_optimized'
+  | 'shopping_completed'
   
   // User Preferences
   | 'favorite_added'
