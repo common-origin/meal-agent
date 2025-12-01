@@ -2,12 +2,26 @@
  * Persistent API Cache for Coles Products
  * Stores API results in colesApiCache.json to reduce API usage long-term
  * Separate from localStorage cache (24h) - this has 30-day TTL
+ * 
+ * Note: This cache is optional - if colesApiCache.json doesn't exist, 
+ * an empty cache will be used.
  */
 
 import type { ColesApiProduct } from './colesApi';
-import colesCacheData from '@/data/colesApiCache.json';
 
 const PERSISTENT_CACHE_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+
+// Load cache data if available, otherwise use empty cache
+let initialCacheData: PersistentCacheData | null = null;
+if (typeof window === 'undefined') {
+  // Server-side: Try to load cache file
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    initialCacheData = require('@/data/colesApiCache.json');
+  } catch {
+    // Cache file doesn't exist - will use empty cache
+  }
+}
 
 export interface CachedProductData {
   product: ColesApiProduct;
@@ -41,21 +55,23 @@ function loadPersistentCache(): PersistentCacheData {
     return inMemoryCache;
   }
   
-  try {
-    inMemoryCache = colesCacheData as PersistentCacheData;
+  // Use pre-loaded cache data if available
+  if (initialCacheData) {
+    inMemoryCache = initialCacheData;
     return inMemoryCache;
-  } catch (error) {
-    console.error('Failed to load persistent cache:', error);
-    return {
-      meta: {
-        version: '1.0.0',
-        lastUpdated: null,
-        cacheTTL: PERSISTENT_CACHE_TTL,
-        description: 'Persistent cache for Coles API product data'
-      },
-      products: {}
-    };
   }
+  
+  // No cache file available - return empty cache
+  inMemoryCache = {
+    meta: {
+      version: '1.0.0',
+      lastUpdated: null,
+      cacheTTL: PERSISTENT_CACHE_TTL,
+      description: 'Persistent cache for Coles API product data'
+    },
+    products: {}
+  };
+  return inMemoryCache;
 }
 
 /**
