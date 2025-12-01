@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npx pnpm@10.19.0 --filter web build",
+  "buildCommand": "cd apps/web && npx pnpm@10.19.0 build",
   "devCommand": "pnpm dev",
   "installCommand": "npx pnpm@10.19.0 install --frozen-lockfile",
   "outputDirectory": "apps/web/.next",
