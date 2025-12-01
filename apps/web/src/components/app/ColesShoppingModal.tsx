@@ -40,6 +40,28 @@ export default function ColesShoppingModal({ isOpen, onClose, items }: ColesShop
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hasStarted, setHasStarted] = useState(false);
 
+  // Update shopping items when items prop changes (e.g., when pantry items are marked)
+  useEffect(() => {
+    const newItems = items
+      .filter(item => !item.isPantryStaple) // Exclude pantry staples
+      .map(item => {
+        const colesInfo = estimateIngredientCost(item.normalizedName, item.totalQty, item.unit);
+        const searchTerm = colesInfo.product?.name || item.name;
+        
+        return {
+          ingredient: item,
+          colesSearchUrl: `https://www.coles.com.au/search?q=${encodeURIComponent(searchTerm)}`,
+          isCompleted: false,
+        };
+      });
+    
+    setShoppingItems(newItems);
+    // Reset to first item if current index is out of bounds
+    if (currentIndex >= newItems.length) {
+      setCurrentIndex(Math.max(0, newItems.length - 1));
+    }
+  }, [items]);
+
   // Load products for current item
   useEffect(() => {
     if (!hasStarted || !isOpen) return;
