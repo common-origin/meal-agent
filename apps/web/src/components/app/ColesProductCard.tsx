@@ -21,14 +21,8 @@ export default function ColesProductCard({
   isRecommended,
   onSelect 
 }: ColesProductCardProps) {
-  // Log product data for debugging
-  console.log('ColesProductCard rendering:', {
-    productName: product.productName,
-    brand: product.brand,
-    currentPrice: product.currentPrice,
-    size: product.size,
-    url: product.url
-  });
+  // Log full product data for debugging
+  console.log('ColesProductCard full product object:', JSON.stringify(product, null, 2));
   
   return (
     <Box 
