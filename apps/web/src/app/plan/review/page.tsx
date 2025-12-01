@@ -10,7 +10,8 @@ import RegenerateDrawer from "@/components/app/RegenerateDrawer";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import { type PlanWeek } from "@/lib/types/recipe";
 import { type MealCardProps } from "@/components/app/MealCard";
-import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides, loadCurrentWeekPlan } from "@/lib/storage";
+import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides } from "@/lib/storage";
+import { loadCurrentWeekPlan } from "@/lib/storageAsync";
 import { composeWeek } from "@/lib/compose";
 import { RecipeLibrary } from "@/lib/library";
 import { nextWeekMondayISO } from "@/lib/schedule";
@@ -64,7 +65,7 @@ export default function PlanReviewPage() {
     };
   }, [plan]);
 
-  const generatePlan = (_pinnedDays?: number[], _constraints?: {
+  const generatePlan = async (_pinnedDays?: number[], _constraints?: {
     maxCost?: number;
     maxIngredients?: number;
     preferredChef?: string;
@@ -75,7 +76,7 @@ export default function PlanReviewPage() {
     const nextWeekISO = nextWeekMondayISO();
     
     // Check if user has a saved week plan (from AI generation or manual selection)
-    const savedPlan = loadCurrentWeekPlan(nextWeekISO);
+    const savedPlan = await loadCurrentWeekPlan(nextWeekISO);
     
     let newPlan: PlanWeek;
     
