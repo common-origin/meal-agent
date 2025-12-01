@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Box, Button, Chip, Container, Icon, IconButton, List, ListItem, ResponsiveGrid, Stack, Typography } from "@common-origin/design-system";
+import { Alert, Box, Button, Chip, Container, Icon, IconButton, List, ListItem, ResponsiveGrid, Stack, Typography } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ColesShoppingModal from "@/components/app/ColesShoppingModal";
 import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from "@/lib/shoppingListAggregator";
@@ -23,6 +23,7 @@ export default function ShoppingListPage() {
   const [showColesModal, setShowColesModal] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [apiPrices, setApiPrices] = useState<Map<string, { cost: number; source: 'api' | 'static' | 'category'; livePrice?: boolean }>>(new Map());
+  const [isShoppingComplete, setIsShoppingComplete] = useState(false);
 
   const loadApiPrices = async (items: AggregatedIngredient[]) => {
     const { estimateIngredientCostWithAPI } = await import('@/lib/colesMapping');
@@ -157,11 +158,21 @@ export default function ShoppingListPage() {
   useEffect(() => {
     track('page_view', { page: '/shopping-list' });
     
-    // Generate shopping list on mount
-    const loadShoppingList = async () => {
-      await generateShoppingList();
-    };
-    loadShoppingList();
+    // Check if shopping is already complete for this week
+    const nextWeekISO = nextWeekMondayISO();
+    const completionKey = `shopping-complete-${nextWeekISO}`;
+    const isComplete = localStorage.getItem(completionKey) === 'true';
+    setIsShoppingComplete(isComplete);
+    
+    // Generate shopping list on mount (only if not complete)
+    if (!isComplete) {
+      const loadShoppingList = async () => {
+        await generateShoppingList();
+      };
+      loadShoppingList();
+    } else {
+      setLoading(false);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -206,11 +217,45 @@ export default function ShoppingListPage() {
     );
   };
 
+  const handleShoppingComplete = () => {
+    // Mark shopping as complete for this week
+    const nextWeekISO = nextWeekMondayISO();
+    const completionKey = `shopping-complete-${nextWeekISO}`;
+    localStorage.setItem(completionKey, 'true');
+    setIsShoppingComplete(true);
+    
+    track('shopping_completed', { 
+      itemCount: aggregatedItems.length,
+      weekStart: nextWeekISO 
+    });
+  };
+
   if (loading) {
     return (
       <main style={{ padding: 24 }}>
         <Typography variant="h1">Generating shopping list...</Typography>
       </main>
+    );
+  }
+
+  // If shopping is complete, show completion message
+  if (isShoppingComplete) {
+    return (
+      <Main maxWidth="md">
+        <Container>
+          <Stack direction="column" gap="lg">
+            <Typography variant="h1">Shopping list</Typography>
+            <Alert variant="success">
+              <Stack direction="column" gap="sm">
+                <Typography variant="subtitle">✓ Shopping completed for this week!</Typography>
+                <Typography variant="body">
+                  Your shopping has been marked as complete. The list will be available again when you plan your next week.
+                </Typography>
+              </Stack>
+            </Alert>
+          </Stack>
+        </Container>
+      </Main>
     );
   }
 
@@ -473,6 +518,7 @@ export default function ShoppingListPage() {
         isOpen={showColesModal}
         onClose={() => setShowColesModal(false)}
         items={needToBuy}
+        onShoppingComplete={handleShoppingComplete}
       />
     </>
   );

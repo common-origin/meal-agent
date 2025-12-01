@@ -11,6 +11,7 @@ interface ColesShoppingModalProps {
   isOpen: boolean;
   onClose: () => void;
   items: AggregatedIngredient[];
+  onShoppingComplete?: () => void;
 }
 
 interface ShoppingItem {
@@ -21,7 +22,7 @@ interface ShoppingItem {
   loadingProducts?: boolean;
 }
 
-export default function ColesShoppingModal({ isOpen, onClose, items }: ColesShoppingModalProps) {
+export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingComplete }: ColesShoppingModalProps) {
   const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>(() => 
     items
       .filter(item => !item.isPantryStaple) // Exclude pantry staples
@@ -156,6 +157,11 @@ export default function ColesShoppingModal({ isOpen, onClose, items }: ColesShop
     const updatedItems = [...shoppingItems];
     updatedItems[currentIndex].isCompleted = true;
     setShoppingItems(updatedItems);
+    
+    // Notify parent that shopping is complete
+    if (onShoppingComplete) {
+      onShoppingComplete();
+    }
     
     // Show completion state briefly, then close
     setTimeout(() => {
