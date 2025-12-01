@@ -186,7 +186,7 @@ export default function ShoppingListPage() {
     setAggregatedItems(prevItems => 
       prevItems.map(i => 
         i.normalizedName === item.normalizedName 
-          ? { ...i, inPantry: true }
+          ? { ...i, isPantryStaple: true }
           : i
       )
     );
@@ -200,7 +200,7 @@ export default function ShoppingListPage() {
     setAggregatedItems(prevItems => 
       prevItems.map(i => 
         i.normalizedName === item.normalizedName 
-          ? { ...i, inPantry: false }
+          ? { ...i, isPantryStaple: false }
           : i
       )
     );
