@@ -1,44 +1,75 @@
 /**
- * Tag Normalizer
- * Infers structured tags from recipe metadata and ingredients
+ * Tag Normalizer (Refactored)
+ * Clean, accurate tag inference and normalization for recipes
  */
 
 import type { Recipe } from "./types/recipe";
 
 /**
- * Normalized tag types for meal planning
+ * Valid recipe tags - single source of truth
+ */
+export const VALID_TAGS = [
+  // Dietary
+  'kid_friendly',
+  'gluten_light',
+  'high_protein',
+  'vegetarian',
+  'vegan',
+  'dairy_free',
+  
+  // Cooking style
+  'quick',
+  'simple',
+  'bulk_cook',
+  'one_pot',
+  
+  // Occasion
+  'weeknight',
+  'weekend',
+  'party_food',
+  'bbq',
+  
+  // Protein
+  'chicken',
+  'beef',
+  'pork',
+  'fish',
+  'lamb',
+  'seafood',
+  
+  // Other
+  'organic_ok',
+] as const;
+
+export type RecipeTag = typeof VALID_TAGS[number];
+
+const VALID_TAG_SET = new Set(VALID_TAGS);
+
+/**
+ * Deprecated - kept for backwards compatibility
  */
 export const TAG_TYPES = {
-  // Dietary
   KID_FRIENDLY: "kid_friendly",
   GLUTEN_LIGHT: "gluten_light",
   HIGH_PROTEIN: "high_protein",
   VEGETARIAN: "vegetarian",
   VEGAN: "vegan",
   DAIRY_FREE: "dairy_free",
-  
-  // Cooking style
-  QUICK: "quick", // ≤30 mins
-  SIMPLE: "simple", // ≤10 ingredients
-  BULK_COOK: "bulk_cook", // Serves ≥6 or tagged for meal prep
+  QUICK: "quick",
+  SIMPLE: "simple",
+  BULK_COOK: "bulk_cook",
   ONE_POT: "one_pot",
-  
-  // Occasion
   WEEKNIGHT: "weeknight",
   WEEKEND: "weekend",
   PARTY_FOOD: "party_food",
   BBQ: "bbq",
-  
-  // Protein
   CHICKEN: "chicken",
   BEEF: "beef",
   PORK: "pork",
   FISH: "fish",
   LAMB: "lamb",
   SEAFOOD: "seafood",
-  
-  // Other
-  ORGANIC_OK: "organic_ok", // Uses common organic ingredients
+  ORGANIC_OK: "organic_ok",
 } as const;
 
 /**
@@ -130,45 +161,44 @@ const ORGANIC_FRIENDLY_INGREDIENTS = [
 ];
 
 /**
- * Infer tags from recipe data
+ * Infer tags from recipe data (pure inference, no copying existing tags)
  */
-export function inferTags(recipe: Recipe): string[] {
-  const inferred = new Set<string>(recipe.tags || []);
+function inferTagsFromRecipe(recipe: Recipe): Set<string> {
+  const tags = new Set<string>();
   
   // Time-based tags
   if (recipe.timeMins !== undefined) {
     if (recipe.timeMins <= 30) {
-      inferred.add(TAG_TYPES.QUICK);
-      inferred.add(TAG_TYPES.WEEKNIGHT);
-    }
-    if (recipe.timeMins <= 40) {
-      inferred.add(TAG_TYPES.WEEKNIGHT);
+      tags.add('quick');
+      tags.add('weeknight');
+    } else if (recipe.timeMins <= 40) {
+      tags.add('weeknight');
     }
   }
   
   // Ingredient count
   if (recipe.ingredients.length <= 10) {
-    inferred.add(TAG_TYPES.SIMPLE);
+    tags.add('simple');
   }
   
   // Bulk cook (serves 6+)
   if (recipe.serves && recipe.serves >= 6) {
-    inferred.add(TAG_TYPES.BULK_COOK);
+    tags.add('bulk_cook');
   }
   
-  // Check title and existing tags
+  // Check title and existing tags for hints
   const titleLower = recipe.title.toLowerCase();
   const tagsLower = recipe.tags.map(t => t.toLowerCase()).join(" ");
   const searchText = `${titleLower} ${tagsLower}`;
   
   // Kid friendly
   if (KID_FRIENDLY_KEYWORDS.some(kw => searchText.includes(kw))) {
-    inferred.add(TAG_TYPES.KID_FRIENDLY);
+    tags.add('kid_friendly');
   }
   
   // Gluten light
   if (GLUTEN_LIGHT_KEYWORDS.some(kw => searchText.includes(kw))) {
-    inferred.add(TAG_TYPES.GLUTEN_LIGHT);
+    tags.add('gluten_light');
   }
   
   // Check ingredients
@@ -178,28 +208,28 @@ export function inferTags(recipe: Recipe): string[] {
   
   // High protein
   if (HIGH_PROTEIN_INGREDIENTS.some(ing => ingredientNames.includes(ing))) {
-    inferred.add(TAG_TYPES.HIGH_PROTEIN);
+    tags.add('high_protein');
   }
   
   // Vegetarian check (no meat ingredients)
   const hasMeat = MEAT_INGREDIENTS.some(meat => ingredientNames.includes(meat));
   if (!hasMeat) {
-    inferred.add(TAG_TYPES.VEGETARIAN);
+    tags.add('vegetarian');
   }
   
   // Protein types
-  if (ingredientNames.includes("chicken")) inferred.add(TAG_TYPES.CHICKEN);
-  if (ingredientNames.includes("beef")) inferred.add(TAG_TYPES.BEEF);
+  if (ingredientNames.includes("chicken")) tags.add('chicken');
+  if (ingredientNames.includes("beef")) tags.add('beef');
   if (ingredientNames.includes("pork") || ingredientNames.includes("bacon")) {
-    inferred.add(TAG_TYPES.PORK);
+    tags.add('pork');
   }
   if (ingredientNames.includes("fish") || ingredientNames.includes("salmon") || 
       ingredientNames.includes("tuna")) {
-    inferred.add(TAG_TYPES.FISH);
+    tags.add('fish');
   }
-  if (ingredientNames.includes("lamb")) inferred.add(TAG_TYPES.LAMB);
+  if (ingredientNames.includes("lamb")) tags.add('lamb');
   if (ingredientNames.includes("prawn") || ingredientNames.includes("shrimp")) {
-    inferred.add(TAG_TYPES.SEAFOOD);
+    tags.add('seafood');
   }
   
   // Organic friendly (uses >50% organic-friendly ingredients)
@@ -207,75 +237,144 @@ export function inferTags(recipe: Recipe): string[] {
     ingredientNames.includes(ing)
   ).length;
   if (organicCount / recipe.ingredients.length > 0.5) {
-    inferred.add(TAG_TYPES.ORGANIC_OK);
+    tags.add('organic_ok');
   }
   
-  return Array.from(inferred);
+  return tags;
 }
 
 /**
- * Normalize existing tags to standard format
+ * Deprecated - use standardizeRecipeTags instead
+ */
+export function inferTags(recipe: Recipe): string[] {
+  return Array.from(inferTagsFromRecipe(recipe));
+}
+
+/**
+ * Tag variation mappings - map common variations to standard tags
+ */
+const TAG_MAPPINGS: Record<string, string> = {
+  // Kid friendly
+  'kids': 'kid_friendly',
+  'kid': 'kid_friendly',
+  'family': 'kid_friendly',
+  'family_friendly': 'kid_friendly',
+  'child': 'kid_friendly',
+  'children': 'kid_friendly',
+  
+  // Quick
+  'fast': 'quick',
+  'express': 'quick',
+  '30_min': 'quick',
+  '30_minute': 'quick',
+  
+  // Simple
+  'easy': 'simple',
+  'beginner': 'simple',
+  
+  // Bulk cook
+  'batch': 'bulk_cook',
+  'meal_prep': 'bulk_cook',
+  'batch_cooking': 'bulk_cook',
+  'leftovers': 'bulk_cook',
+  
+  // Vegetarian
+  'veggie': 'vegetarian',
+  'veg': 'vegetarian',
+  
+  // BBQ
+  'barbecue': 'bbq',
+  'grill': 'bbq',
+  'grilled': 'bbq',
+  
+  // One pot
+  'one_pan': 'one_pot',
+  'single_pot': 'one_pot',
+};
+
+/**
+ * Normalize a single tag to standard format
+ * Returns null if tag is invalid or cannot be mapped
+ */
+function normalizeTag(tag: string): string | null {
+  const lower = tag.toLowerCase().replace(/[_\s-]+/g, '_');
+  
+  // Check direct mapping
+  if (TAG_MAPPINGS[lower]) {
+    return TAG_MAPPINGS[lower];
+  }
+  
+  // Check if it's already a valid tag
+  if (VALID_TAG_SET.has(lower as RecipeTag)) {
+    return lower;
+  }
+  
+  // Check if tag contains a valid tag (e.g., "kid_friendly_dinner" → "kid_friendly")
+  for (const validTag of VALID_TAGS) {
+    if (lower.includes(validTag)) {
+      return validTag;
+  }
+  }
+  
+  // Check if tag contains a mappable keyword
+  for (const [key, value] of Object.entries(TAG_MAPPINGS)) {
+    if (lower.includes(key)) {
+      return value;
+    }
+  }
+  
+  // Invalid tag - discard
+  return null;
+}
+
+/**
+ * Deprecated - use standardizeRecipeTags instead
  */
 export function normalizeTags(tags: string[]): string[] {
   const normalized = new Set<string>();
   
   for (const tag of tags) {
-    const lower = tag.toLowerCase().replace(/[_\s-]+/g, "_");
-    
-    // Map common variations to standard tags
-    if (lower.includes("kid") || lower.includes("family")) {
-      normalized.add(TAG_TYPES.KID_FRIENDLY);
+    const result = normalizeTag(tag);
+    if (result) {
+      normalized.add(result);
     }
-    if (lower.includes("quick") || lower.includes("fast") || lower.includes("express")) {
-      normalized.add(TAG_TYPES.QUICK);
-    }
-    if (lower.includes("simple") || lower.includes("easy")) {
-      normalized.add(TAG_TYPES.SIMPLE);
-    }
-    if (lower.includes("bulk") || lower.includes("batch") || lower.includes("meal_prep")) {
-      normalized.add(TAG_TYPES.BULK_COOK);
-    }
-    if (lower.includes("vegetarian") || lower.includes("veggie")) {
-      normalized.add(TAG_TYPES.VEGETARIAN);
-    }
-    if (lower.includes("vegan")) {
-      normalized.add(TAG_TYPES.VEGAN);
-    }
-    if (lower.includes("party") || lower.includes("appetizer") || lower.includes("finger")) {
-      normalized.add(TAG_TYPES.PARTY_FOOD);
-    }
-    if (lower.includes("bbq") || lower.includes("grill")) {
-      normalized.add(TAG_TYPES.BBQ);
-    }
-    if (lower.includes("chicken")) {
-      normalized.add(TAG_TYPES.CHICKEN);
-    }
-    if (lower.includes("beef")) {
-      normalized.add(TAG_TYPES.BEEF);
-    }
-    if (lower.includes("pork")) {
-      normalized.add(TAG_TYPES.PORK);
-    }
-    
-    // Keep original tag as well
-    normalized.add(lower);
   }
   
   return Array.from(normalized);
 }
 
 /**
- * Enhance recipe with inferred and normalized tags
+ * Standardize all tags for a recipe
+ * This is the main function to use for tag processing
+ */
+export function standardizeRecipeTags(recipe: Recipe): string[] {
+  const finalTags = new Set<string>();
+  
+  // 1. Normalize existing tags from source
+  for (const tag of recipe.tags) {
+    const normalized = normalizeTag(tag);
+    if (normalized) {
+      finalTags.add(normalized);
+    }
+  }
+  
+  // 2. Infer additional tags from recipe data
+  const inferred = inferTagsFromRecipe(recipe);
+  for (const tag of inferred) {
+    finalTags.add(tag);
+  }
+  
+  // 3. Return sorted array of unique, valid tags
+  return Array.from(finalTags).sort();
+}
+
+/**
+ * Enhance recipe with clean, standardized tags
+ * This is the public API for tag processing
  */
 export function enhanceRecipeWithTags(recipe: Recipe): Recipe {
-  const normalizedExisting = normalizeTags(recipe.tags);
-  const inferred = inferTags(recipe);
-  
-  // Combine and deduplicate
-  const allTags = new Set([...normalizedExisting, ...inferred]);
-  
   return {
     ...recipe,
-    tags: Array.from(allTags).sort()
+    tags: standardizeRecipeTags(recipe)
   };
 }
