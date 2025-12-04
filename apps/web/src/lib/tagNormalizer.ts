@@ -46,6 +46,24 @@ export type RecipeTag = typeof VALID_TAGS[number];
 const VALID_TAG_SET = new Set(VALID_TAGS);
 
 /**
+ * Format a tag for display to users (converts underscores to spaces, capitalizes)
+ */
+export function formatTagForDisplay(tag: string): string {
+  return tag
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+/**
+ * Format multiple tags for display
+ */
+export function formatTagsForDisplay(tags: string[]): string[] {
+  return tags.map(formatTagForDisplay);
+}
+
+/**
  * Deprecated - kept for backwards compatibility
  */
 export const TAG_TYPES = {

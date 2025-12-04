@@ -11,6 +11,7 @@ import { type Recipe } from "@/lib/types/recipe";
 import { track } from "@/lib/analytics";
 import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
 import { calculateSeasonalScore, isIngredientInSeason } from "@/lib/seasonal";
+import { formatTagsForDisplay } from "@/lib/tagNormalizer";
 import StarRating from "@/components/app/StarRating";
 
 type RecipePageProps = {
@@ -131,7 +132,7 @@ export default function RecipePage({ params }: RecipePageProps) {
 
           {recipe.tags && recipe.tags.length > 0 && (
             <ChipGroup 
-              labels={Array.from(new Set(recipe.tags.map(tag => tag.replace(/_/g, " ")))).slice(0, 8)} 
+              labels={formatTagsForDisplay([...new Set(recipe.tags)]).slice(0, 8)} 
               variant="dark" 
             />
           )}
