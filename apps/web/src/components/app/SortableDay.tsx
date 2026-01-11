@@ -112,30 +112,28 @@ export default function SortableDay({
               <Typography variant="label" color="subdued">
                 No meal planned
               </Typography>
-              {(onAddSavedRecipeClick || onGenerateClick) && (
-                <div style={{ width: '100%', maxWidth: '200px' }}>
-                  <Stack direction="column" gap="sm">
-                    {onAddSavedRecipeClick && (
-                      <Button
-                        variant="secondary"
-                        size="small"
-                        onClick={() => onAddSavedRecipeClick(index)}
-                        iconName="add"
-                      >
-                        Add saved recipe
-                      </Button>
-                    )}
-                    {onGenerateClick && (
-                      <Button
-                        variant="primary"
-                        size="small"
-                        onClick={() => onGenerateClick(index)}
-                      >
-                        Generate with AI
-                      </Button>
-                    )}
-                  </Stack>
-                </div>
+              {(onAddSavedRecipeClick || onGenerateClick) && (          
+                <Stack direction="column" gap="sm">
+                  {onAddSavedRecipeClick && (
+                    <Button
+                      variant="secondary"
+                      size="small"
+                      onClick={() => onAddSavedRecipeClick(index)}
+                      iconName="add"
+                    >
+                      Add saved recipe
+                    </Button>
+                  )}
+                  {onGenerateClick && (
+                    <Button
+                      variant="primary"
+                      size="small"
+                      onClick={() => onGenerateClick(index)}
+                    >
+                      Generate
+                    </Button>
+                  )}
+                </Stack>     
               )}
             </Box>
           )}

@@ -117,7 +117,7 @@ export default function Header() {
           {user && (
             <Button
               variant="secondary"
-              size="small"
+              size="large"
               onClick={handleSignOut}
               disabled={loading}
             >

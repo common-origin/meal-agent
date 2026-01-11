@@ -27,6 +27,6 @@
     "vitest": "^4.0.3"
   },
   "dependencies": {
-    "@common-origin/design-system": "1.16.0"
+    "@common-origin/design-system": "2.4.2"
   }
 }

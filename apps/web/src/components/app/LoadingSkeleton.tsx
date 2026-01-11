@@ -1,6 +1,6 @@
 "use client";
 
-import { Box } from "@common-origin/design-system";
+import { Box, Typography } from "@common-origin/design-system";
 import styled, { keyframes } from "styled-components";
 import { tokens } from "@common-origin/design-system";
 
@@ -17,11 +17,11 @@ const SkeletonBox = styled(Box)`
   background: linear-gradient(
     to right,
     ${tokens.semantic.color.background.default} 0%,
-    ${tokens.semantic.color.background.subtle} 50%,
+    ${tokens.semantic.color.background.disabled} 50%,
     ${tokens.semantic.color.background.default} 100%
   );
   background-size: 800px 104px;
-  animation: ${shimmer} 1.5s ease-in-out infinite;
+  animation: ${shimmer} 2s ease-in-out infinite;
   border-radius: ${tokens.base.border.radius[4]};
   height: 300px;
   width: 100%;
@@ -56,7 +56,7 @@ export default function LoadingSkeleton({
         />
       ))}
       {/* Screen reader text */}
-      <span className="sr-only">{ariaLabel}</span>
+      <span className="sr-only"><Typography variant="caption">{ariaLabel}</Typography></span>
     </div>
   );
 }

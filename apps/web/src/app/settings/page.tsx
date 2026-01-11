@@ -227,11 +227,13 @@ export default function SettingsPage() {
 
 						{/* Cooking Profile */}
 						<Box border="default" borderRadius="4" p="lg" bg="default">
-							<Stack direction="column" gap="md">
-								<Typography variant="h3">Cooking profile</Typography>
-								<Typography variant="small" color="subdued">
-									Help us understand your cooking preferences and skill level
-								</Typography>
+							<Stack direction="column" gap="2xl">
+								<Stack direction="column" gap="md">
+									<Typography variant="h3">Cooking profile</Typography>
+									<Typography variant="small" color="subdued">
+										Help us understand your cooking preferences and skill level
+									</Typography>
+								</Stack>
 								
 								<Box maxWidth="500px">
 									<Stack direction="column" gap="lg">
@@ -308,11 +310,13 @@ export default function SettingsPage() {
 
 						{/* Location & Seasonality */}
 						<Box border="default" borderRadius="4" p="lg" bg="default">
-							<Stack direction="column" gap="md">
-								<Typography variant="h3">Location & seasonality</Typography>
-								<Typography variant="small" color="subdued">
-									Used for ingredient availability and seasonal preferences
-								</Typography>
+							<Stack direction="column" gap="2xl">
+								<Stack direction="column" gap="md">
+									<Typography variant="h3">Location & seasonality</Typography>
+									<Typography variant="small" color="subdued">
+										Used for ingredient availability and seasonal preferences
+									</Typography>
+								</Stack>
 								
 								<Box maxWidth="500px">
 									<Stack direction="column" gap="lg">
@@ -370,7 +374,7 @@ export default function SettingsPage() {
 							<Stack direction="column" gap="md">
 								<Typography variant="h3">Budget & time</Typography>
 								
-								<Stack direction="column" gap="lg">
+								<Stack direction="column" gap="xl">
 									<Slider
 										label={`Budget per meal (min): $${settings.budgetPerMeal.min}`}
 										min={10}
@@ -493,68 +497,76 @@ export default function SettingsPage() {
 
 						{/* Pantry Preference */}
 						<Box border="default" borderRadius="4" p="lg" bg="default">
-							<Stack direction="column" gap="md">
-								<Typography variant="h3">Pantry ingredients priority</Typography>
-								<Typography variant="body">
-									Control how the AI prioritizes ingredients you already have in your pantry/fridge when generating meal plans.
-								</Typography>
-								
-								<Dropdown
-									label="Priority Level"
-									helperText="Perishable items you add to your pantry list will automatically be prioritized regardless of this setting to help reduce food waste."
-									value={settings.pantryPreference}
-									onChange={(value) => setSettings(prev => ({
-										...prev,
-										pantryPreference: value as 'hard' | 'soft'
-									}))}
-									options={[
-										{ id: 'hard', label: 'High Priority - Strongly prefer recipes using these ingredients' },
-										{ id: 'soft', label: 'Low Priority - Consider these ingredients if suitable' }
-									]}
-								/>
-							</Stack>
+							<Box maxWidth="500px">
+								<Stack direction="column" gap="2xl">
+									<Stack direction="column" gap="md">
+										<Typography variant="h3">Pantry ingredients priority</Typography>
+										<Typography variant="body">
+											Control how the AI prioritizes ingredients you already have in your pantry/fridge when generating meal plans.
+										</Typography>
+									</Stack>
+									
+									<Dropdown
+										label="Priority Level"
+										helperText="Perishable items you add to your pantry list will automatically be prioritized regardless of this setting to help reduce food waste."
+										value={settings.pantryPreference}
+										onChange={(value) => setSettings(prev => ({
+											...prev,
+											pantryPreference: value as 'hard' | 'soft'
+										}))}
+										options={[
+											{ id: 'hard', label: 'High Priority - Strongly prefer recipes using these ingredients' },
+											{ id: 'soft', label: 'Low Priority - Consider these ingredients if suitable' }
+										]}
+									/>
+								</Stack>
+							</Box>
 						</Box>
 
 						{/* Weekly Planning Reminder */}
 						<Box border="default" borderRadius="4" p="lg" bg="default">
-							<Stack direction="column" gap="md">
-								<Typography variant="h3">Weekly planning reminder</Typography>
-								<Typography variant="body">
-									Set when you&apos;d like to be reminded to plan your weekly meals and create your shopping list.
-								</Typography>
-								
-								<Stack direction="row" gap="md">
-									<Dropdown
-										label="Reminder Day"
-										helperText="This will be used for future email/SMS notifications to help you stay on track with your meal planning routine."
-										value={settings.weeklyReminderDay || 'saturday'}
-										onChange={(value) => setSettings(prev => ({
-											...prev,
-											weeklyReminderDay: value as 'saturday' | 'sunday' | 'monday'
-										}))}
-										options={[
-											{ id: 'saturday', label: 'Saturday' },
-											{ id: 'sunday', label: 'Sunday' },
-											{ id: 'monday', label: 'Monday' }
-										]}
-									/>
+							<Box maxWidth="500px">
+								<Stack direction="column" gap="2xl">
+									<Stack direction="column" gap="md">
+										<Typography variant="h3">Weekly planning reminder</Typography>
+										<Typography variant="body">
+											Set when you&apos;d like to be reminded to plan your weekly meals and create your shopping list.
+										</Typography>
+									</Stack>
+									
+									<Stack direction="row" gap="md">
+										<Dropdown
+											label="Reminder Day"
+											helperText="This will be used for future email/SMS notifications to help you stay on track with your meal planning routine."
+											value={settings.weeklyReminderDay || 'saturday'}
+											onChange={(value) => setSettings(prev => ({
+												...prev,
+												weeklyReminderDay: value as 'saturday' | 'sunday' | 'monday'
+											}))}
+											options={[
+												{ id: 'saturday', label: 'Saturday' },
+												{ id: 'sunday', label: 'Sunday' },
+												{ id: 'monday', label: 'Monday' }
+											]}
+										/>
 
-									<input
-										type="time"
-										value={settings.weeklyReminderTime || '18:00'}
-										onChange={(e) => setSettings(prev => ({
-											...prev,
-											weeklyReminderTime: e.target.value
-										}))}
-										style={{
-											padding: '8px 12px',
-											border: '1px solid #ccc',
-											borderRadius: '4px',
-											fontSize: '14px',
-										}}
-									/>
+										<input
+											type="time"
+											value={settings.weeklyReminderTime || '18:00'}
+											onChange={(e) => setSettings(prev => ({
+												...prev,
+												weeklyReminderTime: e.target.value
+											}))}
+											style={{
+												padding: '8px 12px',
+												border: '1px solid #ccc',
+												borderRadius: '4px',
+												fontSize: '14px',
+											}}
+										/>
+									</Stack>
 								</Stack>
-							</Stack>
+							</Box>
 						</Box>
 
 

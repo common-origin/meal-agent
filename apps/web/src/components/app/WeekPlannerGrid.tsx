@@ -1,5 +1,4 @@
-import { Stack, Typography, Button, ResponsiveGrid, Box } from "@common-origin/design-system";
-import { tokens } from "@common-origin/design-system/tokens";
+import { Stack, Typography, ResponsiveGrid, Box } from "@common-origin/design-system";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { MemoizedMealCard, type MealCardProps } from "./MealCard";
@@ -78,7 +77,7 @@ export default function WeekPlannerGrid({
           >
             {DAYS.map((day) => (
               <div key={day} style={{ display: "flex", flexDirection: "column", gap: "8px", height: "100%" }}>
-                <Typography variant="h5">{day}</Typography>
+                <Typography variant="caption">{day}</Typography>
                 <LoadingSkeleton ariaLabel={`Loading recipe for ${day}`} />
               </div>
             ))}
@@ -110,7 +109,7 @@ export default function WeekPlannerGrid({
                 if (generatingDayIndex === index) {
                   return (
                     <div key={day} style={{ display: "flex", flexDirection: "column", gap: "8px", height: "100%" }}>
-                      <Typography variant="h5">{day}</Typography>
+                      <Typography variant="caption">{day}</Typography>
                       <LoadingSkeleton ariaLabel={`Generating AI recipe for ${day}`} />
                     </div>
                   );
