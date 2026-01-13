@@ -826,7 +826,7 @@ export default function PlanPage() {
   };
 
   return (
-    <Main>
+    <Main maxWidth="1400px">
       {/* ARIA live region for screen reader announcements */}
       <div
         role="status"
