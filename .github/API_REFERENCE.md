@@ -35,14 +35,14 @@ Returns all recipes in the library.
 
 ```typescript
 const allRecipes = RecipeLibrary.getAll();
-// Returns: Recipe[] (50+ recipes)
+// Returns: Recipe[] (all recipes in library)
 ```
 
 ##### `getById(id: string): Recipe | undefined`
 Retrieves a single recipe by ID.
 
 ```typescript
-const recipe = RecipeLibrary.getById("chicken-stir-fry-nagi");
+const recipe = RecipeLibrary.getById("my-recipe-id");
 // Returns: Recipe | undefined
 ```
 
@@ -145,15 +145,15 @@ const household = loadHousehold() || {
 };
 
 const plan = composeWeek(household, {
-  pinnedDays: { 0: "chicken-parm-nagi" }, // Pin Monday
+  pinnedDays: { 0: "my-recipe-id" }, // Pin Monday
   maxCost: 100,
   preferences: { maximizeReuse: true }
 });
 
 console.log(plan.days);
 // [
-//   { recipeId: "chicken-parm-nagi", reasons: ["pinned"], notes: undefined },
-//   { recipeId: "beef-stew-nagi", reasons: ["bulk_cook"], notes: "Bulk cook" },
+//   { recipeId: "my-recipe-id", reasons: ["pinned"], notes: undefined },
+//   { recipeId: "beef-stew", reasons: ["bulk_cook"], notes: "Bulk cook" },
 //   { recipeId: "beef-stew-leftover", reasons: ["leftover_efficiency"], notes: "Leftovers from Tuesday's Beef Stew" },
 //   ...
 // ]
@@ -899,15 +899,15 @@ const favorites = loadFavorites(); // Returns [] if none saved
 If you're upgrading from mock data to real recipes:
 
 ```typescript
-// Real recipe library (production)
+// Recipe library
 import { RecipeLibrary } from "@/lib/library";
 const recipes = RecipeLibrary.getAll();
 
-// Loads 50+ real recipes from RecipeTin Eats
+// Loads recipes from AI generation, URL extraction, and manual entry
 // Enhanced with tag normalization and smart search
 ```
 
-All recipes are loaded from `recipes.generated.json` with full ingredient data and metadata.
+Recipes are sourced from AI generation, URL extraction, and manual entry.
 
 ---
 

@@ -50,7 +50,7 @@ meal-agent/
 │   │   └── RegenerateDrawer.tsx
 │   │
 │   └── lib/                    # Core business logic
-│       ├── library.ts          # Recipe library
+│       ├── library.ts          # Recipe library (AI-generated, user-added)
 │       ├── compose.ts          # Meal planning algorithm
 │       ├── scoring.ts          # Recipe scoring (10+ rules)
 │       ├── explainer.ts        # Human-readable explanations
@@ -60,13 +60,6 @@ meal-agent/
 │       ├── analytics.ts        # Privacy-first tracking
 │       ├── storage.ts          # localStorage utilities
 │       └── tagNormalizer.ts    # Tag vocabulary
-│
-├── data/library/
-│   ├── recipes.generated.json  # 50+ recipes (static)
-│   └── nagi/*.json             # Individual recipe files
-│
-├── scripts/
-│   └── indexChefs.ts           # Recipe scraping tool
 │
 └── .github/
     ├── PROJECT_STATUS.md       # Current status
@@ -145,7 +138,7 @@ import { loadHousehold, getDefaultHousehold } from "@/lib/storage";
 const household = loadHousehold() || getDefaultHousehold();
 
 const plan = composeWeek(household, {
-  pinnedDays: { 0: "chicken-parm-nagi" }, // Pin Monday
+  pinnedDays: { 0: "my-recipe-id" }, // Pin Monday
   maxCost: 100,
   preferences: { maximizeReuse: true }
 });
@@ -173,7 +166,7 @@ const quickChicken = RecipeLibrary.search({
 });
 
 // Get by ID
-const recipe = RecipeLibrary.getById("chicken-parm-nagi");
+const recipe = RecipeLibrary.getById("my-recipe-id");
 ```
 
 ### Generate Shopping List
@@ -266,12 +259,6 @@ pnpm build
 
 # Type check (no compilation)
 pnpm type-check
-
-# Index new recipes (scraping)
-pnpm index-chefs
-
-# Build recipe library (from indexed files)
-pnpm build-library
 ```
 
 ---
@@ -401,7 +388,7 @@ const INGREDIENT_MAPPINGS: IngredientMapping[] = [
 
 ```typescript
 import { RecipeLibrary } from "@/lib/library";
-console.log(RecipeLibrary.getAll().length); // Should be 50+
+console.log(RecipeLibrary.getAll().length); // Shows count of recipes in library
 ```
 
 ### Inspect Scoring
@@ -410,7 +397,8 @@ console.log(RecipeLibrary.getAll().length); // Should be 50+
 import { scoreRecipe } from "@/lib/scoring";
 import { RecipeLibrary } from "@/lib/library";
 
-const recipe = RecipeLibrary.getById("chicken-parm-nagi");
+const recipes = RecipeLibrary.getAll();
+const recipe = recipes[0]; // Get first available recipe
 const score = scoreRecipe(recipe, {
   dayOfWeek: 2, // Wednesday
   recentRecipes: [],
@@ -442,7 +430,7 @@ location.reload();
 ## Common Issues & Solutions
 
 ### "No recipes found"
-**Solution**: Run `pnpm build-library` to regenerate recipes.generated.json
+**Solution**: Add recipes via AI generation or URL extraction from the app
 
 ### "TypeScript errors"
 **Solution**: Run `pnpm type-check` to see all errors

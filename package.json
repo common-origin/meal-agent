@@ -7,11 +7,9 @@
     "build": "pnpm --filter web build",
     "start": "pnpm --filter web start",
     "lint": "pnpm --filter web lint",
-    "index-chefs": "pnpm --filter scripts index-chefs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "validate-recipes": "pnpm --filter scripts tsx validate-recipes.ts"
+    "test:ui": "vitest --ui"
   },
   "engines": {
     "node": ">=18.0.0",

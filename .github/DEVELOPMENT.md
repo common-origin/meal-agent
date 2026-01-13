@@ -23,55 +23,36 @@ Last Updated: 27 October 2025
 - ✅ Client components require `"use client"` directive
 - ✅ File-based routing (Next.js App Router)
 
-### Data Flow Architecture
+### Recipe Data Architecture
 
 ```
-┌─────────────────┐
-│ Chef Websites   │ (RecipeTin Eats, Jamie Oliver, etc.)
-│ (recipe pages)  │
-└────────┬────────┘
-         │
-         ▼
 ┌─────────────────────────┐
-│ 1. INDEXER              │ scripts/indexChefs.ts
-│ - Crawls sitemaps       │ Manual: pnpm index-chefs
-│ - Extracts JSON-LD      │
-│ - Applies filters       │
+│ AI RECIPE GENERATION    │ /api/generate-recipes
+│ - Gemini API            │ Context-aware generation
+│ - Family settings       │
+│ - Dietary preferences   │
 └────────┬────────────────┘
          │
          ▼
 ┌─────────────────────────┐
-│ data/library/           │ Indexed recipes (JSON-LD format)
-│ └─ nagi/                │ 50 recipes from RecipeTin Eats
-│    ├─ recipe1.json      │
-│    └─ recipe2.json      │
+│ URL RECIPE EXTRACTION   │ /api/extract-recipe-from-url
+│ - User provides URL     │ Gemini-powered parsing
+│ - Auto-extracts recipe  │
+│ - Normalizes structure  │
 └────────┬────────────────┘
          │
          ▼
 ┌─────────────────────────┐
-│ 2. BUILD SCRIPT         │ scripts/buildRecipeLibrary.ts
-│ - Reads all JSON files  │ Auto: runs before Next.js build
-│ - Converts to app format│ Manual: npx tsx scripts/buildRecipeLibrary.ts
-│ - Validates structure   │
-└────────┬────────────────┘
-         │
-         ▼
-┌─────────────────────────┐
-│ recipes.generated.json  │ Static recipe data (app format)
-│ (3,700+ lines)          │ 50 recipes ready for consumption
-└────────┬────────────────┘
-         │
-         ▼
-┌─────────────────────────┐
-│ 3. RECIPE LIBRARY       │ apps/web/src/lib/library.ts
-│ - Imports static JSON   │ Runtime: loads on app start
+│ RECIPE LIBRARY          │ apps/web/src/lib/library.ts
+│ - Manages custom recipes│ Runtime: loads on app start
 │ - Provides search API   │
 │ - Filters & sorting     │
+│ - AI + user recipes     │
 └────────┬────────────────┘
          │
          ▼
 ┌─────────────────────────┐
-│ 4. APP COMPONENTS       │ apps/web/src/app/
+│ APP COMPONENTS          │ apps/web/src/app/
 │ - composeWeek()         │ User-facing features
 │ - MealCard, SwapDrawer  │
 │ - Shopping list export  │
@@ -107,9 +88,7 @@ meal-agent/
 │       │   │
 │       │   └── lib/            # Business logic & utilities
 │       │       ├── compose.ts              # Meal planning algorithm
-│       │       ├── library.ts              # Recipe search & filtering
-│       │       ├── recipes.ts              # Static recipe import wrapper
-│       │       ├── recipes.generated.json  # Generated recipe data
+│       │       ├── library.ts              # Recipe library (AI + user recipes)
 │       │       ├── storage.ts              # LocalStorage helpers
 │       │       ├── analytics.ts            # Event tracking
 │       │       └── types/
@@ -117,14 +96,6 @@ meal-agent/
 │       │
 │       ├── tsconfig.json       # TypeScript config (strict mode)
 │       └── next.config.ts      # Next.js config
-│
-├── scripts/                    # Build & indexing scripts
-│   ├── indexChefs.ts           # Recipe indexer (manual)
-│   └── buildRecipeLibrary.ts   # JSON generator (auto)
-│
-├── data/
-│   └── library/                # Indexed recipes (JSON-LD)
-│       └── nagi/               # RecipeTin Eats (50 recipes)
 │
 └── pnpm-workspace.yaml         # Monorepo config
 ```
@@ -140,22 +111,11 @@ pnpm dev
 # Uses Turbopack for fast HMR
 ```
 
-### Indexing New Recipes (Manual)
-```bash
-# 1. Configure chef in scripts/indexChefs.ts
-# 2. Run indexer
-pnpm index-chefs
-
-# Output: data/library/{chef-name}/*.json
-```
-
-### Building Recipe Library (Usually Automatic)
-```bash
-# Converts indexed recipes to app format
-npx tsx scripts/buildRecipeLibrary.ts
-
-# Output: apps/web/src/lib/recipes.generated.json
-```
+### Adding Recipes
+Recipes are added through the application:
+- **AI Generation**: Use `/api/generate-recipes` endpoint via the weekly planning wizard
+- **URL Extraction**: Import from any recipe website via `/api/extract-recipe-from-url`
+- **Manual Entry**: Add recipes manually through the `/recipes/add` page
 
 ### Running Type Checks
 ```bash
@@ -175,42 +135,22 @@ pnpm dev
 
 ### Recipe Data Types
 
-**IndexedRecipe** (`data/library/nagi/*.json`)
-```typescript
-{
-  id: string;                    // Generated slug
-  sourceUrl: string;             // Original recipe URL
-  chef: string;                  // Chef identifier
-  domain: string;                // Source domain
-  indexedAt: string;             // ISO timestamp
-  recipe: {                      // JSON-LD from website
-    "@type": "Recipe",
-    name: string,
-    recipeIngredient: string[],
-    totalTime: "PT45M",          // ISO 8601 duration
-    recipeYield: ["4"] | "4",    // Array or string
-    // ... more fields
-  }
-}
-```
-
 **Recipe** (`apps/web/src/lib/types/recipe.ts`)
 ```typescript
 {
   id: string;
   title: string;
   source: {
-    url: string;
-    domain: string;
-    chef: 'jamie_oliver' | 'recipe_tin_eats';
-    license: 'permitted';
+    url?: string;                // Optional for AI-generated recipes
+    domain?: string;
+    chef?: string;
     fetchedAt: string;
   };
-  timeMins: number;              // Parsed from ISO 8601
-  serves: number;                // Parsed from yield
-  tags: string[];                // Generated from categories
-  ingredients: Ingredient[];     // Parsed & structured
-  costPerServeEst: number;       // Calculated heuristic
+  timeMins?: number;
+  serves?: number;
+  tags: string[];
+  ingredients: Ingredient[];
+  costPerServeEst?: number;      // Calculated from ingredients
 }
 ```
 
@@ -223,16 +163,10 @@ pnpm dev
 - Returns PlanWeek with cost estimate
 
 **RecipeLibrary** - `apps/web/src/lib/library.ts`
-- Static class, loads recipes.generated.json
-- Methods: `search()`, `getById()`, `getAll()`
-- Search supports: tags, maxTime, chef, excludeIds, limit
-
-**buildRecipeLibrary()** - `scripts/buildRecipeLibrary.ts`
-- Transforms IndexedRecipe → Recipe
-- Parses ISO 8601 durations (PT1H30M → 90 minutes)
-- Handles recipeYield as array or string
-- Estimates cost based on ingredient count
-- Extracts tags from categories
+- Manages custom recipes (AI-generated, user-added, URL-extracted)
+- Methods: `search()`, `getById()`, `getAll()`, `addRecipe()`, `deleteRecipe()`
+- Search supports: tags, maxTime, excludeIds, limit
+- Persists recipes to Supabase (authenticated) or localStorage (anonymous)
 
 ---
 
@@ -251,38 +185,13 @@ Cmd+Shift+P → "Developer: Reload Window"
 
 **Why**: VS Code caches module resolution, especially for JSON imports
 
-### 2. JSON Import Type Issues
-**Problem**: Direct JSON imports don't work well with TypeScript strict mode
+### 2. Recipe Sources
+Recipes come from multiple sources:
+- AI-generated via Gemini API
+- User uploads via URL extraction
+- Manual entry via the recipes page
 
-**Solution**: Always use the wrapper
-```typescript
-// ❌ Don't do this
-import data from "./recipes.generated.json";
-
-// ✅ Do this instead
-import { recipes } from "./recipes";
-```
-
-**Implementation**: See `apps/web/src/lib/recipes.ts`
-
-### 3. Recipe Filters Configuration
-**Location**: `scripts/indexChefs.ts`
-
-```typescript
-const RECIPE_FILTERS: RecipeFilters = {
-  maxTotalTimeMinutes: 60,        // Max cook time
-  maxIngredients: 18,              // Max ingredient count
-  excludeCategories: [             // Skip these categories
-    "Breakfast", "Brunch", "Dessert", "Baking", 
-    "Drinks", "Cocktails", "Snack", "Cupcake"
-  ],
-  requireDinnerFocused: true       // Only dinner recipes
-};
-```
-
-**To modify**: Edit this object, re-run `pnpm index-chefs`
-
-### 4. RecipeYield Type Inconsistency
+### 3. RecipeYield Type Inconsistency
 **Problem**: Some sites use `["4"]`, others use `"4"` or `4`
 
 **Solution**: Parser handles all three
@@ -294,7 +203,7 @@ function parseServings(yield_?: string | number | string[]): number {
 }
 ```
 
-### 5. Port Conflicts
+
 **Symptom**: "Port 3000 is in use" or lock file errors
 
 **Solution**:
@@ -326,64 +235,14 @@ See Step 2 in this guide for Vitest setup
 
 ---
 
-## 📝 Adding New Features
-
-### Example: Add a New Recipe Source
-
-1. **Update Indexer Config** (`scripts/indexChefs.ts`)
-```typescript
-const CHEFS: ChefConfig[] = [
-  // ... existing
-  {
-    name: "new-chef-slug",
-    domain: "example.com",
-    robotsTxtUrl: "https://example.com/robots.txt",
-    sitemapUrl: "https://example.com/sitemap.xml",
-    excludePatterns: ["/blog/", "/about/"],
-  }
-];
-```
-
-2. **Run Indexer**
-```bash
-pnpm index-chefs
-# Check: data/library/new-chef-slug/ should exist
-```
-
-3. **Rebuild Library**
-```bash
-npx tsx scripts/buildRecipeLibrary.ts
-# Check: recipes.generated.json updated
-```
-
-4. **Update Chef Type** (if needed)
-```typescript
-// apps/web/src/lib/types/recipe.ts
-type Chef = 'jamie_oliver' | 'recipe_tin_eats' | 'new_chef';
-```
-
-5. **Test in App**
-```bash
-pnpm dev
-# Navigate to /plan
-# Verify new recipes appear
-```
-
 ---
 
 ## 🔍 Debugging Tips
 
 ### Recipe Not Appearing in App?
-1. Check if indexed: `ls data/library/nagi/`
-2. Check if built: `grep "recipe-id" apps/web/src/lib/recipes.generated.json`
-3. Check filters: Does it pass quality criteria?
-4. Check search: `RecipeLibrary.search({ tags: ['dinner'] })`
-
-### Indexer Failing?
-1. Check robots.txt: `curl https://example.com/robots.txt`
-2. Check sitemap: `curl https://example.com/sitemap.xml`
-3. Check JSON-LD: View page source, look for `<script type="application/ld+json">`
-4. Check filters: Recipe might be excluded by category/time/ingredients
+1. Check if recipe was saved: Look in Supabase dashboard or localStorage
+2. Check search: `RecipeLibrary.search({ tags: ['dinner'] })`
+3. Clear cache and reload: Recipes may be cached
 
 ### TypeScript Errors?
 1. Clear cache: `rm -rf apps/web/.next`
@@ -447,7 +306,7 @@ When working on this codebase:
 2. **Read existing code** - Don't reinvent patterns
 3. **Use design system** - Import from @common-origin/design-system
 4. **Test manually** - Run `pnpm dev` and verify in browser
-5. **Validate data flow** - Understand indexer → build → runtime
+5. **Validate data flow** - Understand AI generation → library → runtime
 6. **Ask before major changes** - Especially to core types or algorithms
 
 ### Common AI Agent Tasks
@@ -457,22 +316,15 @@ When working on this codebase:
 → Add to `LibrarySearchOptions` interface
 → Update `RecipeLibrary.search()` implementation
 
-**"Index recipes from a new site"**
-→ Add to `CHEFS` array in indexChefs.ts
-→ Test sitemap structure
-→ Run indexer, verify output
-→ Rebuild library
-
 **"Add a new UI component"**
 → Use design system components
 → Add to `apps/web/src/components/app/`
 → Export from component file
 → Import in page/layout
 
-**"Fix a bug in recipe parsing"**
-→ Check `buildRecipeLibrary.ts`
-→ Add handling for edge case
-→ Rebuild library
+**"Fix a bug in recipe handling"**
+→ Check `library.ts` for recipe management
+→ Check API routes for extraction/generation
 → Test in app
 
 ---

@@ -139,9 +139,6 @@ pnpm test                # Run Vitest unit tests
 
 # Database
 supabase gen types typescript --project-id migfbyyftwgidbkwwyst > apps/web/src/lib/supabase/database.types.ts
-
-# Recipe Indexing
-pnpm index-chefs         # Index new recipes from chef websites
 ```
 
 ## 📁 Project Structure
@@ -168,10 +165,6 @@ meal-agent/
 ├── supabase/
 │   ├── migrations/               # Database migrations
 │   └── README.md                 # Database setup guide
-├── data/
-│   └── library/                  # Curated recipe files
-├── scripts/
-│   └── indexChefs.ts             # Recipe indexer
 └── .github/
     ├── workflows/                # CI/CD pipelines
     └── *.md                      # Documentation

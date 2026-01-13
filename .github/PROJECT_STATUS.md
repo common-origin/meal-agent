@@ -24,7 +24,7 @@
 
 1. **WO1: Tag Normalization** ✅
    - `lib/tagNormalizer.ts` - Unified tag vocabulary
-   - Enhanced `lib/library.ts` with normalized tags
+   - Enhanced `lib/library.ts` with normalized tags for all recipe sources
 
 2. **WO2: Scoring Pipeline** ✅
    - `lib/scoring.ts` - Deterministic rules-based scoring (10+ rules)
@@ -357,10 +357,13 @@
 - **`/api/extract-recipe-from-url/route.ts`** - URL recipe scraping (Gemini)
 - **`/api/list-models/route.ts`** - Gemini model testing and validation
 
-### Data Files
+### Recipe Sources
 
-- **`data/library/recipes.generated.json`** - 50+ recipes from RecipeTin Eats
-- **`data/library/nagi/*.json`** - Individual indexed recipe files
+All recipes are dynamically managed through the application:
+- **AI Generation**: Via Gemini API (`/api/generate-recipes`)
+- **URL Extraction**: Via Gemini parsing (`/api/extract-recipe-from-url`)
+- **Manual Entry**: Via the `/recipes/add` page
+- **Image Extraction**: Via Gemini Vision (`/api/extract-recipe-from-image`)
 
 ---
 
@@ -521,9 +524,6 @@ pnpm -F web lint
 
 # Generate database types
 supabase gen types typescript --project-id migfbyyftwgidbkwwyst > apps/web/src/lib/supabase/database.types.ts
-
-# Index new recipes
-pnpm index-chefs
 ```
 
 ---
@@ -531,7 +531,7 @@ pnpm index-chefs
 ## 📊 Metrics (as of Nov 30, 2025)
 
 ### Application
-- **Recipes**: 50+ real recipes from RecipeTin Eats + unlimited AI-generated + user-uploaded
+- **Recipes**: Unlimited AI-generated + user-uploaded recipes
 - **Code Coverage**: Core libraries 100% typed with TypeScript strict mode
 - **Accessibility**: WCAG 2.1 AA compliant
 - **Lines of Code**: ~5,000+ (Phases 1-3 complete)
@@ -563,7 +563,7 @@ pnpm index-chefs
 - ✅ Privacy-first analytics
 - ✅ Accessibility compliance (WCAG 2.1 AA)
 - ✅ Mobile-responsive design
-- ✅ Real recipe integration (50+ RecipeTin Eats + AI-generated)
+- ✅ AI-powered recipe generation
 - ✅ Tag normalization and smart search
 - ✅ Shopping list with actual ingredients
 - ✅ User authentication (Google OAuth + Magic Link)
@@ -643,11 +643,6 @@ meal-agent/
 │   │   ├── 003_alter_recipes_id_to_text.sql  # Recipe ID migration
 │   │   └── 004_add_full_settings_to_family_settings.sql  # JSONB settings
 │   └── README.md                    # Database setup instructions
-├── data/
-│   └── library/
-│       └── nagi/                    # 50+ RecipeTin Eats recipes (JSON-LD)
-├── scripts/
-│   └── indexChefs.ts                # Recipe indexer
 └── pnpm-workspace.yaml              # Monorepo configuration
 ```
 
@@ -656,12 +651,10 @@ meal-agent/
 ## ✅ Definition of Done
 
 ### Phase 1 (Complete ✅)
-- [x] Recipe indexer functional and production-ready
-- [x] 50+ quality recipes indexed from RecipeTin Eats
 - [x] Web app UI fully scaffolded with App Router
 - [x] All routes rendering correctly
 - [x] Design system integrated (v1.14.0)
-- [x] Real recipes connected to app
+- [x] Recipe library connected to app
 - [x] Shopping list with actual ingredients
 - [x] All 10 work orders implemented
 - [x] Explainability and cost transparency
@@ -704,7 +697,7 @@ meal-agent/
 - ✅ Multi-user household support with authentication
 - ✅ PostgreSQL database with complete data persistence
 - ✅ Row-Level Security for household data isolation
-- ✅ 50+ curated recipes + unlimited AI-generated recipes
+- ✅ Unlimited AI-generated and user-uploaded recipes
 - ✅ Budget tracking with Coles product pricing (179 products)
 - ✅ Intelligent meal planning with explainability
 - ✅ Pantry scanning and URL recipe extraction

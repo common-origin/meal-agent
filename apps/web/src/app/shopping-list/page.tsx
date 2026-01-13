@@ -245,14 +245,12 @@ export default function ShoppingListPage() {
         <Container>
           <Stack direction="column" gap="lg">
             <Typography variant="h1">Shopping list</Typography>
-            <Alert variant="success">
-              <Stack direction="column" gap="sm">
-                <Typography variant="subtitle">✓ Shopping completed for this week!</Typography>
-                <Typography variant="body">
-                  Your shopping has been marked as complete. The list will be available again when you plan your next week.
-                </Typography>
-              </Stack>
+            <Alert variant="success" title="Shopping completed">
+              Your shopping has been marked as complete. The list will be available again when you plan your next week.
             </Alert>
+            <Button variant="primary" size="large" href="/plan">
+              View your meal plan
+            </Button>
           </Stack>
         </Container>
       </Main>

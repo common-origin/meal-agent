@@ -34,10 +34,9 @@ meal-agent/
 ├── apps/
 │   └── web/                 # Next.js app with App Router
 ├── packages/
-│   ├── common-origin-ds/    # Local DS workspace (if needed)
 │   └── utils/              # Shared utilities
-├── pnpm-workspace.yaml
-└── scripts/
+├── supabase/               # Database migrations
+└── pnpm-workspace.yaml
 ```
 
 ## Key Routes & Components to Build

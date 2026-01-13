@@ -1,5 +1,4 @@
 import type { Recipe } from "./types/recipe";
-import { recipes } from "./recipes";
 import { enhanceRecipeWithTags } from "./tagNormalizer";
 import { Storage } from "./storage";
 import { getFavorites } from "./storage";
@@ -20,13 +19,11 @@ const CONFIRMED_RECIPES_KEY = "meal-agent:confirmed-recipes:v1"; // Track recipe
 const AI_TEMP_RECIPES_KEY = "meal-agent:ai-temp-recipes:v1"; // Temporary AI recipes for current plans
 
 /**
- * Real Recipe Library
- * Uses pre-generated recipe data from build script
+ * Recipe Library
+ * Manages custom recipes (AI-generated, user-added)
  * Enhanced with tag normalization and smart search
- * Supports custom recipes (AI-generated, user-added)
  */
 export class RecipeLibrary {
-  private static recipes: Recipe[] | null = null;
   private static customRecipes: Recipe[] | null = null;
   private static hasCleanedThisSession = false;
 
@@ -109,20 +106,15 @@ export class RecipeLibrary {
   }
 
   /**
-   * Get all recipes with enhanced tags (built-in + custom + temporary AI)
+   * Get all recipes with enhanced tags (custom + temporary AI)
    */
   private static getEnhancedRecipes(): Recipe[] {
-    if (!this.recipes) {
-      // Enhance all recipes with inferred tags on first load
-      this.recipes = recipes.map(r => enhanceRecipeWithTags(r));
-    }
+    // Combine custom recipes and temporary AI recipes
+    const customRecipes = this.loadCustomRecipes().map(r => enhanceRecipeWithTags(r));
+    const tempAIRecipes = this.loadTempAIRecipes().map(r => enhanceRecipeWithTags(r));
+    const allRecipes = [...customRecipes, ...tempAIRecipes];
     
-    // Combine built-in recipes with custom recipes and temporary AI recipes
-    const customRecipes = this.loadCustomRecipes();
-    const tempAIRecipes = this.loadTempAIRecipes();
-    const allRecipes = [...this.recipes, ...customRecipes, ...tempAIRecipes];
-    
-    // Deduplicate by ID (prefer custom > temp AI > built-in)
+    // Deduplicate by ID (prefer custom > temp AI)
     const recipeMap = new Map<string, Recipe>();
     for (const recipe of allRecipes) {
       if (!recipeMap.has(recipe.id)) {

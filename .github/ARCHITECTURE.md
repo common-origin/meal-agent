@@ -54,24 +54,6 @@ Meal Agent is a Next.js-based multi-user AI-powered meal planning application th
 │                      └──────────────────┘                                │
 │                                                                           │
 └─────────────────────────────────────────────────────────────────────────┘
-                                │
-                                │ Build Process
-                                ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         BUILD-TIME PIPELINE                              │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                           │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────────────┐      │
-│  │ indexChefs.ts│───▶│buildRecipe   │───▶│ recipes.generated    │      │
-│  │              │    │Library.ts    │    │ .json                │      │
-│  │ Web Scraping │    │ • Transform  │    │ • 50+ recipes        │      │
-│  │ JSON-LD      │    │ • Normalize  │    │ • Normalized tags    │      │
-│  │ Filtering    │    │ • Tag norm.  │    │ • Static output      │      │
-│  └──────────────┘    └──────────────┘    └──────────────────────┘      │
-│         │                                                                 │
-│         └──▶ data/library/nagi/*.json (Individual Indexed Recipes)      │
-│                                                                           │
-└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Architecture Layers (Phases 1, 2 & 3)
@@ -393,11 +375,12 @@ User Authentication Flow
 - Server-side session validation
 - Protected API routes check authentication
 
-### 7. Data Layer (Static & Runtime)
+### 7. Data Layer (Runtime)
 
-**Static Data**:
-- `data/library/recipes.generated.json` - 50+ curated recipes
-- `data/library/nagi/*.json` - Individual recipe files (JSON-LD format)
+**Recipe Sources**:
+- AI-generated recipes via Gemini API
+- User-uploaded recipes via URL extraction
+- Manually added recipes via the recipes page
 
 **Runtime Storage (localStorage - Anonymous Users)**:
 ```
@@ -420,38 +403,42 @@ All data persisted in household-scoped tables with automatic sync on changes
 
 ## Data Flow
 
-### 1. Recipe Indexing (Build Time)
+### 1. Recipe Sources (Runtime)
 
 ```
-Internet Recipe Sites (RecipeTin Eats)
-        │
-        ▼
-┌─────────────────┐
-│ indexChefs.ts   │ ← Web scraping with JSON-LD extraction
-│                 │ ← Quality filters (≤60min, ≤18 ingredients)
-│                 │ ← Respectful crawling (1 req/sec)
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────────────┐
-│ data/library/nagi/      │
-│ ├── chicken-parm.json   │ ← Schema.org Recipe format
-│ ├── beef-stew.json      │ ← Source URL, chef metadata
-│ └── ...                 │ ← 50+ individual files
-└─────────┬───────────────┘
-          │
-          ▼
-┌──────────────────────────┐
-│ buildRecipeLibrary.ts    │ ← Reads all *.json files
-│                          │ ← Normalizes tags (tagNormalizer)
-│                          │ ← Validates schema
-└──────────┬───────────────┘
-           │
-           ▼
-┌──────────────────────────┐
-│ recipes.generated.json   │ ← 50+ recipes with normalized tags
-│                          │ ← Static import for client
-└──────────────────────────┘
+┌──────────────────────────────┐
+│ AI Recipe Generation         │
+│ /api/generate-recipes        │ ← Gemini API
+│ - Family settings            │ ← Context-aware generation
+│ - Dietary preferences        │
+│ - Pantry items               │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│ URL Recipe Extraction        │
+│ /api/extract-recipe-from-url │ ← Gemini parsing
+│ - User provides URL          │ ← Any recipe website
+│ - Auto-extracts ingredients  │
+│ - Normalizes structure       │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│ Manual Recipe Entry          │
+│ /recipes/add                 │ ← User input
+│ - Form-based entry           │
+│ - Image extraction option    │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│ RecipeLibrary                │
+│ apps/web/src/lib/library.ts  │ ← Runtime recipe management
+│ - Stores all recipes         │
+│ - Provides search API        │
+│ - Syncs to Supabase/localStorage
+└──────────────────────────────┘
 ```
 
 ### 2. Meal Planning Flow (Runtime)
@@ -670,21 +657,21 @@ CREATE POLICY "Users can view their household recipes"
 - Policies must be tested carefully
 - Cannot use service role key in client code (must use anon key)
 
-### 3. Build-Time vs Runtime Recipe Generation
+### 3. Dynamic Recipe Library
 
-**Decision**: Generate static `recipes.generated.json` at build time instead of loading recipes at runtime.
+**Decision**: All recipes are dynamically managed at runtime through RecipeLibrary, with no static/pre-built recipe files.
 
 **Rationale**:
-- **Client-Side Compatibility**: Next.js client components cannot use Node.js `fs` module
-- **Performance**: Static JSON is faster than filesystem operations
-- **Deployment**: Eliminates need to bundle raw recipe files
-- **Simplicity**: Single source of truth for recipe data
+- **Flexibility**: Users can add recipes anytime via AI, URL extraction, or manual entry
+- **Personalization**: Each household builds their own recipe collection
+- **Storage Efficiency**: Recipes are persisted in Supabase (authenticated) or localStorage (anonymous)
+- **No Build Step**: No need for build-time recipe generation or indexing
 
 **Trade-offs**:
-- Recipe updates require rebuild
-- Larger bundle size (acceptable with 50 recipes, may need optimization at 500+)
+- New users start with an empty library (must generate or import recipes)
+- Requires AI API or manual entry to populate library
 
-### 2. Type-Safe Recipe Schema
+### 4. Type-Safe Recipe Schema
 
 **Decision**: Define strict TypeScript types for all recipe data structures.
 
@@ -743,7 +730,7 @@ export function composeWeek(
 }
 ```
 
-### 5. Tag-Based Recipe Filtering
+### 7. Tag-Based Recipe Filtering
 
 **Decision**: Use flexible string arrays for recipe tags instead of boolean flags.
 
@@ -755,26 +742,7 @@ export function composeWeek(
 
 **Trade-offs**:
 - Less type safety than enums (mitigated with constants)
-- Potential for inconsistent tagging (mitigated with build-time validation)
-
-### 6. Separation of Indexing and Runtime Code
-
-**Decision**: Keep web scraping (`indexChefs.ts`) separate from app code.
-
-**Rationale**:
-- **Security**: Scraping dependencies not bundled in production
-- **Bundle Size**: Cheerio, robots.txt parser not needed at runtime
-- **Responsibility**: Clear separation of concerns
-- **Flexibility**: Can run indexing independently
-
-**Structure**:
-```
-scripts/
-  indexChefs.ts ← Web scraping, filtering
-  buildRecipeLibrary.ts ← Transform for app
-apps/web/src/lib/
-  library.ts ← Runtime recipe access
-```
+- Potential for inconsistent tagging (mitigated with tag normalization)
 
 ## Component Architecture
 
@@ -793,10 +761,9 @@ apps/web/src/app/
 ```
 apps/web/src/lib/
 ├── compose.ts ← Meal composition algorithm
-├── library.ts ← Recipe search and retrieval
+├── library.ts ← Recipe library (AI + user recipes)
 ├── schedule.ts ← Date/week calculations
 ├── constants.ts ← Centralized configuration
-├── recipes.ts ← Static JSON import wrapper
 ├── scoring.ts ← Recipe scoring with 10+ rules
 ├── explainer.ts ← Human-readable reason chips
 ├── colesMapping.ts ← 179 Coles product mappings + price estimation
@@ -831,10 +798,7 @@ apps/web/src/lib/__tests__/
 ├── compose.test.ts ← 11 tests (meal planning logic)
 └── library.test.ts ← 19 tests (recipe search/data integrity)
 
-scripts/__tests__/
-└── buildRecipeLibrary.test.ts ← 25 tests (parsing logic)
-
-Total: 55 tests
+Total: 30 tests
 ```
 
 ### Testing Philosophy
@@ -856,26 +820,23 @@ pnpm test:ui       # Visual test UI
 
 ### Current Constraints
 
-1. **Recipe Count**: 50 recipes (need 100-200 for variety)
-2. **Single Chef**: Only RecipeTin Eats indexed
-3. **No Backend**: All data is static JSON
-4. **No User Accounts**: Household data in local state only
-5. **No Ingredient Aggregation**: Shopping lists not implemented
-6. **No Nutrition Data**: Calories/macros not tracked
+1. **Recipe Count**: Depends on user's added recipes (start with 0)
+2. **AI Dependency**: Recipe generation requires Gemini API access
+3. **No Offline Mode**: AI features require internet connection
+4. **No Nutrition Data**: Calories/macros not tracked
 
 ### Technical Debt
 
 1. **VS Code Cache**: TypeScript server may show false import errors (restart to fix)
-2. **JSON Import Types**: Requires manual `*.json` declaration in `json.d.ts`
-3. **Test Fixtures**: Mock data should be generated from factory functions
-4. **Constants Duplication**: Some filter constants duplicated between scripts and app
+2. **Test Fixtures**: Mock data should be generated from factory functions
+3. **Favorites Migration**: Favorites still in localStorage, not migrated to Supabase
 
 ## Future Enhancements
 
-### Phase 1: More Recipes
-- Index additional chefs (Jamie Oliver, etc.)
-- Expand to 200+ recipes
-- Add more diverse cuisines
+### Phase 1: Starter Recipes
+- Curated starter recipe packs for new users
+- One-click import of recipe collections
+- Recipe sharing between users
 
 ### Phase 2: Shopping Lists
 - Aggregate ingredients across week
@@ -901,9 +862,10 @@ pnpm test:ui       # Visual test UI
 
 ### Adding a New Recipe
 
-1. Run indexer: `pnpm index-chefs`
-2. Build static JSON: `tsx scripts/buildRecipeLibrary.ts`
-3. Verify in app: `pnpm dev`
+Recipes are added through the application:
+1. Use AI generation via weekly planning wizard
+2. Import from URL via `/recipes/add`
+3. Manual entry via the recipes page
 4. Run tests: `pnpm test`
 
 ### Adding a New Feature
@@ -920,7 +882,6 @@ pnpm test:ui       # Visual test UI
 pnpm dev              # Start Next.js dev server
 pnpm build            # Build for production
 pnpm test             # Run all tests
-pnpm index-chefs      # Scrape and index recipes
 ```
 
 ## References
