@@ -85,7 +85,7 @@ export default function DataExportPage() {
         <Box
           bg="subtle"
           p="xl"
-          borderRadius="3"
+          borderRadius="md"
           style={{ border: '1px solid #e0e0e0' }}
         >
           <Stack direction="column" gap="lg">
@@ -106,7 +106,7 @@ export default function DataExportPage() {
         <Box
           bg="subtle"
           p="xl"
-          borderRadius="3"
+          borderRadius="md"
           style={{ border: '1px solid #fdd' }}
         >
           <Stack direction="column" gap="lg">
@@ -127,7 +127,7 @@ export default function DataExportPage() {
         <Box
           bg="subtle"
           p="xl"
-          borderRadius="3"
+          borderRadius="md"
           style={{ border: '1px solid #e7f3ff' }}
         >
           <Stack direction="column" gap="md">

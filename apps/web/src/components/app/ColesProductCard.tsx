@@ -27,7 +27,7 @@ export default function ColesProductCard({
   return (
     <Box 
       bg="surface" 
-      borderRadius="2" 
+      borderRadius="sm" 
       p="md"
       style={{ 
         border: isRecommended ? '2px solid #10b981' : '1px solid #e5e7eb',

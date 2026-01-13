@@ -73,7 +73,7 @@ export default function LoginPage() {
           padding: '24px',
         }}
       >
-        <Box bg="surface" border="default" borderRadius="4" p="xl" style={{ maxWidth: '400px', width: '100%' }}>
+        <Box bg="surface" border="default" borderRadius="lg" p="xl" style={{ maxWidth: '400px', width: '100%' }}>
           <Stack direction="column" gap="lg">
             <Typography variant="h2">Check your email</Typography>
             <Typography color="subdued">
@@ -108,7 +108,7 @@ export default function LoginPage() {
         padding: '24px',
       }}
     >
-      <Box bg="surface" border="default" borderRadius="4" p="xl" style={{ maxWidth: '400px', width: '100%' }}>
+      <Box bg="surface" border="default" borderRadius="lg" p="xl" style={{ maxWidth: '400px', width: '100%' }}>
         <Stack direction="column" gap="lg">
           <Stack direction="column" gap="sm">
             <Typography variant="h2">Welcome back</Typography>
@@ -121,7 +121,7 @@ export default function LoginPage() {
             <Box
               bg="error-subtle"
               border="error"
-              borderRadius="2"
+              borderRadius="sm"
               p="md"
             >
               <Typography>{error}</Typography>

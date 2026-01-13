@@ -289,7 +289,7 @@ export default function PlanReviewPage() {
             aria-label={`Total cost: $${plan.costEstimate.toFixed(2)}, which is $${(plan.costEstimate / plan.days.length).toFixed(2)} per meal`}
             style={{ flex: "1 1 200px" }}
           >
-            <Box bg="emphasis" p="lg" borderRadius="3" minHeight="120px">
+            <Box bg="emphasis" p="lg" borderRadius="md" minHeight="120px">
               <Stack direction="column" gap="xs">
                 <Typography variant="h4" color="inverse">Total cost</Typography>
                 <Typography variant="h2" color="inverse">${plan.costEstimate.toFixed(2)}</Typography>
@@ -305,7 +305,7 @@ export default function PlanReviewPage() {
             aria-label={`Weeknight constraint: ${weeknightsMeetConstraint} out of ${weeknightCount} weeknight meals are 40 minutes or less`}
             style={{ flex: "1 1 200px" }}
           >
-            <Box bg="emphasis" p="lg" borderRadius="3" minHeight="120px">
+            <Box bg="emphasis" p="lg" borderRadius="md" minHeight="120px">
               <Stack direction="column" gap="xs">
                 <Typography variant="h4" color="inverse">Weeknight constraint</Typography>
                 <Typography variant="h2" color="inverse">
@@ -321,7 +321,7 @@ export default function PlanReviewPage() {
             aria-label={`${kidFriendlyCount} out of ${totalDays} meals are kid-friendly`}
             style={{ flex: "1 1 200px" }}
           >
-            <Box bg="emphasis" p="lg" borderRadius="3" minHeight="120px">
+            <Box bg="emphasis" p="lg" borderRadius="md" minHeight="120px">
               <Stack direction="column" gap="xs">
                 <Typography variant="h4" color="inverse">Kid-friendly</Typography>
                 <Typography variant="h2" color="inverse">
@@ -337,7 +337,7 @@ export default function PlanReviewPage() {
             aria-label={`${reusedIngredients} ingredients are used in 2 or more meals`}
             style={{ flex: "1 1 200px" }}
           >
-            <Box bg="emphasis" p="lg" borderRadius="3" minHeight="120px">
+            <Box bg="emphasis" p="lg" borderRadius="md" minHeight="120px">
               <Stack direction="column" gap="xs">
                 <Typography variant="h4" color="inverse">Ingredient reuse</Typography>
                 <Typography variant="h2" color="inverse">{reusedIngredients}</Typography>
@@ -349,7 +349,7 @@ export default function PlanReviewPage() {
 
         {/* Nutrition Summary */}
         {weeklyNutrition && (
-          <Box border="subtle" borderRadius="4" p="lg" bg="default">
+          <Box border="subtle" borderRadius="lg" p="lg" bg="default">
             <Stack direction="column" gap="md">
               <Typography variant="h3">Average Nutrition (per serving)</Typography>
               <Typography variant="small" color="subdued">

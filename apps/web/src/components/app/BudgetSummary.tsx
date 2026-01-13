@@ -153,7 +153,7 @@ export default function BudgetSummary({ weekPlan, budget, dayNames }: BudgetSumm
   return (
     <Stack direction="column" gap="md">
       {/* Main Budget Bar */}
-      <Box bg="surface" borderRadius="3" border="default">
+      <Box bg="surface" borderRadius="md" border="default">
         <Stack direction="column" gap="md">
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="h3">Weekly Budget</Typography>
@@ -208,14 +208,14 @@ export default function BudgetSummary({ weekPlan, budget, dayNames }: BudgetSumm
       
       {/* Detailed Breakdown */}
       {showDetails && (
-        <Box bg="surface" borderRadius="3" p="lg" border="default">
+        <Box bg="surface" borderRadius="md" p="lg" border="default">
           <Stack direction="column" gap="md">
             <Box style={{ marginBottom: '8px' }}>
               <Typography variant="h4">Daily Cost Breakdown</Typography>
             </Box>
             
             {loadingApiPrices && (
-              <Box bg="subtle" borderRadius="2" p="md">
+              <Box bg="subtle" borderRadius="sm" p="md">
                 <Typography variant="small">Loading live prices from Coles API...</Typography>
               </Box>
             )}
@@ -258,7 +258,7 @@ export default function BudgetSummary({ weekPlan, budget, dayNames }: BudgetSumm
             
             {/* Price Source Summary */}
             {(livePriceCount > 0 || staticPriceCount > 0 || estimatedPriceCount > 0) && (
-              <Box bg="subtle" borderRadius="2" p="md" style={{ marginTop: '8px' }}>
+              <Box bg="subtle" borderRadius="sm" p="md" style={{ marginTop: '8px' }}>
                 <Stack direction="column" gap="xs">
                   <Typography variant="small">Price Sources:</Typography>
                   <Box style={{ display: 'flex', flexDirection: 'row', gap: '12px', flexWrap: 'wrap' }}>

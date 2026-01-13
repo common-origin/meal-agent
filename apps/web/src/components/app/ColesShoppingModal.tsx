@@ -203,7 +203,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
           /* Instructions Screen */
           <Stack direction="column" gap="lg">
             {/* Instructions */}
-            <Box bg="subtle" borderRadius="3" p="md">
+            <Box bg="subtle" borderRadius="md" p="md">
               <Stack direction="column" gap="sm">
                 <Typography variant="subtitle">How it works:</Typography>
                 <Typography variant="body">
@@ -219,7 +219,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
                   <Box
                     key={index}
                     bg="surface"
-                    borderRadius="2"
+                    borderRadius="sm"
                     p="sm"
                   >
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -277,7 +277,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
               </Stack>
               <Box
                 bg="surface"
-                borderRadius="2"
+                borderRadius="sm"
                 style={{ height: '8px', overflow: 'hidden' }}
               >
                 <div
@@ -292,7 +292,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
             </Stack>
 
             {/* Current Item */}
-            <Box bg="surface" borderRadius="3" p="lg" border="default">
+            <Box bg="surface" borderRadius="md" p="lg" border="default">
               <Stack direction="column" gap="md">
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                   <Typography variant="h3">Current Item</Typography>
@@ -310,7 +310,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
 
                 {/* Product Options */}
                 {currentItem.loadingProducts ? (
-                  <Box bg="subtle" borderRadius="2" p="md">
+                  <Box bg="subtle" borderRadius="sm" p="md">
                     <Typography variant="body">Loading products from Coles...</Typography>
                   </Box>
                 ) : currentItem.products && currentItem.products.length > 0 ? (
@@ -344,7 +344,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
             </Box>
 
             {/* Instructions */}
-            <Box bg="subtle" borderRadius="3" p="md">
+            <Box bg="subtle" borderRadius="md" p="md">
               <Stack direction="column" gap="xs">
                 <Typography variant="body">
                   <strong>Next steps:</strong>
@@ -371,7 +371,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
                       <Box
                         key={index}
                         bg="subtle"
-                        borderRadius="2"
+                        borderRadius="sm"
                         p="sm"
                       >
                         <Stack direction="row" gap="sm" alignItems="center">

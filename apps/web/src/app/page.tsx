@@ -42,7 +42,7 @@ export default function HomePage() {
         <Box
           maxWidth="600px"
           bg="subtle"
-          borderRadius="4"
+          borderRadius="lg"
           p="7xl"
           style={{
             textAlign: "center",

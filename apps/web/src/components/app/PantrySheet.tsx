@@ -63,7 +63,7 @@ export default function PantrySheet({
         </Typography>
 
         {/* Scan Photo Section */}
-        <Box border="default" borderRadius="4" p="md" bg="subtle">
+        <Box border="default" borderRadius="lg" p="md" bg="subtle">
           <Stack direction="column" gap="md">
             <Typography variant="h3">Scan your fridge or pantry</Typography>
             <Typography variant="small">
@@ -104,7 +104,7 @@ export default function PantrySheet({
         </Box>
 
         {/* Manual Entry Section */}
-        <Box border="default" borderRadius="4" p="md" bg="subtle">
+        <Box border="default" borderRadius="lg" p="md" bg="subtle">
           <Stack direction="column" gap="md">
             <Typography variant="h3">Add manually</Typography>
             
@@ -134,7 +134,7 @@ export default function PantrySheet({
         </Box>
 
         {/* Items List */}
-        <Box border="default" borderRadius="4" p="md">
+        <Box border="default" borderRadius="lg" p="md">
           <Stack direction="column" gap="sm">
             <Typography variant="subtitle">
               Your Items ({pantryItems.length})
@@ -151,7 +151,7 @@ export default function PantrySheet({
                     key={idx}
                     p="sm"
                     bg="subtle"
-                    borderRadius="2"
+                    borderRadius="sm"
                   >
                     <Stack
                       direction="row"

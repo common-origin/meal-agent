@@ -261,7 +261,7 @@ export default function RecipesPage() {
           <Box 
             p="2xl" 
             bg="subtle" 
-            borderRadius="3"
+            borderRadius="md"
             style={{ textAlign: "center" }}
           >
             <Stack direction="column" gap="lg" alignItems="center">
@@ -283,7 +283,7 @@ export default function RecipesPage() {
           <Box 
             p="2xl" 
             bg="subtle" 
-            borderRadius="3"
+            borderRadius="md"
             style={{ textAlign: "center" }}
           >
             <Stack direction="column" gap="md" alignItems="center">

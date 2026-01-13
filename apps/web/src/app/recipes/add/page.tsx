@@ -275,7 +275,7 @@ export default function AddRecipePage() {
           <Typography variant="h1">Upload recipe photo</Typography>
 
           {!imagePreview ? (
-            <Box border="default" borderRadius="3" p="xl" bg="surface">
+            <Box border="default" borderRadius="md" p="xl" bg="surface">
               <Stack direction="column" gap="md" alignItems="center">
                 <Typography variant="h3">Choose an image</Typography>
                 <input
@@ -287,7 +287,7 @@ export default function AddRecipePage() {
             </Box>
           ) : (
             <Stack direction="column" gap="md">
-              <Box border="default" borderRadius="3" p="md" bg="surface">
+              <Box border="default" borderRadius="md" p="md" bg="surface">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
                   src={imagePreview} 
@@ -356,7 +356,7 @@ export default function AddRecipePage() {
         <Stack direction="column" gap="xl">
           <Typography variant="h1">Import from URL</Typography>
 
-          <Box border="default" borderRadius="3" p="lg" bg="surface">
+          <Box border="default" borderRadius="md" p="lg" bg="surface">
             <Stack direction="column" gap="md">
               <TextField
                 label="Recipe URL"
@@ -513,7 +513,7 @@ function RecipeForm({
   return (
     <Stack direction="column" gap="lg">
       {/* Basic Info */}
-      <Box border="subtle" borderRadius="4" p="lg" bg="default">
+      <Box border="subtle" borderRadius="lg" p="lg" bg="default">
         <Stack direction="column" gap="md">
           <Typography variant="h3">Recipe details</Typography>
           
@@ -559,7 +559,7 @@ function RecipeForm({
       </Box>
 
       {/* Ingredients */}
-      <Box border="subtle" borderRadius="4" p="lg" bg="default">
+      <Box border="subtle" borderRadius="lg" p="lg" bg="default">
         <Stack direction="column" gap="md">
           <Typography variant="h3">Ingredients</Typography>
           
@@ -619,7 +619,7 @@ function RecipeForm({
       </Box>
 
       {/* Instructions */}
-      <Box border="subtle" borderRadius="4" p="lg" bg="default">
+      <Box border="subtle" borderRadius="lg" p="lg" bg="default">
         <Stack direction="column" gap="md">
           <Typography variant="h3">Instructions</Typography>
           

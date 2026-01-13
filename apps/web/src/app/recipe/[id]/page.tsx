@@ -140,7 +140,7 @@ export default function RecipePage({ params }: RecipePageProps) {
 
         {/* Rating */}
         {recipe.nutrition && (
-          <Box border="subtle" borderRadius="4" p="lg" bg="default">
+          <Box border="subtle" borderRadius="lg" p="lg" bg="default">
             <Stack direction="column" gap="md">
               <Typography variant="h3">Nutrition (per serving)</Typography>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '16px' }}>
@@ -167,7 +167,7 @@ export default function RecipePage({ params }: RecipePageProps) {
         )}
 
         {/* Ingredients */}
-        <Box border="subtle" borderRadius="4" p="lg" bg="default">
+        <Box border="subtle" borderRadius="lg" p="lg" bg="default">
           <Stack direction="column" gap="md">
             <Typography variant="h2">Ingredients</Typography>
             
@@ -188,7 +188,7 @@ export default function RecipePage({ params }: RecipePageProps) {
 
         {/* Instructions */}
         {recipe.instructions && recipe.instructions.length > 0 ? (
-          <Box border="subtle" borderRadius="4" p="lg" bg="default">
+          <Box border="subtle" borderRadius="lg" p="lg" bg="default">
             <Stack direction="column" gap="md">
               <Typography variant="h2">Instructions</Typography>
               
@@ -221,7 +221,7 @@ export default function RecipePage({ params }: RecipePageProps) {
             </Stack>
           </Box>
         ) : (
-          <Box border="default" borderRadius="3" p="lg" bg="surface">
+          <Box border="default" borderRadius="md" p="lg" bg="surface">
             <Stack direction="column" gap="md">
               <Typography variant="h2">Preparation</Typography>
               <Typography variant="body">
@@ -235,7 +235,7 @@ export default function RecipePage({ params }: RecipePageProps) {
         )}
 
         {/* Rating */}
-        <Box border="subtle" borderRadius="4" p="lg" bg="default">
+        <Box border="subtle" borderRadius="lg" p="lg" bg="default">
           <Stack direction="column" gap="md" alignItems="flex-start">
             <Typography variant="h3">Rate this recipe</Typography>
             <StarRating rating={rating} onChange={handleRatingChange} size="large" />
@@ -274,7 +274,7 @@ export default function RecipePage({ params }: RecipePageProps) {
         </Box>
 
         {/* Source Attribution */}
-        <Box border="default" borderRadius="3" p="md" bg="subtle">
+        <Box border="default" borderRadius="md" p="md" bg="subtle">
           <Stack direction="column" gap="sm">
             <Typography variant="h4">Source</Typography>
             <Typography variant="small">

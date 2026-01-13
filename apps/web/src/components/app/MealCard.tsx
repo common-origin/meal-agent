@@ -130,7 +130,7 @@ export default function MealCard({
     <div onClick={disableLink ? handleCardClick : undefined}>
       <CardWrapper 
         bg="default"
-        borderRadius="4"
+        borderRadius="lg"
         p="lg"
         border="subtle"
         minHeight="300px"

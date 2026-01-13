@@ -74,7 +74,7 @@ export default function SearchMappingTestPage() {
             </Stack>
 
             {/* Search Term Generator */}
-            <Box border="subtle" borderRadius="4" p="lg" bg="surface">
+            <Box border="subtle" borderRadius="lg" p="lg" bg="surface">
               <Stack direction="column" gap="md">
                 <Typography variant="h3">Generate Search Term</Typography>
                 
@@ -97,7 +97,7 @@ export default function SearchMappingTestPage() {
                 </Button>
                 
                 {result && (
-                  <Box bg="emphasis" borderRadius="2" p="md" mt="sm">
+                  <Box bg="emphasis" borderRadius="sm" p="md" mt="sm">
                     <Stack direction="column" gap="sm">
                       <Stack direction="row" gap="sm" alignItems="center">
                         <Icon name="search" size="sm" />
@@ -127,7 +127,7 @@ export default function SearchMappingTestPage() {
             </Box>
 
             {/* Match Score Calculator */}
-            <Box border="subtle" borderRadius="4" p="lg" bg="surface">
+            <Box border="subtle" borderRadius="lg" p="lg" bg="surface">
               <Stack direction="column" gap="md">
                 <Typography variant="h3">Calculate Match Score</Typography>
                 
@@ -157,7 +157,7 @@ export default function SearchMappingTestPage() {
                 </Button>
                 
                 {matchScore !== null && (
-                  <Box bg="emphasis" borderRadius="2" p="md" mt="sm">
+                  <Box bg="emphasis" borderRadius="sm" p="md" mt="sm">
                     <Stack direction="column" gap="xs">
                       <Typography variant="h2">{matchScore.toFixed(0)}%</Typography>
                       <Typography variant="small" color="subdued">
@@ -173,7 +173,7 @@ export default function SearchMappingTestPage() {
             </Box>
 
             {/* Example Ingredients */}
-            <Box border="subtle" borderRadius="4" p="lg" bg="surface">
+            <Box border="subtle" borderRadius="lg" p="lg" bg="surface">
               <Stack direction="column" gap="md">
                 <Typography variant="h3">Example Transformations</Typography>
                 <Typography variant="small" color="subdued">
@@ -217,7 +217,7 @@ export default function SearchMappingTestPage() {
             </Box>
 
             {/* Tips */}
-            <Box border="subtle" borderRadius="4" p="lg" bg="surface">
+            <Box border="subtle" borderRadius="lg" p="lg" bg="surface">
               <Stack direction="column" gap="sm">
                 <Typography variant="h3">How It Works</Typography>
                 

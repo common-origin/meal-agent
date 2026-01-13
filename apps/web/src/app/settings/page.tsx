@@ -126,7 +126,7 @@ export default function SettingsPage() {
 							</Stack>
 						</Alert>
 					)}						{/* Household Section */}
-						<Box border="default" borderRadius="4" p="lg" bg="default">
+						<Box border="default" borderRadius="lg" p="lg" bg="default">
 							<Stack direction="column" gap="md">
 								<Typography variant="h3">Household</Typography>
 								<Box maxWidth="420px">
@@ -190,7 +190,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Dietary requirements */}
-						<Box border="default" borderRadius="4" p="lg" bg="default">
+						<Box border="default" borderRadius="lg" p="lg" bg="default">
 							<Stack direction="column" gap="md">
 								<Typography variant="h3">Dietary requirements</Typography>
 								
@@ -226,7 +226,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Cooking Profile */}
-						<Box border="default" borderRadius="4" p="lg" bg="default">
+						<Box border="default" borderRadius="lg" p="lg" bg="default">
 							<Stack direction="column" gap="2xl">
 								<Stack direction="column" gap="md">
 									<Typography variant="h3">Cooking profile</Typography>
@@ -309,7 +309,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Location & Seasonality */}
-						<Box border="default" borderRadius="4" p="lg" bg="default">
+						<Box border="default" borderRadius="lg" p="lg" bg="default">
 							<Stack direction="column" gap="2xl">
 								<Stack direction="column" gap="md">
 									<Typography variant="h3">Location & seasonality</Typography>
@@ -370,7 +370,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Budget & Time */}
-						<Box border="default" borderRadius="4" p="lg" bg="default">
+						<Box border="default" borderRadius="lg" p="lg" bg="default">
 							<Stack direction="column" gap="md">
 								<Typography variant="h3">Budget & time</Typography>
 								
@@ -437,7 +437,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Batch Cooking */}
-						<Box border="default" borderRadius="4" p="lg" bg="default">
+						<Box border="default" borderRadius="lg" p="lg" bg="default">
 							<Stack direction="column" gap="md">
 								<Typography variant="h3">Batch cooking</Typography>
 								
@@ -496,7 +496,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Pantry Preference */}
-						<Box border="default" borderRadius="4" p="lg" bg="default">
+						<Box border="default" borderRadius="lg" p="lg" bg="default">
 							<Box maxWidth="500px">
 								<Stack direction="column" gap="2xl">
 									<Stack direction="column" gap="md">
@@ -524,7 +524,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Weekly Planning Reminder */}
-						<Box border="default" borderRadius="4" p="lg" bg="default">
+						<Box border="default" borderRadius="lg" p="lg" bg="default">
 							<Box maxWidth="500px">
 								<Stack direction="column" gap="2xl">
 									<Stack direction="column" gap="md">

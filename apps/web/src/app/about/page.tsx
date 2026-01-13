@@ -23,7 +23,7 @@ export default function AboutPage() {
         </Stack>
 
         {/* What is it? */}
-        <Box border="subtle" borderRadius="4" p="xl" bg="default">
+        <Box border="subtle" borderRadius="lg" p="xl" bg="default">
           <Stack direction="column" gap="lg">
             <Typography variant="h2">What is Meal Agent?</Typography>
             <Typography variant="body">
@@ -39,7 +39,7 @@ export default function AboutPage() {
         </Box>
 
         {/* Key Features */}
-        <Box border="subtle" borderRadius="4" p="xl" bg="default">
+        <Box border="subtle" borderRadius="lg" p="xl" bg="default">
           <Stack direction="column" gap="lg">
             <Typography variant="h2">Key Features</Typography>
             
@@ -111,7 +111,7 @@ export default function AboutPage() {
         </Box>
 
         {/* How to Use */}
-        <Box border="subtle" borderRadius="4" p="xl" bg="default">
+        <Box border="subtle" borderRadius="lg" p="xl" bg="default">
           <Stack direction="column" gap="lg">
             <Typography variant="h2">How to Use</Typography>
             
@@ -164,7 +164,7 @@ export default function AboutPage() {
         </Box>
 
         {/* POC Status & Future Extensions */}
-        <Box border="subtle" borderRadius="4" p="xl" bg="surface">
+        <Box border="subtle" borderRadius="lg" p="xl" bg="surface">
           <Stack direction="column" gap="lg">
             <Typography variant="h2">Proof of Concept Status</Typography>
             
@@ -271,7 +271,7 @@ export default function AboutPage() {
         </Box>
 
         {/* Technical Details */}
-        <Box border="subtle" borderRadius="4" p="xl" bg="default">
+        <Box border="subtle" borderRadius="lg" p="xl" bg="default">
           <Stack direction="column" gap="lg">
             <Typography variant="h2">Technical Details</Typography>
             
@@ -334,7 +334,7 @@ export default function AboutPage() {
         </Box>
 
         {/* Call to Action */}
-        <Box border="subtle" borderRadius="4" p="xl" bg="emphasis">
+        <Box border="subtle" borderRadius="lg" p="xl" bg="emphasis">
           <Stack direction="column" gap="lg" alignItems="center">
             <Typography variant="h2" color="inverse">Ready to get started?</Typography>
             <Typography variant="body" color="inverse">

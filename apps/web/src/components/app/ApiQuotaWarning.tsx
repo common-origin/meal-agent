@@ -56,7 +56,7 @@ export default function ApiQuotaWarning() {
   return (
     <Box 
       bg={bgColor}
-      borderRadius="4" 
+      borderRadius="lg" 
       p="md"
       mb="md"
     >

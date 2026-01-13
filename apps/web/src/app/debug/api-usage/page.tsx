@@ -120,7 +120,7 @@ export default function ApiUsagePage() {
             {isWarning && (
               <Box 
                 bg={isCritical ? "error" : "warning"} 
-                borderRadius="4" 
+                borderRadius="lg" 
                 p="md"
               >
                 <Stack direction="row" gap="sm" alignItems="center">
@@ -144,7 +144,7 @@ export default function ApiUsagePage() {
             )}
 
             {/* Usage Overview */}
-            <Box border="subtle" borderRadius="4" p="lg" bg="surface">
+            <Box border="subtle" borderRadius="lg" p="lg" bg="surface">
               <Stack direction="column" gap="lg">
                 <Typography variant="h3">Monthly Usage</Typography>
                 
@@ -185,7 +185,7 @@ export default function ApiUsagePage() {
                 </Box>
               </Stack>
             </Box>            {/* Daily Usage Chart */}
-            <Box border="subtle" borderRadius="4" p="lg" bg="surface">
+            <Box border="subtle" borderRadius="lg" p="lg" bg="surface">
               <Stack direction="column" gap="md">
                 <Typography variant="h3">Daily Usage (Last 30 Days)</Typography>
                 
@@ -217,7 +217,7 @@ export default function ApiUsagePage() {
 
             {/* Top Ingredients */}
             {stats.topIngredients.length > 0 && (
-              <Box border="subtle" borderRadius="4" p="lg" bg="surface">
+              <Box border="subtle" borderRadius="lg" p="lg" bg="surface">
                 <Stack direction="column" gap="md">
                   <Typography variant="h3">Most Searched Ingredients</Typography>
                   
@@ -248,7 +248,7 @@ export default function ApiUsagePage() {
             )}
 
             {/* Tips & Best Practices */}
-            <Box border="subtle" borderRadius="4" p="lg" bg="surface">
+            <Box border="subtle" borderRadius="lg" p="lg" bg="surface">
               <Stack direction="column" gap="md">
                 <Typography variant="h3">Optimization Tips</Typography>
                 
@@ -285,7 +285,7 @@ export default function ApiUsagePage() {
             </Box>
 
             {/* Danger Zone */}
-            <Box border="error" borderRadius="4" p="lg" bg="surface">
+            <Box border="error" borderRadius="lg" p="lg" bg="surface">
               <Stack direction="column" gap="md">
                 <Typography variant="h3">Danger Zone</Typography>
                 

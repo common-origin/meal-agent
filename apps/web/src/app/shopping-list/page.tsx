@@ -305,19 +305,19 @@ export default function ShoppingListPage() {
               colsMd={4} 
               gap={2}
             >
-              <Box bg="emphasis" borderRadius="4" p="md">
+              <Box bg="emphasis" borderRadius="lg" p="md">
                 <Typography variant="subtitle" color="inverse">Items to buy</Typography>
                 <Typography variant="h2" color="inverse">{totalItems}</Typography>
               </Box>
-              <Box bg="emphasis" borderRadius="4" p="md">
+              <Box bg="emphasis" borderRadius="lg" p="md">
                 <Typography variant="subtitle" color="inverse">Already have</Typography>
                 <Typography variant="h2" color="inverse">{alreadyHave.length}</Typography>
               </Box>
-              <Box bg="emphasis" borderRadius="4" p="md">
+              <Box bg="emphasis" borderRadius="lg" p="md">
                 <Typography variant="subtitle" color="inverse">Categories</Typography>
                 <Typography variant="h2" color="inverse">{categories.length}</Typography>
               </Box>
-              <Box bg="emphasis" borderRadius="4" p="md">
+              <Box bg="emphasis" borderRadius="lg" p="md">
                 <Typography variant="subtitle" color="inverse">Estimated total</Typography>
                 <Typography variant="h2" color="inverse">
                   ${needToBuy.reduce((sum, item) => {
@@ -342,7 +342,7 @@ export default function ShoppingListPage() {
             {/* Items to Buy - Grouped by Category */}
             <Box 
               border="subtle"
-              borderRadius="4"
+              borderRadius="lg"
               p="md"
               bg="default"
             >
@@ -468,7 +468,7 @@ export default function ShoppingListPage() {
             {alreadyHave.length > 0 && (
               <Box 
                 border="subtle"
-                borderRadius="4"
+                borderRadius="lg"
                 p="md"
                 bg="default"
               >

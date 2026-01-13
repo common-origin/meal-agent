@@ -72,14 +72,14 @@ export default function PersistentCachePage() {
 
         {/* Cache Statistics */}
         <ResponsiveGrid cols={1} colsSm={2} colsLg={4}>
-          <Box bg="surface" borderRadius="3" p="lg" border="default">
+          <Box bg="surface" borderRadius="md" p="lg" border="default">
             <Stack direction="column" gap="xs">
               <Typography variant="caption" color="subdued">Total Entries</Typography>
               <Typography variant="h2">{stats.totalEntries}</Typography>
             </Stack>
           </Box>
 
-          <Box bg="surface" borderRadius="3" p="lg" border="default">
+          <Box bg="surface" borderRadius="md" p="lg" border="default">
             <Stack direction="column" gap="xs">
               <Typography variant="caption" color="subdued">Valid Entries</Typography>
               <Typography variant="h2">
@@ -88,7 +88,7 @@ export default function PersistentCachePage() {
             </Stack>
           </Box>
 
-          <Box bg="surface" borderRadius="3" p="lg" border="default">
+          <Box bg="surface" borderRadius="md" p="lg" border="default">
             <Stack direction="column" gap="xs">
               <Typography variant="caption" color="subdued">Expired Entries</Typography>
               <Typography variant="h2">
@@ -97,7 +97,7 @@ export default function PersistentCachePage() {
             </Stack>
           </Box>
 
-          <Box bg="surface" borderRadius="3" p="lg" border="default">
+          <Box bg="surface" borderRadius="md" p="lg" border="default">
             <Stack direction="column" gap="xs">
               <Typography variant="caption" color="subdued">Cache Age Range</Typography>
               <Typography variant="small">
@@ -139,7 +139,7 @@ export default function PersistentCachePage() {
               </Box>
               <Box 
                 bg="surface" 
-                borderRadius="2" 
+                borderRadius="sm" 
                 p="md"
                 style={{ maxHeight: '400px', overflow: 'auto' }}
               >
@@ -172,7 +172,7 @@ export default function PersistentCachePage() {
               </Box>
               <Box 
                 bg="surface" 
-                borderRadius="2" 
+                borderRadius="sm" 
                 p="md"
                 style={{ maxHeight: '400px', overflow: 'auto' }}
               >
@@ -192,7 +192,7 @@ export default function PersistentCachePage() {
         <Divider />
 
         {/* How it Works */}
-        <Box bg="surface" borderRadius="3" p="lg" border="default">
+        <Box bg="surface" borderRadius="md" p="lg" border="default">
           <Stack direction="column" gap="md">
             <Typography variant="h3">How Persistent Cache Works</Typography>
             <Stack direction="column" gap="sm">

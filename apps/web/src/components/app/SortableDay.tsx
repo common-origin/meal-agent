@@ -92,7 +92,7 @@ export default function SortableDay({
             />
           ) : (
             <Box
-              borderRadius="4"
+              borderRadius="lg"
               p="xl"
               bg="surface"
               border="subtle"

@@ -153,7 +153,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
 
         {/* Step 1: Pantry Stocktake */}
         {currentStep === 1 && (
-          <Box border="default" borderRadius="4" p="xl" pb="9xl" bg="default">
+          <Box border="default" borderRadius="lg" p="xl" pb="9xl" bg="default">
             <Stack direction="column" gap="lg">
               <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Typography variant="h2">Step 1: Pantry stocktake</Typography>
@@ -263,7 +263,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
 
         {/* Step 2: Cuisine Selection */}
         {currentStep === 2 && (
-          <Box border="default" borderRadius="4" p="xl" pb="9xl" bg="default">
+          <Box border="default" borderRadius="lg" p="xl" pb="9xl" bg="default">
             <Stack direction="column" gap="lg">
               <Typography variant="h2">Step 2: Cuisine preferences</Typography>
               <Typography variant="body">
@@ -340,14 +340,14 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
 
         {/* Step 3: Ready to Generate */}
         {currentStep === 3 && (
-          <Box border="default" borderRadius="4" p="xl" pb="9xl" bg="default">
+          <Box border="default" borderRadius="lg" p="xl" pb="9xl" bg="default">
             <Stack direction="column" gap="lg">
               <Typography variant="h2">Step 3: Generate your meal plan</Typography>
               <Typography variant="body">
                 Great! We&apos;re ready to create your personalized weekly meal plan based on your preferences.
               </Typography>
 
-              <Box p="lg" bg="subtle" borderRadius="3" border="default">
+              <Box p="lg" bg="subtle" borderRadius="md" border="default">
                 <Stack direction="column" gap="sm">
                   <Typography variant="h3">
                     Your weekly plan summary:
