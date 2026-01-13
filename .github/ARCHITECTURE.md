@@ -343,7 +343,7 @@ All tables have RLS enabled with policies that enforce:
 1. **001_initial_schema.sql** - Create 8 tables with indexes and triggers
 2. **002_rls_policies.sql** - Row-Level Security policies on all tables
 3. **003_alter_recipes_id_to_text.sql** - Change recipe ID from UUID to TEXT
-4. **004_add_full_settings_to_family_settings.sql** - Add JSONB column (pending)
+4. **004_add_full_settings_jsonb.sql** - Add JSONB column for flexible settings storage
 
 ### 6. Authentication Layer (Supabase Auth)
 
@@ -829,7 +829,7 @@ pnpm test:ui       # Visual test UI
 
 1. **VS Code Cache**: TypeScript server may show false import errors (restart to fix)
 2. **Test Fixtures**: Mock data should be generated from factory functions
-3. **Favorites Migration**: Favorites still in localStorage, not migrated to Supabase
+3. **Favorites Migration**: Favorites stored in localStorage, planned for Supabase migration via `full_settings` JSONB column
 
 ## Future Enhancements
 

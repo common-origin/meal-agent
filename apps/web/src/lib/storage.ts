@@ -271,13 +271,6 @@ export function loadCurrentWeekPlan(weekOfISO: string): StoredWeekPlan | null {
 }
 
 /**
- * Clear current week plan
- */
-export function clearCurrentWeekPlan(): boolean {
-  return Storage.remove(CURRENT_WEEK_PLAN_KEY);
-}
-
-/**
  * Recipe Ratings & Blocking
  */
 const RECIPE_RATINGS_KEY = 'recipe_ratings';

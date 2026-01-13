@@ -264,8 +264,8 @@ jobs:
         run: pnpm -C apps/web lint
       - name: Typecheck
         run: pnpm -C apps/web typecheck
-      # Optional: add basic a11y checks later
-      # - name: A11y (axe) — TODO
+      # Optional: add a11y checks when axe-core integration is set up
+      # - name: A11y (axe)
       #   run: pnpm -C apps/web test:a11y
 ```
 
@@ -324,7 +324,7 @@ mkdir -p "$APP_SRC/onboarding" "$APP_SRC/plan" "$APP_SRC/recipe/[id]" "$APP_SRC/
 
 cat > "$APP_SRC/providers.tsx" <<'TSX'
 "use client";
-import { ThemeProvider } from "common-origin-ds"; // TODO: replace with real import
+import { ThemeProvider } from "@common-origin/design-system"; // Example import
 export default function Providers({ children }: { children: React.ReactNode }) {
   return <ThemeProvider tokens={undefined as any}>{children}</ThemeProvider>;
 }

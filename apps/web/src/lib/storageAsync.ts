@@ -103,12 +103,6 @@ export async function loadCurrentWeekPlan(weekOfISO: string): Promise<StoredWeek
   };
 }
 
-export async function clearCurrentWeekPlan(): Promise<boolean> {
-  // For now, just use localStorage clear
-  // TODO: Implement Supabase clearing when we have a better understanding of the use case
-  return LocalStorage.clearCurrentWeekPlan();
-}
-
 /**
  * Household and Favorites
  * 

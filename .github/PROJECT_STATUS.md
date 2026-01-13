@@ -505,7 +505,7 @@ supabase gen types typescript --project-id migfbyyftwgidbkwwyst > apps/web/src/l
 # Execute: supabase/migrations/001_initial_schema.sql
 # Execute: supabase/migrations/002_rls_policies.sql
 # Execute: supabase/migrations/003_alter_recipes_id_to_text.sql
-# Execute: supabase/migrations/004_add_full_settings_to_family_settings.sql
+# Execute: supabase/migrations/004_add_full_settings_jsonb.sql
 ```
 
 ### Commands
@@ -641,7 +641,7 @@ meal-agent/
 │   │   ├── 001_initial_schema.sql   # Create tables
 │   │   ├── 002_rls_policies.sql     # Row-Level Security
 │   │   ├── 003_alter_recipes_id_to_text.sql  # Recipe ID migration
-│   │   └── 004_add_full_settings_to_family_settings.sql  # JSONB settings
+│   │   └── 004_add_full_settings_jsonb.sql   # JSONB settings column
 │   └── README.md                    # Database setup instructions
 └── pnpm-workspace.yaml              # Monorepo configuration
 ```

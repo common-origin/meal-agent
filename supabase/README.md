@@ -20,7 +20,15 @@
    - Click "Run" or press Cmd+Enter
    - Verify success: Should see "Success. No rows returned"
 
-4. **Verify Tables Created:**
+4. **Run Full Settings JSONB Migration (Step 3):**
+   - Click "New Query"
+   - Copy entire contents of `supabase/migrations/004_add_full_settings_jsonb.sql`
+   - Paste into SQL Editor
+   - Click "Run" or press Cmd+Enter
+   - Verify success: Should see "Success. No rows returned"
+   - This adds a `full_settings` JSONB column for flexible settings storage
+
+5. **Verify Tables Created:**
    ```sql
    SELECT table_name 
    FROM information_schema.tables 
@@ -38,7 +46,7 @@
    - recipes
    - shopping_lists
 
-5. **Verify RLS Enabled:**
+6. **Verify RLS Enabled:**
    ```sql
    SELECT tablename, rowsecurity 
    FROM pg_tables 
