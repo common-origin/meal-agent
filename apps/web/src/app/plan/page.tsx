@@ -102,13 +102,14 @@ export default function PlanPage() {
         if (household.favorites.includes(recipe.id)) reasons.push("favorite");
         if (recipe.costPerServeEst && recipe.costPerServeEst < 4) reasons.push("best value");
         
-        // Get chef/source display name
+        // Get chef/source display name (hide "AI Generated" on Plan page)
         const chefDisplay = getRecipeSourceDisplay(recipe);
+        const displayChef = chefDisplay === "AI Generated" ? "" : chefDisplay;
         
         return {
           recipeId: recipe.id,
           title: recipe.title,
-          chef: chefDisplay,
+          chef: displayChef,
           timeMins: recipe.timeMins || 0,
           conflicts: [],
           reasons
@@ -279,13 +280,14 @@ export default function PlanPage() {
     if (household.favorites.includes(recipe.id)) reasons.push("favorite");
     if (recipe.costPerServeEst && recipe.costPerServeEst < 4) reasons.push("best value");
     
-    // Get chef/source display name
+    // Get chef/source display name (hide "AI Generated" on Plan page)
     const chefName = getRecipeSourceDisplay(recipe);
+    const displayChef = chefName === "AI Generated" ? "" : chefName;
     
     const newMeal: MealCardProps = {
       recipeId: recipe.id,
       title: recipe.title,
-      chef: chefName,
+      chef: displayChef,
       timeMins: recipe.timeMins || 0,
       conflicts: [],
       reasons
@@ -474,7 +476,7 @@ export default function PlanPage() {
       const aiMeals: (MealCardProps | null)[] = data.recipes.map((recipe: Recipe) => ({
         recipeId: recipe.id,
         title: recipe.title,
-        chef: "AI Generated",
+        chef: "",
         timeMins: recipe.timeMins || 30,
         conflicts: [],
         reasons: ["AI suggested", "✨ personalized"]
@@ -649,7 +651,7 @@ export default function PlanPage() {
       const aiMeals: (MealCardProps | null)[] = data.recipes.map((recipe: Recipe) => ({
         recipeId: recipe.id,
         title: recipe.title,
-        chef: "AI Generated",
+        chef: "",
         timeMins: recipe.timeMins || 30,
         conflicts: [],
         reasons: ["AI suggested", "✨ personalized"]

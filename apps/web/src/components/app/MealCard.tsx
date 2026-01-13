@@ -146,7 +146,7 @@ export default function MealCard({
           <div>
             <Stack direction="column" gap="sm">
               <Stack direction="row" gap="sm">
-                <Tag variant="interactive" border={false}>{chef}</Tag>
+                {chef && <Tag variant="interactive" border={false}>{chef}</Tag>}
                 <Typography variant="small">{timeMins} mins</Typography>
               </Stack>
               {/* Middle section - Time and Chips */}

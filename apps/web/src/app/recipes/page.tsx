@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Stack, Typography, Box, Button, TextField, Dropdown, ResponsiveGrid } from "@common-origin/design-system";
+import { Stack, Typography, Box, Button, TextField, Dropdown, ResponsiveGrid, EmptyState } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import { RecipeLibrary } from "@/lib/library";
@@ -258,51 +258,33 @@ export default function RecipesPage() {
 
         {/* Empty State */}
         {recipes.length === 0 ? (
-          <Box 
-            p="2xl" 
-            bg="subtle" 
-            borderRadius="md"
-            style={{ textAlign: "center" }}
-          >
-            <Stack direction="column" gap="lg" alignItems="center">
-              <Typography variant="h2">No saved recipes yet</Typography>
-              <Typography variant="body" color="subdued">
-                Add your first recipe manually or generate one with AI
-              </Typography>
-              <Button
-                variant="primary"
-                size="large"
-                iconName="add"
-                onClick={handleAddRecipe}
-              >
-                Add your first recipe
-              </Button>
-            </Stack>
-          </Box>
+          <EmptyState
+            size="small"
+            illustration="empty"
+            title="No saved recipes yet"
+            description="Add your first recipe manually or generate one with AI"
+            action={{
+              label: "Add your first recipe",
+              onClick: handleAddRecipe,
+              variant: "primary",
+              icon: "add"
+            }}
+          />
         ) : filteredRecipes.length === 0 ? (
-          <Box 
-            p="2xl" 
-            bg="subtle" 
-            borderRadius="md"
-            style={{ textAlign: "center" }}
-          >
-            <Stack direction="column" gap="md" alignItems="center">
-              <Typography variant="h3">No recipes match your filters</Typography>
-              <Typography variant="body" color="subdued">
-                Try adjusting your search or filter options
-              </Typography>
-              <Button
-                variant="secondary"
-                size="medium"
-                onClick={() => {
-                  setSearchQuery("");
-                  setFilterBy("all");
-                }}
-              >
-                Clear Filters
-              </Button>
-            </Stack>
-          </Box>
+          <EmptyState
+            size="small"
+            illustration="search"
+            title="No recipes match your filters"
+            description="Try adjusting your search or filter options"
+            action={{
+              label: "Clear Filters",
+              onClick: () => {
+                setSearchQuery("");
+                setFilterBy("all");
+              },
+              variant: "secondary"
+            }}
+          />
         ) : (
           /* Recipe Grid */
           <ResponsiveGrid 

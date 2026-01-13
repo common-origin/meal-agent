@@ -156,13 +156,13 @@ export default function BudgetSummary({ weekPlan, budget, dayNames }: BudgetSumm
       <Box bg="surface" borderRadius="md" border="default">
         <Stack direction="column" gap="md">
           <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="h3">Weekly Budget</Typography>
+            <Typography variant="h3">Weekly budget</Typography>
             <Stack direction="row" gap="sm" alignItems="center">
               <Typography variant="body">
                 ${(apiEnhancedCost || budget.current).toFixed(2)} / ${budget.total.toFixed(2)}
               </Typography>
               {apiEnhancedCost && apiEnhancedCost !== budget.current && (
-                <Chip size="small">Live Pricing</Chip>
+                <Chip size="small" variant="emphasis">Live pricing</Chip>
               )}
             </Stack>
           </Stack>
@@ -208,10 +208,10 @@ export default function BudgetSummary({ weekPlan, budget, dayNames }: BudgetSumm
       
       {/* Detailed Breakdown */}
       {showDetails && (
-        <Box bg="surface" borderRadius="md" p="lg" border="default">
+        <Box bg="subtle" borderRadius="md" p="lg" border="default">
           <Stack direction="column" gap="md">
             <Box style={{ marginBottom: '8px' }}>
-              <Typography variant="h4">Daily Cost Breakdown</Typography>
+              <Typography variant="h4">Daily cost breakdown</Typography>
             </Box>
             
             {loadingApiPrices && (
@@ -258,9 +258,9 @@ export default function BudgetSummary({ weekPlan, budget, dayNames }: BudgetSumm
             
             {/* Price Source Summary */}
             {(livePriceCount > 0 || staticPriceCount > 0 || estimatedPriceCount > 0) && (
-              <Box bg="subtle" borderRadius="sm" p="md" style={{ marginTop: '8px' }}>
+              <Box bg="default" borderRadius="sm" p="md" style={{ marginTop: '8px' }}>
                 <Stack direction="column" gap="xs">
-                  <Typography variant="small">Price Sources:</Typography>
+                  <Typography variant="small">Price sources:</Typography>
                   <Box style={{ display: 'flex', flexDirection: 'row', gap: '12px', flexWrap: 'wrap' }}>
                     {livePriceCount > 0 && (
                       <Typography variant="small" color="subdued">
