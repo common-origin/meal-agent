@@ -855,7 +855,7 @@ export default function PlanPage() {
       ) : (
         <Stack direction="column" gap="xl">
           <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="h1">Weekly Meal Plan</Typography>
+            <Typography variant="h1">Weekly meal plan</Typography>
             <Stack direction="row" gap="md">
               <Badge count={pantryItems.length}>
                 <Button
