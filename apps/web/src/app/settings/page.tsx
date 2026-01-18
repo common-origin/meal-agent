@@ -145,8 +145,11 @@ export default function SettingsPage() {
 												}));
 											}}
 										/>
-										<Divider size="small" />
-
+									</Stack>
+								</Box>
+								<Divider size="small" />
+								<Box maxWidth="420px">
+									<Stack direction="column" gap="lg">
 										<Stack direction="column" gap="lg">
 											<Typography variant="subtitle">Children ({settings.children.length})</Typography>
 											{settings.children.map((child, index) => (
@@ -164,7 +167,7 @@ export default function SettingsPage() {
 													/>
 													<Box>
 														<Button
-															variant="secondary"
+															variant="naked"
 															size="large"
 															onClick={() => removeChild(index)}
 															aria-label="Remove child"

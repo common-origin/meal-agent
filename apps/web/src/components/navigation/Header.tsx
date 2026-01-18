@@ -3,39 +3,16 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Box, Stack, Typography, Button } from "@common-origin/design-system";
+import { Stack, Typography, Button, Box } from "@common-origin/design-system";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
-interface NavLinkProps {
-  href: string;
-  children: React.ReactNode;
-  isActive: boolean;
-}
-
-function NavLink({ href, children, isActive }: NavLinkProps) {
-  return (
-    <Link
-      href={href}
-      style={{
-        textDecoration: "none",
-        padding: "8px 16px",
-        borderRadius: "8px",
-        backgroundColor: isActive ? "rgba(0, 0, 0, 0.05)" : "transparent",
-        transition: "background-color 0.2s",
-      }}
-    >
-      <div
-        style={{
-          fontWeight: isActive ? 600 : 400,
-          color: isActive ? "#000" : "#666",
-        }}
-      >
-        <Typography variant="body">{children}</Typography>
-      </div>
-    </Link>
-  );
-}
+const NAV_ITEMS = [
+  { href: '/plan', label: 'Plan' },
+  { href: '/shopping-list', label: 'Shopping' },
+  { href: '/recipes', label: 'Recipes' },
+  { href: '/settings', label: 'Settings' },
+];
 
 export default function Header() {
   const pathname = usePathname();
@@ -74,58 +51,49 @@ export default function Header() {
   }
 
   return (
-    <header
+    <Box
+      as="header"
+      borderBottom="default"
+      p="lg"
+      bg="default"
       style={{
-        borderBottom: "1px solid #e0e0e0",
-        padding: "16px 24px",
-        backgroundColor: "#fff",
         position: "sticky",
         top: 0,
         zIndex: 100,
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "16px",
-        }}
-      >
+      <Stack direction="row" alignItems="center" justifyContent="space-between" gap="lg">
         {/* Logo/Brand */}
         <Link href="/" style={{ textDecoration: "none" }}>
-          <div style={{ margin: 0 }}>
-            <Typography variant="h3">🍽️ Meal Agent</Typography>
-          </div>
+          <Typography variant="h3">Meal Agent</Typography>
         </Link>
 
         {/* Navigation Links */}
-        <Box style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <NavLink href="/plan" isActive={pathname === "/plan"}>
-            Plan
-          </NavLink>
-          <NavLink href="/shopping-list" isActive={pathname === "/shopping-list"}>
-            Shopping
-          </NavLink>
-          <NavLink href="/recipes" isActive={pathname === "/recipes"}>
-            Recipes
-          </NavLink>
-          <NavLink href="/settings" isActive={pathname === "/settings"}>
-            Settings
-          </NavLink>
+        <Stack direction="row" gap="sm" alignItems="center">
+          {NAV_ITEMS.map(({ href, label }) => (
+            <Link key={href} href={href} style={{ textDecoration: 'none' }}>
+              <Button
+                variant="naked"
+                size="medium"
+                style={pathname === href ? { fontWeight: 600, backgroundColor: 'rgba(0,0,0,0.05)' } : undefined}
+              >
+                {label}
+              </Button>
+            </Link>
+          ))}
           
           {user && (
             <Button
-              variant="secondary"
-              size="large"
+              variant="naked"
+              size="medium"
               onClick={handleSignOut}
               disabled={loading}
             >
               {loading ? 'Signing out...' : 'Sign out'}
             </Button>
           )}
-        </Box>
-      </div>
-    </header>
+        </Stack>
+      </Stack>
+    </Box>
   );
 }
