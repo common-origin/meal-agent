@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Stack, Typography, Box, Button, ChipGroup, IconButton, Alert } from "@common-origin/design-system";
+import { Stack, Typography, Box, Button, ChipGroup, IconButton, Alert, ResponsiveGrid } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import { tokens } from "@common-origin/design-system";
 import { toggleFavorite, isFavorite, getRecipeRating, saveRecipeRating, blockRecipe, isRecipeBlocked } from "@/lib/storage";
@@ -136,9 +136,9 @@ export default function RecipePage({ params }: RecipePageProps) {
           <Typography variant="h1">{recipe.title}</Typography>
           
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <Typography variant="body">By {chefName}</Typography>
+            {/* <Typography variant="body">By {chefName}</Typography> */}
             {recipe.timeMins && (
-              <Typography variant="body">• {recipe.timeMins} mins</Typography>
+              <Typography variant="body">{recipe.timeMins} mins</Typography>
             )}
             {recipe.serves && (
               <Typography variant="body">• Serves {recipe.serves}</Typography>
@@ -160,32 +160,30 @@ export default function RecipePage({ params }: RecipePageProps) {
         {recipe.nutrition && (
           <Box border="subtle" borderRadius="lg" p="lg" bg="default">
             <Stack direction="column" gap="md">
-              <Typography variant="h3">Nutrition (per serving)</Typography>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '16px' }}>
-                <Stack direction="column" gap="xs">
-                  <Typography variant="small" color="subdued">Calories</Typography>
-                  <Typography variant="h3">{recipe.nutrition.calories}</Typography>
-                  <Typography variant="small">kcal</Typography>
+              <ResponsiveGrid cols={2} colsMd={4} gap={2}>
+                <Stack direction="column" gap="none">
+                  <Typography variant="overline" color="subdued">CALORIES</Typography>
+                  <Typography variant="subtitle">{recipe.nutrition.calories} kcal</Typography>
                 </Stack>
-                <Stack direction="column" gap="xs">
-                  <Typography variant="small" color="subdued">Protein</Typography>
-                  <Typography variant="h3">{recipe.nutrition.protein}g</Typography>
+                <Stack direction="column" gap="none">
+                  <Typography variant="overline" color="subdued">PROTEIN</Typography>
+                  <Typography variant="subtitle">{recipe.nutrition.protein}g</Typography>
                 </Stack>
-                <Stack direction="column" gap="xs">
-                  <Typography variant="small" color="subdued">Carbs</Typography>
-                  <Typography variant="h3">{recipe.nutrition.carbs}g</Typography>
+                <Stack direction="column" gap="none">
+                  <Typography variant="overline" color="subdued">CARBS</Typography>
+                  <Typography variant="subtitle">{recipe.nutrition.carbs}g</Typography>
                 </Stack>
-                <Stack direction="column" gap="xs">
-                  <Typography variant="small" color="subdued">Fat</Typography>
-                  <Typography variant="h3">{recipe.nutrition.fat}g</Typography>
+                <Stack direction="column" gap="none">
+                  <Typography variant="overline" color="subdued">FAT</Typography>
+                  <Typography variant="subtitle">{recipe.nutrition.fat}g</Typography>
                 </Stack>
-              </div>
+              </ResponsiveGrid>
             </Stack>
           </Box>
         )}
 
         {/* Ingredients */}
-        <Box border="subtle" borderRadius="lg" p="lg" bg="default">
+        <Box border="default" borderRadius="lg" p="lg" bg="default">
           <Stack direction="column" gap="md">
             <Typography variant="h2">Ingredients</Typography>
             
@@ -206,7 +204,7 @@ export default function RecipePage({ params }: RecipePageProps) {
 
         {/* Instructions */}
         {recipe.instructions && recipe.instructions.length > 0 ? (
-          <Box border="subtle" borderRadius="lg" p="lg" bg="default">
+          <Box border="default" borderRadius="lg" p="lg" bg="default">
             <Stack direction="column" gap="md">
               <Typography variant="h2">Instructions</Typography>
               

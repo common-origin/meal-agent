@@ -53,12 +53,18 @@ export default function PlanPage() {
     
     (async () => {
       setIsLoadingInitial(true);
-      // First, load all recipes from Supabase to populate RecipeLibrary cache
-      console.log('📚 Loading recipes from Supabase...');
+      
+      // Load data in parallel for faster initial render
       const { loadAllRecipes } = await import('@/lib/hybridStorage');
-      const supabaseRecipes = await loadAllRecipes();
+      const nextWeekISO = nextWeekMondayISO();
+      
+      const [supabaseRecipes, familySettings, savedPlan] = await Promise.all([
+        loadAllRecipes(),
+        getFamilySettings(),
+        loadCurrentWeekPlan(nextWeekISO),
+      ]);
+      
       console.log(`📚 Loaded ${supabaseRecipes.length} recipes from Supabase`);
-      console.log('📚 Recipe IDs from Supabase:', supabaseRecipes.map(r => r.id).slice(0, 10));
       
       // Sync to localStorage so RecipeLibrary.getById() can find them
       if (supabaseRecipes.length > 0) {
@@ -67,11 +73,6 @@ export default function PlanPage() {
       }
       
       const household = loadHousehold() || getDefaultHousehold();
-      const familySettings = await getFamilySettings();
-      const nextWeekISO = nextWeekMondayISO();
-      
-      // Check if there's a saved week plan first
-      const savedPlan = await loadCurrentWeekPlan(nextWeekISO);
     
     if (savedPlan && savedPlan.recipeIds.length > 0) {
       // Use the saved plan

@@ -41,9 +41,9 @@ export async function generateRecipes(
   try {
     const genAI = getGeminiClient();
     
-    // Use Gemini 2.5 Flash - available in v1 API (confirmed via ListModels)
+    // Use Gemini 1.5 Pro for higher quality outputs
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-pro',
       generationConfig: {
         temperature: 0.8, // Balanced creativity - reliable and family-friendly recipes
         topK: 40,
@@ -296,7 +296,7 @@ function generateRecipeId(name: string): string {
 export async function testGeminiConnection(): Promise<{ success: boolean; message: string }> {
   try {
     const genAI = getGeminiClient();
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
     
     const result = await model.generateContent('Say "API is working" if you can read this.');
     const text = result.response.text();
