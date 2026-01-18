@@ -17,6 +17,16 @@ import PriceSourceBadge from "@/components/app/PriceSourceBadge";
 import ApiQuotaWarning from "@/components/app/ApiQuotaWarning";
 import { addToPantryPreferences, removeFromPantryPreferences } from "@/lib/pantryPreferences";
 
+// Weekly nutrition totals
+type WeeklyNutrition = {
+  totalCalories: number;
+  totalProtein: number;
+  totalCarbs: number;
+  totalFat: number;
+  mealCount: number;
+  mealsWithNutrition: number;
+};
+
 export default function ShoppingListPage() {
   const [aggregatedItems, setAggregatedItems] = useState<AggregatedIngredient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,6 +34,7 @@ export default function ShoppingListPage() {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [apiPrices, setApiPrices] = useState<Map<string, { cost: number; source: 'api' | 'static' | 'category'; livePrice?: boolean }>>(new Map());
   const [isShoppingComplete, setIsShoppingComplete] = useState(false);
+  const [weeklyNutrition, setWeeklyNutrition] = useState<WeeklyNutrition | null>(null);
 
   const loadApiPrices = async (items: AggregatedIngredient[]) => {
     const { estimateIngredientCostWithAPI } = await import('@/lib/colesMapping');
@@ -99,6 +110,28 @@ export default function ShoppingListPage() {
         const recipe = RecipeLibrary.getById(day.recipeId);
         return sum + ((recipe?.costPerServeEst || 0) * day.scaledServings);
       }, 0);
+      
+      // Calculate weekly nutrition totals
+      const nutritionTotals = days.reduce(
+        (totals, day) => {
+          const recipe = RecipeLibrary.getById(day.recipeId);
+          if (recipe?.nutrition) {
+            const servings = day.scaledServings;
+            totals.totalCalories += recipe.nutrition.calories * servings;
+            totals.totalProtein += recipe.nutrition.protein * servings;
+            totals.totalCarbs += recipe.nutrition.carbs * servings;
+            totals.totalFat += recipe.nutrition.fat * servings;
+            totals.mealsWithNutrition += 1;
+          }
+          totals.mealCount += 1;
+          return totals;
+        },
+        { totalCalories: 0, totalProtein: 0, totalCarbs: 0, totalFat: 0, mealCount: 0, mealsWithNutrition: 0 }
+      );
+      
+      if (nutritionTotals.mealsWithNutrition > 0) {
+        setWeeklyNutrition(nutritionTotals);
+      }
       
       plan = {
         startISO: nextWeekISO,
@@ -338,6 +371,50 @@ export default function ShoppingListPage() {
                 </Typography>
               </Box>
             </ResponsiveGrid>
+
+            {/* Weekly Nutrition Summary */}
+            {weeklyNutrition && weeklyNutrition.mealsWithNutrition > 0 && (
+              <Box border="subtle" borderRadius="lg" p="lg" bg="default">
+                <Stack direction="column" gap="md">
+                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Typography variant="h3">Weekly nutrition summary</Typography>
+                    <Typography variant="small" color="subdued">
+                      {weeklyNutrition.mealsWithNutrition} of {weeklyNutrition.mealCount} meals
+                    </Typography>
+                  </Stack>
+                  <ResponsiveGrid cols={2} colsMd={4} gap={2}>
+                    <Box bg="subtle" borderRadius="md" p="md">
+                      <Stack direction="column" gap="xs">
+                        <Typography variant="small" color="subdued">Total calories</Typography>
+                        <Typography variant="h3">{Math.round(weeklyNutrition.totalCalories).toLocaleString()}</Typography>
+                        <Typography variant="small" color="subdued">kcal</Typography>
+                      </Stack>
+                    </Box>
+                    <Box bg="subtle" borderRadius="md" p="md">
+                      <Stack direction="column" gap="xs">
+                        <Typography variant="small" color="subdued">Total protein</Typography>
+                        <Typography variant="h3">{Math.round(weeklyNutrition.totalProtein)}</Typography>
+                        <Typography variant="small" color="subdued">grams</Typography>
+                      </Stack>
+                    </Box>
+                    <Box bg="subtle" borderRadius="md" p="md">
+                      <Stack direction="column" gap="xs">
+                        <Typography variant="small" color="subdued">Total carbs</Typography>
+                        <Typography variant="h3">{Math.round(weeklyNutrition.totalCarbs)}</Typography>
+                        <Typography variant="small" color="subdued">grams</Typography>
+                      </Stack>
+                    </Box>
+                    <Box bg="subtle" borderRadius="md" p="md">
+                      <Stack direction="column" gap="xs">
+                        <Typography variant="small" color="subdued">Total fat</Typography>
+                        <Typography variant="h3">{Math.round(weeklyNutrition.totalFat)}</Typography>
+                        <Typography variant="small" color="subdued">grams</Typography>
+                      </Stack>
+                    </Box>
+                  </ResponsiveGrid>
+                </Stack>
+              </Box>
+            )}
 
             {/* Items to Buy - Grouped by Category */}
             <Box 

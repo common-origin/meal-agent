@@ -52,7 +52,8 @@ You must respond ONLY with valid JSON in this exact format:
       ],
       "instructions": ["Step 1", "Step 2"],
       "tags": ["quick"],
-      "estimatedCost": 18
+      "estimatedCost": 18,
+      "nutrition": { "calories": 450, "protein": 35, "carbs": 40, "fat": 15 }
     }
   ]
 }
@@ -189,6 +190,15 @@ RECIPE QUALITY & SAFETY RULES:
 - Use reasonable, realistic quantities for ingredients; avoid excessive salt or sugar per person that would be a health concern.
 - COMPLETE THE JSON – do not cut off mid-response.
 - Each recipe must be practical, cookable by a home cook, and likely to taste good.
+
+NUTRITION ESTIMATION RULES:
+- Provide realistic nutrition estimates PER SERVING for each recipe.
+- Include: calories (kcal), protein (g), carbs (g), and fat (g).
+- Base estimates on standard nutritional databases (USDA, NUTTAB) and typical portion sizes.
+- Round to nearest whole number (e.g., 450 calories, not 452.3).
+- Consider all ingredients including oils, sauces, and garnishes.
+- Typical ranges for a main dinner: 350-700 calories, 20-50g protein, 30-80g carbs, 10-40g fat.
+- These are estimates to help with meal planning - they don't need to be exact, but should be reasonable.
 
 RECIPE QUALITY VALIDATION - CHEF'S CHECKLIST:
 Before returning each recipe, validate it would pass a professional chef's review:

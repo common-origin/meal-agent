@@ -233,6 +233,7 @@ export type Database = {
           id: string
           ingredients: Json
           instructions: string[] | null
+          nutrition: Json | null
           serves: number
           source_chef: string | null
           source_domain: string
@@ -249,6 +250,7 @@ export type Database = {
           id: string
           ingredients: Json
           instructions?: string[] | null
+          nutrition?: Json | null
           serves: number
           source_chef?: string | null
           source_domain?: string
@@ -265,6 +267,7 @@ export type Database = {
           id?: string
           ingredients?: Json
           instructions?: string[] | null
+          nutrition?: Json | null
           serves?: number
           source_chef?: string | null
           source_domain?: string

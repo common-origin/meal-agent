@@ -112,7 +112,8 @@ export default function PlanPage() {
           chef: displayChef,
           timeMins: recipe.timeMins || 0,
           conflicts: [],
-          reasons
+          reasons,
+          nutrition: recipe.nutrition,
         };
       });
       
@@ -290,7 +291,8 @@ export default function PlanPage() {
       chef: displayChef,
       timeMins: recipe.timeMins || 0,
       conflicts: [],
-      reasons
+      reasons,
+      nutrition: recipe.nutrition,
     };
     
     // Update the meal plan
@@ -479,7 +481,8 @@ export default function PlanPage() {
         chef: "",
         timeMins: recipe.timeMins || 30,
         conflicts: [],
-        reasons: ["AI suggested", "✨ personalized"]
+        reasons: ["AI suggested", "✨ personalized"],
+        nutrition: recipe.nutrition,
       }));
 
       setWeekPlan(aiMeals);
@@ -654,7 +657,8 @@ export default function PlanPage() {
         chef: "",
         timeMins: recipe.timeMins || 30,
         conflicts: [],
-        reasons: ["AI suggested", "✨ personalized"]
+        reasons: ["AI suggested", "✨ personalized"],
+        nutrition: recipe.nutrition,
       }));
 
       setWeekPlan(aiMeals);
@@ -788,7 +792,8 @@ export default function PlanPage() {
         chef: "AI Generated",
         timeMins: recipe.timeMins || 30,
         conflicts: [],
-        reasons: ["AI suggested", "✨ personalized", ...reasons]
+        reasons: ["AI suggested", "✨ personalized", ...reasons],
+        nutrition: recipe.nutrition,
       };
 
       // Update the week plan

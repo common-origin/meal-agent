@@ -235,6 +235,16 @@ function validateRecipes(recipes: unknown[]): Recipe[] {
       }
 
       // Build validated recipe matching the Recipe type
+      // Parse nutrition if provided
+      const nutrition = r.nutrition && typeof r.nutrition === 'object' 
+        ? {
+            calories: Number((r.nutrition as Record<string, unknown>).calories) || 0,
+            protein: Number((r.nutrition as Record<string, unknown>).protein) || 0,
+            carbs: Number((r.nutrition as Record<string, unknown>).carbs) || 0,
+            fat: Number((r.nutrition as Record<string, unknown>).fat) || 0,
+          }
+        : undefined;
+
       const validRecipe: Recipe = {
         id: generateRecipeId(String(r.name)),
         title: String(r.name),
@@ -257,6 +267,7 @@ function validateRecipes(recipes: unknown[]): Recipe[] {
           ? (r.instructions as Array<unknown>).map(step => String(step))
           : undefined,
         costPerServeEst: Number(r.estimatedCost) ? Number(r.estimatedCost) / (Number(r.servings) || 4) : undefined,
+        nutrition: nutrition && nutrition.calories > 0 ? nutrition : undefined,
       };
 
       validRecipes.push(validRecipe);

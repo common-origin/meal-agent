@@ -8,6 +8,7 @@ import { tokens } from "@common-origin/design-system";
 import { toggleFavorite, isFavorite } from "@/lib/storage";
 import { track } from "@/lib/analytics";
 import { explainReasons } from "@/lib/explainer";
+import type { NutritionInfo } from "@/lib/types/recipe";
 
 // Convert title to sentence case while preserving proper nouns
 function toSentenceCase(str: string): string {
@@ -49,6 +50,7 @@ export type MealCardProps = {
   timeMins: number;
   conflicts?: string[];
   reasons?: string[];
+  nutrition?: NutritionInfo;
   onSwapClick?: () => void;
   onDeleteClick?: () => void;
   disableLink?: boolean; // When true, card won't be a link (used in SwapDrawer)
@@ -93,6 +95,7 @@ export default function MealCard({
   timeMins, 
   conflicts = [],
   reasons = [],
+  nutrition,
   onSwapClick,
   onDeleteClick,
   disableLink = false,
@@ -155,6 +158,17 @@ export default function MealCard({
                   <ChipGroup labels={chipLabels} variant="default" />
                 )}
               </Stack>
+              {/* Nutrition summary (if available) */}
+              {nutrition && (
+                <Stack direction="row" gap="md">
+                  <Typography variant="small" color="subdued">
+                    {nutrition.calories} cal
+                  </Typography>
+                  <Typography variant="small" color="subdued">
+                    {nutrition.protein}g protein
+                  </Typography>
+                </Stack>
+              )}
             </Stack>
             {/* Conflicts section (optional) */}
             {conflicts.length > 0 && (

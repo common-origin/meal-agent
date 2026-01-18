@@ -257,6 +257,7 @@ export async function saveRecipe(recipe: Recipe): Promise<boolean> {
       ingredients: recipe.ingredients as unknown as Database['public']['Tables']['recipes']['Insert']['ingredients'],
       instructions: recipe.instructions || null,
       cost_per_serve_est: recipe.costPerServeEst || null,
+      nutrition: recipe.nutrition ? recipe.nutrition as unknown as Database['public']['Tables']['recipes']['Insert']['nutrition'] : null,
       updated_at: new Date().toISOString(),
     };
     
@@ -315,6 +316,7 @@ export async function loadRecipe(recipeId: string): Promise<Recipe | null> {
       ingredients: data.ingredients as Recipe['ingredients'],
       instructions: data.instructions || undefined,
       costPerServeEst: data.cost_per_serve_est || undefined,
+      nutrition: data.nutrition as Recipe['nutrition'] || undefined,
     };
   } catch (error) {
     console.error('Error in loadRecipe:', error);
@@ -366,6 +368,7 @@ export async function loadAllRecipes(): Promise<Recipe[]> {
       ingredients: row.ingredients as Recipe['ingredients'],
       instructions: row.instructions || undefined,
       costPerServeEst: row.cost_per_serve_est || undefined,
+      nutrition: row.nutrition as Recipe['nutrition'] || undefined,
     }));
   } catch (error) {
     console.error('Error in loadAllRecipes:', error);
