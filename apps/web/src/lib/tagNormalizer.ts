@@ -363,12 +363,13 @@ export function normalizeTags(tags: string[]): string[] {
 
 /**
  * Standardize all tags for a recipe
- * This is the main function to use for tag processing
+ * Only normalizes existing tags from source - no longer infers tags automatically
+ * (AI-generated recipes already include appropriate tags, inference caused false positives)
  */
 export function standardizeRecipeTags(recipe: Recipe): string[] {
   const finalTags = new Set<string>();
   
-  // 1. Normalize existing tags from source
+  // Normalize existing tags from source (AI, URL extraction, manual entry)
   for (const tag of recipe.tags) {
     const normalized = normalizeTag(tag);
     if (normalized) {
@@ -376,13 +377,7 @@ export function standardizeRecipeTags(recipe: Recipe): string[] {
     }
   }
   
-  // 2. Infer additional tags from recipe data
-  const inferred = inferTagsFromRecipe(recipe);
-  for (const tag of inferred) {
-    finalTags.add(tag);
-  }
-  
-  // 3. Return sorted array of unique, valid tags
+  // Return sorted array of unique, valid tags
   return Array.from(finalTags).sort();
 }
 

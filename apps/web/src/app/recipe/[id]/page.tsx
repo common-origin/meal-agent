@@ -14,6 +14,24 @@ import { calculateSeasonalScore, isIngredientInSeason } from "@/lib/seasonal";
 import { formatTagsForDisplay } from "@/lib/tagNormalizer";
 import StarRating from "@/components/app/StarRating";
 
+/**
+ * Parse instruction text that may contain markdown bold syntax
+ * Converts **text** to actual bold rendering
+ */
+function parseInstructionWithHeading(instruction: string): { heading: string | null; body: string } {
+  // Match pattern like "**Heading:** rest of text" or "**Heading** rest of text"
+  const match = instruction.match(/^\*\*([^*]+)\*\*:?\s*/);
+  
+  if (match) {
+    return {
+      heading: match[1].trim(),
+      body: instruction.slice(match[0].length).trim()
+    };
+  }
+  
+  return { heading: null, body: instruction };
+}
+
 type RecipePageProps = {
   params: Promise<{ id: string }>;
 };
@@ -193,30 +211,36 @@ export default function RecipePage({ params }: RecipePageProps) {
               <Typography variant="h2">Instructions</Typography>
               
               <Stack direction="column" gap="md">
-                {recipe.instructions.map((instruction, index) => (
-                  <Stack key={index} direction="row" gap="md" alignItems="flex-start">
-                    <div 
-                      style={{ 
-                        minWidth: '24px', 
-                        height: '24px', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        backgroundColor: tokens.semantic.color.background.emphasis,
-                        font: tokens.semantic.typography.overline,
-                        borderRadius: '999px',
-                        color: 'white',
-                        fontWeight: 600,
-                        fontSize: '14px'
-                      }}
-                    >
-                      {index + 1}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <Typography variant="body">{instruction}</Typography>
-                    </div>
-                  </Stack>
-                ))}
+                {recipe.instructions.map((instruction, index) => {
+                  const { heading, body } = parseInstructionWithHeading(instruction);
+                  return (
+                    <Stack key={index} direction="row" gap="md" alignItems="flex-start">
+                      <div 
+                        style={{ 
+                          minWidth: '24px', 
+                          height: '24px', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          backgroundColor: tokens.semantic.color.background.emphasis,
+                          font: tokens.semantic.typography.overline,
+                          borderRadius: '999px',
+                          color: 'white',
+                          fontWeight: 600,
+                          fontSize: '14px'
+                        }}
+                      >
+                        {index + 1}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <Typography variant="body">
+                          {heading && <><strong>{heading}</strong>{' '}</>}
+                          {body}
+                        </Typography>
+                      </div>
+                    </Stack>
+                  );
+                })}
               </Stack>
             </Stack>
           </Box>
