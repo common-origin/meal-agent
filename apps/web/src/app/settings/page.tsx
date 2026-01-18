@@ -8,7 +8,7 @@ import Main from "@/components/app/Main";import {
   resetFamilySettings 
 } from "@/lib/storageAsync";
 import type { FamilySettings } from "@/lib/types/settings";
-import { validateFamilySettings, DEFAULT_FAMILY_SETTINGS } from "@/lib/types/settings";
+import { validateFamilySettings, DEFAULT_FAMILY_SETTINGS, DIETARY_TYPE_OPTIONS } from "@/lib/types/settings";
 import { track } from "@/lib/analytics";
 
 export default function SettingsPage() {
@@ -191,16 +191,47 @@ export default function SettingsPage() {
 
 						{/* Dietary requirements */}
 						<Box border="default" borderRadius="lg" p="lg" bg="default">
-							<Stack direction="column" gap="md">
-								<Typography variant="h3">Dietary requirements</Typography>
-								
+							<Stack direction="column" gap="lg">
 								<Stack direction="column" gap="sm">
+									<Typography variant="h3">Dietary requirements</Typography>
+									<Typography variant="small" color="subdued">
+										Set your primary diet type and any additional preferences
+									</Typography>
+								</Stack>
+								
+								<Box maxWidth="420px">
+									<Dropdown
+										label="Primary diet"
+										helperText="This determines the types of recipes we'll suggest"
+										value={settings.dietaryType}
+										onChange={(value) => setSettings(prev => ({
+											...prev,
+											dietaryType: value as FamilySettings['dietaryType']
+										}))}
+										options={DIETARY_TYPE_OPTIONS.map(opt => ({ id: opt.id, label: opt.label }))}
+									/>
+								</Box>
+
+								<Divider size="small" />
+
+								<Stack direction="column" gap="sm">
+									<Typography variant="subtitle">Additional preferences</Typography>
+									
 									<Checkbox
 										label="Prefer gluten-free options"
 										checked={settings.glutenFreePreference}
 										onChange={(e) => setSettings(prev => ({
 											...prev,
 											glutenFreePreference: e.target.checked
+										}))}
+									/>
+
+									<Checkbox
+										label="Dairy-free"
+										checked={settings.dairyFree}
+										onChange={(e) => setSettings(prev => ({
+											...prev,
+											dairyFree: e.target.checked
 										}))}
 									/>
 

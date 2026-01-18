@@ -288,12 +288,29 @@ CUISINE PREFERENCES:
 
 DIETARY REQUIREMENTS:`;
 
+  // Primary dietary type
+  const dietaryDescriptions: Record<string, string> = {
+    omnivore: 'No dietary restrictions - can include any proteins and animal products.',
+    flexitarian: 'Mostly plant-based diet. Include vegetarian options for most meals, but occasional meat/fish is acceptable (1-2 times per week max).',
+    pescatarian: 'No meat (beef, pork, chicken, lamb). Fish and seafood are allowed. All dairy and eggs are fine.',
+    vegetarian: 'No meat or fish. Dairy and eggs are allowed. Focus on plant proteins, legumes, tofu, and eggs.',
+    vegan: 'No animal products whatsoever. No meat, fish, dairy, eggs, or honey. Use plant-based proteins only (tofu, tempeh, legumes, seitan).',
+  };
+  
+  if (familySettings.dietaryType && familySettings.dietaryType !== 'omnivore') {
+    prompt += `\n- PRIMARY DIET: ${familySettings.dietaryType.toUpperCase()} - ${dietaryDescriptions[familySettings.dietaryType]}`;
+  }
+
   if (familySettings.glutenFreePreference) {
-    prompt += `\n- Prefer gluten-free options when possible.`;
+    prompt += `\n- Prefer gluten-free options when possible (avoid wheat, barley, rye).`;
+  }
+  
+  if (familySettings.dairyFree) {
+    prompt += `\n- DAIRY-FREE: Avoid all dairy products (milk, cheese, cream, butter, yogurt). Use plant-based alternatives.`;
   }
   
   if (familySettings.proteinFocus) {
-    prompt += `\n- Focus on high-protein meals (at least 20 g protein per serving).`;
+    prompt += `\n- Focus on high-protein meals (at least 20g protein per serving).`;
   }
 
   if (familySettings.allergies.length > 0) {

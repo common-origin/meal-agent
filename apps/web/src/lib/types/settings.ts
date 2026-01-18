@@ -23,6 +23,27 @@ export interface BatchCookingPreferences {
   preferredDay: 'sunday' | 'saturday' | 'friday';
 }
 
+/**
+ * Primary dietary type - mutually exclusive options
+ */
+export type DietaryType = 
+  | 'omnivore'      // Eats everything
+  | 'vegetarian'    // No meat or fish
+  | 'vegan'         // No animal products
+  | 'pescatarian'   // Fish but no meat
+  | 'flexitarian';  // Mostly plant-based, occasional meat
+
+/**
+ * Dietary type labels for display
+ */
+export const DIETARY_TYPE_OPTIONS = [
+  { id: 'omnivore', label: 'Omnivore (eats everything)' },
+  { id: 'flexitarian', label: 'Flexitarian (mostly plant-based)' },
+  { id: 'pescatarian', label: 'Pescatarian (fish, no meat)' },
+  { id: 'vegetarian', label: 'Vegetarian (no meat or fish)' },
+  { id: 'vegan', label: 'Vegan (no animal products)' },
+] as const;
+
 export interface LocationSettings {
   city: string;
   country: string;
@@ -41,7 +62,9 @@ export interface FamilySettings {
   preferredChef?: string; // e.g., "Jamie Oliver", "Ottolenghi", "Nagi Maehashi"
   
   // Dietary
+  dietaryType: DietaryType; // Primary dietary classification
   glutenFreePreference: boolean; // Prefer but not strict
+  dairyFree: boolean; // Avoid dairy products
   proteinFocus: boolean; // Ensure adequate protein
   allergies: string[];
   avoidFoods: string[];
@@ -110,7 +133,9 @@ export const DEFAULT_FAMILY_SETTINGS: FamilySettings = {
   customCuisines: [],
   preferredChef: undefined,
   
+  dietaryType: 'omnivore',
   glutenFreePreference: true,
+  dairyFree: false,
   proteinFocus: true,
   allergies: [],
   avoidFoods: [],
