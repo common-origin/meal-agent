@@ -446,8 +446,16 @@ export default function PlanPage() {
 
       console.log('📥 [5/6] API response status:', response.status, response.statusText);
       
-      const data = await response.json();
-      console.log('📦 [5/6] API response data:', data);
+      const text = await response.text();
+      console.log('📦 [5/6] API response text:', text.substring(0, 500));
+      
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        console.error('❌ Failed to parse API response as JSON:', text.substring(0, 200));
+        throw new Error(`Invalid JSON response: ${text.substring(0, 100)}...`);
+      }
 
       if (!response.ok || data.error) {
         console.error('❌ API error:', data);
