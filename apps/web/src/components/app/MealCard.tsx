@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect, MouseEvent, memo } from "react";
+import { useState, useEffect, useRef, MouseEvent, memo } from "react";
 import styled from "styled-components";
 import Link from "next/link";
-import { Stack, Typography, Box, ChipGroup, IconButton, Divider, Tag } from "@common-origin/design-system";
+import { Chip, Stack, Typography, Box, ChipGroup, IconButton, Tag, List, ListItem } from "@common-origin/design-system";
 import { tokens } from "@common-origin/design-system";
 import { toggleFavorite, isFavorite } from "@/lib/storage";
 import { track } from "@/lib/analytics";
 import { explainReasons } from "@/lib/explainer";
 import type { NutritionInfo } from "@/lib/types/recipe";
+import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 
 // Convert title to sentence case while preserving proper nouns
 function toSentenceCase(str: string): string {
@@ -54,6 +55,8 @@ export type MealCardProps = {
   onSwapClick?: () => void;
   onDeleteClick?: () => void;
   disableLink?: boolean; // When true, card won't be a link (used in SwapDrawer)
+  dragHandleRef?: (node: HTMLElement | null) => void;
+  dragListeners?: SyntheticListenerMap;
 };
 
 const CardLink = styled(Link)`
@@ -88,6 +91,32 @@ const StyledMealCardTitle = styled.h3`
   color: ${tokens.semantic.color.text.default}
 `;
 
+const MenuWrapper = styled.div`
+  position: relative;
+  flex-shrink: 0;
+  margin-top: -8px;
+  margin-right: -8px;
+`;
+
+const CardOuter = styled.div`
+  position: relative;
+  height: 100%;
+`;
+
+const DragHandle = styled.div`
+  position: absolute;
+  bottom: ${tokens.semantic.spacing.layout.sm};
+  right: ${tokens.semantic.spacing.layout.sm};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  cursor: grab;
+  transition: opacity 0.2s;
+  touch-action: none;
+`;
+
 export default function MealCard({ 
   recipeId,
   title,
@@ -99,12 +128,29 @@ export default function MealCard({
   onSwapClick,
   onDeleteClick,
   disableLink = false,
+  dragHandleRef,
+  dragListeners,
 }: MealCardProps) {
   const [favorited, setFavorited] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setFavorited(isFavorite(recipeId));
   }, [recipeId]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: globalThis.MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
 
   const handleFavoriteClick = (e?: MouseEvent<HTMLButtonElement>) => {
     if (e) {
@@ -139,9 +185,71 @@ export default function MealCard({
         minHeight="300px"
         $clickable={disableLink && !!onSwapClick}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '16px' }}>
-          {/* Top section - Title and Chef */}
-          <StyledMealCardTitle>{toSentenceCase(title)}</StyledMealCardTitle>
+        <Stack direction="column" gap="md">
+          {/* Top section - Title and Menu */}
+          <Stack direction="row" gap="md" alignItems="flex-start">
+            <StyledMealCardTitle style={{ flex: 1 }}>{toSentenceCase(title)}</StyledMealCardTitle>
+            {/* Kebab menu - stopPropagation prevents menu clicks from triggering card link */}
+            <MenuWrapper ref={menuRef} onClick={(e: MouseEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); }}>
+              <IconButton
+                variant="naked"
+                iconName="kebab"
+                size="medium"
+                onClick={() => setMenuOpen(!menuOpen)}
+                aria-label="Recipe options"
+              />
+              {menuOpen && (
+                <Box
+                  border="default"
+                  borderRadius="lg"
+                  bg="default"
+                  p="none"
+                  style={{
+                    position: 'absolute',
+                    overflow: 'hidden',
+                    right: 0,
+                    top: '100%',
+                    marginTop: 4,
+                    zIndex: 10,
+                    minWidth: 220,
+                    boxShadow: tokens.semantic.elevation.floating,
+                  }}
+                >
+                  <List dividers spacing="compact">
+                    {onSwapClick && !disableLink && (
+                      <ListItem
+                        primary="Swap meal"
+                        interactive
+                        onClick={() => {
+                          onSwapClick();
+                          setMenuOpen(false);
+                        }}
+                      />
+                    )}
+                    <ListItem
+                      primary={favorited ? 'Remove from favourites' : 'Favourite this recipe'}
+                      interactive
+                      onClick={() => {
+                        handleFavoriteClick();
+                        setMenuOpen(false);
+                      }}
+                    />
+                    {onDeleteClick && (
+                      <ListItem
+                        primary="Remove from plan"
+                        interactive
+                        destructive
+                        onClick={() => {
+                          onDeleteClick();
+                          setMenuOpen(false);
+                        }}
+                      />
+                    )}
+                  </List>
+                </Box>
+              )}
+            </MenuWrapper>
+          </Stack>
 
           {/* Spacer to push buttons to bottom */}
           <div style={{ flex: 1 }} />
@@ -150,10 +258,7 @@ export default function MealCard({
             <Stack direction="column" gap="sm">
               <Stack direction="row" gap="sm">
                 {chef && <Tag variant="interactive" border={false}>{chef}</Tag>}
-                <Typography variant="small">{timeMins} mins</Typography>
-              </Stack>
-              {/* Middle section - Time and Chips */}
-              <Stack direction="row" gap="md" alignItems="center">
+                <Chip variant="default">{timeMins} mins</Chip>
                 {chipLabels.length > 0 && (
                   <ChipGroup labels={chipLabels} variant="default" />
                 )}
@@ -183,53 +288,47 @@ export default function MealCard({
                 ))}
               </Stack>
             )}
-            {/* Bottom section - Action buttons */}
-            <Divider size="small" />
-            <div onClick={(e: MouseEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); }}>
-              <Stack direction="row" gap="sm">
-                {onSwapClick && !disableLink && (
-                  <IconButton
-                    variant="naked"
-                    iconName="refresh"
-                    onClick={onSwapClick}
-                    aria-label="Swap meal"
-                  />
-                )}
-                
-                {/* Favorite button */}
-                <IconButton
-                  variant={favorited ? "secondary" : "naked"}
-                  iconName={favorited ? "starFilled" : "star"}
-                  onClick={handleFavoriteClick}
-                  aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
-                />
 
-                {/* Remove button */}
-                {onDeleteClick && (
-                  <IconButton
-                    variant="naked"
-                    iconName="trash"
-                    onClick={onDeleteClick}
-                    aria-label="Remove from plan"
-                  />
-                )}
-              </Stack>
-            </div>
           </div>
-        </div>
+
+        </Stack>
       </CardWrapper>
     </div>
   );
 
+  const dragHandle = dragHandleRef ? (
+    <DragHandle
+      ref={dragHandleRef}
+      {...(dragListeners as React.HTMLAttributes<HTMLDivElement>)}
+    >
+      <IconButton
+        variant="naked"
+        iconName="move"
+        size="small"
+        aria-label="Drag to reorder meal"
+        style={{ pointerEvents: 'none' }}
+      />
+    </DragHandle>
+  ) : null;
+
   // Return wrapped in link or unwrapped
+  // Drag handle is placed outside the link to prevent drag from triggering navigation
   if (disableLink) {
-    return cardContent;
+    return (
+      <CardOuter>
+        {cardContent}
+        {dragHandle}
+      </CardOuter>
+    );
   }
 
   return (
-    <CardLink href={`/recipe/${recipeId}`}>
-      {cardContent}
-    </CardLink>
+    <CardOuter>
+      <CardLink href={`/recipe/${recipeId}`}>
+        {cardContent}
+      </CardLink>
+      {dragHandle}
+    </CardOuter>
   );
 }
 

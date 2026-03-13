@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Stack, Typography, Box, Button, ChipGroup, IconButton, Alert, ResponsiveGrid } from "@common-origin/design-system";
+import { Stack, Typography, Box, Button, ChipGroup, IconButton, List, ListItem, Alert, Modal, ResponsiveGrid } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import { tokens } from "@common-origin/design-system";
 import { toggleFavorite, isFavorite, getRecipeRating, saveRecipeRating, blockRecipe, isRecipeBlocked } from "@/lib/storage";
@@ -10,7 +10,6 @@ import { RecipeLibrary } from "@/lib/library";
 import { type Recipe } from "@/lib/types/recipe";
 import { track } from "@/lib/analytics";
 import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
-import { calculateSeasonalScore, isIngredientInSeason } from "@/lib/seasonal";
 import { formatTagsForDisplay } from "@/lib/tagNormalizer";
 import StarRating from "@/components/app/StarRating";
 
@@ -36,36 +35,48 @@ type RecipePageProps = {
   params: Promise<{ id: string }>;
 };
 
+const stepNumberStyle: React.CSSProperties = {
+  minWidth: '24px',
+  height: '24px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: tokens.semantic.color.background.emphasis,
+  font: tokens.semantic.typography.overline,
+  borderRadius: '999px',
+  color: 'white',
+  fontWeight: 600,
+  fontSize: '14px',
+};
+
+const metadataContainerStyle: React.CSSProperties = {
+  display: 'flex',
+  gap: '12px',
+  alignItems: 'center',
+  flexWrap: 'wrap',
+};
+
 export default function RecipePage({ params }: RecipePageProps) {
   const router = useRouter();
-  const [id, setId] = useState<string>("");
-  const [recipe, setRecipe] = useState<Recipe | null>(null);
-  const [favorited, setFavorited] = useState(false);
-  const [rating, setRating] = useState<number>(0);
-  const [blocked, setBlocked] = useState<boolean>(false);
+  const { id } = use(params);
+  const [recipe] = useState<Recipe | null>(() => RecipeLibrary.getById(id) || null);
+  const [favorited, setFavorited] = useState(() => isFavorite(id));
+  const [rating, setRating] = useState<number>(() => getRecipeRating(id) || 0);
+  const [blocked, setBlocked] = useState<boolean>(() => isRecipeBlocked(id));
   const [showBlockConfirm, setShowBlockConfirm] = useState<boolean>(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
-    params.then((resolvedParams) => {
-      setId(resolvedParams.id);
-      setFavorited(isFavorite(resolvedParams.id));
-      setRating(getRecipeRating(resolvedParams.id) || 0);
-      setBlocked(isRecipeBlocked(resolvedParams.id));
-      
-      // Load recipe from library
-      const loadedRecipe = RecipeLibrary.getById(resolvedParams.id);
-      setRecipe(loadedRecipe || null);
-      
-      if (loadedRecipe) {
-        track('page_view', { 
-          page: 'recipe',
-          recipeId: resolvedParams.id,
-          title: loadedRecipe.title,
-          source: loadedRecipe.source.chef,
-        });
-      }
-    });
-  }, [params]);
+    if (recipe) {
+      track('page_view', { 
+        page: 'recipe',
+        recipeId: id,
+        title: recipe.title,
+        source: recipe.source.chef,
+      });
+    }
+  }, [id, recipe]);
 
   const handleFavoriteClick = () => {
     toggleFavorite(id);
@@ -82,7 +93,21 @@ export default function RecipePage({ params }: RecipePageProps) {
     blockRecipe(id);
     setBlocked(true);
     setShowBlockConfirm(false);
+    setMenuOpen(false);
   };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
   
   if (!recipe) {
     return (
@@ -122,21 +147,61 @@ export default function RecipePage({ params }: RecipePageProps) {
             Back
           </Button>
           
-          <IconButton
-            variant={favorited ? "primary" : "secondary"}
-            iconName={favorited ? "starFilled" : "star"}
-            size="medium"
-            onClick={handleFavoriteClick}
-            aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
-          />
+          <div ref={menuRef} style={{ position: 'relative' }}>
+            <IconButton
+              variant="secondary"
+              iconName="filter"
+              size="medium"
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label="Recipe options"
+            />
+            {menuOpen && (
+              <Box
+                border="default"
+                borderRadius="lg"
+                bg="default"
+                p="none"
+                style={{
+                  position: 'absolute',
+                  overflow: 'hidden',
+                  right: 0,
+                  top: '100%',
+                  marginTop: 4,
+                  zIndex: 10,
+                  minWidth: 240,
+                  boxShadow: tokens.semantic.elevation.floating,
+                }}
+              >
+                <List dividers spacing="compact">
+                  <ListItem
+                    primary={favorited ? 'Remove from favourites' : 'Favourite this recipe'}
+                    interactive
+                    onClick={() => {
+                      handleFavoriteClick();
+                      setMenuOpen(false);
+                    }}
+                  />
+                  <ListItem
+                    primary="Remove from plans"
+                    interactive
+                    destructive
+                    disabled={blocked}
+                    onClick={() => {
+                      setShowBlockConfirm(true);
+                      setMenuOpen(false);
+                    }}
+                  />
+                </List>
+              </Box>
+            )}
+          </div>
         </Stack>
 
         {/* Recipe Header */}
         <Stack direction="column" gap="md">
           <Typography variant="h1">{recipe.title}</Typography>
           
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-            {/* <Typography variant="body">By {chefName}</Typography> */}
+          <div style={metadataContainerStyle}>
             {recipe.timeMins && (
               <Typography variant="body">{recipe.timeMins} mins</Typography>
             )}
@@ -156,7 +221,7 @@ export default function RecipePage({ params }: RecipePageProps) {
           )}
         </Stack>
 
-        {/* Rating */}
+        {/* Nutrition */}
         {recipe.nutrition && (
           <Box border="subtle" borderRadius="lg" p="lg" bg="default">
             <Stack direction="column" gap="md">
@@ -213,21 +278,7 @@ export default function RecipePage({ params }: RecipePageProps) {
                   const { heading, body } = parseInstructionWithHeading(instruction);
                   return (
                     <Stack key={index} direction="row" gap="md" alignItems="flex-start">
-                      <div 
-                        style={{ 
-                          minWidth: '24px', 
-                          height: '24px', 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'center',
-                          backgroundColor: tokens.semantic.color.background.emphasis,
-                          font: tokens.semantic.typography.overline,
-                          borderRadius: '999px',
-                          color: 'white',
-                          fontWeight: 600,
-                          fontSize: '14px'
-                        }}
-                      >
+                      <div style={stepNumberStyle}>
                         {index + 1}
                       </div>
                       <div style={{ flex: 1 }}>
@@ -266,37 +317,35 @@ export default function RecipePage({ params }: RecipePageProps) {
                 This recipe is blocked and will not appear in future AI meal plans.
               </Alert>
             )}
-            {!blocked && (
-              <Button
-                variant="secondary"
-                size="medium"
-                onClick={() => setShowBlockConfirm(true)}
-              >
-                Never show this recipe again
-              </Button>
-            )}
-            {showBlockConfirm && (
-              <Alert variant="warning">
-                <Stack direction="column" gap="sm">
-                  <Typography variant="body">
-                    Are you sure? This recipe will not appear in future AI meal plans.
-                  </Typography>
-                  <Stack direction="row" gap="sm">
-                    <Button variant="primary" size="small" onClick={handleBlockRecipe}>
-                      Yes, block it
-                    </Button>
-                    <Button variant="secondary" size="small" onClick={() => setShowBlockConfirm(false)}>
-                      Cancel
-                    </Button>
-                  </Stack>
-                </Stack>
-              </Alert>
-            )}
           </Stack>
         </Box>
 
+        {/* Block recipe confirmation modal */}
+        <Modal
+          isOpen={showBlockConfirm}
+          onClose={() => setShowBlockConfirm(false)}
+          title="Remove from plans"
+          size="small"
+          actions={[
+            {
+              label: 'Yes, block it',
+              onClick: handleBlockRecipe,
+              variant: 'danger',
+            },
+            {
+              label: 'Cancel',
+              onClick: () => setShowBlockConfirm(false),
+              variant: 'secondary',
+            },
+          ]}
+        >
+          <Typography variant="body">
+            Are you sure? This recipe will not appear in future AI meal plans.
+          </Typography>
+        </Modal>
+
         {/* Source Attribution */}
-        <Box border="default" borderRadius="md" p="md" bg="subtle">
+        <Box border="default" borderRadius="md" p="md" bg="default">
           <Stack direction="column" gap="sm">
             <Typography variant="h4">Source</Typography>
             <Typography variant="small">
@@ -312,7 +361,7 @@ export default function RecipePage({ params }: RecipePageProps) {
                         href={recipe.source.url} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        style={{ color: '#007bff', textDecoration: 'underline' }}
+                        style={{ color: tokens.semantic.color.text.interactive, textDecoration: 'underline' }}
                       >
                         View original
                       </a>

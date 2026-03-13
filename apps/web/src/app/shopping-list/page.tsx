@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Alert, Box, Button, Chip, Container, Icon, IconButton, List, ListItem, ResponsiveGrid, Stack, Typography } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ColesShoppingModal from "@/components/app/ColesShoppingModal";
@@ -265,9 +266,9 @@ export default function ShoppingListPage() {
 
   if (loading) {
     return (
-      <main style={{ padding: 24 }}>
+      <Main maxWidth="md">
         <Typography variant="h1">Generating shopping list...</Typography>
-      </main>
+      </Main>
     );
   }
 
@@ -281,9 +282,11 @@ export default function ShoppingListPage() {
             <Alert variant="success" title="Shopping completed">
               Your shopping has been marked as complete. The list will be available again when you plan your next week.
             </Alert>
-            <Button variant="primary" size="large" href="/plan">
-              View your meal plan
-            </Button>
+            <Link href="/plan">
+              <Button variant="primary" size="large">
+                View your meal plan
+              </Button>
+            </Link>
           </Stack>
         </Container>
       </Main>
@@ -420,7 +423,7 @@ export default function ShoppingListPage() {
             <Box 
               border="subtle"
               borderRadius="lg"
-              p="md"
+              p="lg"
               bg="default"
             >
               <Stack direction="column" gap="lg">
@@ -433,9 +436,9 @@ export default function ShoppingListPage() {
                         <Box style={{ height: '1px', backgroundColor: '#e5e7eb' }} />
                       )}
                       <Box px="lg">
-                        <Stack direction="row" alignItems="center" justifyContent="space-between">
-                          <Typography variant="caption">{category}</Typography>
-                          <Chip variant="dark" size="small">{items.length} items</Chip>
+                        <Stack direction="row" alignItems="center" gap="sm">
+                          <Typography variant="h4">{category}</Typography>
+                          <Chip variant="dark" size="small">{items.length}</Chip>
                         </Stack>
                       </Box>
                       
@@ -506,13 +509,14 @@ export default function ShoppingListPage() {
                                 <Chip variant="light" size="small">
                                   {item.totalQty.toFixed(1)} {item.unit}
                                 </Chip>
-                                <IconButton
-                                  iconName="check"
+                                <Button
                                   size="small"
                                   variant="naked"
+                                  iconName="close"
                                   onClick={() => handleMarkAsPantry(item)}
-                                  aria-label="Mark as pantry item"
-                                />
+                                >
+                                  Remove
+                                </Button>
                               </Stack>
                             }
                             expandable={hasMultipleRecipes}
@@ -546,7 +550,7 @@ export default function ShoppingListPage() {
               <Box 
                 border="subtle"
                 borderRadius="lg"
-                p="md"
+                p="lg"
                 bg="default"
               >
                 <Stack direction="column" gap="md">
@@ -569,13 +573,14 @@ export default function ShoppingListPage() {
                             <Chip variant="light" size="small">
                               {item.totalQty.toFixed(1)} {item.unit}
                             </Chip>
-                            <IconButton
-                              iconName="close"
+                            <Button
                               size="small"
                               variant="naked"
                               onClick={() => handleUnmarkAsPantry(item)}
-                              aria-label="Remove from pantry"
-                            />
+                              iconName="add"
+                            >
+                              Add to shopping list
+                            </Button>
                           </Stack>
                         }
                       />

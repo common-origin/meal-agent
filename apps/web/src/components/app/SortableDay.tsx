@@ -52,43 +52,15 @@ export default function SortableDay({
       {...attributes}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: "8px", height: "100%" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Typography variant="caption">{day}</Typography>
-          {meal && (
-            <button
-              ref={setActivatorNodeRef}
-              {...listeners}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '4px',
-                cursor: 'grab',
-                display: 'flex',
-                alignItems: 'center',
-                opacity: 0.5,
-                transition: 'opacity 0.2s',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-              onMouseLeave={(e) => e.currentTarget.style.opacity = '0.5'}
-              aria-label="Drag to reorder meal"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <circle cx="4" cy="3" r="1.5"/>
-                <circle cx="12" cy="3" r="1.5"/>
-                <circle cx="4" cy="8" r="1.5"/>
-                <circle cx="12" cy="8" r="1.5"/>
-                <circle cx="4" cy="13" r="1.5"/>
-                <circle cx="12" cy="13" r="1.5"/>
-              </svg>
-            </button>
-          )}
-        </div>
+        <Typography variant="label">{day}</Typography>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: "300px" }}>
           {meal ? (
             <MemoizedMealCard
               {...meal}
               onSwapClick={onSwapClick ? () => onSwapClick(index) : undefined}
               onDeleteClick={onDeleteClick ? () => onDeleteClick(index) : undefined}
+              dragHandleRef={setActivatorNodeRef}
+              dragListeners={listeners}
             />
           ) : (
             <Box

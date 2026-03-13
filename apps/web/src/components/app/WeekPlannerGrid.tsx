@@ -109,7 +109,7 @@ export default function WeekPlannerGrid({
                 if (generatingDayIndex === index) {
                   return (
                     <div key={day} style={{ display: "flex", flexDirection: "column", gap: "8px", height: "100%" }}>
-                      <Typography variant="caption">{day}</Typography>
+                      <Typography variant="label">{day}</Typography>
                       <LoadingSkeleton ariaLabel={`Generating AI recipe for ${day}`} />
                     </div>
                   );

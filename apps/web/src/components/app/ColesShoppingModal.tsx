@@ -1,11 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Alert, Box, Button, Chip, IconButton, Sheet, Stack, Typography } from "@common-origin/design-system";
+import { Badge, Box, Button, Chip, Divider, IconButton, Sheet, Stack, Tag, Typography } from "@common-origin/design-system";
 import { estimateIngredientCost } from "@/lib/colesMapping";
 import type { AggregatedIngredient } from "@/lib/shoppingListAggregator";
-import type { ColesApiProduct } from "@/lib/colesApi";
-import ColesProductCard from "./ColesProductCard";
+
+// TODO: Re-enable Coles product cards once API response shape is verified and
+// state management is fixed. Known issues:
+//   A) useEffect on `items` resets loaded product data on every parent re-render
+//   B) `shoppingItems` in product-loading effect dependency array causes feedback loop
+//   C) RapidAPI response field names are unverified — fallback mapping may produce empty strings
+// See ColesProductCard.tsx for the card component (kept for future use).
 
 interface ColesShoppingModalProps {
   isOpen: boolean;
@@ -18,8 +23,6 @@ interface ShoppingItem {
   ingredient: AggregatedIngredient;
   colesSearchUrl: string;
   isCompleted: boolean;
-  products?: ColesApiProduct[];
-  loadingProducts?: boolean;
 }
 
 export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingComplete }: ColesShoppingModalProps) {
@@ -62,53 +65,6 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
       setCurrentIndex(Math.max(0, newItems.length - 1));
     }
   }, [items]);
-
-  // Load products for current item
-  useEffect(() => {
-    if (!hasStarted || !isOpen) return;
-    
-    const loadProducts = async () => {
-      const item = shoppingItems[currentIndex];
-      if (item.products || item.loadingProducts) return;
-      
-      // Mark as loading
-      setShoppingItems(prev => {
-        const updated = [...prev];
-        updated[currentIndex] = { ...updated[currentIndex], loadingProducts: true };
-        return updated;
-      });
-      
-      try {
-        const { searchColesProducts } = await import('@/lib/colesApi');
-        const colesInfo = estimateIngredientCost(item.ingredient.normalizedName, item.ingredient.totalQty, item.ingredient.unit);
-        const searchTerm = colesInfo.product?.name || item.ingredient.name;
-        
-        console.log('🔍 Loading products for:', searchTerm);
-        // Pass category for enhanced search term generation
-        const result = await searchColesProducts(searchTerm, 3, item.ingredient.category);
-        console.log('📦 Loaded products:', result);
-        
-        setShoppingItems(prev => {
-          const updated = [...prev];
-          updated[currentIndex] = {
-            ...updated[currentIndex],
-            products: result?.results || [],
-            loadingProducts: false
-          };
-          return updated;
-        });
-      } catch (error) {
-        console.error('Failed to load products:', error);
-        setShoppingItems(prev => {
-          const updated = [...prev];
-          updated[currentIndex] = { ...updated[currentIndex], loadingProducts: false };
-          return updated;
-        });
-      }
-    };
-    
-    loadProducts();
-  }, [currentIndex, hasStarted, isOpen, shoppingItems]);
 
   const completedCount = shoppingItems.filter(item => item.isCompleted).length;
   const totalCount = shoppingItems.length;
@@ -292,10 +248,10 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
             </Stack>
 
             {/* Current Item */}
-            <Box bg="surface" borderRadius="md" p="lg" border="default">
+            <Box bg="subtle" borderRadius="md" p="lg" border="default">
               <Stack direction="column" gap="md">
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Typography variant="h3">Current Item</Typography>
+                  <Tag variant="interactive" border>Current Item</Tag>
                   {isLastItem && (
                     <Chip variant="dark">Last one!</Chip>
                   )}
@@ -308,45 +264,20 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
                   </Typography>
                 </Stack>
 
-                {/* Product Options */}
-                {currentItem.loadingProducts ? (
-                  <Box bg="subtle" borderRadius="sm" p="md">
-                    <Typography variant="body">Loading products from Coles...</Typography>
-                  </Box>
-                ) : currentItem.products && currentItem.products.length > 0 ? (
-                  <Stack direction="column" gap="sm">
-                    <Typography variant="subtitle">Available at Coles:</Typography>
-                    {currentItem.products.slice(0, 3).map((product, index) => (
-                      <ColesProductCard
-                        key={index}
-                        product={product}
-                        quantity={currentItem.ingredient.totalQty}
-                        unit={currentItem.ingredient.unit}
-                        isRecommended={index === 0}
-                        onSelect={() => window.open(product.url, '_blank')}
-                      />
-                    ))}
-                  </Stack>
-                ) : (
-                  <>
-                    <Alert variant="warning" inline>
-                      No products found. Try searching manually at Coles.
-                    </Alert>
-                    <Button
-                      variant="secondary"
-                      onClick={openCurrentItem}
-                    >
-                      Search on Coles
-                    </Button>
-                  </>
-                )}
+                <Button
+                  variant="secondary"
+                  onClick={openCurrentItem}
+                  iconName="search"
+                >
+                  Search on Coles
+                </Button>
               </Stack>
             </Box>
 
             {/* Instructions */}
             <Box bg="subtle" borderRadius="md" p="md">
               <Stack direction="column" gap="xs">
-                <Typography variant="body">
+                <Typography variant="subtitle">
                   <strong>Next steps:</strong>
                 </Typography>
                 <Typography variant="small">
@@ -362,7 +293,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
             {/* Completed Items List */}
             {completedCount > 0 && (
               <Stack direction="column" gap="sm">
-                <Typography variant="subtitle">Added to Cart ({completedCount})</Typography>
+                <Typography variant="h4">Added to Cart ({completedCount})</Typography><Badge variant="default">{completedCount}</Badge>
                 <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
                   <Stack direction="column" gap="xs">
                   {shoppingItems
@@ -385,28 +316,32 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
               </Stack>
             )}
 
+            <Divider size="medium" />
+
             {/* Navigation Buttons */}
             <Stack direction="row" gap="md">
               <Button
                 variant="secondary"
                 onClick={handlePreviousItem}
+                iconName="arrowLeft"
                 disabled={isFirstItem}
               >
-                ← Previous
+                Previous
               </Button>
               {isLastItem ? (
                 <Button
                   variant="primary"
                   onClick={handleFinish}
+                  iconName="check"
                 >
-                  ✓ Finish Shopping
+                  Finish Shopping
                 </Button>
               ) : (
                 <Button
                   variant="primary"
                   onClick={handleNextItem}
                 >
-                  Next Item →
+                  Next Item
                 </Button>
               )}
             </Stack>

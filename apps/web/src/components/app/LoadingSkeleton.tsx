@@ -6,10 +6,10 @@ import { tokens } from "@common-origin/design-system";
 
 const shimmer = keyframes`
   0% {
-    background-position: -468px 0;
+    background-position: -800px 0;
   }
   100% {
-    background-position: 468px 0;
+    background-position: 800px 0;
   }
 `;
 
@@ -21,7 +21,7 @@ const SkeletonBox = styled(Box)`
     ${tokens.semantic.color.background.default} 100%
   );
   background-size: 800px 104px;
-  animation: ${shimmer} 2s ease-in-out infinite;
+  animation: ${shimmer} 1.5s linear infinite;
   border-radius: ${tokens.base.border.radius[4]};
   height: 300px;
   width: 100%;

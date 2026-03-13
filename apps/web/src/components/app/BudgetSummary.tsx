@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { Box, Stack, Typography, ProgressBar, Chip, Button, Divider } from "@common-origin/design-system";
+import { Box, Stack, Typography, ProgressBar, Chip, Button } from "@common-origin/design-system";
 import { RecipeLibrary } from "@/lib/library";
 import { estimateIngredientCostWithAPI } from "@/lib/colesMapping";
 import type { MealCardProps } from "./MealCard";
@@ -153,8 +153,7 @@ export default function BudgetSummary({ weekPlan, budget, dayNames }: BudgetSumm
   return (
     <Stack direction="column" gap="md">
       {/* Main Budget Bar */}
-      <Divider size="small" />
-      <Box bg="surface" borderRadius="md" border="default">
+      <Box bg="subtle" borderRadius="md" border="default" p="lg">
         <Stack direction="column" gap="md">
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="h3">Weekly budget</Typography>
@@ -206,7 +205,6 @@ export default function BudgetSummary({ weekPlan, budget, dayNames }: BudgetSumm
           </Stack>
         </Stack>
       </Box>
-      <Divider size="small" />
       
       {/* Detailed Breakdown */}
       {showDetails && (
