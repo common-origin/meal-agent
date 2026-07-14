@@ -8,7 +8,7 @@ import Main from "@/components/app/Main";import {
   resetFamilySettings 
 } from "@/lib/storageAsync";
 import type { FamilySettings } from "@/lib/types/settings";
-import { validateFamilySettings, DEFAULT_FAMILY_SETTINGS, DIETARY_TYPE_OPTIONS } from "@/lib/types/settings";
+import { validateFamilySettings, DEFAULT_FAMILY_SETTINGS, DIETARY_TYPE_OPTIONS, MAX_RECIPE_RECIPIENTS } from "@/lib/types/settings";
 import { track } from "@/lib/analytics";
 
 export default function SettingsPage() {
@@ -87,6 +87,35 @@ export default function SettingsPage() {
       children: prev.children.map((child, i) => 
         i === index ? { age } : child
       )
+    }));
+  };
+
+  // Recipe recipients (people you can email recipes to)
+  const [newRecipientName, setNewRecipientName] = useState('');
+  const [newRecipientEmail, setNewRecipientEmail] = useState('');
+  const recipients = settings.recipeRecipients ?? [];
+  const recipientsAtCap = recipients.length >= MAX_RECIPE_RECIPIENTS;
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const canAddRecipient =
+    !recipientsAtCap &&
+    newRecipientName.trim().length > 0 &&
+    emailRe.test(newRecipientEmail.trim()) &&
+    !recipients.some(r => r.email.toLowerCase() === newRecipientEmail.trim().toLowerCase());
+
+  const addRecipient = () => {
+    if (!canAddRecipient) return;
+    setSettings(prev => ({
+      ...prev,
+      recipeRecipients: [...(prev.recipeRecipients ?? []), { name: newRecipientName.trim(), email: newRecipientEmail.trim() }],
+    }));
+    setNewRecipientName('');
+    setNewRecipientEmail('');
+  };
+
+  const removeRecipient = (index: number) => {
+    setSettings(prev => ({
+      ...prev,
+      recipeRecipients: (prev.recipeRecipients ?? []).filter((_, i) => i !== index),
     }));
   };
 
@@ -603,6 +632,81 @@ export default function SettingsPage() {
 							</Box>
 						</Box>
 
+
+						{/* Recipe Sharing */}
+						<Box border="default" borderRadius="lg" p="lg" bg="default">
+							<Box maxWidth="600px">
+								<Stack direction="column" gap="2xl">
+									<Stack direction="column" gap="md">
+										<Typography variant="h3">Recipe sharing</Typography>
+										<Typography variant="body">
+											People you can email a recipe to from the recipe page. Up to {MAX_RECIPE_RECIPIENTS} recipients.
+										</Typography>
+									</Stack>
+
+									{recipients.length > 0 && (
+										<Stack direction="column" gap="sm">
+											{recipients.map((r, i) => (
+												<Box
+													key={`${r.email}-${i}`}
+													border="default"
+													borderRadius="md"
+													p="md"
+													bg="surface"
+												>
+													<Stack direction="row" gap="md" justifyContent="space-between" alignItems="center">
+														<Stack direction="column" gap="xs">
+															<Typography variant="body"><strong>{r.name}</strong></Typography>
+															<Typography variant="small" color="subdued">{r.email}</Typography>
+														</Stack>
+														<Button
+															variant="secondary"
+															size="small"
+															onClick={() => removeRecipient(i)}
+														>
+															Remove
+														</Button>
+													</Stack>
+												</Box>
+											))}
+										</Stack>
+									)}
+
+									{recipientsAtCap ? (
+										<Typography variant="small" color="subdued">
+											You&apos;ve reached the maximum of {MAX_RECIPE_RECIPIENTS} recipients. Remove one to add another.
+										</Typography>
+									) : (
+										<Stack direction="column" gap="md">
+											<Stack direction="row" gap="md">
+												<TextField
+													label="Name"
+													value={newRecipientName}
+													onChange={(e) => setNewRecipientName(e.target.value)}
+													placeholder="e.g., Sarah"
+												/>
+												<TextField
+													label="Email"
+													value={newRecipientEmail}
+													onChange={(e) => setNewRecipientEmail(e.target.value)}
+													placeholder="sarah@example.com"
+												/>
+											</Stack>
+											<Stack direction="row" justifyContent="flex-end">
+												<Button
+													variant="secondary"
+													size="medium"
+													onClick={addRecipient}
+													disabled={!canAddRecipient}
+												>
+													Add recipient
+												</Button>
+											</Stack>
+										</Stack>
+									)}
+								</Stack>
+							</Box>
+						</Box>
 
 						{/* Actions */}
 						<Stack direction="row" gap="md" justifyContent="flex-end">

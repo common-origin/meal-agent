@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Stack, Typography, Box, Button, ChipGroup, IconButton, List, ListItem, Alert, Modal, ResponsiveGrid } from "@common-origin/design-system";
+import { Stack, Typography, Box, Button, Checkbox, ChipGroup, IconButton, List, ListItem, Alert, Modal, ResponsiveGrid, TextField } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import { tokens } from "@common-origin/design-system";
 import { toggleFavorite, isFavorite, getRecipeRating, saveRecipeRating, blockRecipe, isRecipeBlocked } from "@/lib/storage";
@@ -12,6 +12,8 @@ import { track } from "@/lib/analytics";
 import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
 import { formatTagsForDisplay } from "@/lib/tagNormalizer";
 import StarRating from "@/components/app/StarRating";
+import { getFamilySettings } from "@/lib/storageAsync";
+import type { RecipeRecipient } from "@/lib/types/settings";
 
 /**
  * Parse instruction text that may contain markdown bold syntax
@@ -66,6 +68,28 @@ export default function RecipePage({ params }: RecipePageProps) {
   const [showBlockConfirm, setShowBlockConfirm] = useState<boolean>(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Email-recipe state
+  const [savedRecipients, setSavedRecipients] = useState<RecipeRecipient[]>([]);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
+  const [emailNote, setEmailNote] = useState('');
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailResult, setEmailResult] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getFamilySettings()
+      .then((s) => {
+        if (!cancelled) setSavedRecipients(s.recipeRecipients ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setSavedRecipients([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   
   useEffect(() => {
     if (recipe) {
@@ -94,6 +118,67 @@ export default function RecipePage({ params }: RecipePageProps) {
     setBlocked(true);
     setShowBlockConfirm(false);
     setMenuOpen(false);
+  };
+
+  const openEmailModal = () => {
+    setEmailResult(null);
+    setEmailNote('');
+    setSelectedEmails(new Set(savedRecipients.map((r) => r.email)));
+    setShowEmailModal(true);
+    setMenuOpen(false);
+  };
+
+  const toggleRecipientSelected = (email: string) => {
+    setSelectedEmails((prev) => {
+      const next = new Set(prev);
+      if (next.has(email)) next.delete(email);
+      else next.add(email);
+      return next;
+    });
+  };
+
+  const handleSendEmail = async () => {
+    if (selectedEmails.size === 0 || emailSending) return;
+    setEmailSending(true);
+    setEmailResult(null);
+    try {
+      const res = await fetch('/api/share-recipe-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipeId: id,
+          recipientEmails: Array.from(selectedEmails),
+          note: emailNote.trim() || undefined,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setEmailResult({ kind: 'error', message: data?.error || 'Failed to send email' });
+      } else {
+        const sentCount = Array.isArray(data?.sent) ? data.sent.length : 0;
+        const failedCount = Array.isArray(data?.failed) ? data.failed.length : 0;
+        track('recipe_emailed', { recipeId: id, recipientCount: sentCount });
+        if (failedCount > 0) {
+          setEmailResult({
+            kind: 'error',
+            message: `Sent to ${sentCount}. Failed: ${failedCount}.`,
+          });
+        } else {
+          setEmailResult({
+            kind: 'success',
+            message: `Recipe sent to ${sentCount} recipient${sentCount === 1 ? '' : 's'}.`,
+          });
+          setTimeout(() => setShowEmailModal(false), 1500);
+        }
+      }
+    } catch (err) {
+      setEmailResult({
+        kind: 'error',
+        message: err instanceof Error ? err.message : 'Failed to send email',
+      });
+    } finally {
+      setEmailSending(false);
+    }
   };
 
   // Close menu when clicking outside
@@ -180,6 +265,17 @@ export default function RecipePage({ params }: RecipePageProps) {
                       handleFavoriteClick();
                       setMenuOpen(false);
                     }}
+                  />
+                  <ListItem
+                    primary="Email recipe…"
+                    secondary={
+                      savedRecipients.length === 0
+                        ? 'Add recipients in Settings first'
+                        : `${savedRecipients.length} recipient${savedRecipients.length === 1 ? '' : 's'} saved`
+                    }
+                    interactive
+                    disabled={savedRecipients.length === 0}
+                    onClick={openEmailModal}
                   />
                   <ListItem
                     primary="Remove from plans"
@@ -342,6 +438,64 @@ export default function RecipePage({ params }: RecipePageProps) {
           <Typography variant="body">
             Are you sure? This recipe will not appear in future AI meal plans.
           </Typography>
+        </Modal>
+
+        {/* Email recipe modal */}
+        <Modal
+          isOpen={showEmailModal}
+          onClose={() => (emailSending ? undefined : setShowEmailModal(false))}
+          title="Email this recipe"
+          size="medium"
+          actions={[
+            {
+              label: emailSending ? 'Sending…' : 'Send',
+              onClick: handleSendEmail,
+              variant: 'primary',
+              disabled: selectedEmails.size === 0 || emailSending,
+            },
+            {
+              label: 'Cancel',
+              onClick: () => setShowEmailModal(false),
+              variant: 'secondary',
+              disabled: emailSending,
+            },
+          ]}
+        >
+          <Stack direction="column" gap="md">
+            {savedRecipients.length === 0 ? (
+              <Alert variant="info">
+                You haven&apos;t saved any recipients yet. Add one in Settings to email recipes.
+              </Alert>
+            ) : (
+              <>
+                <Typography variant="small" color="subdued">
+                  Select who should receive {recipe.title}.
+                </Typography>
+                <Stack direction="column" gap="sm">
+                  {savedRecipients.map((r) => (
+                    <Checkbox
+                      key={r.email}
+                      label={`${r.name} (${r.email})`}
+                      checked={selectedEmails.has(r.email)}
+                      onChange={() => toggleRecipientSelected(r.email)}
+                    />
+                  ))}
+                </Stack>
+                <TextField
+                  label="Add a note (optional)"
+                  value={emailNote}
+                  onChange={(e) => setEmailNote(e.target.value.slice(0, 280))}
+                  placeholder="e.g., Let's try this on Friday!"
+                  helperText={`${emailNote.length}/280`}
+                />
+                {emailResult && (
+                  <Alert variant={emailResult.kind === 'success' ? 'success' : 'error'}>
+                    {emailResult.message}
+                  </Alert>
+                )}
+              </>
+            )}
+          </Stack>
         </Modal>
 
         {/* Source Attribution */}

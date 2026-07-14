@@ -23,6 +23,13 @@ export interface BatchCookingPreferences {
   preferredDay: 'sunday' | 'saturday' | 'friday';
 }
 
+export interface RecipeRecipient {
+  name: string;
+  email: string;
+}
+
+export const MAX_RECIPE_RECIPIENTS = 5;
+
 /**
  * Primary dietary type - mutually exclusive options
  */
@@ -94,6 +101,9 @@ export interface FamilySettings {
   pantryPreference: 'hard' | 'soft'; // How strongly to prioritize pantry items
   weeklyReminderTime?: string; // HH:MM format, e.g., "18:00" for 6pm reminder to plan the week
   weeklyReminderDay?: 'saturday' | 'sunday' | 'monday'; // Day to send weekly reminder
+
+  // Sharing — people the user can email recipes to (e.g. partner). Capped at MAX_RECIPE_RECIPIENTS.
+  recipeRecipients?: RecipeRecipient[];
   
   // Metadata
   lastUpdated: string; // ISO date
@@ -177,6 +187,8 @@ export const DEFAULT_FAMILY_SETTINGS: FamilySettings = {
   pantryPreference: 'hard', // Default to prioritizing pantry items
   weeklyReminderTime: '18:00', // Default 6pm reminder
   weeklyReminderDay: 'saturday', // Default Saturday reminder
+
+  recipeRecipients: [],
   
   lastUpdated: new Date().toISOString(),
 };
@@ -226,6 +238,17 @@ export function validateFamilySettings(settings: Partial<FamilySettings>): strin
   
   if (settings.cuisines && settings.cuisines.length === 0) {
     errors.push('At least one cuisine must be selected');
+  }
+
+  if (settings.recipeRecipients) {
+    if (settings.recipeRecipients.length > MAX_RECIPE_RECIPIENTS) {
+      errors.push(`You can save at most ${MAX_RECIPE_RECIPIENTS} recipe recipients`);
+    }
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    settings.recipeRecipients.forEach((r, i) => {
+      if (!r.name || !r.name.trim()) errors.push(`Recipient ${i + 1}: name is required`);
+      if (!r.email || !emailRe.test(r.email.trim())) errors.push(`Recipient ${i + 1}: a valid email is required`);
+    });
   }
   
   return errors;

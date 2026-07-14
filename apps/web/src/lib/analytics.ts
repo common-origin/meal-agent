@@ -28,7 +28,10 @@ export type AnalyticsEventType =
   | 'override_saved'
   
   // Price Reports
-  | 'price_reported';
+  | 'price_reported'
+
+  // Sharing
+  | 'recipe_emailed';
 
 export type AnalyticsEvent = {
   type: AnalyticsEventType;
