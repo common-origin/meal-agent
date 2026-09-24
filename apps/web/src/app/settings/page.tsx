@@ -15,17 +15,42 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<FamilySettings>(DEFAULT_FAMILY_SETTINGS);
   const [saved, setSaved] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  const [icsUrl, setIcsUrl] = useState<string | null>(null);
+  const [icsError, setIcsError] = useState<string | null>(null);
 
   useEffect(() => {
     track('page_view', { page: '/settings' });
-    
+
     // Load settings from Supabase
     const loadSettings = async () => {
       const loadedSettings = await getFamilySettings();
       setSettings(loadedSettings);
     };
     loadSettings();
+
+    // Load the calendar feed URL (only available for signed-in households —
+    // an unauthenticated/local-only user has no server-side plan to poll)
+    const loadIcsUrl = async () => {
+      try {
+        const res = await fetch('/api/household/ics-url');
+        const body = await res.json();
+        if (res.ok) {
+          setIcsUrl(body.icsUrl);
+        } else {
+          setIcsError(body.error ?? 'Could not load calendar link.');
+        }
+      } catch {
+        setIcsError('Could not load calendar link.');
+      }
+    };
+    loadIcsUrl();
   }, []);
+
+  const copyIcsUrl = () => {
+    if (!icsUrl) return;
+    navigator.clipboard.writeText(icsUrl);
+    alert('Calendar link copied to clipboard!');
+  };
 
   const handleSave = async () => {
     const validationErrors = validateFamilySettings(settings);
@@ -706,6 +731,35 @@ export default function SettingsPage() {
 									)}
 								</Stack>
 							</Box>
+						</Box>
+
+						{/* Calendar Sync */}
+						<Box border="default" borderRadius="lg" p="lg" bg="default">
+							<Stack direction="column" gap="md">
+								<Typography variant="h3">Calendar Sync</Typography>
+								<Typography color="subdued">
+									Subscribe to this link from a calendar app to see this week&apos;s meals automatically —
+									works with{' '}
+									<a href="https://github.com/derekantrican/GAS-ICS-Sync" target="_blank" rel="noreferrer">
+										GAS-ICS-Sync
+									</a>{' '}
+									for a fully automatic Google Calendar sync. Treat this link like a password: anyone with it can see your meal plan.
+								</Typography>
+								{icsUrl ? (
+									<Stack direction="row" gap="sm" alignItems="center">
+										<Box maxWidth="480px" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+											<Typography variant="body">{icsUrl}</Typography>
+										</Box>
+										<Button variant="secondary" size="medium" onClick={copyIcsUrl}>
+											Copy link
+										</Button>
+									</Stack>
+								) : (
+									<Typography color="subdued">
+										{icsError ?? 'Loading your calendar link…'}
+									</Typography>
+								)}
+							</Stack>
 						</Box>
 
 						{/* Actions */}

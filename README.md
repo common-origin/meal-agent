@@ -108,6 +108,8 @@ GITHUB_TOKEN=your_github_token
    - `supabase/migrations/002_rls_policies.sql`
    - `supabase/migrations/003_alter_recipes_id_to_text.sql`
    - `supabase/migrations/004_add_full_settings_jsonb.sql`
+   - `supabase/migrations/005_add_nutrition_column.sql`
+   - `supabase/migrations/006_add_ics_token.sql`
 
 4. **Generate database types**
    ```bash
