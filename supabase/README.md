@@ -20,7 +20,15 @@
    - Click "Run" or press Cmd+Enter
    - Verify success: Should see "Success. No rows returned"
 
-4. **Run Full Settings JSONB Migration (Step 3):**
+4. **Run Recipe ID Type Migration (Step 3):**
+   - Click "New Query"
+   - Copy entire contents of `supabase/migrations/003_alter_recipes_id_to_text.sql`
+   - Paste into SQL Editor
+   - Click "Run" or press Cmd+Enter
+   - Verify success: Should see "Success. No rows returned"
+   - This changes `recipes.id` from UUID to TEXT, so it can hold semantic IDs like `"ai-recipe-name"` alongside real UUIDs
+
+5. **Run Full Settings JSONB Migration (Step 4):**
    - Click "New Query"
    - Copy entire contents of `supabase/migrations/004_add_full_settings_jsonb.sql`
    - Paste into SQL Editor
@@ -28,7 +36,23 @@
    - Verify success: Should see "Success. No rows returned"
    - This adds a `full_settings` JSONB column for flexible settings storage
 
-5. **Verify Tables Created:**
+6. **Run Nutrition Column Migration (Step 5):**
+   - Click "New Query"
+   - Copy entire contents of `supabase/migrations/005_add_nutrition_column.sql`
+   - Paste into SQL Editor
+   - Click "Run" or press Cmd+Enter
+   - Verify success: Should see "Success. No rows returned"
+   - This adds a `nutrition` JSONB column to `recipes` for per-serving nutrition info
+
+7. **Run ICS Token Migration (Step 6):**
+   - Click "New Query"
+   - Copy entire contents of `supabase/migrations/006_add_ics_token.sql`
+   - Paste into SQL Editor
+   - Click "Run" or press Cmd+Enter
+   - Verify success: Should see "Success. No rows returned"
+   - This adds an `ics_token` column to `households`, needed for the Settings page's "Calendar Sync" link and the `/api/plan/ics/[token]` feed route
+
+8. **Verify Tables Created:**
    ```sql
    SELECT table_name 
    FROM information_schema.tables 
@@ -46,7 +70,7 @@
    - recipes
    - shopping_lists
 
-6. **Verify RLS Enabled:**
+9. **Verify RLS Enabled:**
    ```sql
    SELECT tablename, rowsecurity 
    FROM pg_tables 

@@ -140,18 +140,21 @@ export type Database = {
       households: {
         Row: {
           created_at: string
+          ics_token: string
           id: string
           name: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          ics_token?: string
           id?: string
           name: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          ics_token?: string
           id?: string
           name?: string
           updated_at?: string
