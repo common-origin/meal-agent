@@ -35,3 +35,5 @@ The docs above are not kept in sync with the code. Confirmed discrepancies (as o
 - Client components need `"use client"` (Next.js App Router, file-based routing).
 - Run `pnpm test` before assuming changes to `lib/` are safe — but expect 12 pre-existing failures unrelated to your change (see Known Drift); don't treat all-green as a bar you must personally restore unless the user asks for it.
 - **All new work goes through a PR — never commit directly to `main`.** Create a feature branch, push it, and open a PR with `gh pr create` even for small changes like a doc update. This applies to Claude Code sessions too.
+- **`main` has branch protection**: the `build` CI check is required before merge (no required reviews — solo-maintained repo).
+- **Dependabot PRs for routine bumps auto-merge** once CI passes (`.github/workflows/dependabot-auto-merge.yml`): any GitHub Actions version bump, or a patch/minor npm dependency bump. A major npm/pnpm version bump is left for manual review — CI passing doesn't guarantee a major bump is safe.
