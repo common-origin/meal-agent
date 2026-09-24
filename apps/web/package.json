@@ -16,7 +16,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@google/generative-ai": "^0.24.1",
     "@react-email/components": "^1.0.1",
-    "@supabase/ssr": "^0.8.0",
+    "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.86.0",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.23",
