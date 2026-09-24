@@ -9,6 +9,13 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
+interface GeminiApiModel {
+  name: string;
+  displayName?: string;
+  description?: string;
+  supportedGenerationMethods?: string[];
+}
+
 export async function GET() {
   console.log('🔍 Calling ListModels API...');
   
@@ -42,9 +49,9 @@ export async function GET() {
       const data = await response.json();
       
       if (response.ok && data.models) {
-        const modelNames = data.models
-          .filter((m: any) => m.supportedGenerationMethods?.includes('generateContent'))
-          .map((m: any) => ({
+        const modelNames = (data.models as GeminiApiModel[])
+          .filter((m) => m.supportedGenerationMethods?.includes('generateContent'))
+          .map((m) => ({
             name: m.name,
             displayName: m.displayName,
             description: m.description,
@@ -85,7 +92,7 @@ export async function GET() {
     success: working !== undefined,
     results,
     recommendation: working 
-      ? `Use API version: ${working.version}, Available models: ${working.models?.map((m: any) => m.name.split('/').pop()).join(', ')}`
+      ? `Use API version: ${working.version}, Available models: ${working.models?.map((m) => m.name.split('/').pop()).join(', ')}`
       : 'No working API versions found. Check your API key at https://aistudio.google.com/app/apikey',
   });
 }

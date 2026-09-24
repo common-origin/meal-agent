@@ -47,7 +47,7 @@ export default function AboutPage() {
               <Box>
                 <Typography variant="h4">🤖 AI-Powered Meal Plans</Typography>
                 <Typography variant="body" color="subdued">
-                  Generate complete weekly meal plans using Google's Gemini AI, tailored to your family size, 
+                  Generate complete weekly meal plans using Google&apos;s Gemini AI, tailored to your family size, 
                   dietary preferences, and time constraints. The AI considers your cooking skill level, 
                   available time, and ingredient preferences.
                 </Typography>
@@ -92,8 +92,8 @@ export default function AboutPage() {
               <Box>
                 <Typography variant="h4">🔄 Flexible Planning</Typography>
                 <Typography variant="body" color="subdued">
-                  Don't like a suggestion? Swap any meal with AI-generated alternatives or your saved recipes. 
-                  Add meals manually, delete days you're eating out, or regenerate suggestions with different 
+                  Don&apos;t like a suggestion? Swap any meal with AI-generated alternatives or your saved recipes. 
+                  Add meals manually, delete days you&apos;re eating out, or regenerate suggestions with different 
                   constraints.
                 </Typography>
               </Box>
@@ -101,7 +101,7 @@ export default function AboutPage() {
               <Box>
                 <Typography variant="h4">🔐 Secure Authentication & Cloud Sync</Typography>
                 <Typography variant="body" color="subdued">
-                  Sign in with Google OAuth or Magic Link (passwordless email) to access your household's 
+                  Sign in with Google OAuth or Magic Link (passwordless email) to access your household&apos;s 
                   data. All recipes, meal plans, and settings are automatically synced to Supabase PostgreSQL 
                   with Row-Level Security for complete data isolation. Works seamlessly across devices.
                 </Typography>
@@ -128,8 +128,8 @@ export default function AboutPage() {
               <Box>
                 <Typography variant="h4">Step 2: Generate Your Meal Plan</Typography>
                 <Typography variant="body" color="subdued">
-                  Click <strong>"Plan your week"</strong> from the home page. The wizard will ask about this 
-                  week's pantry items and preferred cuisines, then generate a complete 7-day meal plan optimized 
+                  Click <strong>&quot;Plan your week&quot;</strong> from the home page. The wizard will ask about this 
+                  week&apos;s pantry items and preferred cuisines, then generate a complete 7-day meal plan optimized 
                   for variety, nutrition, and cost.
                 </Typography>
               </Box>
@@ -139,7 +139,7 @@ export default function AboutPage() {
                 <Typography variant="body" color="subdued">
                   Review your plan on the <strong>Plan</strong> page. Click any meal card to see the full recipe. 
                   Use the swap icon to get AI-suggested alternatives or select from your saved recipes. Delete 
-                  meals for days you're eating out.
+                  meals for days you&apos;re eating out.
                 </Typography>
               </Box>
 
@@ -262,7 +262,7 @@ export default function AboutPage() {
                 <Typography variant="body" color="subdued">
                   <strong>Now:</strong> Coles pricing in AUD<br/>
                   <strong>Future:</strong> Multi-country support with local supermarkets (US: Walmart/Target, 
-                  UK: Tesco/Sainsbury's, etc.), currency conversion, regional cuisine preferences, 
+                  UK: Tesco/Sainsbury&apos;s, etc.), currency conversion, regional cuisine preferences, 
                   and localized recipe suggestions.
                 </Typography>
               </Box>
@@ -310,7 +310,7 @@ export default function AboutPage() {
                   • All household data stored in Supabase PostgreSQL with Row-Level Security<br/>
                   • Complete isolation between households - users only access their own data<br/>
                   • Analytics stored locally on your device, never sent to servers<br/>
-                  • AI recipe generation uses Gemini API (Google's standard privacy terms apply)<br/>
+                  • AI recipe generation uses Gemini API (Google&apos;s standard privacy terms apply)<br/>
                   • No cross-household access possible - enforced at database level<br/>
                   • Automatic data cleanup when household or user is deleted (CASCADE)<br/>
                   • Fresh start for new users - no localStorage migration<br/>

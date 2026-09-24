@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Alert, Stack, Typography, IconButton, Button, Sheet, TextField, Dropdown } from "@common-origin/design-system";
 import { type Recipe } from "@/lib/types/recipe";
 import { RecipeLibrary } from "@/lib/library";
@@ -71,15 +71,17 @@ export default function SwapDrawer({
 }: SwapDrawerProps) {
   const [activeTab, setActiveTab] = useState<TabType>("ai");
   const [savedRecipes, setSavedRecipes] = useState<Recipe[]>([]);
-  const [filteredSavedRecipes, setFilteredSavedRecipes] = useState<Recipe[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterBy, setFilterBy] = useState<"all" | "favorites">("all");
   const [favorites, setFavorites] = useState<string[]>([]);
 
-  // Load saved recipes when drawer opens
+  // Load saved recipes when drawer opens. RecipeLibrary/getFavorites read
+  // directly from localStorage with no subscription mechanism, so this is a
+  // genuine external-store sync rather than derivable render-time state.
   useEffect(() => {
     if (isOpen) {
       const customRecipes = RecipeLibrary.getCustomRecipes();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSavedRecipes(customRecipes);
       setFavorites(getFavorites());
       setSearchQuery("");
@@ -90,8 +92,9 @@ export default function SwapDrawer({
     }
   }, [isOpen, currentRecipe]);
 
-  // Filter saved recipes
-  useEffect(() => {
+  // Filter saved recipes — pure derivation from other state, so compute it
+  // during render instead of syncing a copy via an effect.
+  const filteredSavedRecipes = useMemo(() => {
     let result = [...savedRecipes];
 
     if (filterBy === "favorites") {
@@ -100,13 +103,13 @@ export default function SwapDrawer({
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(r => 
+      result = result.filter(r =>
         r.title.toLowerCase().includes(query) ||
         r.ingredients.some(ing => ing.name.toLowerCase().includes(query))
       );
     }
 
-    setFilteredSavedRecipes(result);
+    return result;
   }, [savedRecipes, searchQuery, filterBy, favorites]);
 
   if (!isOpen) return null;

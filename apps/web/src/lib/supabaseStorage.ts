@@ -8,7 +8,7 @@
 import { createClient as createBrowserClient } from '@/lib/supabase/client';
 import type { FamilySettings } from './types/settings';
 import type { Recipe } from './types/recipe';
-import type { Database } from './supabase/database.types';
+import type { Database, Json } from './supabase/database.types';
 
 /**
  * Get the current user's household ID
@@ -60,7 +60,7 @@ export async function saveFamilySettingsToDb(settings: FamilySettings): Promise<
       skill_level: settings.cookingSkill || 'intermediate',
       updated_at: new Date().toISOString(),
       // Store complete settings object
-      full_settings: settings as any,
+      full_settings: settings as unknown as Json,
     };
     
     const { error } = await supabase

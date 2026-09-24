@@ -58,7 +58,12 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
           isCompleted: false,
         };
       });
-    
+
+    // Known issue (see TODO above, item A): re-deriving this on every `items`
+    // change is exactly the reset-on-parent-re-render bug already tracked for
+    // this component's pending state-management rework, not something to
+    // silently change behavior on while fixing an unrelated lint pass.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShoppingItems(newItems);
     // Reset to first item if current index is out of bounds
     if (currentIndex >= newItems.length) {
