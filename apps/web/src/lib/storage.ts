@@ -1,6 +1,7 @@
 // Simple localStorage wrapper with error handling
 import type { FamilySettings } from "./types/settings";
 import { DEFAULT_FAMILY_SETTINGS } from "./types/settings";
+import { RecipeLibrary } from "./library";
 
 /**
  * NOTE: This module provides localStorage-only operations.
@@ -133,8 +134,6 @@ export function toggleFavorite(recipeId: string): boolean {
     household.favorites.push(recipeId);
     
     // If this is a temporary AI recipe, promote it to permanent custom recipe
-    // This is lazy-loaded to avoid circular dependency
-    const { RecipeLibrary } = require('./library');
     RecipeLibrary.promoteTempAIRecipeToCustom(recipeId);
   }
   
