@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { AuthError } from '@supabase/supabase-js';
-import { getAuthErrorMessage } from '../authErrorMessages';
+import { getAuthErrorMessage, getAuthErrorMessageForCode } from '../authErrorMessages';
 
 describe('getAuthErrorMessage', () => {
   it('maps a known error code to friendly copy instead of the raw message', () => {
@@ -47,5 +47,34 @@ describe('getAuthErrorMessage', () => {
     const message = getAuthErrorMessage(new Error('boom'));
 
     expect(message).toBe('Something went wrong trying to sign in. Please try again.');
+  });
+});
+
+describe('getAuthErrorMessageForCode', () => {
+  it('maps a known code to the same friendly copy as getAuthErrorMessage', () => {
+    expect(getAuthErrorMessageForCode('otp_expired')).toBe(
+      'That sign-in link has expired. Request a new one below.'
+    );
+  });
+
+  it('falls back to the generic message for an unrecognized code', () => {
+    expect(getAuthErrorMessageForCode('some_future_code_not_in_our_map')).toBe(
+      'Something went wrong trying to sign in. Please try again.'
+    );
+  });
+
+  it('falls back to the generic message for a null or missing code', () => {
+    expect(getAuthErrorMessageForCode(null)).toBe(
+      'Something went wrong trying to sign in. Please try again.'
+    );
+    expect(getAuthErrorMessageForCode(undefined)).toBe(
+      'Something went wrong trying to sign in. Please try again.'
+    );
+  });
+
+  it('respects the sign-up context for its generic fallback', () => {
+    expect(getAuthErrorMessageForCode('some_future_code_not_in_our_map', 'sign up')).toBe(
+      'Something went wrong trying to sign up. Please try again.'
+    );
   });
 });

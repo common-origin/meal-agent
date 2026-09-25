@@ -24,18 +24,31 @@ const KNOWN_ERROR_MESSAGES: Partial<Record<string, string>> = {
 };
 
 /**
+ * Turns a Supabase Auth error code into copy safe to render to the user.
+ * Used both for an error caught directly client-side (via
+ * getAuthErrorMessage below) and for a code forwarded through a redirect
+ * query param -- e.g. auth/callback/route.ts, which hits its own
+ * exchangeCodeForSession() error server-side and can only pass the code
+ * along, not the original error object. `context` only affects the
+ * wording of the generic fallback for an unrecognized/missing code.
+ */
+export function getAuthErrorMessageForCode(
+  code: string | null | undefined,
+  context: 'sign in' | 'sign up' = 'sign in'
+): string {
+  const known = code ? KNOWN_ERROR_MESSAGES[code] : undefined;
+  if (known) return known;
+
+  return `Something went wrong trying to ${context}. Please try again.`;
+}
+
+/**
  * Turns a caught sign-in/sign-up error into copy safe to render to the
- * user -- never the raw error.message. `context` only affects the wording
- * of the generic fallback for an unrecognized error.
+ * user -- never the raw error.message.
  */
 export function getAuthErrorMessage(
   error: unknown,
   context: 'sign in' | 'sign up' = 'sign in'
 ): string {
-  if (isAuthError(error)) {
-    const known = error.code ? KNOWN_ERROR_MESSAGES[error.code] : undefined;
-    if (known) return known;
-  }
-
-  return `Something went wrong trying to ${context}. Please try again.`;
+  return getAuthErrorMessageForCode(isAuthError(error) ? error.code : undefined, context);
 }
