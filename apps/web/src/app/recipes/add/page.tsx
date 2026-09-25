@@ -148,7 +148,7 @@ export default function AddRecipePage() {
     setInstructions(instructions.filter((_, i) => i !== index));
   };
 
-  const handleSaveRecipe = () => {
+  const handleSaveRecipe = async () => {
     if (!title || ingredients.length === 0) {
       alert('Please provide at least a title and ingredients');
       return;
@@ -186,8 +186,8 @@ export default function AddRecipePage() {
         costPerServeEst: estimatedCost,
       };
 
-      RecipeLibrary.addCustomRecipes([recipe]);
-      
+      await RecipeLibrary.addCustomRecipes([recipe]);
+
       track('page_view', { page: 'recipe_added', source: mode });
       
       router.push(`/recipe/${recipe.id}`);
