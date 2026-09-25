@@ -24,9 +24,8 @@ async function getHouseholdId(): Promise<string | null> {
     .select('household_id')
     .eq('user_id', user.id)
     .single();
-  
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data as any)?.household_id || null;
+
+  return data?.household_id || null;
 }
 
 /**
