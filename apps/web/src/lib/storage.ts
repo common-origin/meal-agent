@@ -373,6 +373,13 @@ export function isRecipeBlocked(recipeId: string): boolean {
  * see issue #48) or `apiQuota.ts`/`colesApi.ts` (device-level API rate
  * limiting) — so this can't be a blanket `Storage.clear()`.
  *
+ * This is a one-shot cleanup, not a guarantee: an async write already in
+ * flight when sign-out is clicked (e.g. `RecipeLibrary.addTempAIRecipes()`
+ * mid-AI-generation) can still land after this runs and repopulate the
+ * cache it just cleared. Tracked in issue #73, not fixed here — needs a
+ * cancellation/session-generation guard across several async write paths,
+ * not a one-line patch.
+ *
  * Never throws: this runs in Header.tsx between `supabase.auth.signOut()`
  * and the redirect to `/login`, and some of what it calls (e.g.
  * `localStorage.removeItem` in `clearPantryPreferences()`/
