@@ -7,7 +7,7 @@ import Main from "@/components/app/Main";
 import ColesShoppingModal from "@/components/app/ColesShoppingModal";
 import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from "@/lib/shoppingListAggregator";
 import { generateShoppingListCSV, downloadCSV } from "@/lib/csv";
-import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides } from "@/lib/storage";
+import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides, STORAGE_KEYS } from "@/lib/storage";
 import { loadCurrentWeekPlan, savePantryItems, loadPantryItems, hydrateRecencyFromSupabase, syncRecencyToSupabase } from "@/lib/hybridStorage";
 import { composeWeek } from "@/lib/compose";
 import { nextWeekMondayISO } from "@/lib/schedule";
@@ -225,7 +225,7 @@ export default function ShoppingListPage() {
     
     // Check if shopping is already complete for this week
     const nextWeekISO = nextWeekMondayISO();
-    const completionKey = `shopping-complete-${nextWeekISO}`;
+    const completionKey = `${STORAGE_KEYS.SHOPPING_COMPLETE_PREFIX}${nextWeekISO}`;
     const isComplete = localStorage.getItem(completionKey) === 'true';
     setIsShoppingComplete(isComplete);
     
@@ -285,7 +285,7 @@ export default function ShoppingListPage() {
   const handleShoppingComplete = () => {
     // Mark shopping as complete for this week
     const nextWeekISO = nextWeekMondayISO();
-    const completionKey = `shopping-complete-${nextWeekISO}`;
+    const completionKey = `${STORAGE_KEYS.SHOPPING_COMPLETE_PREFIX}${nextWeekISO}`;
     localStorage.setItem(completionKey, 'true');
     setIsShoppingComplete(true);
     

@@ -14,6 +14,7 @@ import {
   getBlockedRecipes,
   saveWeeklyOverrides,
   loadWeeklyOverrides,
+  STORAGE_KEYS,
 } from '../storage';
 import { savePantryPreferences, loadPantryPreferences } from '../pantryPreferences';
 import { recordWeekRecipes, getRecipeHistory } from '../recencyTracker';
@@ -82,6 +83,18 @@ describe('clearHouseholdScopedCaches', () => {
 
     expect(loadWeeklyOverrides('2026-01-05')).toBeNull();
     expect(loadWeeklyOverrides('2026-01-12')).toBeNull();
+  });
+
+  it('clears every shopping-completion key, not just one week', () => {
+    // shopping-list/page.tsx sets this directly via localStorage, one key
+    // per week, the same pattern as weekly overrides above.
+    localStorage.setItem(`${STORAGE_KEYS.SHOPPING_COMPLETE_PREFIX}2026-01-05`, 'true');
+    localStorage.setItem(`${STORAGE_KEYS.SHOPPING_COMPLETE_PREFIX}2026-01-12`, 'true');
+
+    clearHouseholdScopedCaches();
+
+    expect(localStorage.getItem(`${STORAGE_KEYS.SHOPPING_COMPLETE_PREFIX}2026-01-05`)).toBeNull();
+    expect(localStorage.getItem(`${STORAGE_KEYS.SHOPPING_COMPLETE_PREFIX}2026-01-12`)).toBeNull();
   });
 
   it('clears pantry preferences', () => {

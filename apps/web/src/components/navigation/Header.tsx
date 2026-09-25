@@ -24,7 +24,14 @@ export default function Header() {
   const handleSignOut = async () => {
     setSigningOut(true);
     const supabase = createClient();
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error('Failed to sign out:', error);
+      setSigningOut(false);
+      return;
+    }
+
     clearHouseholdScopedCaches();
     router.push('/login');
   };

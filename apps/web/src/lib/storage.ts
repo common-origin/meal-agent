@@ -87,6 +87,7 @@ export const STORAGE_KEYS = {
   ANALYTICS: "meal-agent-analytics",
   HOUSEHOLD: "ma_household",
   OVERRIDES_PREFIX: "ma_overrides:", // followed by weekOfISO
+  SHOPPING_COMPLETE_PREFIX: "shopping-complete-", // followed by weekOfISO, see shopping-list/page.tsx
 } as const;
 
 // Type imports
@@ -362,9 +363,10 @@ export function isRecipeBlocked(recipeId: string): boolean {
 
 /**
  * Clear every localStorage cache scoped to a household — meal plans,
- * recipes, pantry preferences, recency history, ratings/blocks. Called on
- * sign-out so a browser that switches between households or accounts
- * doesn't inherit the previous one's local data (issue #49).
+ * recipes, pantry preferences, recency history, ratings/blocks, shopping-
+ * completion state. Called on sign-out so a browser that switches between
+ * households or accounts doesn't inherit the previous one's local data
+ * (issue #49).
  *
  * Deliberately does NOT touch caches that are meant to persist regardless
  * of who's signed in — e.g. `ingredientAnalytics.ts` (maintainer tooling,
@@ -389,11 +391,15 @@ export function clearHouseholdScopedCaches(): void {
     Storage.remove(RECIPE_RATINGS_KEY);
     Storage.remove(BLOCKED_RECIPES_KEY);
 
-    // Weekly overrides are one key per week with no registry of which weeks
-    // exist, so sweep by prefix instead (same approach colesApi.ts's own
-    // cache-clearing uses for its per-SKU keys).
+    // Weekly overrides and shopping-completion state are each one key per
+    // week with no registry of which weeks exist, so sweep by prefix
+    // instead (same approach colesApi.ts's own cache-clearing uses for its
+    // per-SKU keys).
     for (const key of Object.keys(localStorage)) {
-      if (key.startsWith(STORAGE_KEYS.OVERRIDES_PREFIX)) {
+      if (
+        key.startsWith(STORAGE_KEYS.OVERRIDES_PREFIX) ||
+        key.startsWith(STORAGE_KEYS.SHOPPING_COMPLETE_PREFIX)
+      ) {
         localStorage.removeItem(key);
       }
     }
