@@ -247,12 +247,33 @@ export class RecipeLibrary {
   /**
    * Sync Supabase recipes to localStorage cache
    * Used on page load to ensure RecipeLibrary has access to all recipes from Supabase
+   *
+   * Splits by source.domain rather than dumping everything into the temp-AI
+   * cache: a custom recipe (source.domain: 'user-added', set for all of
+   * URL/image/manual entry in recipes/add/page.tsx) restored into the temp
+   * cache instead of the custom cache wouldn't show up in getCustomRecipes()
+   * on another device unless also favorited, and would eventually be
+   * auto-cleaned by cleanupOldTempRecipes as if it were a stale AI
+   * suggestion. See issue #32.
    */
   static syncSupabaseRecipes(supabaseRecipes: Recipe[]): boolean {
     try {
-      // Replace the entire temp AI recipes cache with Supabase recipes
-      this.saveTempAIRecipes(supabaseRecipes);
-      console.log(`✅ Synced ${supabaseRecipes.length} recipes from Supabase to localStorage cache`);
+      const customFromSupabase = supabaseRecipes.filter(r => r.source.domain !== 'ai-generated');
+      const aiFromSupabase = supabaseRecipes.filter(r => r.source.domain === 'ai-generated');
+
+      // Merge custom recipes in (don't just overwrite — a device can have
+      // added one locally that hasn't round-tripped through Supabase yet)
+      const existingCustom = this.loadCustomRecipes();
+      const existingCustomIds = new Set(existingCustom.map(r => r.id));
+      const newCustom = customFromSupabase.filter(r => !existingCustomIds.has(r.id));
+      if (newCustom.length > 0) {
+        this.saveCustomRecipes([...existingCustom, ...newCustom]);
+      }
+
+      // Replace the entire temp AI recipes cache with Supabase's AI recipes
+      this.saveTempAIRecipes(aiFromSupabase);
+
+      console.log(`✅ Synced ${customFromSupabase.length} custom + ${aiFromSupabase.length} AI recipes from Supabase to localStorage cache`);
       return true;
     } catch (error) {
       console.error('Failed to sync Supabase recipes:', error);

@@ -122,9 +122,10 @@ export function getDefaultHousehold(): Household {
 }
 
 // Favorites helpers
-export async function toggleFavorite(recipeId: string): Promise<boolean> {
+export function toggleFavorite(recipeId: string): boolean {
   const household = loadHousehold() || getDefaultHousehold();
   const index = household.favorites.indexOf(recipeId);
+  let isNewFavorite = false;
 
   if (index > -1) {
     // Remove from favorites
@@ -132,12 +133,25 @@ export async function toggleFavorite(recipeId: string): Promise<boolean> {
   } else {
     // Add to favorites
     household.favorites.push(recipeId);
-
-    // If this is a temporary AI recipe, promote it to permanent custom recipe
-    await RecipeLibrary.promoteTempAIRecipeToCustom(recipeId);
+    isNewFavorite = true;
   }
 
-  return saveHousehold(household);
+  // Save the favorite locally first — none of this function's callers await
+  // it, so if the promotion below ran first, a slow or offline Supabase
+  // round trip would delay (and risk losing, on navigation/reload) the one
+  // local write that actually persists the toggle.
+  const success = saveHousehold(household);
+
+  if (isNewFavorite) {
+    // Promote in the background: if this is a temporary AI recipe, turn it
+    // into a permanent custom recipe. Not awaited — the favorite itself is
+    // already saved above regardless of how this resolves.
+    RecipeLibrary.promoteTempAIRecipeToCustom(recipeId).catch((err) => {
+      console.warn('Failed to promote recipe to My Recipes:', err);
+    });
+  }
+
+  return success;
 }
 
 export function isFavorite(recipeId: string): boolean {
