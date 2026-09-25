@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Stack, Typography, Button, Box } from "@common-origin/design-system";
 import { createClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 const NAV_ITEMS = [
   { href: '/plan', label: 'Plan' },
@@ -17,29 +17,11 @@ const NAV_ITEMS = [
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const supabase = createClient();
-    
-    // Get initial user
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const { user } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
 
   const handleSignOut = async () => {
-    setLoading(true);
+    setSigningOut(true);
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push('/login');
@@ -87,9 +69,9 @@ export default function Header() {
               variant="naked"
               size="medium"
               onClick={handleSignOut}
-              disabled={loading}
+              disabled={signingOut}
             >
-              {loading ? 'Signing out...' : 'Sign out'}
+              {signingOut ? 'Signing out...' : 'Sign out'}
             </Button>
           )}
         </Stack>

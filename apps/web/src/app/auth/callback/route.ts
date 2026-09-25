@@ -21,7 +21,14 @@ export async function GET(request: Request) {
 
     if (error) {
       console.error('Error exchanging code for session:', error);
-      return NextResponse.redirect(`${origin}/login?error=auth_failed`);
+      // Forward the actual Supabase error code (e.g. otp_expired for a
+      // stale magic link) rather than a fixed "auth_failed", so the login
+      // page can render specific, friendly copy via getAuthErrorMessageForCode
+      // instead of only ever showing its generic fallback.
+      const errorCode = error.code ?? 'unexpected_failure';
+      return NextResponse.redirect(
+        `${origin}/login?error=${encodeURIComponent(errorCode)}`
+      );
     }
   }
 

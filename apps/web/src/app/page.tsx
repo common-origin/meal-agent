@@ -5,26 +5,22 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Stack, Typography, Button, ResponsiveGrid, Box } from "@common-origin/design-system";
 import { track } from "@/lib/analytics";
-import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function HomePage() {
   const router = useRouter();
-  
+  const { user, loading } = useAuth();
+
   useEffect(() => {
     track('page_view', { page: '/' });
-    
-    // Check if user is authenticated and redirect to meal-plan
-    const checkAuth = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-        router.push('/plan');
-      }
-    };
-    
-    checkAuth();
-  }, [router]);
+  }, []);
+
+  useEffect(() => {
+    // Redirect an already-authenticated visitor to the meal plan
+    if (!loading && user) {
+      router.push('/plan');
+    }
+  }, [loading, user, router]);
 
   return (
     <main
