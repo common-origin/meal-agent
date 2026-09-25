@@ -25,26 +25,24 @@ for signed-in households; anonymous use falls back to localStorage.
 - **Vercel**: hosting, deployed on every push to `main` — independently of
   CI (see [CI/CD and deployment](#cicd-and-deployment) below)
 
-## Request flow: middleware and auth
+## Request flow: proxy and auth
 
-`apps/web/src/middleware.ts` runs before the routes it's scoped to and
+`apps/web/src/proxy.ts` runs before the routes it's scoped to and
 refreshes the Supabase session, redirecting unauthenticated visitors away
 from routes that need a session and signed-in visitors away from
-`/login`/`/signup`.
+`/login`/`/signup`. (Migrated from the deprecated `middleware.ts` file
+convention to `proxy.ts` in issue #22 — same behavior, Next.js 16.3.x just
+renamed the convention.)
 
 Its `matcher` is deliberately narrow — only `/plan`, `/shopping-list`,
 `/recipes`, `/settings`, `/debug`, `/login`, and `/signup` — not "every
 route." Earlier it matched almost everything, including the homepage, and
 the `supabase.auth.getUser()` call inside it had no timeout: a slow
-Supabase response could hang the middleware and 504 the *entire site*, not
+Supabase response could hang the proxy and 504 the *entire site*, not
 just the pages that actually need a session. That's what happened in
 production once (see issue #19, now fixed) — the matcher was narrowed and
 the auth check now races a 3-second timeout, treating a timeout the same
 as "no user" rather than hanging the request.
-
-Separately: Next.js 16.3.x deprecated the `middleware.ts` file convention in
-favor of `proxy.ts`. It still works today via a compatibility shim, but the
-file will eventually need migrating — tracked in issue #22.
 
 ## Layers
 
@@ -59,7 +57,7 @@ Pages, by area:
 - **Shopping**: `/shopping-list`
 - **Household**: `/settings`, `/settings/data-export`
 - **Other**: `/about`, `/analytics`
-- **Debug/admin** (not auth-gated by the middleware's matcher today):
+- **Debug/admin** (not auth-gated by the proxy's matcher today):
   `/admin/debug`, `/debug/api-usage`, `/debug/coles-api-test`,
   `/debug/ingredient-analytics`, `/debug/persistent-cache`,
   `/debug/search-mapping`
