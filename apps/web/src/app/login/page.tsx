@@ -1,19 +1,31 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Box, Button, Stack, TextField, Typography } from '@common-origin/design-system';
 import { createClient } from '@/lib/supabase/client';
 import { getSiteUrl, isSafeRedirectPath } from '@/lib/utils/url';
+import { getAuthErrorMessage, getAuthErrorMessageForCode } from '@/lib/auth/authErrorMessages';
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirectTo');
+  const errorCode = searchParams.get('error');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  // auth/callback/route.ts redirects here with ?error=<code> when
+  // exchangeCodeForSession() fails server-side (e.g. an expired magic
+  // link) -- render the same friendly copy for it as for an error caught
+  // directly client-side below.
+  useEffect(() => {
+    if (errorCode) {
+      setError(getAuthErrorMessageForCode(errorCode, 'sign in'));
+    }
+  }, [errorCode]);
 
   // Forward the page the user originally wanted (set by proxy.ts's login
   // redirect) through the OAuth/magic-link round trip via `next`, so
@@ -43,7 +55,7 @@ function LoginForm() {
 
       if (error) throw error;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign in with Google');
+      setError(getAuthErrorMessage(err, 'sign in'));
       setLoading(false);
     }
   };
@@ -72,7 +84,7 @@ function LoginForm() {
 
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send magic link');
+      setError(getAuthErrorMessage(err, 'sign in'));
       setLoading(false);
     }
   };
