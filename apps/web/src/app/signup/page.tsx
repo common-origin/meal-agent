@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Box, Button, Stack, TextField, Typography } from '@common-origin/design-system';
 import { createClient } from '@/lib/supabase/client';
 import { getSiteUrl, isSafeRedirectPath } from '@/lib/utils/url';
+import { getAuthErrorMessage } from '@/lib/auth/authErrorMessages';
 
 function SignupForm() {
   const router = useRouter();
@@ -43,7 +44,7 @@ function SignupForm() {
 
       if (error) throw error;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign up with Google');
+      setError(getAuthErrorMessage(err, 'sign up'));
       setLoading(false);
     }
   };
@@ -72,7 +73,7 @@ function SignupForm() {
 
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send magic link');
+      setError(getAuthErrorMessage(err, 'sign up'));
       setLoading(false);
     }
   };
