@@ -209,12 +209,19 @@ export async function savePantryItems(items: string[]): Promise<boolean> {
 
 export async function loadPantryItems(): Promise<string[]> {
   const authed = await isAuthenticated();
-  
+
   if (authed) {
     const items = await SupabaseStorage.loadPantryItems();
-    if (items.length > 0) return items;
+    if (items.length > 0) {
+      // Keep the localStorage cache in sync so synchronous local-only
+      // readers (e.g. shoppingListAggregator.ts's isInPantryPreferences)
+      // see this device's latest data right after hydration, rather than
+      // whatever was last written on this device specifically.
+      savePantryPreferences(new Set(items));
+      return items;
+    }
   }
-  
+
   // Fall back to localStorage
   return Array.from(loadPantryPreferences());
 }

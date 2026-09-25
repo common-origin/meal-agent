@@ -1,7 +1,12 @@
 /**
- * User Pantry Preferences
+ * User Pantry Preferences (localStorage primitive)
  * Manages user's preferences for which ingredients they always have in their pantry
  * These items will be excluded from the shopping list (moved to "Already Have" section)
+ *
+ * This is the anonymous-user store and local cache for `hybridStorage.ts`'s
+ * savePantryItems/loadPantryItems, which is the auth-aware entry point app
+ * code should call instead — see issue #2. Importing this module directly
+ * from a page/component bypasses Supabase sync for authenticated users.
  */
 
 const STORAGE_KEY = 'user_pantry_preferences';
