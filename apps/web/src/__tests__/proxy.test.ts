@@ -11,7 +11,7 @@ vi.mock('@supabase/ssr', () => ({
   }),
 }));
 
-import { proxy } from '../proxy';
+import { proxy, config } from '../proxy';
 
 function makeRequest(pathname: string): NextRequest {
   return new NextRequest(new URL(pathname, 'https://example.com'));
@@ -52,18 +52,38 @@ describe('proxy', () => {
       }
     );
 
-    it('matches nested protected paths (e.g. /recipes/42), not just the exact prefix', async () => {
+    it('matches nested protected paths (e.g. /recipes/42), not just the exact prefix, and preserves the full path in redirectTo', async () => {
       getUserMock.mockResolvedValue({ data: { user: null } });
 
       const response = await proxy(makeRequest('/recipes/42'));
 
-      expect(locationOf(response)?.pathname).toBe('/login');
+      const location = locationOf(response);
+      expect(location?.pathname).toBe('/login');
+      expect(location?.searchParams.get('redirectTo')).toBe('/recipes/42');
+    });
+
+    it("config.matcher covers every path in protectedPaths (including nested routes), so a regression here can't silently stop Next.js from invoking this proxy on a protected route", () => {
+      const protectedPaths = ['/plan', '/shopping-list', '/recipes', '/settings', '/debug'];
+
+      for (const path of protectedPaths) {
+        // Next.js's `:path*` matches zero or more segments, so
+        // `/plan/:path*` covers both `/plan` itself and `/plan/42`.
+        expect(config.matcher).toContain(`${path}/:path*`);
+      }
     });
   });
 
   describe('unprotected paths', () => {
     it('does not redirect an unauthenticated request to an unprotected path', async () => {
       getUserMock.mockResolvedValue({ data: { user: null } });
+
+      const response = await proxy(makeRequest('/about'));
+
+      expect(locationOf(response)).toBeNull();
+    });
+
+    it('does not redirect an authenticated request to an unprotected path either', async () => {
+      getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } } });
 
       const response = await proxy(makeRequest('/about'));
 

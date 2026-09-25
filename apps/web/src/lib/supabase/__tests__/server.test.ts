@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const getUserMock = vi.fn();
 const householdSelectMock = vi.fn();
+const eqMock = vi.fn(() => ({ single: householdSelectMock }));
 
 vi.mock('next/headers', () => ({
   cookies: vi.fn(async () => ({
@@ -17,9 +18,7 @@ vi.mock('@supabase/ssr', () => ({
     },
     from: () => ({
       select: () => ({
-        eq: () => ({
-          single: householdSelectMock,
-        }),
+        eq: eqMock,
       }),
     }),
   }),
@@ -64,6 +63,7 @@ describe('getUserHousehold', () => {
   beforeEach(() => {
     getUserMock.mockReset();
     householdSelectMock.mockReset();
+    eqMock.mockClear();
   });
 
   it('returns null without querying the household when there is no user', async () => {
@@ -88,6 +88,10 @@ describe('getUserHousehold', () => {
       household_id: 'household-1',
       households: { name: 'The Smiths' },
     });
+    // Not just that a lookup happened, but that it was scoped to the
+    // authenticated caller -- a regression that unscopes or misscopes
+    // this query would otherwise still pass this test.
+    expect(eqMock).toHaveBeenCalledWith('user_id', 'user-1');
   });
 
   it('returns null when the household lookup errors', async () => {
