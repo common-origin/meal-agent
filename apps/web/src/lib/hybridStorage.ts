@@ -9,9 +9,13 @@ import * as LocalStorage from './storage';
 import * as SupabaseStorage from './supabaseStorage';
 import { createClient } from './supabase/client';
 import type { FamilySettings } from './types/settings';
+import { DEFAULT_FAMILY_SETTINGS } from './types/settings';
 import type { Recipe } from './types/recipe';
+import type { StoredWeekPlan } from './storage';
 import { RecipeLibrary } from './library';
 import { loadPantryPreferences, savePantryPreferences } from './pantryPreferences';
+
+const DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 /**
  * Check if user is authenticated
@@ -60,9 +64,13 @@ export async function loadFamilySettings(): Promise<FamilySettings | null> {
 export async function getFamilySettings(): Promise<FamilySettings> {
   const settings = await loadFamilySettings();
   if (settings) return settings;
-  
+
   // Return defaults if nothing found
   return LocalStorage.getFamilySettings();
+}
+
+export async function resetFamilySettings(): Promise<boolean> {
+  return await saveFamilySettings(DEFAULT_FAMILY_SETTINGS);
 }
 
 /**
@@ -98,13 +106,12 @@ export async function loadMealPlan(weekStart: string): Promise<SupabaseStorage.M
     
     // Convert localStorage format to MealPlan format
     const meals: SupabaseStorage.MealPlan['meals'] = {};
-    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-    
+
     localPlan.recipeIds.forEach((recipeId, index) => {
       if (recipeId) {
-        meals[days[index]] = { recipeId };
+        meals[DAYS_OF_WEEK[index]] = { recipeId };
       } else {
-        meals[days[index]] = null;
+        meals[DAYS_OF_WEEK[index]] = null;
       }
     });
     
@@ -113,6 +120,54 @@ export async function loadMealPlan(weekStart: string): Promise<SupabaseStorage.M
       meals,
     };
   }
+}
+
+/**
+ * Current Week Plan
+ *
+ * Adapts between the plan/shopping-list pages' array-based day format and
+ * saveMealPlan/loadMealPlan's object-keyed-by-day format above.
+ */
+export async function saveCurrentWeekPlan(
+  recipeIds: string[],
+  weekOfISO: string,
+  pantryItems?: string[]
+): Promise<boolean> {
+  const meals: SupabaseStorage.MealPlan['meals'] = {};
+
+  recipeIds.forEach((id, index) => {
+    if (index < DAYS_OF_WEEK.length) {
+      meals[DAYS_OF_WEEK[index]] = id ? { recipeId: id } : null;
+    }
+  });
+
+  const success = await saveMealPlan(weekOfISO, meals);
+
+  if (success && pantryItems) {
+    await savePantryItems(pantryItems);
+  }
+
+  return success;
+}
+
+export async function loadCurrentWeekPlan(weekOfISO: string): Promise<StoredWeekPlan | null> {
+  if (!weekOfISO) {
+    return null;
+  }
+
+  const plan = await loadMealPlan(weekOfISO);
+  if (!plan) return null;
+
+  const recipeIds = DAYS_OF_WEEK.map(day => plan.meals[day]?.recipeId || '');
+
+  const pantryItems = await loadPantryItems();
+
+  return {
+    recipeIds,
+    weekOfISO: plan.weekStart,
+    createdAt: new Date().toISOString(),
+    pantryItems: pantryItems.length > 0 ? pantryItems : undefined,
+  };
 }
 
 /**
@@ -209,12 +264,22 @@ export async function savePantryItems(items: string[]): Promise<boolean> {
 
 export async function loadPantryItems(): Promise<string[]> {
   const authed = await isAuthenticated();
-  
+
   if (authed) {
     const items = await SupabaseStorage.loadPantryItems();
-    if (items.length > 0) return items;
+    // items === [] is a confirmed-empty cloud row, not "no data" — respect
+    // it rather than falling back to a possibly-stale local cache. Only
+    // null (no household/row/query failure) falls through below.
+    if (items !== null) {
+      // Keep the localStorage cache in sync so synchronous local-only
+      // readers (e.g. shoppingListAggregator.ts's isInPantryPreferences)
+      // see this device's latest data right after hydration, rather than
+      // whatever was last written on this device specifically.
+      savePantryPreferences(new Set(items));
+      return items;
+    }
   }
-  
+
   // Fall back to localStorage
   return Array.from(loadPantryPreferences());
 }
@@ -316,13 +381,12 @@ export async function migrateLocalStorageToSupabase(): Promise<{
     );
     if (currentWeekPlan) {
       const meals: SupabaseStorage.MealPlan['meals'] = {};
-      const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-      
+
       currentWeekPlan.recipeIds.forEach((recipeId, index) => {
         if (recipeId) {
-          meals[days[index]] = { recipeId };
+          meals[DAYS_OF_WEEK[index]] = { recipeId };
         } else {
-          meals[days[index]] = null;
+          meals[DAYS_OF_WEEK[index]] = null;
         }
       });
       
