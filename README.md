@@ -44,7 +44,7 @@ An AI-powered multi-user meal planning application that helps households plan we
 - **Supabase PostgreSQL** - Production database with automatic backups
 - **Supabase Auth** - Google OAuth + Magic Link authentication
 - **Row-Level Security** - Database-level data isolation by household
-- **8 Tables** - Complete schema with relationships and indexes
+- **9 Tables** - Complete schema with relationships and indexes
 
 ### AI & Machine Learning
 - **Google Gemini API** - gemini-2.0-flash-exp model

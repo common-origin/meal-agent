@@ -132,34 +132,58 @@ feed URL for display in Settings
 
 ### Storage
 
-**This is the part of the architecture most in need of simplification —
-tracked as issue #2, not something to take as the intended design.**
+**Simplified as issue #2** (PRs #44/#45/#46): three modules now, not four —
+`storage.ts` (synchronous localStorage utilities, used internally by the
+other two), `hybridStorage.ts` (the single auth-aware entry point app code
+should import: routes between localStorage and Supabase, including
+`saveCurrentWeekPlan`/`loadCurrentWeekPlan`'s array-format adapter over
+`saveMealPlan`/`loadMealPlan`), and `supabaseStorage.ts` (Postgres CRUD).
+`storageAsync.ts`, a pass-through layer with no logic of its own, was
+deleted in #44.
 
-Four modules exist: `storage.ts` (synchronous localStorage utilities),
-`storageAsync.ts` (meant to be an async facade over it), `hybridStorage.ts`
-(routes between localStorage and Supabase based on auth state), and
-`supabaseStorage.ts` (Postgres CRUD). In practice, application code calls
-all four directly and interchangeably rather than only through
-`hybridStorage.ts`'s router — there isn't a single storage entry point to
-rely on when tracing data flow.
+Of the four modules that used to bypass all of the above and read/write
+`localStorage` directly with their own keys:
+- `pantryPreferences.ts` — the shopping-list page's bypass is fixed (#45),
+  now routing through `hybridStorage.ts`'s `savePantryItems`/`loadPantryItems`
+  so pantry staples sync for authenticated users. `pantryPreferences.ts`
+  itself remains the local cache primitive underneath, still imported
+  directly by `app/settings/data-export/page.tsx` (an explicit "export a
+  local backup" feature, not a sync gap) and by `shoppingListAggregator.ts`'s
+  synchronous `isInPantryPreferences` check.
+- `recencyTracker.ts` — now syncs cross-device (#46) via
+  `hybridStorage.ts`'s `hydrateRecencyFromSupabase`/`syncRecencyToSupabase`,
+  called around `compose.ts`'s `composeWeek()` rather than threaded through
+  it — `composeWeek()` and `getSuggestedSwaps()` stay synchronous
+  deliberately, since making them auth-aware internally would force their
+  whole call graph (including `compose.test.ts`) async for no behavior
+  change. Backed by the new `recipe_history` table (migration 007).
+- `ingredientAnalytics.ts` — deliberately left localStorage-only: it's
+  maintainer tooling for prioritizing `colesMapping.ts` entries (see
+  `/api/ingredient-analytics` and `/debug/ingredient-analytics`), not
+  user-facing household data.
+- `userPriceReports.ts` — still bypasses, unaddressed. Not folded into #2:
+  a price report isn't household-scoped data like everything else in this
+  schema (a Coles price is the same regardless of who reports it), and
+  nothing reads reports back into pricing yet, so this needs its own
+  data-model decision, not a sync fix. Tracked in issue #47.
 
-On top of that, four more modules bypass all of the above and read/write
-`localStorage` directly with their own keys: `pantryPreferences.ts`,
-`recencyTracker.ts`, `ingredientAnalytics.ts`, and `userPriceReports.ts`.
-None of this data syncs for authenticated users across devices.
+None of this app's localStorage caches (including the ones above) are
+namespaced by household or cleared on sign-out, so a browser signing out of
+one household and into another can inherit stale cached data. Real but
+app-wide, not specific to any one module — tracked in issue #49.
 
-A related, now-fixed instance of the same problem: `library.ts`'s
+A related, earlier instance of the same class of problem: `library.ts`'s
 `addCustomRecipes()` (recipes added via URL/image/manual entry) used to
 only write to localStorage, never Supabase, unlike AI-generated recipes —
 so custom recipes silently never made it to the cloud. Fixed in issue #32,
 including the read-path bug that was still misclassifying restored custom
 recipes even after the write path was fixed. Worth reading that issue's
-history as a concrete example of how this storage layer's looseness causes
-real bugs, not just architectural untidiness.
+history, and #45/#46's, as concrete examples of how this storage layer's
+looseness causes real bugs, not just architectural untidiness.
 
 ### Database (Supabase Postgres)
 
-8 tables, all with Row-Level Security scoping access to the requesting
+9 tables, all with Row-Level Security scoping access to the requesting
 user's own household (`get_user_household_id()` helper function; a new
 household's owner and default settings are created automatically on
 signup):
@@ -178,8 +202,11 @@ signup):
   week_start)`), `meals` is a JSONB object keyed by lowercase day name
   (`monday`..`sunday`)
 - **`shopping_lists`**, **`pantry_preferences`**, **`api_usage`**
+- **`recipe_history`** (migration 007) — one row per recipe used in a
+  composed week, `UNIQUE(household_id, recipe_id, week_start)`; backs
+  cross-device recency/variety-enforcement sync (see [Storage](#storage))
 
-Migrations run in order, 001 through 006 — see `supabase/README.md` for
+Migrations run in order, 001 through 007 — see `supabase/README.md` for
 the exact steps. There's no migration-runner in CI; each one is applied by
 hand in the Supabase SQL editor, same as every migration so far.
 
