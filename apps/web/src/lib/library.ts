@@ -14,7 +14,7 @@ export interface LibrarySearchOptions {
   searchText?: string; // New: keyword search
 }
 
-const CUSTOM_RECIPES_KEY = "meal-agent:custom-recipes:v1"; // User-added recipes only
+export const CUSTOM_RECIPES_KEY = "meal-agent:custom-recipes:v1"; // User-added recipes only
 const CONFIRMED_RECIPES_KEY = "meal-agent:confirmed-recipes:v1"; // Track recipes confirmed in plans
 const AI_TEMP_RECIPES_KEY = "meal-agent:ai-temp-recipes:v1"; // Temporary AI recipes for current plans
 

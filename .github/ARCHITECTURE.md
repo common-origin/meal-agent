@@ -254,11 +254,11 @@ signal now, but it was never actually gating what reached production.
   (see `PRODUCT.md`), and today the flow stops at a list. Same root cause
   as the pricing limitation — no public Coles API. Issue #36 has the
   researched options.
-- **Test suite is only partially trustworthy.** `pnpm test` currently
-  fails 12 of 30 tests (recipe-library seed data issue in the Node test
-  environment, not a regression from any specific change) and there's no
-  coverage at all on the storage layer, `scoring.ts`, or any API route.
-  Tracked in issue #5.
+- **No coverage on the storage layer or any API route.** `pnpm test`
+  passes in full (fixed in issue #5 — the root scripts weren't applying
+  `apps/web/vitest.config.ts`, and `RecipeLibrary`/`scoring.ts` now have
+  real test coverage), but the storage layers and every API route are
+  still untested.
 - **Editing an existing plan is more effort than it should be** — swapping
   out one night's meal isn't as seamless as the rest of the product aims
   for. Flagged in issue #38 as needing real UX research, not a quick fix.
