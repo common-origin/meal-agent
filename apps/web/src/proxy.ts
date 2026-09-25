@@ -1,7 +1,7 @@
 /**
- * Next.js Middleware for Supabase Authentication
- * 
- * This middleware:
+ * Next.js Proxy for Supabase Authentication
+ *
+ * This proxy:
  * 1. Refreshes the user's session automatically
  * 2. Protects routes that require authentication
  * 3. Redirects unauthenticated users to login
@@ -10,7 +10,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -39,7 +39,7 @@ export async function middleware(request: NextRequest) {
   );
 
   // Refreshing the auth token — raced against a timeout so a slow or
-  // unresponsive Supabase Auth call can't hang this middleware invocation
+  // unresponsive Supabase Auth call can't hang this proxy invocation
   // and take down the whole site with a 504 (see issue #19). A timeout is
   // treated the same as "no user", the same safe fallback used on an
   // actual auth failure.
@@ -82,11 +82,11 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Scoped to exactly the paths this middleware needs to act on: the
+  // Scoped to exactly the paths this proxy needs to act on: the
   // protected routes it may redirect away from, and /login + /signup (for
   // the reverse redirect when an authenticated user visits them). Every
   // other route — the homepage, /about, /recipe/[id], etc. — needs no auth
-  // check at all, so it skips this middleware (and the Supabase call
+  // check at all, so it skips this proxy (and the Supabase call
   // inside it) entirely. Previously this matched nearly every route,
   // meaning a slow Supabase Auth response could 504 the entire site
   // instead of just the pages that actually require a session (issue #19).

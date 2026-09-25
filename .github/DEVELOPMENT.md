@@ -32,7 +32,7 @@ meal-agent/
 │   ├── app/                    # Routes (App Router) — see ARCHITECTURE.md
 │   │                              for the actual current page list
 │   ├── components/app/         # App-specific components
-│   ├── middleware.ts           # Auth gate — see ARCHITECTURE.md
+│   ├── proxy.ts                # Auth gate — see ARCHITECTURE.md
 │   └── lib/                    # Business logic — compose.ts, library.ts,
 │                                  scoring.ts, storage layers, etc.
 └── pnpm-workspace.yaml         # Monorepo config
