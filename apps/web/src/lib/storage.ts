@@ -2,6 +2,8 @@
 import type { FamilySettings } from "./types/settings";
 import { DEFAULT_FAMILY_SETTINGS } from "./types/settings";
 import { RecipeLibrary } from "./library";
+import { clearPantryPreferences } from "./pantryPreferences";
+import { clearRecipeHistory } from "./recencyTracker";
 
 /**
  * NOTE: This module provides localStorage-only operations.
@@ -356,4 +358,38 @@ export function unblockRecipe(recipeId: string): boolean {
  */
 export function isRecipeBlocked(recipeId: string): boolean {
   return getBlockedRecipes().has(recipeId);
+}
+
+/**
+ * Clear every localStorage cache scoped to a household — meal plans,
+ * recipes, pantry preferences, recency history, ratings/blocks. Called on
+ * sign-out so a browser that switches between households or accounts
+ * doesn't inherit the previous one's local data (issue #49).
+ *
+ * Deliberately does NOT touch caches that are meant to persist regardless
+ * of who's signed in — e.g. `ingredientAnalytics.ts` (maintainer tooling,
+ * see issue #48) or `apiQuota.ts`/`colesApi.ts` (device-level API rate
+ * limiting) — so this can't be a blanket `Storage.clear()`.
+ */
+export function clearHouseholdScopedCaches(): void {
+  if (typeof window === "undefined") return;
+
+  Storage.remove(STORAGE_KEYS.HOUSEHOLD);
+  Storage.remove(FAMILY_SETTINGS_KEY);
+  Storage.remove(CURRENT_WEEK_PLAN_KEY);
+  Storage.remove(RECIPE_RATINGS_KEY);
+  Storage.remove(BLOCKED_RECIPES_KEY);
+
+  // Weekly overrides are one key per week with no registry of which weeks
+  // exist, so sweep by prefix instead (same approach colesApi.ts's own
+  // cache-clearing uses for its per-SKU keys).
+  for (const key of Object.keys(localStorage)) {
+    if (key.startsWith(STORAGE_KEYS.OVERRIDES_PREFIX)) {
+      localStorage.removeItem(key);
+    }
+  }
+
+  clearPantryPreferences();
+  clearRecipeHistory();
+  RecipeLibrary.clearAllRecipeData();
 }
