@@ -165,13 +165,16 @@ export default function ShoppingListPage() {
       plan = composeWeek(household, overrides || undefined);
       // Fall back to general household pantry if no saved plan (already in correct format)
       weeklyPantryItems = household.pantry;
+
+      // Hydrate the local pantry-preferences cache from Supabase (for
+      // authenticated users) so aggregateShoppingList's synchronous
+      // isInPantryPreferences check below sees pantry staples marked on
+      // other devices, not just this one. Not needed on the savedPlan
+      // branch above — loadCurrentWeekPlan() already called
+      // HybridStorage.loadPantryItems() internally, which hydrates the
+      // same cache as a side effect.
+      await loadPantryItems();
     }
-    
-    // Hydrate the local pantry-preferences cache from Supabase first (for
-    // authenticated users) so aggregateShoppingList's synchronous
-    // isInPantryPreferences check below sees pantry staples marked on
-    // other devices, not just this one.
-    await loadPantryItems();
 
     // Aggregate ingredients using week-specific pantry items
     const items = aggregateShoppingList(plan, {
