@@ -57,10 +57,11 @@ Pages, by area:
 - **Shopping**: `/shopping-list`
 - **Household**: `/settings`, `/settings/data-export`
 - **Other**: `/about`, `/analytics`
-- **Debug/admin** (not auth-gated by the proxy's matcher today):
-  `/admin/debug`, `/debug/api-usage`, `/debug/coles-api-test`,
+- **Debug**: `/debug/api-usage`, `/debug/coles-api-test`,
   `/debug/ingredient-analytics`, `/debug/persistent-cache`,
-  `/debug/search-mapping`
+  `/debug/search-mapping` (auth-gated — the proxy matcher covers
+  `/debug/:path*`)
+- **Admin**: `/admin/debug` (not auth-gated — outside the proxy's matcher)
 
 Key components: `WeekPlannerGrid`, `SwapDrawer`, `RegenerateDrawer`,
 `WeeklyOverridesSheet`, `WeeklyPlanWizard` (planning); `PantrySheet`
