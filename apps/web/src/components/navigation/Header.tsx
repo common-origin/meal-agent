@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Stack, Typography, Button, Box } from "@common-origin/design-system";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { clearHouseholdScopedCaches } from "@/lib/storage";
 
 const NAV_ITEMS = [
   { href: '/plan', label: 'Plan' },
@@ -23,7 +24,15 @@ export default function Header() {
   const handleSignOut = async () => {
     setSigningOut(true);
     const supabase = createClient();
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error('Failed to sign out:', error);
+      setSigningOut(false);
+      return;
+    }
+
+    clearHouseholdScopedCaches();
     router.push('/login');
   };
 

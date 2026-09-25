@@ -2,6 +2,8 @@
 import type { FamilySettings } from "./types/settings";
 import { DEFAULT_FAMILY_SETTINGS } from "./types/settings";
 import { RecipeLibrary } from "./library";
+import { clearPantryPreferences } from "./pantryPreferences";
+import { clearRecipeHistory } from "./recencyTracker";
 
 /**
  * NOTE: This module provides localStorage-only operations.
@@ -85,6 +87,7 @@ export const STORAGE_KEYS = {
   ANALYTICS: "meal-agent-analytics",
   HOUSEHOLD: "ma_household",
   OVERRIDES_PREFIX: "ma_overrides:", // followed by weekOfISO
+  SHOPPING_COMPLETE_PREFIX: "shopping-complete-", // followed by weekOfISO, see shopping-list/page.tsx
 } as const;
 
 // Type imports
@@ -356,4 +359,62 @@ export function unblockRecipe(recipeId: string): boolean {
  */
 export function isRecipeBlocked(recipeId: string): boolean {
   return getBlockedRecipes().has(recipeId);
+}
+
+/**
+ * Clear every localStorage cache scoped to a household — meal plans,
+ * recipes, pantry preferences, recency history, ratings/blocks, shopping-
+ * completion state. Called on sign-out so a browser that switches between
+ * households or accounts doesn't inherit the previous one's local data
+ * (issue #49).
+ *
+ * Deliberately does NOT touch caches that are meant to persist regardless
+ * of who's signed in — e.g. `ingredientAnalytics.ts` (maintainer tooling,
+ * see issue #48) or `apiQuota.ts`/`colesApi.ts` (device-level API rate
+ * limiting) — so this can't be a blanket `Storage.clear()`.
+ *
+ * This is a one-shot cleanup, not a guarantee: an async write already in
+ * flight when sign-out is clicked (e.g. `RecipeLibrary.addTempAIRecipes()`
+ * mid-AI-generation) can still land after this runs and repopulate the
+ * cache it just cleared. Tracked in issue #73, not fixed here — needs a
+ * cancellation/session-generation guard across several async write paths,
+ * not a one-line patch.
+ *
+ * Never throws: this runs in Header.tsx between `supabase.auth.signOut()`
+ * and the redirect to `/login`, and some of what it calls (e.g.
+ * `localStorage.removeItem` in `clearPantryPreferences()`/
+ * `clearRecipeHistory()`) isn't itself wrapped in try/catch the way
+ * `Storage.remove()` is. A rare storage-access failure (e.g. Safari
+ * blocking storage in some contexts) shouldn't leave the user signed out
+ * server-side but stuck on the page with no redirect.
+ */
+export function clearHouseholdScopedCaches(): void {
+  if (typeof window === "undefined") return;
+
+  try {
+    Storage.remove(STORAGE_KEYS.HOUSEHOLD);
+    Storage.remove(FAMILY_SETTINGS_KEY);
+    Storage.remove(CURRENT_WEEK_PLAN_KEY);
+    Storage.remove(RECIPE_RATINGS_KEY);
+    Storage.remove(BLOCKED_RECIPES_KEY);
+
+    // Weekly overrides and shopping-completion state are each one key per
+    // week with no registry of which weeks exist, so sweep by prefix
+    // instead (same approach colesApi.ts's own cache-clearing uses for its
+    // per-SKU keys).
+    for (const key of Object.keys(localStorage)) {
+      if (
+        key.startsWith(STORAGE_KEYS.OVERRIDES_PREFIX) ||
+        key.startsWith(STORAGE_KEYS.SHOPPING_COMPLETE_PREFIX)
+      ) {
+        localStorage.removeItem(key);
+      }
+    }
+
+    clearPantryPreferences();
+    clearRecipeHistory();
+    RecipeLibrary.clearAllRecipeData();
+  } catch (error) {
+    console.warn("Failed to clear household-scoped caches on sign-out:", error);
+  }
 }

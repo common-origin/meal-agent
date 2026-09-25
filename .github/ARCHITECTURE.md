@@ -166,10 +166,15 @@ Of the four modules that used to bypass all of the above and read/write
   nothing reads reports back into pricing yet, so this needs its own
   data-model decision, not a sync fix. Tracked in issue #47.
 
-None of this app's localStorage caches (including the ones above) are
-namespaced by household or cleared on sign-out, so a browser signing out of
-one household and into another can inherit stale cached data. Real but
-app-wide, not specific to any one module — tracked in issue #49.
+Fixed in issue #49: `Header.tsx`'s sign-out handler now calls
+`storage.ts`'s `clearHouseholdScopedCaches()`, which clears every
+household-scoped cache above (including `RecipeLibrary`'s in-memory
+cache, not just localStorage — necessary since sign-out redirects via
+client-side navigation, no full page reload) so a browser switching
+between households doesn't inherit stale data. Deliberately leaves
+`ingredientAnalytics.ts` and the device-level `apiQuota.ts`/`colesApi.ts`
+caches untouched, since those are meant to persist regardless of who's
+signed in.
 
 A related, earlier instance of the same class of problem: `library.ts`'s
 `addCustomRecipes()` (recipes added via URL/image/manual entry) used to

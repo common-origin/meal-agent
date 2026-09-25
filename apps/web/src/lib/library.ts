@@ -378,6 +378,22 @@ export class RecipeLibrary {
   }
 
   /**
+   * Clear every locally cached recipe (custom, temporary AI, confirmed
+   * tracking) — including the in-memory cache, not just localStorage.
+   * Used on sign-out (see issue #49): without resetting `customRecipes`
+   * too, a household switch via client-side navigation (no full page
+   * reload) would keep serving the previous household's recipes from
+   * memory even after localStorage is cleared underneath it.
+   */
+  static clearAllRecipeData(): void {
+    this.customRecipes = null;
+    this.hasCleanedThisSession = false;
+    Storage.remove(CUSTOM_RECIPES_KEY);
+    Storage.remove(AI_TEMP_RECIPES_KEY);
+    Storage.remove(CONFIRMED_RECIPES_KEY);
+  }
+
+  /**
    * Get only custom recipes ("My Recipes")
    * Includes:
    * - User-added recipes (via URL/image/manual entry)
