@@ -1,28 +1,37 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Box, Button, Stack, TextField, Typography } from '@common-origin/design-system';
 import { createClient } from '@/lib/supabase/client';
-import { getSiteUrl } from '@/lib/utils/url';
+import { getSiteUrl, isSafeRedirectPath } from '@/lib/utils/url';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirectTo');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  // Forward the page the user originally wanted (set by proxy.ts's login
+  // redirect) through the OAuth/magic-link round trip via `next`, so
+  // auth/callback/route.ts can send them back to it after sign-in.
+  const callbackUrl = isSafeRedirectPath(redirectTo)
+    ? `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(redirectTo)}`
+    : `${getSiteUrl()}/auth/callback`;
+
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${getSiteUrl()}/auth/callback`,
+          redirectTo: callbackUrl,
         },
       });
 
@@ -35,7 +44,7 @@ export default function LoginPage() {
 
   const handleMagicLinkSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email) {
       setError('Please enter your email');
       return;
@@ -44,17 +53,17 @@ export default function LoginPage() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${getSiteUrl()}/auth/callback`,
+          emailRedirectTo: callbackUrl,
         },
       });
 
       if (error) throw error;
-      
+
       setSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send magic link');
@@ -179,5 +188,13 @@ export default function LoginPage() {
         </Stack>
       </Box>
     </Box>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }
