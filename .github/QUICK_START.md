@@ -61,11 +61,11 @@ meal-agent/
 │       ├── storage.ts          # localStorage utilities
 │       └── tagNormalizer.ts    # Tag vocabulary
 │
+├── PRODUCT.md                  # Why this exists
 └── .github/
-    ├── PROJECT_STATUS.md       # Current status
-    ├── PHASE_1_IMPLEMENTATION.md  # Work order details
     ├── API_REFERENCE.md        # Library API docs
-    └── ARCHITECTURE.md         # System architecture
+    ├── ARCHITECTURE.md         # System architecture
+    └── archive/                # Historical, point-in-time planning docs
 ```
 
 ---

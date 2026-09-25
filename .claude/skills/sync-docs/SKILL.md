@@ -1,6 +1,6 @@
 ---
 name: sync-docs
-description: Check whether meal-agent's .github/*.md documentation (ARCHITECTURE.md, PROJECT_STATUS.md, PROJECT_INSTRUCTIONS.md, API_REFERENCE.md, DEVELOPMENT.md, DESIGN_SYSTEM_MIGRATION.md, AI_SETUP.md) still matches the current branch's changes, and update only the affected facts. Run this before opening a PR whenever the branch touches apps/web/src/lib/, API routes, package.json versions, AI/Gemini model usage, or completes a roadmap item — and also whenever the user asks to "sync the docs," "update the documentation," or "does the doc need updating," even if they don't name a specific file. Prefer this over a manual doc edit whenever the same fact might be stated in more than one place in .github/, since that's where this repo's documentation has drifted before.
+description: Check whether meal-agent's .github/*.md documentation (ARCHITECTURE.md, PROJECT_INSTRUCTIONS.md, API_REFERENCE.md, DEVELOPMENT.md, DESIGN_SYSTEM_MIGRATION.md, AI_SETUP.md) still matches the current branch's changes, and update only the affected facts. Run this before opening a PR whenever the branch touches apps/web/src/lib/, API routes, package.json versions, AI/Gemini model usage, or completes a roadmap item — and also whenever the user asks to "sync the docs," "update the documentation," or "does the doc need updating," even if they don't name a specific file. Prefer this over a manual doc edit whenever the same fact might be stated in more than one place in .github/, since that's where this repo's documentation has drifted before.
 ---
 
 # Sync docs
@@ -23,9 +23,8 @@ Stay conservative: this runs right before a PR, so a developer needs to trust it
    |---|---|
    | `apps/web/src/lib/*storage*` / `*Storage*.ts` | `ARCHITECTURE.md` (storage section) |
    | `package.json` dependency versions (e.g. `@common-origin/design-system`) | Any doc stating that version in prose — check `PROJECT_INSTRUCTIONS.md`, `DEVELOPMENT.md`, `DESIGN_SYSTEM_MIGRATION.md` |
-   | AI/Gemini model strings (e.g. `gemini-2.5-pro`) | `AI_SETUP.md`, `ARCHITECTURE.md`, `PROJECT_STATUS.md` |
+   | AI/Gemini model strings (e.g. `gemini-2.5-pro`) | `AI_SETUP.md`, `ARCHITECTURE.md` |
    | New or changed routes under `apps/web/src/app/api/` | `API_REFERENCE.md` |
-   | A feature going from in-progress to shipped, or vice versa | `PROJECT_STATUS.md`'s roadmap/phase list |
 
 3. **Search for every other copy of the same fact before editing one.** If the diff changes a version number or model name, `grep -rn` for the old value across `.github/*.md` and update every occurrence together. A doc fixed in only one place is exactly how this repo's drift happened the first time — the fix needs to close that gap everywhere, not add a third value to the mix.
 

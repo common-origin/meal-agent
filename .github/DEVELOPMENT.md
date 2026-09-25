@@ -65,11 +65,11 @@ Last Updated: 27 October 2025
 
 ```
 meal-agent/
+├── PRODUCT.md                   # Why this exists (start here)
 ├── .github/                    # Documentation & project management
 │   ├── DEVELOPMENT.md          # This file
 │   ├── ARCHITECTURE.md         # System design
-│   ├── PROJECT_STATUS.md       # Current status & roadmap
-│   └── COPILOT_BUILD.md        # Historical build instructions
+│   └── archive/                # Historical, point-in-time planning docs
 │
 ├── apps/
 │   └── web/                    # Next.js application
@@ -254,10 +254,9 @@ See Step 2 in this guide for Vitest setup
 
 ## 📚 Related Documentation
 
+- **PRODUCT.md** - Why this exists and what it needs to achieve
 - **ARCHITECTURE.md** - System design & data flow diagrams
-- **PROJECT_STATUS.md** - Current status & next steps
-- **INDEXER_ENHANCEMENT_PLAN.md** - Indexer development history
-- **COPILOT_BUILD.md** - Original build instructions
+- **CLAUDE.md** - Index of the full doc set, plus known doc/code drift
 
 ---
 
@@ -329,4 +328,4 @@ When working on this codebase:
 
 ---
 
-**Questions?** Check PROJECT_STATUS.md or ARCHITECTURE.md first!
+**Questions?** Check ARCHITECTURE.md or PRODUCT.md first!

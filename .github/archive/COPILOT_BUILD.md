@@ -1,3 +1,8 @@
+> **Archived (#35).** This describes bootstrapping an empty repo before the
+> app existed. Historical record only — not current guidance. See
+> `CLAUDE.md` / `.github/PROJECT_INSTRUCTIONS.md` for how this repo actually
+> works today.
+
 # COPILOT_BUILD.md — Bootstrapping the Meal Agent repo
 
 **Goal:** create a fresh GitHub repo and have **GitHub Copilot** + VS Code scaffold the Meal Agent UI using the **Common Origin Design System** (CODS). This file acts as Copilot’s playbook: paste it into an empty folder and follow the steps below.
