@@ -8,7 +8,18 @@ export function getSiteUrl(): string {
     return process.env.NEXT_PUBLIC_SITE_URL;
   }
   
-  // Check for Vercel deployment URL
+  // Check for Vercel deployment URL. Note: on a preview deployment this
+  // resolves to that deployment's own unique per-branch URL, which is
+  // essentially never on Supabase Auth's redirect allow-list (Auth
+  // settings -> Redirect URLs) -- that list only has the production
+  // domain and localhost. This is a deliberate, known gap (issue #59),
+  // not a bug: it means Google/magic-link sign-in doesn't complete on
+  // preview deployments (Supabase rejects the redirect, so this fails
+  // safe rather than open), so don't spend time debugging "why doesn't
+  // sign-in work on my preview deploy" -- it isn't expected to. Wildcarding
+  // the allow-list for *.vercel.app previews would fix this but is a
+  // deliberate security trade-off for whoever owns the Supabase project
+  // to decide, not something to do silently here.
   if (process.env.NEXT_PUBLIC_VERCEL_URL) {
     return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
   }
