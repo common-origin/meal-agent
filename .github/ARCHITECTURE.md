@@ -258,10 +258,15 @@ future AI generation — not just sit in a list of things to cook.
 `Recipe`, `PlanWeek`/`PlanDay`, `Household`, etc., shared across the
 composition logic, storage layers, and UI.
 
-**Pure functions for meal composition.** `composeWeek()` and the scoring
-logic are side-effect-free — same inputs always produce the same plan,
-which makes them straightforward to test in isolation (where tests exist —
-see [Known limitations](#known-limitations)).
+**The scoring logic is a pure function; composition around it isn't.**
+`scoreRecipe()` in `scoring.ts` is genuinely side-effect-free, which makes
+it straightforward to test in isolation (where tests exist — see [Known
+limitations](#known-limitations)). `composeWeek()` itself is not pure,
+despite an earlier version of this document claiming otherwise: it reads
+recent-recipe history and the current `RecipeLibrary` state directly, and
+records the week's selections as a side effect — same inputs can produce
+different output depending on what's changed in storage since the last
+call.
 
 **Tags as flexible strings, not an enum.** Recipe categorization uses
 `string[]` tags rather than fixed boolean flags, trading some type safety
@@ -282,4 +287,4 @@ document before #35 had one claiming shopping lists and user accounts as
 - [`PRODUCT.md`](../PRODUCT.md) — why this exists, read first
 - [`CLAUDE.md`](../CLAUDE.md) — doc index and known doc/code drift
 - [`DEVELOPMENT.md`](./DEVELOPMENT.md) — dev workflows, testing, deployment
-- [`PROJECT_INSTRUCTIONS.md`](./PROJECT_INSTRUCTIONS.md) — dev conventions
+- [`AI.md`](./AI.md) — Gemini setup and troubleshooting

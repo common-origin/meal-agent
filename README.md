@@ -253,9 +253,8 @@ pnpm -F web start
 - **[PRODUCT.md](./PRODUCT.md)** - Why this exists and what it needs to achieve — start here
 - **[CLAUDE.md](./CLAUDE.md)** - Index of the docs below, plus known doc/code drift to verify before trusting
 - **[ARCHITECTURE.md](./.github/ARCHITECTURE.md)** - System architecture and data flow
-- **[DEVELOPMENT.md](./.github/DEVELOPMENT.md)** - Development workflows and testing
-- **[PROJECT_INSTRUCTIONS.md](./.github/PROJECT_INSTRUCTIONS.md)** - Development guidelines
-- **[QUICK_START.md](./.github/QUICK_START.md)** - Quick setup guide
+- **[DEVELOPMENT.md](./.github/DEVELOPMENT.md)** - Getting started, workflows, testing
+- **[AI.md](./.github/AI.md)** - Gemini API setup and troubleshooting
 - **[supabase/README.md](./supabase/README.md)** - Database setup instructions
 - **[Design System Docs](https://common-origin-design-system.vercel.app/)** - Component library documentation
 

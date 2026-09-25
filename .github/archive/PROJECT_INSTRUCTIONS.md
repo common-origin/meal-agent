@@ -1,3 +1,9 @@
+> **Archived (#35).** This is a pre-build planning document — it describes
+> routes that were never built (`/onboarding`) and treats already-shipped
+> features as future work. Historical record only. For current
+> conventions see `CLAUDE.md`'s "Dev conventions" section and
+> `.github/DEVELOPMENT.md`.
+
 # Meal Agent Project Instructions
 
 ## Project Overview

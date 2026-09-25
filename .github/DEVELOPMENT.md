@@ -1,331 +1,182 @@
 # Development Guide
 
-**For AI Agents & Human Developers**
+For AI agents and human developers. See [`PRODUCT.md`](../PRODUCT.md) for
+why this exists and [`ARCHITECTURE.md`](./ARCHITECTURE.md) for how it's
+built — this file is about the day-to-day mechanics of working in the
+codebase.
 
-Last Updated: 27 October 2025
+## Getting started
 
----
+Prerequisites: Node 20+, pnpm 9+.
 
-## 🚀 Quick Start for AI Agents
-
-### Tech Stack Overview
-- **Framework**: Next.js 16.0.0 (App Router, Turbopack)
-- **UI Library**: React 19.2.0
-- **Language**: TypeScript 5.9.3 (strict mode enabled)
-- **Package Manager**: PNPM v10.19.0 (monorepo)
-- **Design System**: @common-origin/design-system v1.4.0
-- **Node Version**: 20+
-
-### Key Constraints
-- ✅ TypeScript strict mode - NO `any` types allowed
-- ✅ All imports must be explicitly typed
-- ✅ Use design system components (no custom CSS where possible)
-- ✅ Client components require `"use client"` directive
-- ✅ File-based routing (Next.js App Router)
-
-### Recipe Data Architecture
-
-```
-┌─────────────────────────┐
-│ AI RECIPE GENERATION    │ /api/generate-recipes
-│ - Gemini API            │ Context-aware generation
-│ - Family settings       │
-│ - Dietary preferences   │
-└────────┬────────────────┘
-         │
-         ▼
-┌─────────────────────────┐
-│ URL RECIPE EXTRACTION   │ /api/extract-recipe-from-url
-│ - User provides URL     │ Gemini-powered parsing
-│ - Auto-extracts recipe  │
-│ - Normalizes structure  │
-└────────┬────────────────┘
-         │
-         ▼
-┌─────────────────────────┐
-│ RECIPE LIBRARY          │ apps/web/src/lib/library.ts
-│ - Manages custom recipes│ Runtime: loads on app start
-│ - Provides search API   │
-│ - Filters & sorting     │
-│ - AI + user recipes     │
-└────────┬────────────────┘
-         │
-         ▼
-┌─────────────────────────┐
-│ APP COMPONENTS          │ apps/web/src/app/
-│ - composeWeek()         │ User-facing features
-│ - MealCard, SwapDrawer  │
-│ - Shopping list export  │
-└─────────────────────────┘
+```bash
+pnpm install
+pnpm dev              # http://localhost:3000, Turbopack + hot reload
 ```
 
----
+Environment variables go in `apps/web/.env.local` — see the root
+`.env.local.example` for what's needed and `supabase/README.md` for
+database setup.
 
-## 📁 Project Structure
+## Project structure
 
 ```
 meal-agent/
-├── PRODUCT.md                   # Why this exists (start here)
-├── .github/                    # Documentation & project management
-│   ├── DEVELOPMENT.md          # This file
+├── PRODUCT.md                  # Why this exists (start here)
+├── CLAUDE.md                   # Doc index + known doc/code drift
+├── .github/
 │   ├── ARCHITECTURE.md         # System design
+│   ├── DEVELOPMENT.md          # This file
 │   └── archive/                # Historical, point-in-time planning docs
-│
-├── apps/
-│   └── web/                    # Next.js application
-│       ├── src/
-│       │   ├── app/            # Routes (App Router)
-│       │   │   ├── page.tsx                    # Home (/)
-│       │   │   ├── plan/page.tsx               # Meal planner (/plan)
-│       │   │   ├── shopping-list/page.tsx      # Grocery list
-│       │   │   └── onboarding/page.tsx         # User setup
-│       │   │
-│       │   ├── components/app/ # App-specific components
-│       │   │   ├── MealCard.tsx
-│       │   │   ├── WeekPlannerGrid.tsx
-│       │   │   ├── SwapDrawer.tsx
-│       │   │   └── ...
-│       │   │
-│       │   └── lib/            # Business logic & utilities
-│       │       ├── compose.ts              # Meal planning algorithm
-│       │       ├── library.ts              # Recipe library (AI + user recipes)
-│       │       ├── storage.ts              # LocalStorage helpers
-│       │       ├── analytics.ts            # Event tracking
-│       │       └── types/
-│       │           └── recipe.ts           # Type definitions
-│       │
-│       ├── tsconfig.json       # TypeScript config (strict mode)
-│       └── next.config.ts      # Next.js config
-│
+├── apps/web/src/
+│   ├── app/                    # Routes (App Router) — see ARCHITECTURE.md
+│   │                              for the actual current page list
+│   ├── components/app/         # App-specific components
+│   ├── middleware.ts           # Auth gate — see ARCHITECTURE.md
+│   └── lib/                    # Business logic — compose.ts, library.ts,
+│                                  scoring.ts, storage layers, etc.
 └── pnpm-workspace.yaml         # Monorepo config
 ```
 
----
+Don't trust a hand-copied page/component list to stay accurate here —
+`ARCHITECTURE.md`'s UI section is kept closer to current and is the
+better reference for "what pages/components actually exist."
 
-## 🔧 Common Development Tasks
+## Core concepts
 
-### Starting Development Server
+**Meal planning flow**: `composeWeek(household, overrides?)` in
+`compose.ts` scores every candidate recipe (`scoring.ts`), picks the best
+fit per day while enforcing variety (protein, cuisine, recency), and
+returns a `PlanWeek`. `scoreRecipe()` itself is a pure function, but
+`composeWeek()` is not — it reads recent-recipe history via
+`getRecentRecipeIds()`, queries the current `RecipeLibrary` state
+directly, and calls `recordWeekRecipes()` as a side effect at the end.
+Same inputs can produce different plans depending on what's changed in
+storage since the last call, and calling it has a side effect. (An
+earlier version of this doc, and of `ARCHITECTURE.md`, incorrectly
+called this pure — caught by review, corrected here.)
+
+**Explainability**: every meal selection carries reason codes
+(`explainer.ts` maps them to human-readable chips, e.g. `"quick_weeknight"`
+→ "⚡ Quick (≤40 mins)"), so the UI can show *why* a meal was chosen, not
+just what was chosen.
+
+**Shopping list**: `shoppingListAggregator.ts` normalizes ingredient names
+and units, sums quantities across the week's recipes, flags pantry
+staples, then `colesMapping.ts` attaches pricing where a mapping exists
+(it's a large, hand-maintained file that's grown well past its original
+size — check it directly rather than trusting a specific count anywhere
+in prose, including here).
+
+**Analytics**: `analytics.ts` tracks events entirely client-side
+(localStorage, never transmitted) — check the file directly for the
+current event list rather than trusting a specific count.
+
+## Common development tasks
+
 ```bash
-pnpm dev
-# → http://localhost:3000
-# Uses Turbopack for fast HMR
+pnpm dev                          # dev server
+pnpm -C apps/web build             # production build
+cd apps/web && pnpm tsc --noEmit  # type check only, no build
+pnpm test                         # run the test suite (see Testing below)
+rm -rf apps/web/.next && pnpm dev # clear the Next.js cache
 ```
 
-### Adding Recipes
-Recipes are added through the application:
-- **AI Generation**: Use `/api/generate-recipes` endpoint via the weekly planning wizard
-- **URL Extraction**: Import from any recipe website via `/api/extract-recipe-from-url`
-- **Manual Entry**: Add recipes manually through the `/recipes/add` page
+**Adding recipes** happens through the app itself, not by editing a data
+file — there's no static/seed recipe library (see `PRODUCT.md` on why):
+AI generation via the weekly planning wizard, URL import or manual entry
+via `/recipes/add`, or photo scanning.
 
-### Running Type Checks
+## Key files to read first
+
+1. **`apps/web/src/lib/compose.ts`** — the core planning algorithm
+2. **`apps/web/src/lib/scoring.ts`** — the scoring rules that drive it
+3. **`apps/web/src/lib/library.ts`** (`RecipeLibrary`) — recipe storage
+   and retrieval; check this file directly for its actual public methods
+   (`getAll`, `search`, `getById`, `getCustomRecipes`,
+   `addCustomRecipes`, `addTempAIRecipes`, `syncSupabaseRecipes`, etc.) —
+   older docs in this repo have named methods that don't exist
+   (`addRecipe`, `deleteRecipe`), so verify against the file, not prose
+4. **`apps/web/src/lib/shoppingListAggregator.ts`** — ingredient
+   normalization and dedup
+
+## Known issues & gotchas
+
+**VS Code TypeScript server cache**: import errors for files that
+actually resolve fine (the app compiles) usually mean VS Code's TS
+server is stale — `Cmd+Shift+P` → "TypeScript: Restart TS Server," or
+reload the window.
+
+**Port already in use / stale lock file**:
 ```bash
-cd apps/web
-pnpm tsc --noEmit
-```
-
-### Clearing Next.js Cache
-```bash
-rm -rf apps/web/.next
-pnpm dev
-```
-
----
-
-## 🎯 Key Files & Their Roles
-
-### Recipe Data Types
-
-**Recipe** (`apps/web/src/lib/types/recipe.ts`)
-```typescript
-{
-  id: string;
-  title: string;
-  source: {
-    url?: string;                // Optional for AI-generated recipes
-    domain?: string;
-    chef?: string;
-    fetchedAt: string;
-  };
-  timeMins?: number;
-  serves?: number;
-  tags: string[];
-  ingredients: Ingredient[];
-  costPerServeEst?: number;      // Calculated from ingredients
-}
-```
-
-### Core Business Logic
-
-**composeWeek()** - `apps/web/src/lib/compose.ts`
-- Generates weekly meal plan
-- Applies filters: kid-friendly, max time, protein variety
-- Uses RecipeLibrary.search() to find candidates
-- Returns PlanWeek with cost estimate
-
-**RecipeLibrary** - `apps/web/src/lib/library.ts`
-- Manages custom recipes (AI-generated, user-added, URL-extracted)
-- Methods: `search()`, `getById()`, `getAll()`, `addRecipe()`, `deleteRecipe()`
-- Search supports: tags, maxTime, excludeIds, limit
-- Persists recipes to Supabase (authenticated) or localStorage (anonymous)
-
----
-
-## 🐛 Known Issues & Gotchas
-
-### 1. VS Code TypeScript Server Cache
-**Symptom**: Import errors for `@/lib/library` even though app compiles fine
-
-**Solution**:
-```bash
-# In VS Code
-Cmd+Shift+P → "TypeScript: Restart TS Server"
-# OR
-Cmd+Shift+P → "Developer: Reload Window"
-```
-
-**Why**: VS Code caches module resolution, especially for JSON imports
-
-### 2. Recipe Sources
-Recipes come from multiple sources:
-- AI-generated via Gemini API
-- User uploads via URL extraction
-- Manual entry via the recipes page
-
-### 3. RecipeYield Type Inconsistency
-**Problem**: Some sites use `["4"]`, others use `"4"` or `4`
-
-**Solution**: Parser handles all three
-```typescript
-function parseServings(yield_?: string | number | string[]): number {
-  if (typeof yield_ === 'number') return yield_;
-  if (Array.isArray(yield_)) return parseInt(String(yield_[0]));
-  return parseInt(String(yield_).match(/(\d+)/)?.[1] || '4');
-}
-```
-
-
-**Symptom**: "Port 3000 is in use" or lock file errors
-
-**Solution**:
-```bash
-# Kill all Next.js processes
 pkill -9 -f "next dev"
-
-# Clear lock files
 rm -rf apps/web/.next/dev/lock
-
-# Restart
 pnpm dev
 ```
 
----
+## Testing
 
-## 🧪 Testing Strategy
-
-### Manual Testing Checklist
-- [ ] Navigate to /plan - weekly meal plan loads
-- [ ] Click "Swap" on a meal - drawer opens with 3 suggestions
-- [ ] Select a swap - meal updates, budget recalculates
-- [ ] Check recipe details - shows real RecipeTin Eats data
-- [ ] Export shopping list - CSV downloads correctly
-- [ ] Check /admin/debug - analytics tracking works
-
-### Automated Tests (Coming Soon)
-See Step 2 in this guide for Vitest setup
-
----
-
----
-
-## 🔍 Debugging Tips
-
-### Recipe Not Appearing in App?
-1. Check if recipe was saved: Look in Supabase dashboard or localStorage
-2. Check search: `RecipeLibrary.search({ tags: ['dinner'] })`
-3. Clear cache and reload: Recipes may be cached
-
-### TypeScript Errors?
-1. Clear cache: `rm -rf apps/web/.next`
-2. Restart TS server: VS Code Command Palette
-3. Check types: `cd apps/web && pnpm tsc --noEmit`
-4. Verify imports: Use exact paths from types/recipe.ts
-
----
-
-## 📚 Related Documentation
-
-- **PRODUCT.md** - Why this exists and what it needs to achieve
-- **ARCHITECTURE.md** - System design & data flow diagrams
-- **CLAUDE.md** - Index of the full doc set, plus known doc/code drift
-
----
-
-## 📊 Ingredient Analytics & Price Mapping
-
-### Overview
-The system automatically tracks ingredient usage frequency to help prioritize which ingredients need Coles price mappings.
-
-### How It Works
-
-**Automatic Tracking**:
-- Triggered automatically when users generate or view meal plans
-- Extracts all ingredients from selected recipes
-- Normalizes ingredient names (removes "fresh", "chopped", etc.)
-- Increments frequency counters in localStorage
-- Checks each ingredient against 179 mapped Coles products
-
-**Analytics Dashboard**: `/debug/ingredient-analytics`
-- View total recipes tracked and ingredient counts
-- See coverage statistics (mapped vs unmapped %)
-- Top 10 unmapped ingredients needing prices
-- Generate full priority report (top 50-100 ingredients)
-- Export data as JSON for analysis
-
-**Key Functions** - `apps/web/src/lib/ingredientAnalytics.ts`:
-```typescript
-trackIngredientUsage(recipeIds: string[])      // Auto-called on plan generation
-getIngredientAnalytics()                        // Returns comprehensive stats
-generatePriorityReport()                        // Creates formatted text report
-exportIngredientData()                          // JSON export
-resetIngredientAnalytics()                      // Clear all data
+```bash
+pnpm test          # run once
+pnpm test:watch    # watch mode
+pnpm test:ui       # visual UI
 ```
 
-**Storage**: localStorage key `meal-agent:ingredient-frequency:v1`
+Two suites exist (`compose.test.ts`, `library.test.ts`). **12 of 30 tests
+currently fail** (a recipe-library seed-data issue in the Node test
+environment, not a recent regression), and there's no coverage at all on
+the storage layers, `scoring.ts`, or any API route — tracked in issue #5.
+Don't treat "tests pass" as a bar to personally restore on an unrelated
+change; do treat new coverage on the areas issue #5 calls out as
+valuable.
 
-**Use Case**: 
-When expanding price mappings in `colesMapping.ts`, use the analytics dashboard to identify which 50-100 ingredients are most frequently used in real meal plans, ensuring you're adding the most valuable mappings first.
+Manual testing checklist for planning changes:
+- [ ] `/plan` loads a weekly grid
+- [ ] "Swap" on a meal opens suggestions and updates the plan on selection
+- [ ] `/shopping-list` reflects the current plan's ingredients
+- [ ] `/settings` changes persist and affect the next generated plan
 
----
+## Debugging tips
 
-## 🤖 AI Agent Guidelines
+**Recipe not appearing?** Check `RecipeLibrary.getAll().length` in the
+console; check whether it was actually saved (Supabase dashboard for
+authenticated users, localStorage for anonymous); recipes added via
+URL/image/manual entry didn't reliably sync to Supabase before issue #32
+fixed it — worth knowing if debugging an old report.
 
-When working on this codebase:
+**TypeScript errors?** Clear the cache (`rm -rf apps/web/.next`),
+restart the TS server, then confirm with `pnpm tsc --noEmit` from
+`apps/web`.
 
-1. **Always check types first** - This is a strict TypeScript project
-2. **Read existing code** - Don't reinvent patterns
-3. **Use design system** - Import from @common-origin/design-system
-4. **Test manually** - Run `pnpm dev` and verify in browser
-5. **Validate data flow** - Understand AI generation → library → runtime
-6. **Ask before major changes** - Especially to core types or algorithms
+**Inspecting local state**: `localStorage.getItem('meal-agent:...')` keys
+hold most anonymous-user state — check `storage.ts` for the exact key
+names in use, since several modules bypass the shared storage layers
+entirely with their own keys (see `ARCHITECTURE.md`'s Storage section,
+issue #2).
 
-### Common AI Agent Tasks
+## Ingredient analytics & price mapping
 
-**"Add a new filter to meal planning"**
-→ Update `composeWeek()` in compose.ts
-→ Add to `LibrarySearchOptions` interface
-→ Update `RecipeLibrary.search()` implementation
+`ingredientAnalytics.ts` automatically tracks ingredient usage frequency
+whenever a plan is generated or viewed, so `colesMapping.ts` can be
+expanded starting with whatever's actually used most, rather than
+guessing. Dashboard at `/debug/ingredient-analytics`: coverage
+(mapped vs. unmapped), a priority report of the most-used unmapped
+ingredients, and a JSON export.
 
-**"Add a new UI component"**
-→ Use design system components
-→ Add to `apps/web/src/components/app/`
-→ Export from component file
-→ Import in page/layout
+## AI agent guidelines
 
-**"Fix a bug in recipe handling"**
-→ Check `library.ts` for recipe management
-→ Check API routes for extraction/generation
-→ Test in app
+1. Check types first — this is a strict TypeScript project, no `any`
+2. Read the existing code before adding a pattern — don't reinvent one
+   that already exists elsewhere in `lib/`
+3. Use `@common-origin/design-system` components over custom CSS/markup
+4. Verify manually in the browser, not just via typecheck/build
+5. Ask before changing core types (`types/recipe.ts`) or the
+   composition/scoring algorithms — those are load-bearing for the whole
+   app
 
----
+## Related documentation
 
-**Questions?** Check ARCHITECTURE.md or PRODUCT.md first!
+- [`PRODUCT.md`](../PRODUCT.md) — why this exists
+- [`ARCHITECTURE.md`](./ARCHITECTURE.md) — system design & data flow
+- [`AI.md`](./AI.md) — Gemini setup and troubleshooting
+- [`CLAUDE.md`](../CLAUDE.md) — doc index, known doc/code drift
