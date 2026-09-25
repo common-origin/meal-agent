@@ -122,21 +122,21 @@ export function getDefaultHousehold(): Household {
 }
 
 // Favorites helpers
-export function toggleFavorite(recipeId: string): boolean {
+export async function toggleFavorite(recipeId: string): Promise<boolean> {
   const household = loadHousehold() || getDefaultHousehold();
   const index = household.favorites.indexOf(recipeId);
-  
+
   if (index > -1) {
     // Remove from favorites
     household.favorites.splice(index, 1);
   } else {
     // Add to favorites
     household.favorites.push(recipeId);
-    
+
     // If this is a temporary AI recipe, promote it to permanent custom recipe
-    RecipeLibrary.promoteTempAIRecipeToCustom(recipeId);
+    await RecipeLibrary.promoteTempAIRecipeToCustom(recipeId);
   }
-  
+
   return saveHousehold(household);
 }
 

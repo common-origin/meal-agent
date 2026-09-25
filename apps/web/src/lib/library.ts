@@ -264,26 +264,41 @@ export class RecipeLibrary {
    * Add custom recipes (user-added via URL/image/manual entry)
    * These recipes will appear in "My Recipes"
    * Merges with existing custom recipes, avoiding duplicates by ID
+   *
+   * Saves to Supabase for authenticated users first (mirrors
+   * addTempAIRecipes below) so these recipes are actually persisted in the
+   * cloud, not just in this browser's localStorage — see issue #32.
    */
-  static addCustomRecipes(newRecipes: Recipe[]): boolean {
+  static async addCustomRecipes(newRecipes: Recipe[]): Promise<boolean> {
     const existingCustom = this.loadCustomRecipes();
     const existingIds = new Set(existingCustom.map(r => r.id));
-    
+
     // Filter out duplicates
     const recipesToAdd = newRecipes.filter(r => !existingIds.has(r.id));
-    
+
     if (recipesToAdd.length === 0) {
       console.log('No new recipes to add (all duplicates)');
       return true;
     }
-    
+
     // Enhance new recipes with tags
     const enhancedNewRecipes = recipesToAdd.map(r => enhanceRecipeWithTags(r));
-    
+
+    // Save to Supabase first for authenticated users (always attempt;
+    // local caching below proceeds regardless so this still works offline
+    // or logged out)
+    const HybridStorage = await import('./hybridStorage');
+    let savedCount = 0;
+    for (const recipe of enhancedNewRecipes) {
+      const saved = await HybridStorage.saveRecipe(recipe);
+      if (saved) savedCount++;
+    }
+    console.log(`💾 Saved ${savedCount}/${enhancedNewRecipes.length} custom recipes to Supabase`);
+
     // Merge and save
     const allCustom = [...existingCustom, ...enhancedNewRecipes];
     const success = this.saveCustomRecipes(allCustom);
-    
+
     console.log(`✅ Added ${recipesToAdd.length} custom recipes to "My Recipes"`);
 
     return success;
@@ -380,18 +395,18 @@ export class RecipeLibrary {
    * Promote a temporary AI recipe to permanent custom recipe
    * This happens when a user favorites an AI-generated recipe
    */
-  static promoteTempAIRecipeToCustom(recipeId: string): boolean {
+  static async promoteTempAIRecipeToCustom(recipeId: string): Promise<boolean> {
     const tempRecipes = this.loadTempAIRecipes();
     const recipe = tempRecipes.find(r => r.id === recipeId);
-    
+
     if (!recipe) {
       console.warn(`Temporary AI recipe ${recipeId} not found`);
       return false;
     }
-    
+
     // Add to custom recipes
-    const success = this.addCustomRecipes([recipe]);
-    
+    const success = await this.addCustomRecipes([recipe]);
+
     if (success) {
       console.log(`✅ Promoted AI recipe "${recipe.title}" to "My Recipes"`);
     }
