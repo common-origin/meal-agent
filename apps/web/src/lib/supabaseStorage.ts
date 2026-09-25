@@ -509,26 +509,33 @@ export async function savePantryItems(items: string[]): Promise<boolean> {
   }
 }
 
-export async function loadPantryItems(): Promise<string[]> {
+/**
+ * Returns null when there's no cloud row to read (no household, query
+ * error, or the row doesn't exist yet) as distinct from `[]`, which means
+ * the row exists and is genuinely empty — callers need to tell "no data"
+ * from "confirmed zero items" apart to decide whether falling back to a
+ * local cache is correct.
+ */
+export async function loadPantryItems(): Promise<string[] | null> {
   try {
     const householdId = await getHouseholdId();
-    if (!householdId) return [];
-    
+    if (!householdId) return null;
+
     const supabase = createBrowserClient();
-    
+
     const { data, error } = await supabase
       .from('pantry_preferences')
       .select('items')
       .eq('household_id', householdId)
       .single();
-    
+
     if (error || !data) {
-      return [];
+      return null;
     }
-    
+
     return data.items;
   } catch (error) {
     console.error('Error in loadPantryItems:', error);
-    return [];
+    return null;
   }
 }

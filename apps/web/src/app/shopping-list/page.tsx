@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Alert, Box, Button, Chip, Container, Icon, IconButton, List, ListItem, ResponsiveGrid, Stack, Typography } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
@@ -8,7 +8,7 @@ import ColesShoppingModal from "@/components/app/ColesShoppingModal";
 import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from "@/lib/shoppingListAggregator";
 import { generateShoppingListCSV, downloadCSV } from "@/lib/csv";
 import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides } from "@/lib/storage";
-import { loadCurrentWeekPlan } from "@/lib/hybridStorage";
+import { loadCurrentWeekPlan, savePantryItems, loadPantryItems } from "@/lib/hybridStorage";
 import { composeWeek } from "@/lib/compose";
 import { nextWeekMondayISO } from "@/lib/schedule";
 import { track, type CostOptimizedMeta } from "@/lib/analytics";
@@ -16,7 +16,6 @@ import { estimateIngredientCost } from "@/lib/colesMapping";
 import { RecipeLibrary } from "@/lib/library";
 import PriceSourceBadge from "@/components/app/PriceSourceBadge";
 import ApiQuotaWarning from "@/components/app/ApiQuotaWarning";
-import { addToPantryPreferences, removeFromPantryPreferences } from "@/lib/pantryPreferences";
 
 // Weekly nutrition totals
 type WeeklyNutrition = {
@@ -36,6 +35,22 @@ export default function ShoppingListPage() {
   const [apiPrices, setApiPrices] = useState<Map<string, { cost: number; source: 'api' | 'static' | 'category'; livePrice?: boolean }>>(new Map());
   const [isShoppingComplete, setIsShoppingComplete] = useState(false);
   const [weeklyNutrition, setWeeklyNutrition] = useState<WeeklyNutrition | null>(null);
+
+  // Serializes pantry-preference read-modify-write cycles so two quick
+  // mark/unmark clicks can't interleave their loadPantryItems/savePantryItems
+  // calls and silently drop one of the two updates.
+  const pantryUpdateQueue = useRef<Promise<unknown>>(Promise.resolve());
+  const updatePantryPreference = (normalizedName: string, addItem: boolean) => {
+    pantryUpdateQueue.current = pantryUpdateQueue.current
+      .then(() => loadPantryItems())
+      .then(current => {
+        const updated = addItem
+          ? Array.from(new Set([...current, normalizedName]))
+          : current.filter(name => name !== normalizedName);
+        return savePantryItems(updated);
+      })
+      .catch(err => console.error('Failed to update pantry preference:', err));
+  };
 
   const loadApiPrices = async (items: AggregatedIngredient[]) => {
     const { estimateIngredientCostWithAPI } = await import('@/lib/colesMapping');
@@ -149,8 +164,17 @@ export default function ShoppingListPage() {
       plan = composeWeek(household, overrides || undefined);
       // Fall back to general household pantry if no saved plan (already in correct format)
       weeklyPantryItems = household.pantry;
+
+      // Hydrate the local pantry-preferences cache from Supabase (for
+      // authenticated users) so aggregateShoppingList's synchronous
+      // isInPantryPreferences check below sees pantry staples marked on
+      // other devices, not just this one. Not needed on the savedPlan
+      // branch above — loadCurrentWeekPlan() already called
+      // HybridStorage.loadPantryItems() internally, which hydrates the
+      // same cache as a side effect.
+      await loadPantryItems();
     }
-    
+
     // Aggregate ingredients using week-specific pantry items
     const items = aggregateShoppingList(plan, {
       userPantryItems: weeklyPantryItems
@@ -224,13 +248,13 @@ export default function ShoppingListPage() {
   };
 
   const handleMarkAsPantry = (item: AggregatedIngredient) => {
-    // Add to pantry preferences
-    addToPantryPreferences(item.normalizedName);
-    
+    // Add to pantry preferences (syncs to Supabase for authenticated users)
+    updatePantryPreference(item.normalizedName, true);
+
     // Update UI immediately by moving item to pantry section
-    setAggregatedItems(prevItems => 
-      prevItems.map(i => 
-        i.normalizedName === item.normalizedName 
+    setAggregatedItems(prevItems =>
+      prevItems.map(i =>
+        i.normalizedName === item.normalizedName
           ? { ...i, isPantryStaple: true }
           : i
       )
@@ -238,13 +262,13 @@ export default function ShoppingListPage() {
   };
 
   const handleUnmarkAsPantry = (item: AggregatedIngredient) => {
-    // Remove from pantry preferences
-    removeFromPantryPreferences(item.normalizedName);
-    
+    // Remove from pantry preferences (syncs to Supabase for authenticated users)
+    updatePantryPreference(item.normalizedName, false);
+
     // Update UI immediately by moving item back to shopping list
-    setAggregatedItems(prevItems => 
-      prevItems.map(i => 
-        i.normalizedName === item.normalizedName 
+    setAggregatedItems(prevItems =>
+      prevItems.map(i =>
+        i.normalizedName === item.normalizedName
           ? { ...i, isPantryStaple: false }
           : i
       )
