@@ -1,7 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { composeWeek, getSuggestedSwaps } from '../compose';
 import type { Household, WeeklyOverrides } from '../types/recipe';
 import { nextWeekMondayISO } from '../schedule';
+import { seedRecipeLibrary } from './fixtures/seedRecipeLibrary';
+
+beforeAll(() => {
+  seedRecipeLibrary();
+});
 
 describe('composeWeek', () => {
   const mockHousehold: Household = {

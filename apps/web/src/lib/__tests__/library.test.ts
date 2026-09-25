@@ -1,7 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { RecipeLibrary } from '../library';
+import { seedRecipeLibrary } from './fixtures/seedRecipeLibrary';
 
 describe('RecipeLibrary', () => {
+  beforeAll(() => {
+    seedRecipeLibrary();
+  });
+
   describe('getAll', () => {
     it('returns all recipes', () => {
       const recipes = RecipeLibrary.getAll();

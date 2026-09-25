@@ -7,9 +7,9 @@
     "build": "pnpm --filter web build",
     "start": "pnpm --filter web start",
     "lint": "pnpm --filter web lint",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test": "vitest run --root apps/web",
+    "test:watch": "vitest --root apps/web",
+    "test:ui": "vitest --ui --root apps/web"
   },
   "engines": {
     "node": ">=18.0.0",
