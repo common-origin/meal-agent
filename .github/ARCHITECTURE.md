@@ -282,4 +282,4 @@ document before #35 had one claiming shopping lists and user accounts as
 - [`PRODUCT.md`](../PRODUCT.md) — why this exists, read first
 - [`CLAUDE.md`](../CLAUDE.md) — doc index and known doc/code drift
 - [`DEVELOPMENT.md`](./DEVELOPMENT.md) — dev workflows, testing, deployment
-- [`PROJECT_INSTRUCTIONS.md`](./PROJECT_INSTRUCTIONS.md) — dev conventions
+- [`AI.md`](./AI.md) — Gemini setup and troubleshooting
