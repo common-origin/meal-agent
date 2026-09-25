@@ -7,7 +7,7 @@ Meal Agent is a multi-user, AI-powered weekly meal-planning app for households (
 ## Where things live (read the file, don't rely on this doc for depth)
 
 - **`PRODUCT.md`** — *why* this exists and what it needs to achieve, from the project owner directly. Read this before `ARCHITECTURE.md`: if the two ever disagree, `PRODUCT.md` wins.
-- **`.github/ARCHITECTURE.md`** — system architecture, layer breakdown, data flow, DB schema. Treat the storage-layer diagram and test-coverage numbers with suspicion (see Known Drift below).
+- **`.github/ARCHITECTURE.md`** — system architecture, layer breakdown, data flow, DB schema. Rewritten as part of #35 to match reality, including the parts that aren't clean (storage layering, no scheduling) — no longer needs the same "treat with suspicion" caveat this line used to carry, but verify against code if something here seems off, same as any doc.
 - **`.github/PROJECT_INSTRUCTIONS.md`** — original dev conventions and design-system component inventory (short, worth reading in full once).
 - **`.github/API_REFERENCE.md`** — function-level reference for `apps/web/src/lib/*`.
 - **`.github/DEVELOPMENT.md`** — dev workflows, testing, deployment steps, ingredient-analytics workflow.
@@ -19,12 +19,10 @@ Retired as of #35, don't recreate: `.github/PROJECT_STATUS.md` and `.github/READ
 
 ## Known drift — verify before trusting
 
-The docs above are not kept in sync with the code. Confirmed discrepancies (as of 2026-09-24):
+The docs above are not kept in sync with the code. Confirmed discrepancies (as of 2026-09-25):
 
 - **Design system version**: PROJECT_INSTRUCTIONS.md says v1.14.0, DEVELOPMENT.md says v1.4.0, DESIGN_SYSTEM_MIGRATION.md says v1.14.0 — actual installed version in `apps/web/package.json` is `^2.12.0` (see commit "Upgrade design system to v2.12.0"). Always check `package.json` directly, not the docs, for the real version.
-- **Gemini model names**: ARCHITECTURE.md repeatedly says `gemini-2.0-flash-exp`. No AI call site uses that model. Actual usage is mixed per call site: `gemini-2.5-pro` (`lib/aiRecipeGenerator.ts` main path, with a `gemini-1.5-pro` fallback), `gemini-2.5-flash` (`extract-recipe-from-url`, `scan-pantry-image`), `gemini-1.5-pro` (`extract-recipe-from-image`). Check the route/lib file directly for the model in use, not the docs. The stale string is also displayed as static UI copy on the About page (`apps/web/src/app/about/page.tsx:284`), alongside a stale design-system version (`v1.14.0`) on the line above it — that page's "Technology Stack" list needs the same fixes as the docs.
-- **Storage architecture**: ARCHITECTURE.md draws a clean 4-layer pipeline (storage.ts → storageAsync.ts → hybridStorage.ts → supabaseStorage.ts). In practice app code calls all of these layers directly/interchangeably rather than only through the router, and `pantryPreferences.ts`, `recencyTracker.ts`, `ingredientAnalytics.ts`, and `userPriceReports.ts` write straight to `localStorage`, bypassing all four layers. Don't assume a single storage entry point when tracing data flow. Tracked in issue #2.
-- **Test suite health**: docs report "30 tests" with no caveat. Currently 12 of 30 fail (`pnpm test`) because the recipe library has no seed data in the Node test environment. There is no test coverage on the storage layers, `scoring.ts`, or any API route — treat any doc claim of "tested"/"validated" behavior in those areas skeptically. Tracked in issue #5.
+- **Gemini model names**: `.github/PROJECT_INSTRUCTIONS.md` says `gemini-2.0-flash-exp`. No AI call site uses that model — see `ARCHITECTURE.md`'s API routes table for what's actually configured per route (it's mixed, not one constant). Check the route/lib file directly, not the docs, if `ARCHITECTURE.md`'s table itself ever seems out of date. The stale string is also displayed as static UI copy on the About page (`apps/web/src/app/about/page.tsx:284`), alongside a stale design-system version (`v1.14.0`) on the line above it — that page's "Technology Stack" list needs the same fix as the docs.
 - **Scheduling**: `schedule.ts` is still just client-side "plan your week" reminder logic. There is no server-side cron anywhere in the repo (no Vercel cron config, no scheduled GitHub workflow) — don't assume "scheduling" mentioned in docs implies real scheduling infrastructure exists. Tracked in issue #4. (The ICS calendar export this bullet used to also flag as missing now exists — see `apps/web/src/app/api/plan/ics/[token]/route.ts`, issue #3, merged.)
 
 ## Dev conventions worth knowing up front
