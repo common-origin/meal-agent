@@ -14,7 +14,7 @@ import { type MealCardProps } from "@/components/app/MealCard";
 import { type Recipe } from "@/lib/types/recipe";
 import { scheduleSundayToast, isSaturdayAfter4, nextWeekMondayISO } from "@/lib/schedule";
 import { loadHousehold, getDefaultHousehold } from "@/lib/storage";
-import { getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan } from "@/lib/storageAsync";
+import { getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan } from "@/lib/hybridStorage";
 import { getSuggestedSwaps } from "@/lib/compose";
 import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";

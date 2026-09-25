@@ -12,7 +12,7 @@ import { track } from "@/lib/analytics";
 import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
 import { formatTagsForDisplay } from "@/lib/tagNormalizer";
 import StarRating from "@/components/app/StarRating";
-import { getFamilySettings } from "@/lib/storageAsync";
+import { getFamilySettings } from "@/lib/hybridStorage";
 import type { RecipeRecipient } from "@/lib/types/settings";
 
 /**
