@@ -1,6 +1,6 @@
 # Meal Agent
 
-**Production URL**: https://meal-agent-gvvyzmw1k-commonorigins-projects.vercel.app
+**Production URL**: https://meal-agent.vercel.app
 
 An AI-powered multi-user meal planning application that helps households plan weekly dinners with authentication, persistent storage, and intelligent recipe recommendations.
 
@@ -250,7 +250,8 @@ pnpm -F web start
 
 ## 📚 Documentation
 
-- **[PROJECT_STATUS.md](./.github/PROJECT_STATUS.md)** - Complete project status and feature list
+- **[PRODUCT.md](./PRODUCT.md)** - Why this exists and what it needs to achieve — start here
+- **[CLAUDE.md](./CLAUDE.md)** - Index of the docs below, plus known doc/code drift to verify before trusting
 - **[ARCHITECTURE.md](./.github/ARCHITECTURE.md)** - System architecture and data flow
 - **[DEVELOPMENT.md](./.github/DEVELOPMENT.md)** - Development workflows and testing
 - **[PROJECT_INSTRUCTIONS.md](./.github/PROJECT_INSTRUCTIONS.md)** - Development guidelines
@@ -260,26 +261,7 @@ pnpm -F web start
 
 ## 🎯 Roadmap
 
-### Current (Phase 3) ✅
-- [x] Multi-user authentication (Google OAuth + Magic Link)
-- [x] PostgreSQL database with Row-Level Security
-- [x] Household-based data isolation
-- [x] Recipe, meal plan, and settings persistence
-- [x] 4-layer hybrid storage architecture
-
-### Next (Phase 4)
-- [ ] Household member invitation system
-- [ ] Member management UI
-- [ ] Transfer ownership functionality
-- [ ] Favorites migration to database
-
-### Future (Phase 5+)
-- [ ] Coles checkout integration (deep links + browser extension)
-- [ ] Advanced LLM-powered meal reasoning
-- [ ] Real-time Coles API pricing
-- [ ] Nutrition tracking and goals
-- [ ] Social features (share plans, rate recipes)
-- [ ] Mobile native apps (iOS/Android)
+Tracked as [GitHub Issues](https://github.com/common-origin/meal-agent/issues), not a static checklist here — a roadmap written into a doc goes stale exactly like the one this replaced had (it listed the storage architecture as a completed achievement; see #2 for why that's not accurate, and #36 for the Coles checkout/pricing work it called "Phase 5+").
 
 ## 🤝 Contributing
 

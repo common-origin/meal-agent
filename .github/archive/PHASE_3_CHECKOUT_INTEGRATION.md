@@ -1,3 +1,7 @@
+> **Archived (#35).** This research is now tracked as issue #36, which is
+> where any decisions or updates should go — this file is preserved as the
+> original point-in-time record, not kept in sync with it.
+
 # Phase 3: Coles Checkout Integration - Research & Planning
 
 **Date**: 6 November 2025  
