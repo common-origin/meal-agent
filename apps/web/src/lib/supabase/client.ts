@@ -30,10 +30,9 @@ export function createClient() {
   return client;
 }
 
-/**
- * Get the current authenticated user
- */
-export async function getCurrentUser() {
+let inFlightUser: ReturnType<typeof fetchCurrentUser> | null = null;
+
+async function fetchCurrentUser() {
   const supabase = createClient();
   const {
     data: { user },
@@ -46,6 +45,25 @@ export async function getCurrentUser() {
   }
 
   return user;
+}
+
+/**
+ * Get the current authenticated user.
+ *
+ * getUser() is a real network round-trip to Supabase Auth (deliberately, so
+ * it re-verifies the session rather than trusting the cookie like the
+ * cheaper getSession() would). Several call sites across the app call this
+ * independently in quick succession, so concurrent calls share one in-flight
+ * request instead of each firing their own.
+ */
+export async function getCurrentUser() {
+  if (!inFlightUser) {
+    inFlightUser = fetchCurrentUser().finally(() => {
+      inFlightUser = null;
+    });
+  }
+
+  return inFlightUser;
 }
 
 /**
