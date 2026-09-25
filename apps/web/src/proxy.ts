@@ -15,6 +15,23 @@ export async function proxy(request: NextRequest) {
     request,
   });
 
+  // Refreshing the auth token — bounded by a timeout so a slow or
+  // unresponsive Supabase Auth call can't hang this proxy invocation and
+  // take down the whole site with a 504 (see issue #19). This aborts the
+  // underlying fetch itself (via the AbortController below), rather than
+  // just racing a timer against it and discarding the result — an earlier
+  // version of this fix only did the latter, which bounded the response
+  // time for this request but left the real network call to Supabase Auth
+  // running in the background regardless (see issue #57). A timeout is
+  // treated the same as "no user", the same safe fallback used on an
+  // actual auth failure.
+  const AUTH_TIMEOUT_MS = 3000;
+  const authAbortController = new AbortController();
+  const authTimeoutId = setTimeout(
+    () => authAbortController.abort(),
+    AUTH_TIMEOUT_MS
+  );
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -35,20 +52,24 @@ export async function proxy(request: NextRequest) {
           );
         },
       },
+      global: {
+        fetch: (input, init) =>
+          fetch(input, { ...init, signal: authAbortController.signal }),
+      },
     }
   );
 
-  // Refreshing the auth token — raced against a timeout so a slow or
-  // unresponsive Supabase Auth call can't hang this proxy invocation
-  // and take down the whole site with a 504 (see issue #19). A timeout is
-  // treated the same as "no user", the same safe fallback used on an
-  // actual auth failure.
-  const AUTH_TIMEOUT_MS = 3000;
-  const authResult = await Promise.race([
-    supabase.auth.getUser(),
-    new Promise<null>((resolve) => setTimeout(() => resolve(null), AUTH_TIMEOUT_MS)),
-  ]);
-  const user = authResult?.data.user ?? null;
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch {
+    // Aborted by the timeout above, or any other network/auth error --
+    // treated the same as "no user".
+    user = null;
+  } finally {
+    clearTimeout(authTimeoutId);
+  }
 
   // Protected routes - require authentication
   const protectedPaths = [
