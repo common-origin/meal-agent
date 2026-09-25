@@ -1,10 +1,15 @@
 /**
  * Ingredient Analytics
- * 
+ *
  * Tracks ingredient usage frequency across meal plans to identify:
  * - Most commonly used ingredients
  * - Unmapped ingredients that need pricing data
  * - Priority list for expanding colesMapping.ts
+ *
+ * Deliberately localStorage-only, not part of the household sync layer
+ * (issue #2): this is maintainer tooling for prioritizing colesMapping.ts
+ * entries (see /api/ingredient-analytics and /debug/ingredient-analytics),
+ * not user-facing household data, so it doesn't need cross-device sync.
  */
 
 import { RecipeLibrary } from './library';
