@@ -22,6 +22,12 @@ function SignupForm() {
     ? `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(redirectTo)}`
     : `${getSiteUrl()}/auth/callback`;
 
+  // Keep it attached when switching to login too, so a visitor who lands
+  // here first doesn't lose the deep link by using that link instead.
+  const loginHref = isSafeRedirectPath(redirectTo)
+    ? `/login?redirectTo=${encodeURIComponent(redirectTo)}`
+    : '/login';
+
   const handleGoogleSignUp = async () => {
     try {
       setLoading(true);
@@ -178,7 +184,7 @@ function SignupForm() {
               Already have an account?{' '}
               <Button
                 variant="naked"
-                onClick={() => router.push('/login')}
+                onClick={() => router.push(loginHref)}
                 disabled={loading}
               >
                 Sign in
