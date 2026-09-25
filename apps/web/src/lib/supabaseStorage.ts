@@ -539,3 +539,75 @@ export async function loadPantryItems(): Promise<string[] | null> {
     return null;
   }
 }
+
+/**
+ * Recipe History (recency tracking)
+ * Append-only log of recipes used per composed week, mirroring
+ * recencyTracker.ts's RecipeHistory shape so hybridStorage.ts can merge
+ * these rows into the existing localStorage history — see issue #2.
+ */
+export interface RecipeHistoryEntry {
+  recipeId: string;
+  weekStart: string;
+  usedAt: string;
+}
+
+export async function saveRecipeHistoryEntries(entries: RecipeHistoryEntry[]): Promise<boolean> {
+  if (entries.length === 0) return true;
+
+  try {
+    const householdId = await getHouseholdId();
+    if (!householdId) return false;
+
+    const supabase = createBrowserClient();
+
+    const { error } = await supabase
+      .from('recipe_history')
+      .upsert(entries.map(entry => ({
+        household_id: householdId,
+        recipe_id: entry.recipeId,
+        week_start: entry.weekStart,
+        used_at: entry.usedAt,
+      })), {
+        onConflict: 'household_id,recipe_id,week_start',
+      });
+
+    if (error) {
+      console.error('Error saving recipe history:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error in saveRecipeHistoryEntries:', error);
+    return false;
+  }
+}
+
+export async function loadRecipeHistory(sinceISO: string): Promise<RecipeHistoryEntry[]> {
+  try {
+    const householdId = await getHouseholdId();
+    if (!householdId) return [];
+
+    const supabase = createBrowserClient();
+
+    const { data, error } = await supabase
+      .from('recipe_history')
+      .select('recipe_id, week_start, used_at')
+      .eq('household_id', householdId)
+      .gte('week_start', sinceISO);
+
+    if (error || !data) {
+      return [];
+    }
+
+    return data.map(row => ({
+      recipeId: row.recipe_id,
+      weekStart: row.week_start,
+      usedAt: row.used_at,
+    }));
+  } catch (error) {
+    console.error('Error in loadRecipeHistory:', error);
+    return [];
+  }
+}

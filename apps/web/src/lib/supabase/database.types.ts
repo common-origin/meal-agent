@@ -228,6 +228,38 @@ export type Database = {
           },
         ]
       }
+      recipe_history: {
+        Row: {
+          household_id: string
+          id: string
+          recipe_id: string
+          used_at: string
+          week_start: string
+        }
+        Insert: {
+          household_id: string
+          id?: string
+          recipe_id: string
+          used_at?: string
+          week_start: string
+        }
+        Update: {
+          household_id?: string
+          id?: string
+          recipe_id?: string
+          used_at?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_history_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipes: {
         Row: {
           cost_per_serve_est: number | null
