@@ -144,7 +144,8 @@ export default function PlanReviewPage() {
       newPlan = composeWeek(household, overrides || undefined);
       // Push this week's picks to Supabase (fire-and-forget, doesn't block
       // rendering the plan) so other devices see them too
-      syncRecencyToSupabase(nextWeekISO, newPlan.days.map(d => d.recipeId));
+      syncRecencyToSupabase(nextWeekISO, newPlan.days.map(d => d.recipeId))
+        .catch(err => console.warn('Failed to sync recency history to Supabase:', err));
     }
     
     setPlan(newPlan);

@@ -1,6 +1,12 @@
 /**
  * Recency Tracker
  * Tracks recently used recipes to enforce variety (3-week window)
+ *
+ * This key isn't namespaced by household/user and isn't cleared on sign-out,
+ * so a browser that signs out of one household and into another can inherit
+ * the previous household's recency data — same gap as every other
+ * localStorage-backed cache in this app. Tracked in issue #49; not fixed
+ * here since it needs an app-wide sign-out change, not a recency-specific one.
  */
 
 import { REPETITION_WINDOW_WEEKS } from "./constants";

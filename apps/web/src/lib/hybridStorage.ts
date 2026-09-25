@@ -256,9 +256,13 @@ export async function syncRecencyToSupabase(weekOfISO: string, recipeIds: string
   if (!authed) return;
 
   const usedAt = new Date().toISOString();
-  const entries = recipeIds
-    .filter((id): id is string => Boolean(id))
-    .map(recipeId => ({ recipeId, weekStart: weekOfISO, usedAt }));
+  // Dedupe: composeWeek() deliberately repeats a recipeId across a
+  // bulk-cook leftover day, and the upsert's (household_id, recipe_id,
+  // week_start) conflict key can't appear twice in one statement — Postgres
+  // rejects the whole upsert ("ON CONFLICT DO UPDATE command cannot affect
+  // row a second time") if it does.
+  const uniqueRecipeIds = new Set(recipeIds.filter((id): id is string => Boolean(id)));
+  const entries = Array.from(uniqueRecipeIds).map(recipeId => ({ recipeId, weekStart: weekOfISO, usedAt }));
 
   if (entries.length === 0) return;
 

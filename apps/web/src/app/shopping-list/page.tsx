@@ -153,7 +153,8 @@ export default function ShoppingListPage() {
       plan = composeWeek(household, overrides || undefined);
       // Push this week's picks to Supabase (fire-and-forget) so other
       // devices see them too
-      syncRecencyToSupabase(nextWeekISO, plan.days.map(d => d.recipeId));
+      syncRecencyToSupabase(nextWeekISO, plan.days.map(d => d.recipeId))
+        .catch(err => console.warn('Failed to sync recency history to Supabase:', err));
       // Fall back to general household pantry if no saved plan (already in correct format)
       weeklyPantryItems = household.pantry;
     }

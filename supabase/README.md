@@ -52,7 +52,15 @@
    - Verify success: Should see "Success. No rows returned"
    - This adds an `ics_token` column to `households`, needed for the Settings page's "Calendar Sync" link and the `/api/plan/ics/[token]` feed route
 
-8. **Verify Tables Created:**
+8. **Run Recipe History Migration (Step 7):**
+   - Click "New Query"
+   - Copy entire contents of `supabase/migrations/007_add_recipe_history.sql`
+   - Paste into SQL Editor
+   - Click "Run" or press Cmd+Enter
+   - Verify success: Should see "Success. No rows returned"
+   - This adds a `recipe_history` table so recipe-repeat variety enforcement syncs across an authenticated household's devices, instead of resetting per device
+
+9. **Verify Tables Created:**
    ```sql
    SELECT table_name 
    FROM information_schema.tables 
@@ -67,10 +75,11 @@
    - households
    - meal_plans
    - pantry_preferences
+   - recipe_history
    - recipes
    - shopping_lists
 
-9. **Verify RLS Enabled:**
+10. **Verify RLS Enabled:**
    ```sql
    SELECT tablename, rowsecurity 
    FROM pg_tables 
@@ -90,6 +99,7 @@
 - **shopping_lists** - Aggregated shopping items per week
 - **pantry_preferences** - Items always in pantry (exclude from shopping)
 - **api_usage** - Track AI API costs per household
+- **recipe_history** - Recipes used per composed week, for cross-device repeat-avoidance
 
 ### Automatic Behaviors:
 - **New User Signup** → Auto-creates household, adds user as owner, creates default settings
