@@ -60,7 +60,15 @@
    - Verify success: Should see "Success. No rows returned"
    - This adds a `recipe_history` table so recipe-repeat variety enforcement syncs across an authenticated household's devices, instead of resetting per device
 
-9. **Verify Tables Created:**
+9. **Run Pin Function search_path Migration (Step 8):**
+   - Click "New Query"
+   - Copy entire contents of `supabase/migrations/008_pin_function_search_paths.sql`
+   - Paste into SQL Editor
+   - Click "Run" or press Cmd+Enter
+   - Verify success: Should see "Success. No rows returned"
+   - This re-declares `handle_new_user()` and `get_user_household_id()` with a pinned `search_path`, closing the "Function Search Path Mutable" hardening gap on both SECURITY DEFINER functions
+
+10. **Verify Tables Created:**
    ```sql
    SELECT table_name 
    FROM information_schema.tables 
@@ -79,7 +87,7 @@
    - recipes
    - shopping_lists
 
-10. **Verify RLS Enabled:**
+11. **Verify RLS Enabled:**
    ```sql
    SELECT tablename, rowsecurity 
    FROM pg_tables 

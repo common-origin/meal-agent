@@ -122,13 +122,15 @@ pnpm test:watch    # watch mode
 pnpm test:ui       # visual UI
 ```
 
-Two suites exist (`compose.test.ts`, `library.test.ts`). **12 of 30 tests
-currently fail** (a recipe-library seed-data issue in the Node test
-environment, not a recent regression), and there's no coverage at all on
-the storage layers, `scoring.ts`, or any API route — tracked in issue #5.
-Don't treat "tests pass" as a bar to personally restore on an unrelated
-change; do treat new coverage on the areas issue #5 calls out as
-valuable.
+Three suites exist (`compose.test.ts`, `library.test.ts`, `scoring.test.ts`).
+The root `pnpm test` used to run bare `vitest run` with no config, which
+skipped `apps/web/vitest.config.ts` entirely (its `happy-dom` environment
+and setup file never applied) — combined with `RecipeLibrary` having no
+built-in seed data, that's what caused 12 of 30 tests to fail. Both are
+fixed (issue #5): the root scripts now pass `--root apps/web`, and
+`compose.test.ts`/`library.test.ts` seed a fixture recipe set via
+`__tests__/fixtures/`. There's still no coverage on the storage layers or
+any API route.
 
 Manual testing checklist for planning changes:
 - [ ] `/plan` loads a weekly grid

@@ -5,7 +5,7 @@
  * All data is scoped to the user's household for proper isolation.
  */
 
-import { createClient as createBrowserClient } from '@/lib/supabase/client';
+import { createClient as createBrowserClient, getCurrentUser } from '@/lib/supabase/client';
 import type { FamilySettings } from './types/settings';
 import type { Recipe } from './types/recipe';
 import type { Database, Json } from './supabase/database.types';
@@ -14,11 +14,11 @@ import type { Database, Json } from './supabase/database.types';
  * Get the current user's household ID
  */
 async function getHouseholdId(): Promise<string | null> {
-  const supabase = createBrowserClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
+  const user = await getCurrentUser();
+
   if (!user) return null;
-  
+
+  const supabase = createBrowserClient();
   const { data } = await supabase
     .from('household_members')
     .select('household_id')

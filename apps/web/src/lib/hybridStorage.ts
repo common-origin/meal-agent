@@ -7,7 +7,7 @@
 
 import * as LocalStorage from './storage';
 import * as SupabaseStorage from './supabaseStorage';
-import { createClient } from './supabase/client';
+import { getCurrentUser } from './supabase/client';
 import type { FamilySettings } from './types/settings';
 import { DEFAULT_FAMILY_SETTINGS } from './types/settings';
 import type { Recipe } from './types/recipe';
@@ -22,8 +22,7 @@ const DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 's
  */
 async function isAuthenticated(): Promise<boolean> {
   try {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     return !!user;
   } catch {
     return false;
