@@ -47,8 +47,14 @@ better reference for "what pages/components actually exist."
 **Meal planning flow**: `composeWeek(household, overrides?)` in
 `compose.ts` scores every candidate recipe (`scoring.ts`), picks the best
 fit per day while enforcing variety (protein, cuisine, recency), and
-returns a `PlanWeek`. It's a pure function — same inputs always produce
-the same plan, which is what makes it testable in isolation.
+returns a `PlanWeek`. `scoreRecipe()` itself is a pure function, but
+`composeWeek()` is not — it reads recent-recipe history via
+`getRecentRecipeIds()`, queries the current `RecipeLibrary` state
+directly, and calls `recordWeekRecipes()` as a side effect at the end.
+Same inputs can produce different plans depending on what's changed in
+storage since the last call, and calling it has a side effect. (An
+earlier version of this doc, and of `ARCHITECTURE.md`, incorrectly
+called this pure — caught by review, corrected here.)
 
 **Explainability**: every meal selection carries reason codes
 (`explainer.ts` maps them to human-readable chips, e.g. `"quick_weeknight"`

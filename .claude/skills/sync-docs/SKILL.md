@@ -22,7 +22,7 @@ Stay conservative: this runs right before a PR, so a developer needs to trust it
    | Change touches... | Likely needs an update in... |
    |---|---|
    | `apps/web/src/lib/*storage*` / `*Storage*.ts` | `ARCHITECTURE.md` (storage section) |
-   | `package.json` dependency versions (e.g. `@common-origin/design-system`) | Any doc stating that version in prose — check `DESIGN_SYSTEM_MIGRATION.md` (`DEVELOPMENT.md` and `AI.md` deliberately point to `package.json` instead of stating versions, precisely to avoid this) |
+   | `package.json` dependency versions (e.g. `@common-origin/design-system`) | Any doc stating that version in prose — check `DESIGN_SYSTEM_MIGRATION.md`. `DEVELOPMENT.md` and `AI.md` don't currently mention any dependency version at all, which is the actual reason they can't drift this way — if a future edit adds one, it becomes exactly the kind of prose-version-statement this row exists to catch |
    | AI/Gemini model strings (e.g. `gemini-2.5-pro`) | `ARCHITECTURE.md`'s API routes table |
    | New or changed routes under `apps/web/src/app/api/` | `ARCHITECTURE.md`'s API routes table |
 

@@ -21,17 +21,29 @@ model-specific detail so it can't drift the same way again.
 ## Using AI generation in the app
 
 `/settings` → configure family preferences → `/plan` → "Generate with AI."
-The request goes to `POST /api/generate-recipes`, whose actual request/
-response shape is defined by `RecipeGenerationRequest` and
-`GeneratedRecipeResponse` in `aiRecipeGenerator.ts` — read those types
-directly rather than a hand-copied JSON example here, since that's
-exactly the kind of thing that drifts out of sync with the code silently.
+The request goes to `POST /api/generate-recipes`. Its request type
+(`RecipeGenerationRequest`) is defined in
+`apps/web/src/lib/prompts/recipeGeneration.ts`, not in
+`aiRecipeGenerator.ts` where the generation logic itself lives — and the
+actual HTTP response isn't the generator's raw internal result type
+either: the route wraps it as `{ success: true, recipes, count }` on
+success or `{ error, details }` on failure
+(`apps/web/src/app/api/generate-recipes/route.ts`). Read the route file
+directly for the real contract rather than a hand-copied JSON example
+here, since that's exactly the kind of thing that drifts out of sync
+with the code silently — as this line itself did on a previous version.
 
 ## Rate limiting
 
 `generate-recipes` enforces 3 requests per minute per IP
 (`MAX_REQUESTS_PER_WINDOW` in `apps/web/src/app/api/generate-recipes/route.ts`)
-— a 429 with "Rate limit exceeded" means wait a minute, not a bug.
+— a 429 with "Rate limit exceeded" means wait a minute, not a bug. (The
+limiter's window-reset logic had a real bug that meant it never actually
+engaged — every request looked like a "new window" because the previous
+request's timestamp was never stored. Fixed alongside this doc; caught
+by review on the PR that added this file, which is itself a reasonable
+argument for not writing down "verified" behavior without re-reading the
+code closely enough to actually verify it.)
 
 ## Troubleshooting
 

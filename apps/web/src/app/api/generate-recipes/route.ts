@@ -20,27 +20,30 @@ const MAX_REQUESTS_PER_WINDOW = 3; // Max 3 requests per minute per IP
 function checkRateLimit(identifier: string): boolean {
   const now = Date.now();
   const lastRequest = requestCache.get(identifier) || 0;
-  
-  // Clean up old entries
+
+  // Reset the window if it's expired — note this only clears the count,
+  // it doesn't early-return. Returning true here directly (the previous
+  // behavior) skipped ever recording a timestamp for a new identifier,
+  // so this branch matched on every single call and the limit never
+  // actually engaged. See generate-recipes' entry in AI.md.
   if (now - lastRequest > RATE_LIMIT_WINDOW_MS) {
-    requestCache.delete(identifier);
-    return true;
+    requestCache.delete(`${identifier}:count`);
   }
-  
+
   // Check if within rate limit
   const requestCount = requestCache.get(`${identifier}:count`) || 0;
   if (requestCount >= MAX_REQUESTS_PER_WINDOW) {
     return false;
   }
-  
+
   requestCache.set(identifier, now);
   requestCache.set(`${identifier}:count`, requestCount + 1);
-  
+
   // Reset count after window
   setTimeout(() => {
     requestCache.delete(`${identifier}:count`);
   }, RATE_LIMIT_WINDOW_MS);
-  
+
   return true;
 }
 
