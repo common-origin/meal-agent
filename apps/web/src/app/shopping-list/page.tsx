@@ -10,6 +10,7 @@ import { generateShoppingListCSV, downloadCSV } from "@/lib/csv";
 import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides } from "@/lib/storage";
 import { loadCurrentWeekPlan } from "@/lib/storageAsync";
 import { composeWeek } from "@/lib/compose";
+import { hydrateRecencyFromSupabase, syncRecencyToSupabase } from "@/lib/hybridStorage";
 import { nextWeekMondayISO } from "@/lib/schedule";
 import { track, type CostOptimizedMeta } from "@/lib/analytics";
 import { estimateIngredientCost } from "@/lib/colesMapping";
@@ -146,7 +147,13 @@ export default function ShoppingListPage() {
       // Fall back to auto-composition from library
       console.log('🔄 No saved plan found, composing from library...');
       const overrides = loadWeeklyOverrides(nextWeekISO);
+      // Pull in any recency history recorded on other devices first, so
+      // variety enforcement below sees what's actually been cooked recently
+      await hydrateRecencyFromSupabase();
       plan = composeWeek(household, overrides || undefined);
+      // Push this week's picks to Supabase (fire-and-forget) so other
+      // devices see them too
+      syncRecencyToSupabase(nextWeekISO, plan.days.map(d => d.recipeId));
       // Fall back to general household pantry if no saved plan (already in correct format)
       weeklyPantryItems = household.pantry;
     }

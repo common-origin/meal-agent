@@ -12,6 +12,7 @@ import { type PlanWeek } from "@/lib/types/recipe";
 import { type MealCardProps } from "@/components/app/MealCard";
 import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides } from "@/lib/storage";
 import { loadCurrentWeekPlan } from "@/lib/storageAsync";
+import { hydrateRecencyFromSupabase, syncRecencyToSupabase } from "@/lib/hybridStorage";
 import { composeWeek } from "@/lib/compose";
 import { RecipeLibrary } from "@/lib/library";
 import { nextWeekMondayISO } from "@/lib/schedule";
@@ -137,7 +138,13 @@ export default function PlanReviewPage() {
       // Fall back to auto-composition from library
       console.log('🔄 Review page: No saved plan found, composing from library...');
       const overrides = loadWeeklyOverrides(nextWeekISO);
+      // Pull in any recency history recorded on other devices first, so
+      // variety enforcement below sees what's actually been cooked recently
+      await hydrateRecencyFromSupabase();
       newPlan = composeWeek(household, overrides || undefined);
+      // Push this week's picks to Supabase (fire-and-forget, doesn't block
+      // rendering the plan) so other devices see them too
+      syncRecencyToSupabase(nextWeekISO, newPlan.days.map(d => d.recipeId));
     }
     
     setPlan(newPlan);

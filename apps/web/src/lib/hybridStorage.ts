@@ -220,6 +220,52 @@ export async function loadPantryItems(): Promise<string[]> {
 }
 
 /**
+ * Recipe History (recency tracking)
+ *
+ * compose.ts's composeWeek() stays synchronous and keeps recording directly
+ * to recencyTracker.ts's localStorage cache (unchanged behavior) — these
+ * two functions bookend that call for authenticated users instead of
+ * threading an auth-aware call through composeWeek itself, which would
+ * force it (and getSuggestedSwaps, and every synchronous caller/test) async
+ * for no behavior change. Call hydrateRecencyFromSupabase before composing
+ * a week so cross-device history is available locally, and
+ * syncRecencyToSupabase after so this week's picks reach other devices.
+ */
+export async function hydrateRecencyFromSupabase(): Promise<void> {
+  const authed = await isAuthenticated();
+  if (!authed) return;
+
+  // Only fetch what pruneOldHistory would keep anyway (REPETITION_WINDOW_WEEKS)
+  // rather than the household's entire history table.
+  const { REPETITION_WINDOW_WEEKS } = await import('./constants');
+  const sinceDate = new Date();
+  sinceDate.setDate(sinceDate.getDate() - REPETITION_WINDOW_WEEKS * 7);
+  const sinceISO = sinceDate.toISOString().split('T')[0];
+
+  const entries = await SupabaseStorage.loadRecipeHistory(sinceISO);
+  const { mergeRemoteHistory } = await import('./recencyTracker');
+  mergeRemoteHistory(entries.map(e => ({
+    recipeId: e.recipeId,
+    weekOfISO: e.weekStart,
+    usedAt: e.usedAt,
+  })));
+}
+
+export async function syncRecencyToSupabase(weekOfISO: string, recipeIds: string[]): Promise<void> {
+  const authed = await isAuthenticated();
+  if (!authed) return;
+
+  const usedAt = new Date().toISOString();
+  const entries = recipeIds
+    .filter((id): id is string => Boolean(id))
+    .map(recipeId => ({ recipeId, weekStart: weekOfISO, usedAt }));
+
+  if (entries.length === 0) return;
+
+  await SupabaseStorage.saveRecipeHistoryEntries(entries);
+}
+
+/**
  * Migration Helper
  * 
  * Migrates all localStorage data to Supabase for an authenticated user

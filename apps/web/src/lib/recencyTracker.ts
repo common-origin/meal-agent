@@ -48,21 +48,39 @@ function saveRecipeHistory(history: RecipeHistory[]): void {
 export function recordWeekRecipes(weekOfISO: string, recipeIds: string[]): void {
   const history = getRecipeHistory();
   const now = new Date().toISOString();
-  
+
   // Add new entries
   const newEntries: RecipeHistory[] = recipeIds.map(recipeId => ({
     recipeId,
     weekOfISO,
     usedAt: now
   }));
-  
+
   // Combine and deduplicate (keep most recent)
   const combined = [...history, ...newEntries];
   const deduplicated = deduplicateHistory(combined);
-  
+
   // Prune old entries (beyond repetition window)
   const pruned = pruneOldHistory(deduplicated);
-  
+
+  saveRecipeHistory(pruned);
+}
+
+/**
+ * Merge history entries fetched from Supabase into the local cache (for
+ * authenticated users, so a device that didn't compose a given week still
+ * knows it happened elsewhere) — same dedupe/prune as recordWeekRecipes,
+ * just starting from remote entries instead of a single new week. See
+ * hybridStorage.ts's hydrateRecencyFromSupabase (issue #2).
+ */
+export function mergeRemoteHistory(entries: RecipeHistory[]): void {
+  if (entries.length === 0) return;
+
+  const history = getRecipeHistory();
+  const combined = [...history, ...entries];
+  const deduplicated = deduplicateHistory(combined);
+  const pruned = pruneOldHistory(deduplicated);
+
   saveRecipeHistory(pruned);
 }
 
