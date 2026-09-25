@@ -67,6 +67,17 @@ export async function getCurrentUser() {
 }
 
 /**
+ * Discards any in-flight getCurrentUser() request. Called from
+ * onAuthStateChange so a request that started before a sign-out/sign-in
+ * transition can't be shared with callers that ask again after it -- they
+ * get a fresh request reflecting the new session instead of a stale
+ * in-flight one.
+ */
+export function invalidateCurrentUserCache() {
+  inFlightUser = null;
+}
+
+/**
  * Sign out the current user
  */
 export async function signOut() {

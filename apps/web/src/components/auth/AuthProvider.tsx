@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { createClient, getCurrentUser } from "@/lib/supabase/client";
+import { createClient, getCurrentUser, invalidateCurrentUserCache } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
 interface AuthState {
@@ -24,14 +24,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const supabase = createClient();
 
-    getCurrentUser().then((user) => {
-      setUser(user);
-      setLoading(false);
-    });
+    getCurrentUser()
+      .then((user) => {
+        setUser(user);
+      })
+      .catch(() => {
+        // getCurrentUser() itself already swallows a Supabase auth error
+        // into `null` -- this only guards against something upstream
+        // (e.g. createClient() throwing on missing env vars) rejecting
+        // instead, so loading can't get stuck true forever.
+        setUser(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      // A request kicked off by getCurrentUser() before this transition
+      // could still be in flight; discard it so a caller asking again
+      // after this point gets a fresh request instead of that stale one.
+      invalidateCurrentUserCache();
       setUser(session?.user ?? null);
       setLoading(false);
     });
