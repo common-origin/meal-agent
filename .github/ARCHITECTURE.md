@@ -224,7 +224,8 @@ instead.
 
 ## CI/CD and deployment
 
-GitHub Actions (`ci.yml`) runs lint, typecheck, and build on every PR, and
+GitHub Actions (`ci.yml`) runs lint, typecheck, tests, and build on every
+PR, and
 is a required status check on `main` (no required reviews — solo-maintained
 repo). Dependabot is configured for weekly dependency and GitHub Actions
 updates; routine bumps (any Actions version bump, or a patch/minor npm
