@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   clearHouseholdScopedCaches,
   saveHousehold,
@@ -118,5 +118,22 @@ describe('clearHouseholdScopedCaches', () => {
     clearHouseholdScopedCaches();
 
     expect(localStorage.getItem('meal-agent:ingredient-frequency:v1')).not.toBeNull();
+  });
+
+  it('never throws, even if a localStorage call fails partway through', () => {
+    // This runs between supabase.auth.signOut() and the redirect to
+    // /login in Header.tsx — a rare storage-access failure (e.g. Safari
+    // blocking storage in some contexts) shouldn't leave the caller
+    // stuck without ever reaching the redirect.
+    saveHousehold({ ...getDefaultHousehold(), id: 'household-1' });
+    const removeItemSpy = vi
+      .spyOn(Storage.prototype, 'removeItem')
+      .mockImplementation(() => {
+        throw new Error('storage access blocked');
+      });
+
+    expect(() => clearHouseholdScopedCaches()).not.toThrow();
+
+    removeItemSpy.mockRestore();
   });
 });

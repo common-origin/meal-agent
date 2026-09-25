@@ -370,26 +370,38 @@ export function isRecipeBlocked(recipeId: string): boolean {
  * of who's signed in — e.g. `ingredientAnalytics.ts` (maintainer tooling,
  * see issue #48) or `apiQuota.ts`/`colesApi.ts` (device-level API rate
  * limiting) — so this can't be a blanket `Storage.clear()`.
+ *
+ * Never throws: this runs in Header.tsx between `supabase.auth.signOut()`
+ * and the redirect to `/login`, and some of what it calls (e.g.
+ * `localStorage.removeItem` in `clearPantryPreferences()`/
+ * `clearRecipeHistory()`) isn't itself wrapped in try/catch the way
+ * `Storage.remove()` is. A rare storage-access failure (e.g. Safari
+ * blocking storage in some contexts) shouldn't leave the user signed out
+ * server-side but stuck on the page with no redirect.
  */
 export function clearHouseholdScopedCaches(): void {
   if (typeof window === "undefined") return;
 
-  Storage.remove(STORAGE_KEYS.HOUSEHOLD);
-  Storage.remove(FAMILY_SETTINGS_KEY);
-  Storage.remove(CURRENT_WEEK_PLAN_KEY);
-  Storage.remove(RECIPE_RATINGS_KEY);
-  Storage.remove(BLOCKED_RECIPES_KEY);
+  try {
+    Storage.remove(STORAGE_KEYS.HOUSEHOLD);
+    Storage.remove(FAMILY_SETTINGS_KEY);
+    Storage.remove(CURRENT_WEEK_PLAN_KEY);
+    Storage.remove(RECIPE_RATINGS_KEY);
+    Storage.remove(BLOCKED_RECIPES_KEY);
 
-  // Weekly overrides are one key per week with no registry of which weeks
-  // exist, so sweep by prefix instead (same approach colesApi.ts's own
-  // cache-clearing uses for its per-SKU keys).
-  for (const key of Object.keys(localStorage)) {
-    if (key.startsWith(STORAGE_KEYS.OVERRIDES_PREFIX)) {
-      localStorage.removeItem(key);
+    // Weekly overrides are one key per week with no registry of which weeks
+    // exist, so sweep by prefix instead (same approach colesApi.ts's own
+    // cache-clearing uses for its per-SKU keys).
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith(STORAGE_KEYS.OVERRIDES_PREFIX)) {
+        localStorage.removeItem(key);
+      }
     }
-  }
 
-  clearPantryPreferences();
-  clearRecipeHistory();
-  RecipeLibrary.clearAllRecipeData();
+    clearPantryPreferences();
+    clearRecipeHistory();
+    RecipeLibrary.clearAllRecipeData();
+  } catch (error) {
+    console.warn("Failed to clear household-scoped caches on sign-out:", error);
+  }
 }
