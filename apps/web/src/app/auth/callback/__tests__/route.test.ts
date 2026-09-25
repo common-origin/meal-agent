@@ -54,9 +54,26 @@ describe('auth callback route', () => {
     expect(response.headers.get('location')).toBe('https://example.com/plan');
   });
 
-  it('redirects to /login?error=auth_failed when the code exchange fails', async () => {
+  it('forwards the real Supabase error code when the code exchange fails', async () => {
     exchangeCodeForSessionMock.mockResolvedValue({
-      error: new Error('bad code'),
+      error: { name: 'AuthApiError', message: 'Email link is invalid or has expired', code: 'otp_expired' },
+    });
+
+    const response = await GET(
+      new Request('https://example.com/auth/callback?code=abc123')
+    );
+
+    // So the login page can render specific, friendly copy for it via
+    // getAuthErrorMessageForCode instead of only ever seeing a fixed
+    // "auth_failed" that maps to nothing but the generic fallback.
+    expect(response.headers.get('location')).toBe(
+      'https://example.com/login?error=otp_expired'
+    );
+  });
+
+  it('falls back to a generic error code when the failure has none of its own', async () => {
+    exchangeCodeForSessionMock.mockResolvedValue({
+      error: new Error('bad code'), // not a real Supabase AuthError -- no .code
     });
 
     const response = await GET(
@@ -64,7 +81,7 @@ describe('auth callback route', () => {
     );
 
     expect(response.headers.get('location')).toBe(
-      'https://example.com/login?error=auth_failed'
+      'https://example.com/login?error=unexpected_failure'
     );
   });
 

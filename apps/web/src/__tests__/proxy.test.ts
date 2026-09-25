@@ -3,12 +3,24 @@ import { NextRequest } from 'next/server';
 
 const getUserMock = vi.fn();
 
+// Captures the `global.fetch` wrapper proxy.ts builds (the one carrying its
+// AbortController's signal), so the timeout test below can exercise the
+// real abort wiring instead of a getUser() mock that's disconnected from it.
+let capturedGlobalFetch: typeof fetch | undefined;
+
 vi.mock('@supabase/ssr', () => ({
-  createServerClient: () => ({
-    auth: {
-      getUser: getUserMock,
-    },
-  }),
+  createServerClient: (
+    _url: string,
+    _key: string,
+    options: { global?: { fetch?: typeof fetch } }
+  ) => {
+    capturedGlobalFetch = options.global?.fetch;
+    return {
+      auth: {
+        getUser: getUserMock,
+      },
+    };
+  },
 }));
 
 import { proxy, config } from '../proxy';
@@ -118,17 +130,40 @@ describe('proxy', () => {
   describe('auth check timeout', () => {
     afterEach(() => {
       vi.useRealTimers();
+      vi.unstubAllGlobals();
     });
 
-    it('treats a getUser() call that never resolves as unauthenticated once the timeout elapses', async () => {
+    it('aborts the underlying fetch (not just the wait) and treats it as unauthenticated once the timeout elapses', async () => {
       vi.useFakeTimers();
-      getUserMock.mockImplementation(() => new Promise(() => {})); // never settles
+
+      // A realistic fetch stand-in: it never settles on its own, but
+      // rejects (like a real aborted fetch does) once its signal fires.
+      const fetchSpy = vi.fn(
+        (_input: RequestInfo | URL, init?: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init?.signal?.addEventListener('abort', () => {
+              reject(new DOMException('The operation was aborted.', 'AbortError'));
+            });
+          })
+      );
+      vi.stubGlobal('fetch', fetchSpy);
+
+      // getUser() itself is still mocked (this file doesn't exercise real
+      // supabase-js), but it now routes through the captured global.fetch
+      // wrapper -- the same one the real GoTrueClient.getUser() would use
+      // -- so aborting it actually unblocks this call, the way it does in
+      // production, rather than the test relying on a separate timer race.
+      getUserMock.mockImplementation(async () => {
+        await capturedGlobalFetch!('https://example.supabase.co/auth/v1/user');
+        throw new Error('unreachable: fetch should have rejected on abort');
+      });
 
       const responsePromise = proxy(makeRequest('/plan'));
       await vi.advanceTimersByTimeAsync(3000);
       const response = await responsePromise;
 
       expect(locationOf(response)?.pathname).toBe('/login');
+      expect(fetchSpy).toHaveBeenCalled();
     });
   });
 });
