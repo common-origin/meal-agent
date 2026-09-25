@@ -11,7 +11,7 @@ import ButtonGroup from "@/components/app/ButtonGroup";
 import { type PlanWeek } from "@/lib/types/recipe";
 import { type MealCardProps } from "@/components/app/MealCard";
 import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides } from "@/lib/storage";
-import { loadCurrentWeekPlan } from "@/lib/storageAsync";
+import { loadCurrentWeekPlan } from "@/lib/hybridStorage";
 import { composeWeek } from "@/lib/compose";
 import { RecipeLibrary } from "@/lib/library";
 import { nextWeekMondayISO } from "@/lib/schedule";

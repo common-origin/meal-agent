@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { Alert, Box, Button, Checkbox, Chip, Container, Divider, Dropdown, NumberInput, Slider, Stack, TextField, Typography } from "@common-origin/design-system";
-import Main from "@/components/app/Main";import { 
-  getFamilySettings, 
-  saveFamilySettings, 
-  resetFamilySettings 
-} from "@/lib/storageAsync";
+import Main from "@/components/app/Main";import {
+  getFamilySettings,
+  saveFamilySettings,
+  resetFamilySettings
+} from "@/lib/hybridStorage";
 import type { FamilySettings } from "@/lib/types/settings";
 import { validateFamilySettings, DEFAULT_FAMILY_SETTINGS, DIETARY_TYPE_OPTIONS, MAX_RECIPE_RECIPIENTS } from "@/lib/types/settings";
 import { track } from "@/lib/analytics";
