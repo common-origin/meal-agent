@@ -8,7 +8,7 @@ import ColesShoppingModal from "@/components/app/ColesShoppingModal";
 import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from "@/lib/shoppingListAggregator";
 import { generateShoppingListCSV, downloadCSV } from "@/lib/csv";
 import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides } from "@/lib/storage";
-import { loadCurrentWeekPlan } from "@/lib/storageAsync";
+import { loadCurrentWeekPlan } from "@/lib/hybridStorage";
 import { composeWeek } from "@/lib/compose";
 import { nextWeekMondayISO } from "@/lib/schedule";
 import { track, type CostOptimizedMeta } from "@/lib/analytics";
