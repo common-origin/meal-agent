@@ -7,12 +7,14 @@ import ButtonGroup from "@/components/app/ButtonGroup";
 import { tokens } from "@common-origin/design-system/tokens";
 import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
+import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
 import type { Recipe, Ingredient } from "@/lib/types/recipe";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function AddRecipePage() {
   const router = useRouter();
+  const { beginGeneration, endGeneration, isSignOutInProgress } = useGenerationActivity();
   const [mode, setMode] = useState<'choice' | 'image' | 'url' | 'manual'>('choice');
   const [imagePreview, setImagePreview] = useState<string>('');
   const [extracting, setExtracting] = useState(false);
@@ -149,6 +151,11 @@ export default function AddRecipePage() {
   };
 
   const handleSaveRecipe = async () => {
+    if (isSignOutInProgress) {
+      alert('Please wait for sign-out to finish before saving a recipe');
+      return;
+    }
+
     if (!title || ingredients.length === 0) {
       alert('Please provide at least a title and ingredients');
       return;
@@ -160,6 +167,7 @@ export default function AddRecipePage() {
     }
 
     setSaving(true);
+    beginGeneration();
 
     try {
       // Estimate cost per serve based on number of ingredients (rough heuristic)
@@ -195,6 +203,8 @@ export default function AddRecipePage() {
       console.error('Failed to save recipe:', err);
       alert('Failed to save recipe');
       setSaving(false);
+    } finally {
+      endGeneration();
     }
   };
 

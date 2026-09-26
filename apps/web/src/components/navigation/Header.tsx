@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Stack, Typography, Button, Box } from "@common-origin/design-system";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
 import { clearHouseholdScopedCaches } from "@/lib/storage";
 
 const NAV_ITEMS = [
@@ -19,21 +20,38 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
+  const { isGenerationInProgress, beginSignOut, endSignOut } = useGenerationActivity();
   const [signingOut, setSigningOut] = useState(false);
 
   const handleSignOut = async () => {
     setSigningOut(true);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signOut();
+    // Marked before the signOut() await starts (not just via the disabled
+    // button below), so a generation/save that's clicked during that await
+    // gets refused instead of racing clearHouseholdScopedCaches() below.
+    beginSignOut();
 
-    if (error) {
-      console.error('Failed to sign out:', error);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error('Failed to sign out:', error);
+        return;
+      }
+
+      clearHouseholdScopedCaches();
+      router.push('/login');
+    } catch (err) {
+      // supabase.auth.signOut() can reject outright (e.g. a network
+      // exception), not just resolve with { error } -- without this catch,
+      // beginSignOut() above would never be undone, permanently disabling
+      // sign-out and every generation/save entry point for the rest of
+      // the browser session.
+      console.error('Failed to sign out:', err);
+    } finally {
       setSigningOut(false);
-      return;
+      endSignOut();
     }
-
-    clearHouseholdScopedCaches();
-    router.push('/login');
   };
 
   // Don't show header on landing, login, or signup pages
@@ -78,9 +96,13 @@ export default function Header() {
               variant="naked"
               size="medium"
               onClick={handleSignOut}
-              disabled={signingOut}
+              disabled={signingOut || isGenerationInProgress}
             >
-              {signingOut ? 'Signing out...' : 'Sign out'}
+              {signingOut
+                ? 'Signing out...'
+                : isGenerationInProgress
+                  ? 'Please wait…'
+                  : 'Sign out'}
             </Button>
           )}
         </Stack>

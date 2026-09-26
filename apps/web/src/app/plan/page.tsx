@@ -21,10 +21,12 @@ import { track } from "@/lib/analytics";
 import { addToRecipeHistory, getRecipeIdsToExclude } from "@/lib/recipeHistory";
 import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
 import { trackIngredientUsage } from "@/lib/ingredientAnalytics";
+import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export default function PlanPage() {
+  const { beginGeneration, endGeneration, isSignOutInProgress } = useGenerationActivity();
   const [showWizard, setShowWizard] = useState(false);
   const [showOverridesSheet, setShowOverridesSheet] = useState(false);
   const [showPantrySheet, setShowPantrySheet] = useState(false);
@@ -187,8 +189,13 @@ export default function PlanPage() {
 
   const handleGenerateAISwaps = async () => {
     if (swapDayIndex === null) return;
-    
+    if (isSignOutInProgress) {
+      console.warn('Sign-out in progress, refusing to start AI swap generation');
+      return;
+    }
+
     setIsGeneratingAISwaps(true);
+    beginGeneration();
 
     try {
       const dayName = DAYS[swapDayIndex];
@@ -257,6 +264,7 @@ export default function PlanPage() {
       setGenerationError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setIsGeneratingAISwaps(false);
+      endGeneration();
     }
   };
 
@@ -389,8 +397,12 @@ export default function PlanPage() {
   };
 
   const handleWizardComplete = async (wizardData: WeeklyPlanData) => {
+    if (isSignOutInProgress) {
+      console.warn('Sign-out in progress, refusing to start plan generation');
+      return;
+    }
     console.log('🧙 Wizard completed with data:', wizardData);
-    
+
     // Set pantry items from wizard
     setPantryItems(wizardData.pantryItems);
     
@@ -402,6 +414,7 @@ export default function PlanPage() {
     
     // Generate plan using wizard data
     setIsGenerating(true);
+    beginGeneration();
     setGenerationError(null);
     setAriaLiveMessage("Generating weekly meal plan...");
 
@@ -532,6 +545,7 @@ export default function PlanPage() {
       setShowWizard(true); // Show wizard again on error
     } finally {
       setIsGenerating(false);
+      endGeneration();
     }
   };
 
@@ -588,10 +602,16 @@ export default function PlanPage() {
   };
 
   const handleGenerateWithAI = async () => {
+    if (isSignOutInProgress) {
+      console.warn('Sign-out in progress, refusing to start plan generation');
+      return;
+    }
+
     // Clear previous plan to show loading skeletons
     setWeekPlan([null, null, null, null, null, null, null]);
-    
+
     setIsGenerating(true);
+    beginGeneration();
     setGenerationError(null);
     setAriaLiveMessage("Generating weekly meal plan...");
 
@@ -709,11 +729,17 @@ export default function PlanPage() {
       setAriaLiveMessage(`Error generating plan: ${errorMessage}`);
     } finally {
       setIsGenerating(false);
+      endGeneration();
     }
   };
 
   const handleGenerateSingleRecipe = async (dayIndex: number) => {
+    if (isSignOutInProgress) {
+      console.warn('Sign-out in progress, refusing to start recipe generation');
+      return;
+    }
     setGeneratingDayIndex(dayIndex);
+    beginGeneration();
     setGenerationError(null);
 
     try {
@@ -836,6 +862,7 @@ export default function PlanPage() {
       setAriaLiveMessage(`Error generating recipe for ${DAYS[dayIndex]}: ${errorMessage}`);
     } finally {
       setGeneratingDayIndex(null);
+      endGeneration();
     }
   };
 
