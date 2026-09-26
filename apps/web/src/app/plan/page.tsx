@@ -21,10 +21,12 @@ import { track } from "@/lib/analytics";
 import { addToRecipeHistory, getRecipeIdsToExclude } from "@/lib/recipeHistory";
 import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
 import { trackIngredientUsage } from "@/lib/ingredientAnalytics";
+import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export default function PlanPage() {
+  const { beginGeneration, endGeneration } = useGenerationActivity();
   const [showWizard, setShowWizard] = useState(false);
   const [showOverridesSheet, setShowOverridesSheet] = useState(false);
   const [showPantrySheet, setShowPantrySheet] = useState(false);
@@ -189,6 +191,7 @@ export default function PlanPage() {
     if (swapDayIndex === null) return;
     
     setIsGeneratingAISwaps(true);
+    beginGeneration();
 
     try {
       const dayName = DAYS[swapDayIndex];
@@ -257,6 +260,7 @@ export default function PlanPage() {
       setGenerationError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setIsGeneratingAISwaps(false);
+      endGeneration();
     }
   };
 
@@ -402,6 +406,7 @@ export default function PlanPage() {
     
     // Generate plan using wizard data
     setIsGenerating(true);
+    beginGeneration();
     setGenerationError(null);
     setAriaLiveMessage("Generating weekly meal plan...");
 
@@ -532,6 +537,7 @@ export default function PlanPage() {
       setShowWizard(true); // Show wizard again on error
     } finally {
       setIsGenerating(false);
+      endGeneration();
     }
   };
 
@@ -590,8 +596,9 @@ export default function PlanPage() {
   const handleGenerateWithAI = async () => {
     // Clear previous plan to show loading skeletons
     setWeekPlan([null, null, null, null, null, null, null]);
-    
+
     setIsGenerating(true);
+    beginGeneration();
     setGenerationError(null);
     setAriaLiveMessage("Generating weekly meal plan...");
 
@@ -709,11 +716,13 @@ export default function PlanPage() {
       setAriaLiveMessage(`Error generating plan: ${errorMessage}`);
     } finally {
       setIsGenerating(false);
+      endGeneration();
     }
   };
 
   const handleGenerateSingleRecipe = async (dayIndex: number) => {
     setGeneratingDayIndex(dayIndex);
+    beginGeneration();
     setGenerationError(null);
 
     try {
@@ -836,6 +845,7 @@ export default function PlanPage() {
       setAriaLiveMessage(`Error generating recipe for ${DAYS[dayIndex]}: ${errorMessage}`);
     } finally {
       setGeneratingDayIndex(null);
+      endGeneration();
     }
   };
 

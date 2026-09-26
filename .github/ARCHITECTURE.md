@@ -268,6 +268,13 @@ signal now, but it was never actually gating what reached production.
 - **Editing an existing plan is more effort than it should be** — swapping
   out one night's meal isn't as seamless as the rest of the product aims
   for. Flagged in issue #38 as needing real UX research, not a quick fix.
+- **Sign-out's cache clearing doesn't cover an operation already in
+  flight.** `clearHouseholdScopedCaches()` (issue #49) is a one-shot
+  cleanup; the "Sign out" button is now disabled while AI recipe
+  generation is running (via `GenerationActivityProvider`) to narrow the
+  window, but this is a deliberate stopgap, not a fix for the general
+  case — a proper fix needs a cancellation/session-generation guard across
+  every async local-write path. Issue #73.
 
 ## Key design decisions
 

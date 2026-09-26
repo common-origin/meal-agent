@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Stack, Typography, Button, Box } from "@common-origin/design-system";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
 import { clearHouseholdScopedCaches } from "@/lib/storage";
 
 const NAV_ITEMS = [
@@ -19,6 +20,7 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
+  const { isGenerationInProgress } = useGenerationActivity();
   const [signingOut, setSigningOut] = useState(false);
 
   const handleSignOut = async () => {
@@ -78,9 +80,13 @@ export default function Header() {
               variant="naked"
               size="medium"
               onClick={handleSignOut}
-              disabled={signingOut}
+              disabled={signingOut || isGenerationInProgress}
             >
-              {signingOut ? 'Signing out...' : 'Sign out'}
+              {signingOut
+                ? 'Signing out...'
+                : isGenerationInProgress
+                  ? 'Generating…'
+                  : 'Sign out'}
             </Button>
           )}
         </Stack>
