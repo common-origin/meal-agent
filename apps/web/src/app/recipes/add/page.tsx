@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 
 export default function AddRecipePage() {
   const router = useRouter();
-  const { beginGeneration, endGeneration } = useGenerationActivity();
+  const { beginGeneration, endGeneration, isSignOutInProgress } = useGenerationActivity();
   const [mode, setMode] = useState<'choice' | 'image' | 'url' | 'manual'>('choice');
   const [imagePreview, setImagePreview] = useState<string>('');
   const [extracting, setExtracting] = useState(false);
@@ -151,6 +151,11 @@ export default function AddRecipePage() {
   };
 
   const handleSaveRecipe = async () => {
+    if (isSignOutInProgress) {
+      alert('Please wait for sign-out to finish before saving a recipe');
+      return;
+    }
+
     if (!title || ingredients.length === 0) {
       alert('Please provide at least a title and ingredients');
       return;

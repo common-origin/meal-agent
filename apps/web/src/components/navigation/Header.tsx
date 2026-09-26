@@ -20,21 +20,27 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
-  const { isGenerationInProgress } = useGenerationActivity();
+  const { isGenerationInProgress, beginSignOut, endSignOut } = useGenerationActivity();
   const [signingOut, setSigningOut] = useState(false);
 
   const handleSignOut = async () => {
     setSigningOut(true);
+    // Marked before the signOut() await starts (not just via the disabled
+    // button below), so a generation/save that's clicked during that await
+    // gets refused instead of racing clearHouseholdScopedCaches() below.
+    beginSignOut();
     const supabase = createClient();
     const { error } = await supabase.auth.signOut();
 
     if (error) {
       console.error('Failed to sign out:', error);
       setSigningOut(false);
+      endSignOut();
       return;
     }
 
     clearHouseholdScopedCaches();
+    endSignOut();
     router.push('/login');
   };
 

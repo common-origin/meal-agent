@@ -26,7 +26,7 @@ import { useGenerationActivity } from "@/components/generation/GenerationActivit
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export default function PlanPage() {
-  const { beginGeneration, endGeneration } = useGenerationActivity();
+  const { beginGeneration, endGeneration, isSignOutInProgress } = useGenerationActivity();
   const [showWizard, setShowWizard] = useState(false);
   const [showOverridesSheet, setShowOverridesSheet] = useState(false);
   const [showPantrySheet, setShowPantrySheet] = useState(false);
@@ -189,7 +189,11 @@ export default function PlanPage() {
 
   const handleGenerateAISwaps = async () => {
     if (swapDayIndex === null) return;
-    
+    if (isSignOutInProgress) {
+      console.warn('Sign-out in progress, refusing to start AI swap generation');
+      return;
+    }
+
     setIsGeneratingAISwaps(true);
     beginGeneration();
 
@@ -393,8 +397,12 @@ export default function PlanPage() {
   };
 
   const handleWizardComplete = async (wizardData: WeeklyPlanData) => {
+    if (isSignOutInProgress) {
+      console.warn('Sign-out in progress, refusing to start plan generation');
+      return;
+    }
     console.log('🧙 Wizard completed with data:', wizardData);
-    
+
     // Set pantry items from wizard
     setPantryItems(wizardData.pantryItems);
     
@@ -594,6 +602,11 @@ export default function PlanPage() {
   };
 
   const handleGenerateWithAI = async () => {
+    if (isSignOutInProgress) {
+      console.warn('Sign-out in progress, refusing to start plan generation');
+      return;
+    }
+
     // Clear previous plan to show loading skeletons
     setWeekPlan([null, null, null, null, null, null, null]);
 
@@ -721,6 +734,10 @@ export default function PlanPage() {
   };
 
   const handleGenerateSingleRecipe = async (dayIndex: number) => {
+    if (isSignOutInProgress) {
+      console.warn('Sign-out in progress, refusing to start recipe generation');
+      return;
+    }
     setGeneratingDayIndex(dayIndex);
     beginGeneration();
     setGenerationError(null);
