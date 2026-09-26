@@ -29,19 +29,29 @@ export default function Header() {
     // button below), so a generation/save that's clicked during that await
     // gets refused instead of racing clearHouseholdScopedCaches() below.
     beginSignOut();
-    const supabase = createClient();
-    const { error } = await supabase.auth.signOut();
 
-    if (error) {
-      console.error('Failed to sign out:', error);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error('Failed to sign out:', error);
+        return;
+      }
+
+      clearHouseholdScopedCaches();
+      router.push('/login');
+    } catch (err) {
+      // supabase.auth.signOut() can reject outright (e.g. a network
+      // exception), not just resolve with { error } -- without this catch,
+      // beginSignOut() above would never be undone, permanently disabling
+      // sign-out and every generation/save entry point for the rest of
+      // the browser session.
+      console.error('Failed to sign out:', err);
+    } finally {
       setSigningOut(false);
       endSignOut();
-      return;
     }
-
-    clearHouseholdScopedCaches();
-    endSignOut();
-    router.push('/login');
   };
 
   // Don't show header on landing, login, or signup pages
