@@ -85,7 +85,7 @@ export default function Header() {
               {signingOut
                 ? 'Signing out...'
                 : isGenerationInProgress
-                  ? 'Generating…'
+                  ? 'Please wait…'
                   : 'Sign out'}
             </Button>
           )}

@@ -12,16 +12,20 @@ interface GenerationActivityContextValue {
 const GenerationActivityContext = createContext<GenerationActivityContextValue | undefined>(undefined);
 
 /**
- * Tracks whether an AI recipe generation request is in flight anywhere in
- * the app, so Header.tsx can disable "Sign out" while one is running.
+ * Tracks whether an async recipe write (AI generation or a custom recipe
+ * save) is in flight anywhere in the app, so Header.tsx can disable
+ * "Sign out" while one is running.
  *
  * A stopgap for issue #73: clearHouseholdScopedCaches() is a one-shot
- * cleanup on sign-out, and a generation request that's already in flight
- * (e.g. RecipeLibrary.addTempAIRecipes() mid-await) can still write the
- * previous household's data back into the cache after that cleanup runs.
- * Disabling sign-out during generation narrows the window without solving
- * the general case (a proper fix needs a cancellation/session-generation
- * guard across every async local-write path, tracked separately).
+ * cleanup on sign-out, and a write that's already in flight (e.g.
+ * RecipeLibrary.addTempAIRecipes()/addCustomRecipes() mid-await) can still
+ * write the previous household's data back into the cache after that
+ * cleanup runs. Disabling sign-out during the write narrows the window
+ * without solving the general case (a proper fix needs a
+ * cancellation/session-generation guard across every async local-write
+ * path, tracked separately) — and only covers call sites that have been
+ * wired in explicitly (plan/page.tsx's generation flows,
+ * recipes/add/page.tsx's save), not every current or future one.
  *
  * See ./activityCounter.ts for the counter logic itself (kept separate so
  * it's unit-testable without rendering).
