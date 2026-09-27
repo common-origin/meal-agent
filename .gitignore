@@ -13,3 +13,5 @@ build
 *.log
 *.tsbuildinfo
 .vscode/settings.json
+# Supabase CLI local cache
+supabase/.temp/
