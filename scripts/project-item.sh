@@ -16,7 +16,10 @@
 # are renamed or re-created in the project UI. Cycle (an iteration field) is
 # set during weekly planning, not by this script.
 #
-# Needs a gh token with the `project` scope: `gh auth refresh -s project`.
+# All Field=Value pairs are validated before anything is written, so a typo
+# never partially updates the board.
+#
+# Needs `jq`, and a gh token with the `project` scope (`gh auth refresh -s project`).
 set -euo pipefail
 
 OWNER="common-origin"
@@ -24,7 +27,8 @@ REPO="meal-agent"
 PROJECT_NUMBER=2
 
 usage() {
-  sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'
+  # Print the header comment block (everything after the shebang up to the first non-comment line).
+  awk 'NR > 1 && /^#/ { sub(/^# ?/, ""); print; next } NR > 1 { exit }' "$0"
   exit 1
 }
 
@@ -32,13 +36,13 @@ usage() {
 issue="$1"
 shift
 [[ "$issue" =~ ^[0-9]+$ ]] || { echo "error: issue number must be numeric, got '$issue'" >&2; exit 1; }
+command -v jq >/dev/null || { echo "error: jq is required (e.g. brew install jq)" >&2; exit 1; }
 
 project_id=$(gh project view "$PROJECT_NUMBER" --owner "$OWNER" --format json --jq '.id')
 fields_json=$(gh project field-list "$PROJECT_NUMBER" --owner "$OWNER" --format json)
 
-item_id=$(gh project item-add "$PROJECT_NUMBER" --owner "$OWNER" \
-  --url "https://github.com/$OWNER/$REPO/issues/$issue" --format json --jq '.id')
-
+# Resolve every Field=Value pair up front; exit before any write if one is invalid.
+names=() field_ids=() option_ids=()
 for pair in "$@"; do
   [[ "$pair" == *=* ]] || { echo "error: expected Field=Value, got '$pair'" >&2; exit 1; }
   field="${pair%%=*}"
@@ -59,7 +63,16 @@ for pair in "$@"; do
     exit 1
   fi
 
+  names+=("$field → $value")
+  field_ids+=("$field_id")
+  option_ids+=("$option_id")
+done
+
+item_id=$(gh project item-add "$PROJECT_NUMBER" --owner "$OWNER" \
+  --url "https://github.com/$OWNER/$REPO/issues/$issue" --format json --jq '.id')
+
+for i in "${!field_ids[@]}"; do
   gh project item-edit --id "$item_id" --project-id "$project_id" \
-    --field-id "$field_id" --single-select-option-id "$option_id" >/dev/null
-  echo "#$issue: $field → $value"
+    --field-id "${field_ids[$i]}" --single-select-option-id "${option_ids[$i]}" >/dev/null
+  echo "#$issue: ${names[$i]}"
 done
