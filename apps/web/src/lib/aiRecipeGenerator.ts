@@ -289,26 +289,3 @@ function generateRecipeId(name: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')}`;
 }
-
-/**
- * Test function to verify Gemini API is working
- */
-export async function testGeminiConnection(): Promise<{ success: boolean; message: string }> {
-  try {
-    const genAI = getGeminiClient();
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
-    
-    const result = await model.generateContent('Say "API is working" if you can read this.');
-    const text = result.response.text();
-    
-    return {
-      success: true,
-      message: `Gemini API connected successfully. Response: ${text}`,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : 'Unknown error',
-    };
-  }
-}
