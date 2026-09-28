@@ -85,14 +85,12 @@ Not every route is an AI call — grouped by what they actually do:
 | `extract-recipe-from-url` | `gemini-2.5-flash` | Parse a recipe from an arbitrary URL |
 | `extract-recipe-from-image` | `gemini-1.5-pro` | Extract a recipe from a photo |
 | `scan-pantry-image` | `gemini-2.5-flash` | Detect ingredients from a pantry/fridge photo |
-| `gemini-list-models`, `list-models`, `test-gemini`, `test-gemini-rest` | — | Diagnostics, not used in the main app flow |
 
 Model choice is per-route, not a single constant — check the route file
 directly for what's actually configured, not this table, since it's the
 kind of fact that's already drifted in this doc's history (see `CLAUDE.md`
 Known Drift). `aiRecipeGenerator.ts`'s `generateRecipes()` has no fallback
-model; a separate `testGeminiConnection()` helper in the same file uses a
-different model for its own diagnostic purposes only.
+model.
 
 **Pricing/shopping**: `coles-search` (product lookup), `ingredient-analytics`
 (client-side analytics metadata)

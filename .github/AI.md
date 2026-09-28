@@ -61,14 +61,16 @@ expired.
 server terminal for the actual error (both sides log meaningfully around
 this call); check API key validity at Google AI Studio.
 
-**Diagnosing step by step**:
-1. Visit `/api/test-gemini` directly — confirms the key is configured and
-   the API is reachable, independent of the full recipe-generation flow
-2. Check the browser console and the `pnpm dev` terminal for errors when
-   generating from `/plan`
-3. Check the Network tab for the actual request/response to
-   `/api/generate-recipes` — status code and body tell you more than
-   guessing
+**Diagnosing step by step** (there's deliberately no health-check
+endpoint — a public route that spends quota is the wrong tool):
+1. Check `GEMINI_API_KEY` is in `apps/web/.env.local` (not the repo root)
+   and restart `pnpm dev`
+2. Reproduce the failing flow and read the server output (the `pnpm dev`
+   terminal locally, Vercel logs in production). The SDK error names the
+   cause: 400 bad request, 403 key or permission, 404 model not found,
+   429 quota
+3. Check the key and its quota in
+   [Google AI Studio](https://aistudio.google.com/app/apikey)
 
 ## Cost
 
