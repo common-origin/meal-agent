@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Alert, Badge, Stack, Typography, Button } from "@common-origin/design-system";
+import { Alert, Badge, Stack, Typography, Button, TabBar } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import WeekPlannerGrid from "@/components/app/WeekPlannerGrid";
@@ -12,7 +12,15 @@ import WeeklyPlanWizard, { type WeeklyPlanData } from "@/components/app/WeeklyPl
 import PantrySheet from "@/components/app/PantrySheet";
 import { type MealCardProps } from "@/components/app/MealCard";
 import { type Recipe } from "@/lib/types/recipe";
-import { scheduleSundayToast, isSaturdayAfter4, nextWeekMondayISO } from "@/lib/schedule";
+import {
+  scheduleSundayToast,
+  isSaturdayAfter4,
+  getPlanWeek,
+  setPlanWeek,
+  planWeekMondayISO,
+  formatWeekRange,
+  type PlanWeek,
+} from "@/lib/schedule";
 import { loadHousehold, getDefaultHousehold } from "@/lib/storage";
 import { getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan } from "@/lib/hybridStorage";
 import { getSuggestedSwaps } from "@/lib/compose";
@@ -22,6 +30,11 @@ import { addToRecipeHistory, getRecipeIdsToExclude } from "@/lib/recipeHistory";
 import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
 import { trackIngredientUsage } from "@/lib/ingredientAnalytics";
 import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
+
+const PLAN_WEEK_TABS = [
+  { id: "this", label: "This week" },
+  { id: "next", label: "Next week" },
+];
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -42,6 +55,13 @@ export default function PlanPage() {
   const [generatingDayIndex, setGeneratingDayIndex] = useState<number | null>(null);
   const [ariaLiveMessage, setAriaLiveMessage] = useState<string>("");
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
+  // null until read from storage on mount, so the server render and first
+  // client render agree; the load effect below waits for it.
+  const [planWeek, setPlanWeekState] = useState<PlanWeek | null>(null);
+  // Handlers save to the week shown in the render they were created in, not
+  // whatever storage says after an await, so a tab switch mid-save can't move
+  // one week's plan into the other.
+  const planWeekISO = planWeekMondayISO(planWeek ?? "next");
 
   
   // Pantry items state
@@ -52,18 +72,23 @@ export default function PlanPage() {
   useEffect(() => {
     track('page_view', { page: '/plan' });
     scheduleSundayToast();
-    
+    setPlanWeekState(getPlanWeek());
+  }, []);
+
+  useEffect(() => {
+    if (!planWeek) return;
+
     (async () => {
       setIsLoadingInitial(true);
       
       // Load data in parallel for faster initial render
       const { loadAllRecipes } = await import('@/lib/hybridStorage');
-      const nextWeekISO = nextWeekMondayISO();
+      const weekISO = planWeekMondayISO(planWeek);
       
       const [supabaseRecipes, familySettings, savedPlan] = await Promise.all([
         loadAllRecipes(),
         getFamilySettings(),
-        loadCurrentWeekPlan(nextWeekISO),
+        loadCurrentWeekPlan(weekISO),
       ]);
       
       console.log(`📚 Loaded ${supabaseRecipes.length} recipes from Supabase`);
@@ -150,22 +175,37 @@ export default function PlanPage() {
       } else {
         // No saved plan - show wizard instead of auto-generating
         console.log('🧙 Plan page: No saved plan, showing wizard');
+        setWeekPlan([]);
+        setBudget({ current: 0, total: 120 });
         setShowWizard(true);
       }
       
       // Loading complete
       setIsLoadingInitial(false);
     })();
-  }, []);
+  }, [planWeek]);
+
+  const handlePlanWeekChange = (tabId: string) => {
+    const week: PlanWeek = tabId === "this" ? "this" : "next";
+    if (week === planWeek) return;
+    // Close anything bound to the current week's plan before it's replaced.
+    setSwapDayIndex(null);
+    setShowPantrySheet(false);
+    setShowOverridesSheet(false);
+    setGenerationError(null);
+    setPlanWeek(week);
+    setPlanWeekState(week);
+    track('plan_week_changed', { week });
+  };
 
   // Handler for updating pantry items
   const handleUpdatePantryItems = async (items: string[]) => {
     setPantryItems(items);
     
     // Save updated pantry items to storage
-    const nextWeekISO = nextWeekMondayISO();
+    const weekISO = planWeekISO;
     const recipeIds = weekPlan.map(m => m?.recipeId || "");
-    await saveCurrentWeekPlan(recipeIds, nextWeekISO, items);
+    await saveCurrentWeekPlan(recipeIds, weekISO, items);
     console.log('✅ Pantry items updated and saved');
   };
 
@@ -321,9 +361,9 @@ export default function PlanPage() {
     setBudget(prev => ({ current: prev.current + budgetDiff, total: weeklyBudget }));
     
     // Save updated week plan
-    const nextWeekISO = nextWeekMondayISO();
+    const weekISO = planWeekISO;
     const recipeIds = newWeekPlan.map(meal => meal?.recipeId || "");
-    await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
+    await saveCurrentWeekPlan(recipeIds, weekISO, pantryItems);
     console.log('✅ Week plan updated after swap');
     
     // Close drawer
@@ -360,9 +400,9 @@ export default function PlanPage() {
     setBudget(prev => ({ current: prev.current - costToRemove, total: weeklyBudget }));
     
     // Save updated week plan
-    const nextWeekISO = nextWeekMondayISO();
+    const weekISO = planWeekISO;
     const recipeIds = newWeekPlan.map(m => m?.recipeId || "");
-    await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
+    await saveCurrentWeekPlan(recipeIds, weekISO, pantryItems);
     console.log('✅ Week plan updated after deletion');
     
     track('swap', {
@@ -383,9 +423,9 @@ export default function PlanPage() {
     setWeekPlan(newWeekPlan);
     
     // Save updated week plan
-    const nextWeekISO = nextWeekMondayISO();
+    const weekISO = planWeekISO;
     const recipeIds = newWeekPlan.map(m => m?.recipeId || "");
-    await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
+    await saveCurrentWeekPlan(recipeIds, weekISO, pantryItems);
     console.log('✅ Week plan reordered and saved');
     
     // Track analytics
@@ -510,9 +550,9 @@ export default function PlanPage() {
       setWeekPlan(aiMeals);
       
       // Save week plan
-      const nextWeekISO = nextWeekMondayISO();
+      const weekISO = planWeekISO;
       const recipeIds = data.recipes.map((r: Recipe) => r.id);
-      await saveCurrentWeekPlan(recipeIds, nextWeekISO, wizardData.pantryItems);
+      await saveCurrentWeekPlan(recipeIds, weekISO, wizardData.pantryItems);
       
       // Track ingredient usage for analytics
       trackIngredientUsage(recipeIds);
@@ -693,9 +733,9 @@ export default function PlanPage() {
       setWeekPlan(aiMeals);
       
       // Save week plan to storage for shopping list
-      const nextWeekISO = nextWeekMondayISO();
+      const weekISO = planWeekISO;
       const recipeIds = data.recipes.map((r: Recipe) => r.id);
-      const planSaved = await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
+      const planSaved = await saveCurrentWeekPlan(recipeIds, weekISO, pantryItems);
       if (planSaved) {
         console.log('✅ Week plan saved for shopping list');
         // Track ingredient usage for analytics
@@ -843,9 +883,9 @@ export default function PlanPage() {
       setBudget(prev => ({ current: prev.current + newCost, total: weeklyBudget }));
 
       // Save updated week plan
-      const nextWeekISO = nextWeekMondayISO();
+      const weekISO = planWeekISO;
       const recipeIds = newWeekPlan.map(meal => meal?.recipeId || "");
-      await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
+      await saveCurrentWeekPlan(recipeIds, weekISO, pantryItems);
       console.log('✅ Week plan updated');
       setAriaLiveMessage(`Recipe generated for ${dayName}: ${recipe.title}`);
 
@@ -883,6 +923,19 @@ export default function PlanPage() {
       >
         {ariaLiveMessage}
       </div>
+
+      {planWeek && (
+        <Stack direction="row" gap="md" alignItems="center">
+          <TabBar
+            tabs={PLAN_WEEK_TABS.map(tab => ({ ...tab, disabled: isGenerating || isLoadingInitial || generatingDayIndex !== null || isGeneratingAISwaps }))}
+            activeTab={planWeek}
+            onTabChange={handlePlanWeekChange}
+            variant="pills"
+            aria-label="Week to plan"
+          />
+          <Typography color="subdued">{formatWeekRange(planWeekISO)}</Typography>
+        </Stack>
+      )}
 
       {showWizard ? (
         <WeeklyPlanWizard
@@ -968,6 +1021,7 @@ export default function PlanPage() {
           onDeleteClick={handleDeleteMeal}
           isGeneratingPlan={isGenerating || isLoadingInitial}
           onReorder={handleReorder}
+          weekStartISO={planWeek ? planWeekISO : undefined}
         />
         
         {/* Actions */}
