@@ -60,6 +60,24 @@ describe('plan week selection', () => {
     expect(getPlanWeek()).toBe('next');
   });
 
+  it('keeps "this week" for the rest of the week it was chosen in', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-30T09:00:00')); // Wed
+    setPlanWeek('this');
+    vi.setSystemTime(new Date('2026-10-04T20:00:00')); // Sun, same week
+    expect(getPlanWeek()).toBe('this');
+    vi.useRealTimers();
+  });
+
+  it('reverts "this week" to next week once that week is over', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-30T09:00:00')); // Wed
+    setPlanWeek('this');
+    vi.setSystemTime(new Date('2026-10-05T09:00:00')); // following Mon
+    expect(getPlanWeek()).toBe('next');
+    vi.useRealTimers();
+  });
+
   it('resolves the choice to a Monday', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-10-04T09:00:00'));

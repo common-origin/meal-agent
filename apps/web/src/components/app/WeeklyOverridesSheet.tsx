@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Stack, Typography, IconButton, Sheet } from "@common-origin/design-system";
 import { saveWeeklyOverrides } from "@/lib/storage";
-import { selectedWeekMondayISO } from "@/lib/schedule";
+import { nextWeekMondayISO } from "@/lib/schedule";
 import { track } from "@/lib/analytics";
 import type { WeeklyOverrides, PantryItem } from "@/lib/types/recipe";
 
@@ -35,7 +35,9 @@ export default function WeeklyOverridesSheet({
     e.preventDefault();
     
     const overrides: WeeklyOverrides = {
-      weekOfISO: selectedWeekMondayISO(),
+      // Always next week, whatever week is selected on the Plan page: this
+      // sheet is opened from the "Update next week inputs" banner.
+      weekOfISO: nextWeekMondayISO(),
       dinners,
       servingsPerMeal,
       kidFriendlyWeeknights,

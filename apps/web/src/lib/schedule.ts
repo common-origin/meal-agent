@@ -34,13 +34,14 @@ export type PlanWeek = "this" | "next";
 const PLAN_WEEK_KEY = "meal_agent_plan_week";
 
 /**
- * Which week the user is planning. Stored relative rather than as a date so
- * "this"/"next" rolls over on its own each Monday. Defaults to "next", the
- * weekend-planning routine the app was built around.
+ * Which week the user is planning. Defaults to "next", the weekend-planning
+ * routine the app was built around. "This week" is stored with the Monday it
+ * was chosen in and only holds for that week, so a mid-week switch can't
+ * make the following weekend's plan overwrite the week that's just ending.
  */
 export function getPlanWeek(): PlanWeek {
   try {
-    return window.localStorage.getItem(PLAN_WEEK_KEY) === "this" ? "this" : "next";
+    return window.localStorage.getItem(PLAN_WEEK_KEY) === `this:${thisWeekMondayISO()}` ? "this" : "next";
   } catch {
     return "next";
   }
@@ -48,7 +49,7 @@ export function getPlanWeek(): PlanWeek {
 
 export function setPlanWeek(week: PlanWeek): void {
   try {
-    window.localStorage.setItem(PLAN_WEEK_KEY, week);
+    window.localStorage.setItem(PLAN_WEEK_KEY, week === "this" ? `this:${thisWeekMondayISO()}` : "next");
   } catch {
     // Storage unavailable (private mode etc.) — the choice just won't persist.
   }
