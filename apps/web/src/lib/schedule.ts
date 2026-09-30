@@ -10,10 +10,63 @@ export function isSaturdayAfter4(): boolean {
   return now.day() === 6 && now.hour() >= 16;
 }
 
+/**
+ * Monday of the Monday–Sunday week containing `date`. dayjs numbers Sunday
+ * as day 0, so `day(1)` on a Sunday would jump forward to the next Monday —
+ * count back from the day index instead.
+ */
+export function mondayOfWeekISO(date: dayjs.ConfigType = undefined): string {
+  const d = dayjs(date);
+  const daysSinceMonday = (d.day() + 6) % 7;
+  return d.subtract(daysSinceMonday, "day").format("YYYY-MM-DD");
+}
+
+export function thisWeekMondayISO(): string {
+  return mondayOfWeekISO();
+}
+
 export function nextWeekMondayISO(): string {
-  const now = dayjs();
-  const nextMonday = now.day(1).add(1, "week");
-  return nextMonday.format("YYYY-MM-DD");
+  return dayjs(mondayOfWeekISO()).add(1, "week").format("YYYY-MM-DD");
+}
+
+export type PlanWeek = "this" | "next";
+
+const PLAN_WEEK_KEY = "meal_agent_plan_week";
+
+/**
+ * Which week the user is planning. Stored relative rather than as a date so
+ * "this"/"next" rolls over on its own each Monday. Defaults to "next", the
+ * weekend-planning routine the app was built around.
+ */
+export function getPlanWeek(): PlanWeek {
+  try {
+    return window.localStorage.getItem(PLAN_WEEK_KEY) === "this" ? "this" : "next";
+  } catch {
+    return "next";
+  }
+}
+
+export function setPlanWeek(week: PlanWeek): void {
+  try {
+    window.localStorage.setItem(PLAN_WEEK_KEY, week);
+  } catch {
+    // Storage unavailable (private mode etc.) — the choice just won't persist.
+  }
+}
+
+export function planWeekMondayISO(week: PlanWeek): string {
+  return week === "this" ? thisWeekMondayISO() : nextWeekMondayISO();
+}
+
+/** Monday ISO of the week currently selected for planning. */
+export function selectedWeekMondayISO(): string {
+  return planWeekMondayISO(getPlanWeek());
+}
+
+/** e.g. "Mon 28 Sep – Sun 4 Oct" */
+export function formatWeekRange(mondayISO: string): string {
+  const monday = dayjs(mondayISO);
+  return `${monday.format("ddd D MMM")} – ${monday.add(6, "day").format("ddd D MMM")}`;
 }
 
 export function getNextSunday8AM(): Date {

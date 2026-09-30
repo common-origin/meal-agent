@@ -108,7 +108,9 @@ feed URL for display in Settings
 - **Meal composition**: `compose.ts` orchestrates `scoring.ts` (recipe
   scoring rules), `recencyTracker.ts` (avoids recent repeats),
   `tagNormalizer.ts`, `explainer.ts` (generates the "why this meal" reason
-  chips), and `schedule.ts` (week-start date math — despite the name, this
+  chips), and `schedule.ts` (week-start date math, plus the per-browser
+  "this week / next week" planning choice every page reads its week from —
+  despite the name, this
   is *not* a scheduling/cron layer; see
   [Known limitations](#known-limitations))
 - **Shopping & pricing**: `shoppingListAggregator.ts` (unit normalization,

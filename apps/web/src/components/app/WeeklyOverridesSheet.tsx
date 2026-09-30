@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Stack, Typography, IconButton, Sheet } from "@common-origin/design-system";
 import { saveWeeklyOverrides } from "@/lib/storage";
-import { nextWeekMondayISO } from "@/lib/schedule";
+import { selectedWeekMondayISO } from "@/lib/schedule";
 import { track } from "@/lib/analytics";
 import type { WeeklyOverrides, PantryItem } from "@/lib/types/recipe";
 
@@ -35,7 +35,7 @@ export default function WeeklyOverridesSheet({
     e.preventDefault();
     
     const overrides: WeeklyOverrides = {
-      weekOfISO: nextWeekMondayISO(),
+      weekOfISO: selectedWeekMondayISO(),
       dinners,
       servingsPerMeal,
       kidFriendlyWeeknights,

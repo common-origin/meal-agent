@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dayjs from 'dayjs';
 import { createAdminClient } from '@/lib/supabase/server';
+import { mondayOfWeekISO } from '@/lib/schedule';
 
 export const runtime = 'nodejs';
 
@@ -70,7 +71,7 @@ export async function GET(
 
   // Only current-week-onward plans — a feed of past dinners isn't useful,
   // and old weeks would otherwise accumulate indefinitely.
-  const startOfThisWeekISO = dayjs().day(1).format('YYYY-MM-DD');
+  const startOfThisWeekISO = mondayOfWeekISO();
 
   const { data: plans, error: plansError } = await supabase
     .from('meal_plans')
