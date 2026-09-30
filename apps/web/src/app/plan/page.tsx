@@ -18,7 +18,6 @@ import {
   getPlanWeek,
   setPlanWeek,
   planWeekMondayISO,
-  selectedWeekMondayISO,
   formatWeekRange,
   type PlanWeek,
 } from "@/lib/schedule";
@@ -59,6 +58,10 @@ export default function PlanPage() {
   // null until read from storage on mount, so the server render and first
   // client render agree; the load effect below waits for it.
   const [planWeek, setPlanWeekState] = useState<PlanWeek | null>(null);
+  // Handlers save to the week shown in the render they were created in, not
+  // whatever storage says after an await, so a tab switch mid-save can't move
+  // one week's plan into the other.
+  const planWeekISO = planWeekMondayISO(planWeek ?? "next");
 
   
   // Pantry items state
@@ -185,6 +188,11 @@ export default function PlanPage() {
   const handlePlanWeekChange = (tabId: string) => {
     const week: PlanWeek = tabId === "this" ? "this" : "next";
     if (week === planWeek) return;
+    // Close anything bound to the current week's plan before it's replaced.
+    setSwapDayIndex(null);
+    setShowPantrySheet(false);
+    setShowOverridesSheet(false);
+    setGenerationError(null);
     setPlanWeek(week);
     setPlanWeekState(week);
     track('plan_week_changed', { week });
@@ -195,7 +203,7 @@ export default function PlanPage() {
     setPantryItems(items);
     
     // Save updated pantry items to storage
-    const weekISO = selectedWeekMondayISO();
+    const weekISO = planWeekISO;
     const recipeIds = weekPlan.map(m => m?.recipeId || "");
     await saveCurrentWeekPlan(recipeIds, weekISO, items);
     console.log('✅ Pantry items updated and saved');
@@ -353,7 +361,7 @@ export default function PlanPage() {
     setBudget(prev => ({ current: prev.current + budgetDiff, total: weeklyBudget }));
     
     // Save updated week plan
-    const weekISO = selectedWeekMondayISO();
+    const weekISO = planWeekISO;
     const recipeIds = newWeekPlan.map(meal => meal?.recipeId || "");
     await saveCurrentWeekPlan(recipeIds, weekISO, pantryItems);
     console.log('✅ Week plan updated after swap');
@@ -392,7 +400,7 @@ export default function PlanPage() {
     setBudget(prev => ({ current: prev.current - costToRemove, total: weeklyBudget }));
     
     // Save updated week plan
-    const weekISO = selectedWeekMondayISO();
+    const weekISO = planWeekISO;
     const recipeIds = newWeekPlan.map(m => m?.recipeId || "");
     await saveCurrentWeekPlan(recipeIds, weekISO, pantryItems);
     console.log('✅ Week plan updated after deletion');
@@ -415,7 +423,7 @@ export default function PlanPage() {
     setWeekPlan(newWeekPlan);
     
     // Save updated week plan
-    const weekISO = selectedWeekMondayISO();
+    const weekISO = planWeekISO;
     const recipeIds = newWeekPlan.map(m => m?.recipeId || "");
     await saveCurrentWeekPlan(recipeIds, weekISO, pantryItems);
     console.log('✅ Week plan reordered and saved');
@@ -542,7 +550,7 @@ export default function PlanPage() {
       setWeekPlan(aiMeals);
       
       // Save week plan
-      const weekISO = selectedWeekMondayISO();
+      const weekISO = planWeekISO;
       const recipeIds = data.recipes.map((r: Recipe) => r.id);
       await saveCurrentWeekPlan(recipeIds, weekISO, wizardData.pantryItems);
       
@@ -725,7 +733,7 @@ export default function PlanPage() {
       setWeekPlan(aiMeals);
       
       // Save week plan to storage for shopping list
-      const weekISO = selectedWeekMondayISO();
+      const weekISO = planWeekISO;
       const recipeIds = data.recipes.map((r: Recipe) => r.id);
       const planSaved = await saveCurrentWeekPlan(recipeIds, weekISO, pantryItems);
       if (planSaved) {
@@ -875,7 +883,7 @@ export default function PlanPage() {
       setBudget(prev => ({ current: prev.current + newCost, total: weeklyBudget }));
 
       // Save updated week plan
-      const weekISO = selectedWeekMondayISO();
+      const weekISO = planWeekISO;
       const recipeIds = newWeekPlan.map(meal => meal?.recipeId || "");
       await saveCurrentWeekPlan(recipeIds, weekISO, pantryItems);
       console.log('✅ Week plan updated');
@@ -925,7 +933,7 @@ export default function PlanPage() {
             variant="pills"
             aria-label="Week to plan"
           />
-          <Typography color="subdued">{formatWeekRange(planWeekMondayISO(planWeek))}</Typography>
+          <Typography color="subdued">{formatWeekRange(planWeekISO)}</Typography>
         </Stack>
       )}
 
@@ -1013,7 +1021,7 @@ export default function PlanPage() {
           onDeleteClick={handleDeleteMeal}
           isGeneratingPlan={isGenerating || isLoadingInitial}
           onReorder={handleReorder}
-          weekStartISO={planWeek ? planWeekMondayISO(planWeek) : undefined}
+          weekStartISO={planWeek ? planWeekISO : undefined}
         />
         
         {/* Actions */}

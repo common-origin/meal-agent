@@ -78,6 +78,17 @@ describe('plan week selection', () => {
     vi.useRealTimers();
   });
 
+  it('keeps the choice for the session when localStorage cannot be written', () => {
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError');
+    });
+    setPlanWeek('this');
+    expect(getPlanWeek()).toBe('this');
+    setPlanWeek('next');
+    expect(getPlanWeek()).toBe('next');
+    setItem.mockRestore();
+  });
+
   it('resolves the choice to a Monday', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-10-04T09:00:00'));
