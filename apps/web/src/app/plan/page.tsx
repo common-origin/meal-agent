@@ -22,6 +22,7 @@ import { addToRecipeHistory, getRecipeIdsToExclude } from "@/lib/recipeHistory";
 import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
 import { trackIngredientUsage } from "@/lib/ingredientAnalytics";
 import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
+import { redirectToLoginIfUnauthenticated } from "@/lib/api/client";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -227,6 +228,8 @@ export default function PlanPage() {
           specificDays: [{ index: swapDayIndex, type: dayType }],
         }),
       });
+
+      if (redirectToLoginIfUnauthenticated(response)) return;
 
       const data = await response.json();
 
@@ -457,6 +460,8 @@ export default function PlanPage() {
         }),
       });
 
+      if (redirectToLoginIfUnauthenticated(response)) return;
+
       console.log('📥 [5/6] API response status:', response.status, response.statusText);
       
       const text = await response.text();
@@ -568,6 +573,8 @@ export default function PlanPage() {
         body: formData,
       });
 
+      if (redirectToLoginIfUnauthenticated(response)) return;
+
       const data = await response.json();
 
       if (!response.ok || data.error) {
@@ -644,6 +651,8 @@ export default function PlanPage() {
           pantryItems, // Pass pantry items for AI to prioritize
         }),
       });
+
+      if (redirectToLoginIfUnauthenticated(response)) return;
 
       console.log('📥 [5/6] API response status:', response.status, response.statusText);
       
@@ -791,6 +800,8 @@ export default function PlanPage() {
           specificDays: [{ index: dayIndex, type: dayType }],
         }),
       });
+
+      if (redirectToLoginIfUnauthenticated(response)) return;
 
       const data = await response.json();
 

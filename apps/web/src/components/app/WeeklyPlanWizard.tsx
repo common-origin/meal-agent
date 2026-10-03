@@ -5,6 +5,7 @@ import { Alert, Divider, Stack, Typography, Button, Box, TextField, List, ListIt
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import { CUISINE_OPTIONS } from "@/lib/types/settings";
+import { redirectToLoginIfUnauthenticated } from "@/lib/api/client";
 
 interface WeeklyPlanWizardProps {
   onComplete: (data: WeeklyPlanData) => void;
@@ -43,6 +44,8 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
         method: 'POST',
         body: formData,
       });
+
+      if (redirectToLoginIfUnauthenticated(response)) return;
 
       const data = await response.json();
 

@@ -33,25 +33,30 @@ directly for the real contract rather than a hand-copied JSON example
 here, since that's exactly the kind of thing that drifts out of sync
 with the code silently — as this line itself did on a previous version.
 
-## Rate limiting
+## Auth, rate limiting and validation
 
-`generate-recipes` enforces 3 requests per minute per IP
-(`MAX_REQUESTS_PER_WINDOW` in `apps/web/src/app/api/generate-recipes/route.ts`)
-— a 429 with "Rate limit exceeded" means wait a minute, not a bug. (The
-limiter's window-reset logic had a real bug that meant it never actually
-engaged — every request looked like a "new window" because the previous
-request's timestamp was never stored. Fixed alongside this doc; caught
-by review on the PR that added this file, which is itself a reasonable
-argument for not writing down "verified" behavior without re-reading the
-code closely enough to actually verify it.)
+Every AI route (`generate-recipes`, `scan-pantry-image`,
+`extract-recipe-from-image`, `extract-recipe-from-url`) requires a signed-in
+user (401, `code: "unauthenticated"`) and applies a per-user sliding-window
+limit (429, `code: "rate_limited"`): 20 per 10 minutes for
+`generate-recipes` and `extract-recipe-from-url`, 10 per 10 minutes for the
+two image routes. The limits are set in `apps/web/src/lib/api/rateLimit.ts`.
+They are in-memory, so each server instance counts separately; they're burst
+control, not a daily cap (that's #85). Request bodies are validated with the
+Zod schemas in `apps/web/src/lib/api/schemas.ts` (400,
+`code: "invalid_request"`, with the Zod issues logged server-side). A 429
+means wait a few minutes, not a bug.
 
 ## Troubleshooting
 
 **"GEMINI_API_KEY is not configured"** — check the key is actually in
 `apps/web/.env.local` (not the repo root), then restart the dev server.
 
-**"Rate limit exceeded"** — see above; only click Generate once per
-attempt.
+**"You've hit the limit for now"** — the per-user limit above; wait a
+few minutes.
+
+**"Please sign in to use this feature"** — the session has expired; the
+app sends you to `/login` and back.
 
 **"Failed to parse AI response" / malformed JSON** — usually transient;
 retry. If persistent, check Gemini API status and that the key hasn't

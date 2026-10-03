@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { aiRateLimiters } from '@/lib/api/rateLimit';
+import { extractRecipeFromUrlSchema } from '@/lib/api/schemas';
+import { parseBody, readJson, requireUserWithinLimit } from '@/lib/api/guard';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function POST(req: NextRequest) {
   try {
-    const { url } = await req.json();
+    const auth = await requireUserWithinLimit(aiRateLimiters.extractRecipeFromUrl);
+    if (!auth.ok) return auth.response;
 
-    if (!url) {
-      return NextResponse.json({ error: 'URL is required' }, { status: 400 });
-    }
+    const parsed = parseBody(extractRecipeFromUrlSchema, await readJson(req), 'extract-recipe-from-url');
+    if (!parsed.ok) return parsed.response;
+    const { url } = parsed.value;
 
     console.log('📥 Fetching recipe from URL:', url);
 

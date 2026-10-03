@@ -8,75 +8,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateRecipes } from '@/lib/aiRecipeGenerator';
 import type { RecipeGenerationRequest } from '@/lib/prompts/recipeGeneration';
+import { aiRateLimiters } from '@/lib/api/rateLimit';
+import { generateRecipesSchema } from '@/lib/api/schemas';
+import { parseBody, readJson, requireUserWithinLimit } from '@/lib/api/guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Rate limiting (simple in-memory cache)
-const requestCache = new Map<string, number>();
-const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 3; // Max 3 requests per minute per IP
-
-function checkRateLimit(identifier: string): boolean {
-  const now = Date.now();
-  const lastRequest = requestCache.get(identifier) || 0;
-
-  // Reset the window if it's expired — note this only clears the count,
-  // it doesn't early-return. Returning true here directly (the previous
-  // behavior) skipped ever recording a timestamp for a new identifier,
-  // so this branch matched on every single call and the limit never
-  // actually engaged. See generate-recipes' entry in AI.md.
-  if (now - lastRequest > RATE_LIMIT_WINDOW_MS) {
-    requestCache.delete(`${identifier}:count`);
-  }
-
-  // Check if within rate limit
-  const requestCount = requestCache.get(`${identifier}:count`) || 0;
-  if (requestCount >= MAX_REQUESTS_PER_WINDOW) {
-    return false;
-  }
-
-  requestCache.set(identifier, now);
-  requestCache.set(`${identifier}:count`, requestCount + 1);
-
-  // Reset count after window
-  setTimeout(() => {
-    requestCache.delete(`${identifier}:count`);
-  }, RATE_LIMIT_WINDOW_MS);
-
-  return true;
-}
-
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting
-    const ip = request.headers.get('x-forwarded-for') || 'unknown';
-    if (!checkRateLimit(ip)) {
-      return NextResponse.json(
-        { error: 'Rate limit exceeded. Please wait a minute before trying again.' },
-        { status: 429 }
-      );
-    }
+    const auth = await requireUserWithinLimit(aiRateLimiters.generateRecipes);
+    if (!auth.ok) return auth.response;
 
-    // Parse request body
-    const body = await request.json();
-    
-    // Validate request
-    if (!body.familySettings) {
-      return NextResponse.json(
-        { error: 'Missing required field: familySettings' },
-        { status: 400 }
-      );
-    }
+    const parsed = parseBody(generateRecipesSchema, await readJson(request), 'generate-recipes');
+    if (!parsed.ok) return parsed.response;
 
-    const generationRequest: RecipeGenerationRequest = {
-      familySettings: body.familySettings,
-      numberOfRecipes: body.numberOfRecipes || 7, // Default to 7 for a week
-      excludeRecipeIds: body.excludeRecipeIds || [],
-      specificDays: body.specificDays || undefined,
-      pantryItems: body.pantryItems || [], // Pass pantry items to AI
-      existingProteins: body.existingProteins || [], // Pass existing proteins for variety
-    };
+    const generationRequest: RecipeGenerationRequest = parsed.value;
 
     console.log('📥 Recipe generation request:', {
       numberOfRecipes: generationRequest.numberOfRecipes,
