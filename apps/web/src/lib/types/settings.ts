@@ -30,6 +30,11 @@ export interface RecipeRecipient {
 
 export const MAX_RECIPE_RECIPIENTS = 5;
 
+// Caps on free-text settings. The AI routes reject longer values
+// (lib/api/schemas.ts), so the inputs and validateFamilySettings use them too.
+export const MAX_SETTING_TEXT_LENGTH = 100;
+export const MAX_FLAVOR_PROFILE_LENGTH = 500;
+
 /**
  * Primary dietary type - mutually exclusive options
  */
@@ -232,6 +237,20 @@ export function validateFamilySettings(settings: Partial<FamilySettings>): strin
     }
   }
   
+  if (settings.flavorProfileDescription && settings.flavorProfileDescription.length > MAX_FLAVOR_PROFILE_LENGTH) {
+    errors.push(`Flavor profile description must be at most ${MAX_FLAVOR_PROFILE_LENGTH} characters`);
+  }
+
+  if (settings.preferredChef && settings.preferredChef.length > MAX_SETTING_TEXT_LENGTH) {
+    errors.push(`Preferred chef must be at most ${MAX_SETTING_TEXT_LENGTH} characters`);
+  }
+
+  if (settings.location) {
+    if (settings.location.city.length > MAX_SETTING_TEXT_LENGTH || settings.location.country.length > MAX_SETTING_TEXT_LENGTH) {
+      errors.push(`City and country must be at most ${MAX_SETTING_TEXT_LENGTH} characters`);
+    }
+  }
+
   if (settings.varietyLevel !== undefined && (settings.varietyLevel < 1 || settings.varietyLevel > 5)) {
     errors.push('Variety level must be between 1 and 5');
   }

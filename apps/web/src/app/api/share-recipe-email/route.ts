@@ -16,6 +16,7 @@ import { Resend } from 'resend';
 import { render } from '@react-email/components';
 import { createClient, getCurrentUser } from '@/lib/supabase/server';
 import RecipeEmail from '@/emails/RecipeEmail';
+import { createRateLimiter } from '@/lib/api/rateLimit';
 import type { Recipe } from '@/lib/types/recipe';
 import type { FamilySettings, RecipeRecipient } from '@/lib/types/settings';
 
@@ -25,19 +26,8 @@ export const dynamic = 'force-dynamic';
 const MAX_NOTE_LENGTH = 280;
 const MAX_RECIPIENTS_PER_SEND = 5;
 
-// Simple per-user rate limit: max 10 sends per 5 minutes
-const sendCache = new Map<string, number[]>();
-const RATE_WINDOW_MS = 5 * 60 * 1000;
-const MAX_SENDS_PER_WINDOW = 10;
-
-function checkRateLimit(userId: string): boolean {
-  const now = Date.now();
-  const recent = (sendCache.get(userId) || []).filter((t) => now - t < RATE_WINDOW_MS);
-  if (recent.length >= MAX_SENDS_PER_WINDOW) return false;
-  recent.push(now);
-  sendCache.set(userId, recent);
-  return true;
-}
+// Per-user rate limit: max 10 sends per 5 minutes
+const sendLimiter = createRateLimiter({ limit: 10, windowMs: 5 * 60 * 1000 });
 
 interface LoadedRecipeRow {
   id: string;
@@ -92,7 +82,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    if (!checkRateLimit(user.id)) {
+    if (!sendLimiter.check(user.id)) {
       return NextResponse.json(
         { error: 'Rate limit exceeded. Please wait a few minutes before sending more emails.' },
         { status: 429 }

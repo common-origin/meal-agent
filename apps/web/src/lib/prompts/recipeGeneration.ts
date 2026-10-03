@@ -12,7 +12,7 @@ export interface RecipeGenerationRequest {
   familySettings: FamilySettings;
   numberOfRecipes: number;
   excludeRecipeIds?: string[]; // Recipes to avoid (for variety)
-  specificDays?: ('weeknight' | 'weekend')[]; // If generating specific days
+  specificDays?: { index: number; type: 'weeknight' | 'weekend' }[]; // If generating specific days (shape settled in #80)
   pantryItems?: string[]; // Ingredients already available
   existingProteins?: string[]; // Proteins already in the week plan (for single recipe variety)
 }
@@ -260,7 +260,7 @@ export function buildRecipeGenerationPrompt(request: RecipeGenerationRequest): s
     : 'any cuisine';
   
   const dayType = specificDays && specificDays.length > 0
-    ? specificDays[0]
+    ? specificDays[0].type
     : 'mixed weeknight and weekend';
   
   const maxTime = dayType === 'weekend' 

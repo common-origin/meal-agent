@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Alert, Divider, Stack, Typography, Button, Box, TextField, List, ListItem, IconButton, Chip } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
-import { CUISINE_OPTIONS } from "@/lib/types/settings";
+import { CUISINE_OPTIONS, MAX_SETTING_TEXT_LENGTH } from "@/lib/types/settings";
+import { redirectToLoginIfUnauthenticated } from "@/lib/api/client";
 
 interface WeeklyPlanWizardProps {
   onComplete: (data: WeeklyPlanData) => void;
@@ -43,6 +44,8 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
         method: 'POST',
         body: formData,
       });
+
+      if (redirectToLoginIfUnauthenticated(response)) return;
 
       const data = await response.json();
 
@@ -329,6 +332,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
                 <TextField
                   label="Preferred Chef or Recipe Source (optional)"
                   value={preferredChef}
+                  maxLength={MAX_SETTING_TEXT_LENGTH}
                   onChange={(e) => setPreferredChef(e.target.value)}
                   placeholder="e.g., Jamie Oliver, Ottolenghi, RecipeTin Eats"
                   helperText="The AI will try to match the style of recipes from your preferred chef or recipe source"

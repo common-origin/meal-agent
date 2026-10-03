@@ -7,6 +7,7 @@ import ButtonGroup from "@/components/app/ButtonGroup";
 import { tokens } from "@common-origin/design-system/tokens";
 import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
+import { redirectToLoginIfUnauthenticated } from "@/lib/api/client";
 import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
 import type { Recipe, Ingredient } from "@/lib/types/recipe";
 import Link from "next/link";
@@ -57,6 +58,8 @@ export default function AddRecipePage() {
         body: JSON.stringify({ image: imagePreview }),
       });
 
+      if (redirectToLoginIfUnauthenticated(response)) return;
+
       const data = await response.json();
 
       if (!response.ok) {
@@ -97,6 +100,8 @@ export default function AddRecipePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: recipeUrl }),
       });
+
+      if (redirectToLoginIfUnauthenticated(response)) return;
 
       const data = await response.json();
 

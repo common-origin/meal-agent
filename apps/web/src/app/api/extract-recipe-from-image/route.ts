@@ -8,6 +8,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Recipe } from '@/lib/types/recipe';
+import { aiRateLimiters } from '@/lib/api/rateLimit';
+import { extractRecipeFromImageSchema } from '@/lib/api/schemas';
+import { parseBody, readJson, requireUserWithinLimit } from '@/lib/api/guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,14 +27,12 @@ const getGeminiClient = () => {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    
-    if (!body.image) {
-      return NextResponse.json(
-        { error: 'Missing required field: image (base64 encoded)' },
-        { status: 400 }
-      );
-    }
+    const auth = await requireUserWithinLimit(aiRateLimiters.extractRecipeFromImage);
+    if (!auth.ok) return auth.response;
+
+    const parsed = parseBody(extractRecipeFromImageSchema, await readJson(request), 'extract-recipe-from-image');
+    if (!parsed.ok) return parsed.response;
+    const body = parsed.value;
 
     console.log('📸 Extracting recipe from image...');
 

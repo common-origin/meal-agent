@@ -92,6 +92,11 @@ kind of fact that's already drifted in this doc's history (see `CLAUDE.md`
 Known Drift). `aiRecipeGenerator.ts`'s `generateRecipes()` has no fallback
 model.
 
+These routes aren't covered by `proxy.ts`'s matcher, so each one checks the
+session itself, then applies a per-user rate limit and validates the body
+(`lib/api/guard.ts`, `lib/api/rateLimit.ts`, `lib/api/schemas.ts`; details
+in `AI.md`). `share-recipe-email` uses the same rate limiter.
+
 **Pricing/shopping**: `coles-search` (product lookup), `ingredient-analytics`
 (client-side analytics metadata)
 

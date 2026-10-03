@@ -7,6 +7,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { aiRateLimiters } from '@/lib/api/rateLimit';
+import { invalidRequestResponse, requireUserWithinLimit } from '@/lib/api/guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,6 +17,9 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireUserWithinLimit(aiRateLimiters.scanPantryImage);
+    if (!auth.ok) return auth.response;
+
     if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json(
         { error: 'Gemini API key not configured' },
@@ -22,14 +27,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const formData = await request.formData();
-    const image = formData.get('image') as File;
+    const formData = await request.formData().catch(() => null);
+    const image = formData?.get('image');
 
-    if (!image) {
-      return NextResponse.json(
-        { error: 'No image provided' },
-        { status: 400 }
-      );
+    if (!(image instanceof File) || image.size === 0) {
+      console.warn('scan-pantry-image: invalid request body (no image file)');
+      return invalidRequestResponse();
     }
 
     console.log('📸 Scanning pantry/fridge image:', {
