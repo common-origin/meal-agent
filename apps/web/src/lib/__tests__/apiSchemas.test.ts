@@ -47,6 +47,11 @@ describe('generateRecipesSchema', () => {
     expect(generateRecipesSchema.safeParse({ familySettings: wireSettings(), excludeRecipeIds }).success).toBe(true);
   });
 
+  it('allows recipe IDs derived from long titles', () => {
+    const excludeRecipeIds = [`ai-${'a'.repeat(150)}`];
+    expect(generateRecipesSchema.safeParse({ familySettings: wireSettings(), excludeRecipeIds }).success).toBe(true);
+  });
+
   it('validates specificDays index and type', () => {
     const familySettings = wireSettings();
     expect(generateRecipesSchema.safeParse({ familySettings, specificDays: [{ index: 6, type: 'weekend' }] }).success).toBe(true);

@@ -10,6 +10,7 @@
  */
 
 import { createServerClient } from '@supabase/ssr';
+import { isAuthSessionMissingError } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import type { Database } from './database.types';
 
@@ -51,7 +52,11 @@ export async function getCurrentUser() {
   } = await supabase.auth.getUser();
 
   if (error) {
-    console.error('Error fetching user:', error);
+    // No session is the normal signed-out case (e.g. an anonymous call to an
+    // API route), not an error worth logging.
+    if (!isAuthSessionMissingError(error)) {
+      console.error('Error fetching user:', error);
+    }
     return null;
   }
 

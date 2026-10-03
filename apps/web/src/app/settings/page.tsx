@@ -8,7 +8,7 @@ import Main from "@/components/app/Main";import {
   resetFamilySettings
 } from "@/lib/hybridStorage";
 import type { FamilySettings } from "@/lib/types/settings";
-import { validateFamilySettings, DEFAULT_FAMILY_SETTINGS, DIETARY_TYPE_OPTIONS, MAX_RECIPE_RECIPIENTS } from "@/lib/types/settings";
+import { validateFamilySettings, DEFAULT_FAMILY_SETTINGS, DIETARY_TYPE_OPTIONS, MAX_RECIPE_RECIPIENTS, MAX_FLAVOR_PROFILE_LENGTH, MAX_SETTING_TEXT_LENGTH } from "@/lib/types/settings";
 import { track } from "@/lib/analytics";
 
 export default function SettingsPage() {
@@ -384,6 +384,7 @@ export default function SettingsPage() {
 												label="Flavor profile description"
 												helperText="Describe your family&apos;s taste preferences in a few words"
 												value={settings.flavorProfileDescription}
+												maxLength={MAX_FLAVOR_PROFILE_LENGTH}
 												onChange={(e) => setSettings(prev => ({
 													...prev,
 													flavorProfileDescription: e.target.value
@@ -411,6 +412,7 @@ export default function SettingsPage() {
 										<TextField
 											label="City"
 											value={settings.location.city}
+											maxLength={MAX_SETTING_TEXT_LENGTH}
 											onChange={(e) => setSettings(prev => ({
 												...prev,
 												location: {
@@ -424,6 +426,7 @@ export default function SettingsPage() {
 										<TextField
 											label="Country"
 											value={settings.location.country}
+											maxLength={MAX_SETTING_TEXT_LENGTH}
 											onChange={(e) => setSettings(prev => ({
 												...prev,
 												location: {

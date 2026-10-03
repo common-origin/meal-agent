@@ -23,6 +23,7 @@ export interface RateLimiter {
 
 export function createRateLimiter({ limit, windowMs, now = Date.now }: RateLimiterOptions): RateLimiter {
   const hits = new Map<string, number[]>();
+  let lastSweep = now();
 
   return {
     check(key: string): boolean {
@@ -34,9 +35,20 @@ export function createRateLimiter({ limit, windowMs, now = Date.now }: RateLimit
       }
       recent.push(t);
       hits.set(key, recent);
+      evictExpired(t);
       return true;
     },
   };
+
+  // Drops keys whose newest hit has left the window, at most once per window,
+  // so the map doesn't keep one entry per user for the life of the instance.
+  function evictExpired(t: number) {
+    if (t - lastSweep < windowMs) return;
+    lastSweep = t;
+    for (const [key, keyHits] of hits) {
+      if (t - keyHits[keyHits.length - 1] >= windowMs) hits.delete(key);
+    }
+  }
 }
 
 const TEN_MINUTES_MS = 10 * 60 * 1000;

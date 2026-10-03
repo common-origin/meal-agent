@@ -7,9 +7,13 @@
  */
 
 import { z } from 'zod';
+import { MAX_FLAVOR_PROFILE_LENGTH, MAX_SETTING_TEXT_LENGTH } from '@/lib/types/settings';
 
-const text = z.string().max(100);
+const text = z.string().max(MAX_SETTING_TEXT_LENGTH);
 const textList = z.array(text).max(30);
+// Recipe IDs aren't free text, and AI recipe IDs are derived from the full
+// title (generateRecipeId), so they get a looser per-item cap than prose.
+const recipeIdList = z.array(z.string().max(200)).max(30);
 // Optional fields may arrive as null from stored settings; treat that as absent.
 const optionalText = text.nullish().transform((v) => v ?? undefined);
 const optionalTextList = textList.nullish().transform((v) => v ?? undefined);
@@ -34,7 +38,7 @@ export const familySettingsSchema = z.object({
   spiceTolerance: z.enum(['very_mild', 'mild', 'medium', 'hot', 'loves_hot']),
   cookingSkill: z.enum(['beginner', 'intermediate', 'confident_home_cook', 'advanced']),
   effortPreference: z.enum(['minimal_clean_up', 'balanced', 'happy_to_spend_time_on_weekends']),
-  flavorProfileDescription: z.string().max(500),
+  flavorProfileDescription: z.string().max(MAX_FLAVOR_PROFILE_LENGTH),
 
   location: z.object({
     city: text,
@@ -42,7 +46,7 @@ export const familySettingsSchema = z.object({
     hemisphere: z.enum(['northern', 'southern']),
   }),
 
-  dislikedRecipeIds: textList,
+  dislikedRecipeIds: recipeIdList,
   dislikedPatterns: optionalTextList,
 
   budgetPerMeal: z.object({ min: z.number(), max: z.number() }),
@@ -78,7 +82,7 @@ export const specificDaysSchema = z
 export const generateRecipesSchema = z.object({
   familySettings: familySettingsSchema,
   numberOfRecipes: z.number().int().min(1).max(7).default(7),
-  excludeRecipeIds: textList.default([]),
+  excludeRecipeIds: recipeIdList.default([]),
   specificDays: specificDaysSchema.optional(),
   pantryItems: z.array(z.string().max(60)).max(60).default([]),
   existingProteins: textList.default([]),

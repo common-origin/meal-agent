@@ -52,4 +52,14 @@ describe('createRateLimiter', () => {
     clock.advance(500); // t=1000
     expect(limiter.check('a')).toBe(true);
   });
+
+  it('forgets keys once their window has passed, starting them fresh', () => {
+    const clock = fakeClock();
+    const limiter = createRateLimiter({ limit: 1, windowMs: 1000, now: clock.now });
+    limiter.check('a');
+    clock.advance(1000);
+    limiter.check('b'); // triggers the sweep that drops 'a'
+    expect(limiter.check('a')).toBe(true);
+    expect(limiter.check('a')).toBe(false);
+  });
 });
