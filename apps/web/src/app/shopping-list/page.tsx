@@ -10,7 +10,7 @@ import { generateShoppingListCSV, downloadCSV } from "@/lib/csv";
 import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides, STORAGE_KEYS } from "@/lib/storage";
 import { loadCurrentWeekPlan, savePantryItems, loadPantryItems, hydrateRecencyFromSupabase, syncRecencyToSupabase } from "@/lib/hybridStorage";
 import { composeWeek } from "@/lib/compose";
-import { selectedWeekMondayISO } from "@/lib/schedule";
+import { nextWeekMondayISO } from "@/lib/schedule";
 import { track, type CostOptimizedMeta } from "@/lib/analytics";
 import { estimateIngredientCost } from "@/lib/colesMapping";
 import { RecipeLibrary } from "@/lib/library";
@@ -78,10 +78,10 @@ export default function ShoppingListPage() {
     
     // Get current plan
     const household = loadHousehold() || getDefaultHousehold();
-    const weekISO = selectedWeekMondayISO();
+    const nextWeekISO = nextWeekMondayISO();
     
     // Check if user has a saved week plan (from AI generation or manual selection)
-    const savedPlan = await loadCurrentWeekPlan(weekISO);
+    const savedPlan = await loadCurrentWeekPlan(nextWeekISO);
     
     let plan;
     let weeklyPantryItems: Array<{ name: string; qty: number; unit: string }> = [];
@@ -99,7 +99,7 @@ export default function ShoppingListPage() {
       console.log('🥫 Using week-specific pantry items:', weeklyPantryItems.length, 'items');
       
       // Calculate dates for the week (Monday through Sunday)
-      const startDate = new Date(weekISO);
+      const startDate = new Date(nextWeekISO);
       
       const days = savedPlan.recipeIds.map((recipeId, index) => {
         if (!recipeId) return null;
@@ -150,7 +150,7 @@ export default function ShoppingListPage() {
       }
       
       plan = {
-        startISO: weekISO,
+        startISO: nextWeekISO,
         days,
         costEstimate,
         conflicts: [],
@@ -160,14 +160,14 @@ export default function ShoppingListPage() {
     } else {
       // Fall back to auto-composition from library
       console.log('🔄 No saved plan found, composing from library...');
-      const overrides = loadWeeklyOverrides(weekISO);
+      const overrides = loadWeeklyOverrides(nextWeekISO);
       // Pull in any recency history recorded on other devices first, so
       // variety enforcement below sees what's actually been cooked recently
       await hydrateRecencyFromSupabase();
       plan = composeWeek(household, overrides || undefined);
       // Push this week's picks to Supabase (fire-and-forget) so other
       // devices see them too
-      syncRecencyToSupabase(weekISO, plan.days.map(d => d.recipeId))
+      syncRecencyToSupabase(nextWeekISO, plan.days.map(d => d.recipeId))
         .catch(err => console.warn('Failed to sync recency history to Supabase:', err));
       // Fall back to general household pantry if no saved plan (already in correct format)
       weeklyPantryItems = household.pantry;
@@ -224,8 +224,8 @@ export default function ShoppingListPage() {
     track('page_view', { page: '/shopping-list' });
     
     // Check if shopping is already complete for this week
-    const weekISO = selectedWeekMondayISO();
-    const completionKey = `${STORAGE_KEYS.SHOPPING_COMPLETE_PREFIX}${weekISO}`;
+    const nextWeekISO = nextWeekMondayISO();
+    const completionKey = `${STORAGE_KEYS.SHOPPING_COMPLETE_PREFIX}${nextWeekISO}`;
     const isComplete = localStorage.getItem(completionKey) === 'true';
     setIsShoppingComplete(isComplete);
     
@@ -284,14 +284,14 @@ export default function ShoppingListPage() {
 
   const handleShoppingComplete = () => {
     // Mark shopping as complete for this week
-    const weekISO = selectedWeekMondayISO();
-    const completionKey = `${STORAGE_KEYS.SHOPPING_COMPLETE_PREFIX}${weekISO}`;
+    const nextWeekISO = nextWeekMondayISO();
+    const completionKey = `${STORAGE_KEYS.SHOPPING_COMPLETE_PREFIX}${nextWeekISO}`;
     localStorage.setItem(completionKey, 'true');
     setIsShoppingComplete(true);
     
     track('shopping_completed', { 
       itemCount: aggregatedItems.length,
-      weekStart: weekISO 
+      weekStart: nextWeekISO 
     });
   };
 

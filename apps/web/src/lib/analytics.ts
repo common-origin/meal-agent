@@ -10,7 +10,6 @@ export type AnalyticsEventType =
   | 'plan_regenerated'
   | 'plan_confirmed'
   | 'plan_reviewed'
-  | 'plan_week_changed'
   
   // Meal Swapping
   | 'swap'

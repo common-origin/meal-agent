@@ -1,5 +1,4 @@
 import { Stack, Typography, ResponsiveGrid, Box } from "@common-origin/design-system";
-import dayjs from "dayjs";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { MemoizedMealCard, type MealCardProps } from "./MealCard";
@@ -15,8 +14,6 @@ export type WeekPlannerGridProps = {
   onDeleteClick?: (dayIndex: number) => void;
   isGeneratingPlan?: boolean;
   onReorder?: (oldIndex: number, newIndex: number) => void;
-  /** Monday of the planned week; when set, each day's label includes its date. */
-  weekStartISO?: string;
 };
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -31,11 +28,8 @@ export default function WeekPlannerGrid({
   generatingDayIndex, 
   onDeleteClick, 
   isGeneratingPlan,
-  onReorder,
-  weekStartISO
+  onReorder 
 }: WeekPlannerGridProps) {
-  const dayLabel = (day: string, index: number) =>
-    weekStartISO ? `${day} · ${dayjs(weekStartISO).add(index, "day").format("D MMM")}` : day;
   
   // Set up sensors for drag interactions
   const sensors = useSensors(
@@ -81,9 +75,9 @@ export default function WeekPlannerGrid({
             gapX={4}
             gapY={8}
           >
-            {DAYS.map((day, index) => (
+            {DAYS.map((day) => (
               <div key={day} style={{ display: "flex", flexDirection: "column", gap: "8px", height: "100%" }}>
-                <Typography variant="caption">{dayLabel(day, index)}</Typography>
+                <Typography variant="caption">{day}</Typography>
                 <LoadingSkeleton ariaLabel={`Loading recipe for ${day}`} />
               </div>
             ))}
@@ -115,7 +109,7 @@ export default function WeekPlannerGrid({
                 if (generatingDayIndex === index) {
                   return (
                     <div key={day} style={{ display: "flex", flexDirection: "column", gap: "8px", height: "100%" }}>
-                      <Typography variant="label">{dayLabel(day, index)}</Typography>
+                      <Typography variant="label">{day}</Typography>
                       <LoadingSkeleton ariaLabel={`Generating AI recipe for ${day}`} />
                     </div>
                   );
@@ -126,7 +120,7 @@ export default function WeekPlannerGrid({
                   <SortableDay
                     key={day}
                     id={day}
-                    day={dayLabel(day, index)}
+                    day={day}
                     index={index}
                     meal={meals[index]}
                     onSwapClick={onSwapClick}

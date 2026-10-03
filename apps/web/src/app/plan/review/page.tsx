@@ -14,7 +14,7 @@ import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides } from "@/lib/s
 import { loadCurrentWeekPlan, hydrateRecencyFromSupabase, syncRecencyToSupabase } from "@/lib/hybridStorage";
 import { composeWeek } from "@/lib/compose";
 import { RecipeLibrary } from "@/lib/library";
-import { selectedWeekMondayISO } from "@/lib/schedule";
+import { nextWeekMondayISO } from "@/lib/schedule";
 import { track, type PlanComposedMeta, type PlanRegeneratedMeta } from "@/lib/analytics";
 import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
 import { trackIngredientUsage } from "@/lib/ingredientAnalytics";
@@ -73,10 +73,10 @@ export default function PlanReviewPage() {
     setLoading(true);
     
     const household = loadHousehold() || getDefaultHousehold();
-    const weekISO = selectedWeekMondayISO();
+    const nextWeekISO = nextWeekMondayISO();
     
     // Check if user has a saved week plan (from AI generation or manual selection)
-    const savedPlan = await loadCurrentWeekPlan(weekISO);
+    const savedPlan = await loadCurrentWeekPlan(nextWeekISO);
     
     let newPlan: PlanWeek;
     
@@ -85,7 +85,7 @@ export default function PlanReviewPage() {
       console.log('📋 Review page: Using saved week plan:', savedPlan.recipeIds);
       
       // Calculate dates for the week (Monday through Sunday)
-      const startDate = new Date(weekISO);
+      const startDate = new Date(nextWeekISO);
       
       const days = savedPlan.recipeIds.map((recipeId, index) => {
         if (!recipeId) return null;
@@ -123,7 +123,7 @@ export default function PlanReviewPage() {
       }, 0);
       
       newPlan = {
-        startISO: weekISO,
+        startISO: nextWeekISO,
         days,
         costEstimate,
         conflicts: [],
@@ -136,14 +136,14 @@ export default function PlanReviewPage() {
     } else {
       // Fall back to auto-composition from library
       console.log('🔄 Review page: No saved plan found, composing from library...');
-      const overrides = loadWeeklyOverrides(weekISO);
+      const overrides = loadWeeklyOverrides(nextWeekISO);
       // Pull in any recency history recorded on other devices first, so
       // variety enforcement below sees what's actually been cooked recently
       await hydrateRecencyFromSupabase();
       newPlan = composeWeek(household, overrides || undefined);
       // Push this week's picks to Supabase (fire-and-forget, doesn't block
       // rendering the plan) so other devices see them too
-      syncRecencyToSupabase(weekISO, newPlan.days.map(d => d.recipeId))
+      syncRecencyToSupabase(nextWeekISO, newPlan.days.map(d => d.recipeId))
         .catch(err => console.warn('Failed to sync recency history to Supabase:', err));
     }
     

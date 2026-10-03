@@ -2,7 +2,7 @@ import type { Household, WeeklyOverrides, PlanWeek, PlanDay, Recipe } from "./ty
 import { RecipeLibrary } from "./library";
 import { scoreAndRank, type ScoringContext } from "./scoring";
 import { getRecentRecipeIds, recordWeekRecipes } from "./recencyTracker";
-import { selectedWeekMondayISO } from "./schedule";
+import { nextWeekMondayISO } from "./schedule";
 import {
   DEFAULT_DINNERS_PER_WEEK,
   DEFAULT_SERVINGS_PER_MEAL,
@@ -19,7 +19,7 @@ export function composeWeek(
   household: Household,
   overrides?: WeeklyOverrides
 ): PlanWeek {
-  const startISO = overrides?.weekOfISO || selectedWeekMondayISO();
+  const startISO = overrides?.weekOfISO || nextWeekMondayISO();
   const dinnerCount = overrides?.dinners || DEFAULT_DINNERS_PER_WEEK;
   const servings = overrides?.servingsPerMeal || DEFAULT_SERVINGS_PER_MEAL;
   const kidFriendly = overrides?.kidFriendlyWeeknights ?? true;

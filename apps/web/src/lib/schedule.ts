@@ -29,60 +29,6 @@ export function nextWeekMondayISO(): string {
   return dayjs(mondayOfWeekISO()).add(1, "week").format("YYYY-MM-DD");
 }
 
-export type PlanWeek = "this" | "next";
-
-const PLAN_WEEK_KEY = "meal_agent_plan_week";
-
-// The choice made in this session, which wins over storage. It keeps the
-// choice across pages even when localStorage can be read but not written
-// (module state survives client-side navigation).
-let inMemoryPlanWeek: string | null = null;
-
-function storedPlanWeek(): string | null {
-  if (inMemoryPlanWeek !== null) return inMemoryPlanWeek;
-  try {
-    return window.localStorage.getItem(PLAN_WEEK_KEY);
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Which week the user is planning. Defaults to "next", the weekend-planning
- * routine the app was built around. "This week" is stored with the Monday it
- * was chosen in and only holds for that week, so a mid-week switch can't
- * make the following weekend's plan overwrite the week that's just ending.
- */
-export function getPlanWeek(): PlanWeek {
-  return storedPlanWeek() === `this:${thisWeekMondayISO()}` ? "this" : "next";
-}
-
-export function setPlanWeek(week: PlanWeek): void {
-  const value = week === "this" ? `this:${thisWeekMondayISO()}` : "next";
-  inMemoryPlanWeek = value;
-  try {
-    window.localStorage.setItem(PLAN_WEEK_KEY, value);
-  } catch {
-    // Storage unavailable (private mode etc.) — the in-memory value above
-    // still applies for the rest of the session.
-  }
-}
-
-export function planWeekMondayISO(week: PlanWeek): string {
-  return week === "this" ? thisWeekMondayISO() : nextWeekMondayISO();
-}
-
-/** Monday ISO of the week currently selected for planning. */
-export function selectedWeekMondayISO(): string {
-  return planWeekMondayISO(getPlanWeek());
-}
-
-/** e.g. "Mon 28 Sep – Sun 4 Oct" */
-export function formatWeekRange(mondayISO: string): string {
-  const monday = dayjs(mondayISO);
-  return `${monday.format("ddd D MMM")} – ${monday.add(6, "day").format("ddd D MMM")}`;
-}
-
 export function getNextSunday8AM(): Date {
   const now = dayjs();
   let nextSunday = now.day(0); // This Sunday

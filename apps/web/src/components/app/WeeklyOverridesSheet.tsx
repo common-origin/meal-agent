@@ -35,8 +35,6 @@ export default function WeeklyOverridesSheet({
     e.preventDefault();
     
     const overrides: WeeklyOverrides = {
-      // Always next week, whatever week is selected on the Plan page: this
-      // sheet is opened from the "Update next week inputs" banner.
       weekOfISO: nextWeekMondayISO(),
       dinners,
       servingsPerMeal,

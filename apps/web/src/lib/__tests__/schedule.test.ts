@@ -1,12 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import {
   mondayOfWeekISO,
   thisWeekMondayISO,
   nextWeekMondayISO,
-  getPlanWeek,
-  setPlanWeek,
-  planWeekMondayISO,
-  formatWeekRange,
 } from '../schedule';
 
 // Week of Mon 28 Sep – Sun 4 Oct 2026
@@ -41,65 +37,5 @@ describe('thisWeekMondayISO / nextWeekMondayISO', () => {
     vi.setSystemTime(new Date(`${date}T09:00:00`));
     expect(thisWeekMondayISO()).toBe('2026-09-28');
     expect(nextWeekMondayISO()).toBe('2026-10-05');
-  });
-});
-
-describe('plan week selection', () => {
-  beforeEach(() => {
-    localStorage.clear();
-  });
-
-  it('defaults to next week', () => {
-    expect(getPlanWeek()).toBe('next');
-  });
-
-  it('persists the chosen week', () => {
-    setPlanWeek('this');
-    expect(getPlanWeek()).toBe('this');
-    setPlanWeek('next');
-    expect(getPlanWeek()).toBe('next');
-  });
-
-  it('keeps "this week" for the rest of the week it was chosen in', () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-09-30T09:00:00')); // Wed
-    setPlanWeek('this');
-    vi.setSystemTime(new Date('2026-10-04T20:00:00')); // Sun, same week
-    expect(getPlanWeek()).toBe('this');
-    vi.useRealTimers();
-  });
-
-  it('reverts "this week" to next week once that week is over', () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-09-30T09:00:00')); // Wed
-    setPlanWeek('this');
-    vi.setSystemTime(new Date('2026-10-05T09:00:00')); // following Mon
-    expect(getPlanWeek()).toBe('next');
-    vi.useRealTimers();
-  });
-
-  it('keeps the choice for the session when localStorage cannot be written', () => {
-    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new Error('QuotaExceededError');
-    });
-    setPlanWeek('this');
-    expect(getPlanWeek()).toBe('this');
-    setPlanWeek('next');
-    expect(getPlanWeek()).toBe('next');
-    setItem.mockRestore();
-  });
-
-  it('resolves the choice to a Monday', () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-10-04T09:00:00'));
-    expect(planWeekMondayISO('this')).toBe('2026-09-28');
-    expect(planWeekMondayISO('next')).toBe('2026-10-05');
-    vi.useRealTimers();
-  });
-});
-
-describe('formatWeekRange', () => {
-  it('formats Monday to Sunday', () => {
-    expect(formatWeekRange('2026-09-28')).toBe('Mon 28 Sep – Sun 4 Oct');
   });
 });
