@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   getCurrentUser: vi.fn(),
   generateRecipes: vi.fn(),
   generateContent: vi.fn(),
+  safeFetchHtml: vi.fn(),
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -16,6 +17,11 @@ vi.mock('@/lib/supabase/server', () => ({
 
 vi.mock('@/lib/aiRecipeGenerator', () => ({
   generateRecipes: mocks.generateRecipes,
+}));
+
+vi.mock('@/lib/api/safeFetch', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/api/safeFetch')>()),
+  safeFetchHtml: mocks.safeFetchHtml,
 }));
 
 vi.mock('@google/generative-ai', () => ({
@@ -31,6 +37,7 @@ import { POST as scanPantryPOST } from '../scan-pantry-image/route';
 import { POST as extractFromImagePOST } from '../extract-recipe-from-image/route';
 import { POST as extractFromUrlPOST } from '../extract-recipe-from-url/route';
 import { POST as shareRecipeEmailPOST } from '../share-recipe-email/route';
+import { SafeFetchError } from '@/lib/api/safeFetch';
 
 // Limiters are module-level and keyed by user, so each test signs in as a
 // fresh user to start from an empty window.
@@ -113,7 +120,7 @@ const routes: RouteCase[] = [
     call: () => extractFromUrlPOST(jsonRequest('/api/extract-recipe-from-url', { url: 'https://example.com/soup' })),
     callInvalid: () => extractFromUrlPOST(jsonRequest('/api/extract-recipe-from-url', { url: 42 })),
     prepareValid: () => {
-      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('<html>soup</html>')));
+      mocks.safeFetchHtml.mockResolvedValue({ html: '<html>soup</html>', finalUrl: 'https://example.com/soup' });
       mocks.generateContent.mockResolvedValue(geminiText('{"title":"Soup"}'));
     },
   },
@@ -121,7 +128,6 @@ const routes: RouteCase[] = [
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.unstubAllGlobals();
   vi.stubEnv('GEMINI_API_KEY', 'test-key');
   vi.spyOn(console, 'log').mockImplementation(() => {});
   vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -208,6 +214,27 @@ describe('generate-recipes body handling', () => {
       new NextRequest('http://localhost/api/generate-recipes', { method: 'POST', body: 'not json' })
     );
     expect(res.status).toBe(400);
+  });
+});
+
+describe('extract-recipe-from-url fetch errors', () => {
+  it.each([
+    ['invalid_url', 400],
+    ['blocked_host', 400],
+    ['timeout', 422],
+    ['too_large', 422],
+    ['not_html', 422],
+    ['http_error', 422],
+  ] as const)('maps %s to %i with friendly copy, without calling the model', async (code, status) => {
+    signIn();
+    mocks.safeFetchHtml.mockRejectedValue(new SafeFetchError(code, 'detail'));
+    const res = await extractFromUrlPOST(jsonRequest('/api/extract-recipe-from-url', { url: 'http://10.0.0.5/' }));
+    expect(res.status).toBe(status);
+    expect(await res.json()).toEqual({
+      error: "We couldn't read that page. Check the link or add the recipe manually.",
+      code,
+    });
+    expect(mocks.generateContent).not.toHaveBeenCalled();
   });
 });
 
