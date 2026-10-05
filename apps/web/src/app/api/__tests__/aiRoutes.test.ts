@@ -24,7 +24,8 @@ vi.mock('@/lib/api/safeFetch', async (importOriginal) => ({
   safeFetchHtml: mocks.safeFetchHtml,
 }));
 
-vi.mock('@google/generative-ai', () => ({
+vi.mock('@google/generative-ai', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@google/generative-ai')>()),
   GoogleGenerativeAI: class {
     getGenerativeModel() {
       return { generateContent: mocks.generateContent };
@@ -32,12 +33,13 @@ vi.mock('@google/generative-ai', () => ({
   },
 }));
 
-import { POST as generateRecipesPOST } from '../generate-recipes/route';
-import { POST as scanPantryPOST } from '../scan-pantry-image/route';
-import { POST as extractFromImagePOST } from '../extract-recipe-from-image/route';
-import { POST as extractFromUrlPOST } from '../extract-recipe-from-url/route';
+import { POST as generateRecipesPOST, maxDuration as generateRecipesMaxDuration } from '../generate-recipes/route';
+import { POST as scanPantryPOST, maxDuration as scanPantryMaxDuration } from '../scan-pantry-image/route';
+import { POST as extractFromImagePOST, maxDuration as extractFromImageMaxDuration } from '../extract-recipe-from-image/route';
+import { POST as extractFromUrlPOST, maxDuration as extractFromUrlMaxDuration } from '../extract-recipe-from-url/route';
 import { POST as shareRecipeEmailPOST } from '../share-recipe-email/route';
-import { SafeFetchError } from '@/lib/api/safeFetch';
+import { SafeFetchError, SAFE_FETCH_TIMEOUT_MS } from '@/lib/api/safeFetch';
+import { AI_DEADLINES_MS } from '@/lib/constants';
 
 // Limiters are module-level and keyed by user, so each test signs in as a
 // fresh user to start from an empty window.
@@ -236,6 +238,54 @@ describe('extract-recipe-from-url fetch errors', () => {
     });
     expect(mocks.generateContent).not.toHaveBeenCalled();
   });
+});
+
+describe('AI deadlines', () => {
+  const TIMEOUT_BODY = { error: 'That took too long. Please try again.', code: 'timeout' };
+  const realTimeout = AbortSignal.timeout.bind(AbortSignal);
+
+  it.each([
+    ['generate-recipes', generateRecipesMaxDuration, AI_DEADLINES_MS.generateRecipes],
+    ['scan-pantry-image', scanPantryMaxDuration, AI_DEADLINES_MS.scanPantryImage],
+    ['extract-recipe-from-image', extractFromImageMaxDuration, AI_DEADLINES_MS.extractRecipeFromImage],
+    // The page fetch runs before the AI call, so both budgets count.
+    ['extract-recipe-from-url', extractFromUrlMaxDuration, AI_DEADLINES_MS.extractRecipeFromUrl + SAFE_FETCH_TIMEOUT_MS],
+  ])('%s maxDuration (%ss) leaves room after its deadline', (_route, maxDurationS, deadlineMs) => {
+    expect(maxDurationS * 1000).toBeGreaterThanOrEqual(deadlineMs + 10_000);
+  });
+
+  it('generate-recipes returns 504 when the generator times out', async () => {
+    signIn();
+    mocks.generateRecipes.mockRejectedValue(new DOMException('deadline', 'TimeoutError'));
+    const res = await routes[0].call();
+    expect(res.status).toBe(504);
+    expect(await res.json()).toEqual(TIMEOUT_BODY);
+  });
+
+  it.each(routes.slice(1).map((r) => [r.name, r] as const))(
+    '%s aborts a model call that never answers and returns 504',
+    async (_name, route) => {
+      signIn();
+      route.prepareValid();
+      const deadlines: number[] = [];
+      // Real deadlines are 30-45 s; shrink them so the test runs quickly.
+      vi.spyOn(AbortSignal, 'timeout').mockImplementation((ms) => {
+        deadlines.push(ms);
+        return realTimeout(20);
+      });
+      mocks.generateContent.mockReturnValue(new Promise(() => {}));
+
+      const res = await route.call();
+      expect(res.status).toBe(504);
+      expect(await res.json()).toEqual(TIMEOUT_BODY);
+
+      const { signal } = mocks.generateContent.mock.calls[0][1] as { signal: AbortSignal };
+      expect(signal.aborted).toBe(true);
+      expect(deadlines).toContain(
+        { 'scan-pantry-image': 30_000, 'extract-recipe-from-image': 45_000, 'extract-recipe-from-url': 30_000 }[route.name]
+      );
+    }
+  );
 });
 
 describe('share-recipe-email rate limit (shared limiter)', () => {

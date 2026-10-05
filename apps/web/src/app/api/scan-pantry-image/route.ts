@@ -8,10 +8,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
-import { invalidRequestResponse, requireUserWithinLimit } from '@/lib/api/guard';
+import { invalidRequestResponse, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
+import { callWithDeadline, isTimeoutError } from '@/lib/api/aiCall';
+import { AI_DEADLINES_MS } from '@/lib/constants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+// Must stay above AI_DEADLINES_MS.scanPantryImage, so the route can return its 504 first.
+export const maxDuration = 60;
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
@@ -73,15 +77,20 @@ Return ONLY a JSON array of ingredient names, nothing else:
 Example output:
 ["chicken breast", "cherry tomatoes", "bell peppers", "milk", "cheddar cheese", "ground beef", "carrots", "broccoli"]`;
 
-    const result = await model.generateContent([
-      {
-        inlineData: {
-          data: base64Image,
-          mimeType: image.type || 'image/jpeg',
-        },
-      },
-      prompt,
-    ]);
+    const result = await callWithDeadline(AI_DEADLINES_MS.scanPantryImage, (signal) =>
+      model.generateContent(
+        [
+          {
+            inlineData: {
+              data: base64Image,
+              mimeType: image.type || 'image/jpeg',
+            },
+          },
+          prompt,
+        ],
+        { signal }
+      )
+    );
 
     const response = await result.response;
     const text = response.text().trim();
@@ -129,6 +138,8 @@ Example output:
     });
 
   } catch (error) {
+    if (isTimeoutError(error)) return timeoutResponse('scan-pantry-image');
+
     console.error('❌ Error scanning pantry image:', error);
     
     // Check for rate limit error

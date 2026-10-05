@@ -10,10 +10,14 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Recipe } from '@/lib/types/recipe';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
 import { extractRecipeFromImageSchema } from '@/lib/api/schemas';
-import { parseBody, readJson, requireUserWithinLimit } from '@/lib/api/guard';
+import { parseBody, readJson, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
+import { callWithDeadline, isTimeoutError } from '@/lib/api/aiCall';
+import { AI_DEADLINES_MS } from '@/lib/constants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+// Must stay above AI_DEADLINES_MS.extractRecipeFromImage, so the route can return its 504 first.
+export const maxDuration = 60;
 
 const getGeminiClient = () => {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -82,15 +86,20 @@ RULES:
     // Process image
     const imageData = body.image.replace(/^data:image\/\w+;base64,/, '');
     
-    const result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          data: imageData,
-          mimeType: 'image/jpeg', // or image/png
-        },
-      },
-    ]);
+    const result = await callWithDeadline(AI_DEADLINES_MS.extractRecipeFromImage, (signal) =>
+      model.generateContent(
+        [
+          prompt,
+          {
+            inlineData: {
+              data: imageData,
+              mimeType: 'image/jpeg', // or image/png
+            },
+          },
+        ],
+        { signal }
+      )
+    );
 
     const response = result.response;
     
@@ -151,6 +160,8 @@ RULES:
 
   } catch (error) {
     console.error('❌ Error extracting recipe from image:', error);
+    if (isTimeoutError(error)) return timeoutResponse('extract-recipe-from-image');
+
     
     return NextResponse.json(
       {
