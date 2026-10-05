@@ -170,6 +170,36 @@ describe('safeFetchHtml', () => {
     await expectCode(safeFetchHtml('https://example.com/missing'), 'http_error');
   });
 
+  it('does not start a redirect hop lookup after the timeout has fired', async () => {
+    const controller = new AbortController();
+    vi.spyOn(AbortSignal, 'timeout').mockReturnValue(controller.signal);
+    fetchMock.mockImplementationOnce(async () => {
+      controller.abort(new DOMException('timed out', 'TimeoutError'));
+      return redirect('https://other.example/');
+    });
+    await expectCode(safeFetchHtml('https://example.com/r'), 'timeout');
+    expect(lookupMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports a timeout during DNS, and handles the lookup failing afterwards', async () => {
+    const controller = new AbortController();
+    vi.spyOn(AbortSignal, 'timeout').mockReturnValue(controller.signal);
+    let failLookup: (error: Error) => void = () => {};
+    lookupMock.mockReturnValue(new Promise((_resolve, reject) => (failLookup = reject)) as never);
+    const unhandled = vi.fn();
+    process.on('unhandledRejection', unhandled);
+    try {
+      const result = safeFetchHtml('https://example.com/slow-dns');
+      controller.abort(new DOMException('timed out', 'TimeoutError'));
+      await expectCode(result, 'timeout');
+      failLookup(new Error('ENOTFOUND'));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(unhandled).not.toHaveBeenCalled();
+    } finally {
+      process.off('unhandledRejection', unhandled);
+    }
+  });
+
   it('reports a timeout when the overall signal fires', async () => {
     const controller = new AbortController();
     vi.spyOn(AbortSignal, 'timeout').mockReturnValue(controller.signal);

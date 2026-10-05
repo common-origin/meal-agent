@@ -117,6 +117,9 @@ async function assertPublicHost(hostname: string, signal: AbortSignal): Promise<
     return;
   }
 
+  // Don't start a lookup once the overall timeout has fired (e.g. on a redirect hop).
+  signal.throwIfAborted();
+
   let addresses: { address: string }[];
   try {
     addresses = await abortable(dns.promises.lookup(host, { all: true }), signal);
@@ -133,9 +136,12 @@ async function assertPublicHost(hostname: string, signal: AbortSignal): Promise<
 function abortable<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const onAbort = () => reject(signal.reason);
-    if (signal.aborted) return onAbort();
-    signal.addEventListener('abort', onAbort, { once: true });
+    // Always observe `promise`, even after aborting, so a late rejection
+    // isn't left unhandled (it would crash the process under strict
+    // unhandled-rejection handling).
     promise.then(resolve, reject).finally(() => signal.removeEventListener('abort', onAbort));
+    if (signal.aborted) onAbort();
+    else signal.addEventListener('abort', onAbort, { once: true });
   });
 }
 
