@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
-import { invalidRequestResponse, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
+import { readImageUpload, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
 import { callWithDeadline, isTimeoutError } from '@/lib/api/aiCall';
 import { AI_DEADLINES_MS } from '@/lib/constants';
 
@@ -31,13 +31,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const formData = await request.formData().catch(() => null);
-    const image = formData?.get('image');
-
-    if (!(image instanceof File) || image.size === 0) {
-      console.warn('scan-pantry-image: invalid request body (no image file)');
-      return invalidRequestResponse();
-    }
+    const upload = await readImageUpload(request, 'scan-pantry-image');
+    if (!upload.ok) return upload.response;
+    const image = upload.value;
 
     console.log('📸 Scanning pantry/fridge image:', {
       name: image.name,
@@ -83,7 +79,7 @@ Example output:
           {
             inlineData: {
               data: base64Image,
-              mimeType: image.type || 'image/jpeg',
+              mimeType: image.type,
             },
           },
           prompt,

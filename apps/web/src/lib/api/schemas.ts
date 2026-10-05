@@ -88,11 +88,6 @@ export const generateRecipesSchema = z.object({
   existingProteins: textList.default([]),
 });
 
-export const extractRecipeFromImageSchema = z.object({
-  // Base64 data URL. Size is bounded by the platform's request limit (#82).
-  image: z.string().min(1),
-});
-
 export const extractRecipeFromUrlSchema = z.object({
   // Recipe URLs are often longer than the 100-char free-text cap. Which URLs
   // may be fetched is validated separately (#79).

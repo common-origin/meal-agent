@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Stack, Typography, Button, Box, TextField, NumberInput, Dropdown, List, ListItem, IconButton } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
@@ -8,6 +8,7 @@ import { tokens } from "@common-origin/design-system/tokens";
 import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
 import { redirectToLoginIfUnauthenticated } from "@/lib/api/client";
+import { resizeImageForUpload, PhotoTooLargeError, PHOTO_TOO_LARGE_MESSAGE } from "@/lib/client/resizeImage";
 import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
 import type { Recipe, Ingredient } from "@/lib/types/recipe";
 import Link from "next/link";
@@ -17,7 +18,13 @@ export default function AddRecipePage() {
   const router = useRouter();
   const { beginGeneration, endGeneration, isSignOutInProgress } = useGenerationActivity();
   const [mode, setMode] = useState<'choice' | 'image' | 'url' | 'manual'>('choice');
+  // The resized photo that will be uploaded, and an object URL previewing it.
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
+  const previewUrlRef = useRef('');
+  // Bumped on every pick, clear and unmount, so a resize that finishes late
+  // (after a newer pick, or after leaving the page) is ignored.
+  const selectionRef = useRef(0);
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
   
@@ -35,30 +42,59 @@ export default function AddRecipePage() {
   const [ingredientUnit, setIngredientUnit] = useState<'g'|'ml'|'tsp'|'tbsp'|'unit'>('g');
   const [instructionInput, setInstructionInput] = useState('');
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Swaps the photo, revoking the previous preview URL.
+  const showImage = (file: File | null) => {
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    previewUrlRef.current = file ? URL.createObjectURL(file) : '';
+    setImageFile(file);
+    setImagePreview(previewUrlRef.current);
+  };
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+  const clearImage = () => {
+    selectionRef.current++;
+    showImage(null);
+  };
+
+  useEffect(() => () => {
+    selectionRef.current++;
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+  }, []);
+
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const file = input.files?.[0];
+    if (!file) return;
+    const selection = ++selectionRef.current;
+
+    try {
+      // Resized on the client to stay well under Vercel's 4.5 MB body limit (#82).
+      const resized = await resizeImageForUpload(file);
+      if (selection !== selectionRef.current) return;
+      showImage(resized);
+    } catch (error) {
+      if (selection !== selectionRef.current) return;
+      alert(error instanceof Error ? error.message : PHOTO_TOO_LARGE_MESSAGE);
+      input.value = '';
+    }
   };
 
   const handleExtractFromImage = async () => {
-    if (!imagePreview) return;
+    if (!imageFile) return;
 
     setExtracting(true);
     
     try {
+      const formData = new FormData();
+      formData.append('image', imageFile);
+
       const response = await fetch('/api/extract-recipe-from-image', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: imagePreview }),
+        body: formData,
       });
 
       if (redirectToLoginIfUnauthenticated(response)) return;
+      // Vercel's 413 body isn't our JSON, so handle it before parsing.
+      if (response.status === 413) throw new PhotoTooLargeError();
 
       const data = await response.json();
 
@@ -321,7 +357,7 @@ export default function AddRecipePage() {
                 </Button>
                 <Button 
                   variant="secondary" 
-                  onClick={() => setImagePreview('')}
+                  onClick={clearImage}
                 >
                   Choose different image
                 </Button>

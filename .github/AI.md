@@ -42,9 +42,12 @@ limit (429, `code: "rate_limited"`): 20 per 10 minutes for
 `generate-recipes` and `extract-recipe-from-url`, 10 per 10 minutes for the
 two image routes. The limits are set in `apps/web/src/lib/api/rateLimit.ts`.
 They are in-memory, so each server instance counts separately; they're burst
-control, not a daily cap (that's #85). Request bodies are validated with the
-Zod schemas in `apps/web/src/lib/api/schemas.ts` (400,
-`code: "invalid_request"`, with the Zod issues logged server-side). A 429
+control, not a daily cap (that's #85). JSON request bodies
+(`generate-recipes`, `extract-recipe-from-url`) are validated with the Zod
+schemas in `apps/web/src/lib/api/schemas.ts`; the photo routes validate their
+multipart `image` field with `readImageUpload` in
+`apps/web/src/lib/api/guard.ts` (see below). Either way an invalid body gets
+400, `code: "invalid_request"`, with the problem logged server-side. A 429
 means wait a few minutes, not a bug.
 
 `extract-recipe-from-url` fetches the page with `safeFetchHtml`
@@ -65,6 +68,16 @@ Up to 2 retries (1 s then 2 s backoff) happen only on HTTP 429/500/502/503/504
 or a network error, never after the deadline. Each route's `maxDuration`
 sits above its deadline. Running out of time returns 504,
 `code: "timeout"`.
+
+The two photo routes (`scan-pantry-image`, `extract-recipe-from-image`) take
+multipart `FormData` with an `image` field, which must be `image/*`; the
+route passes the file's real MIME type to Gemini. The browser resizes every
+photo first (`resizeImageForUpload` in
+`apps/web/src/lib/client/resizeImage.ts`: long edge at most 1600 px, JPEG
+quality 0.8) to stay far under Vercel's 4.5 MB request limit. If the browser
+can't decode a photo (e.g. HEIC in Chrome) it sends the original only when
+it's at most 4 MB; otherwise, or on a 413, the user sees "That photo is too
+large. Try a screenshot or a smaller photo."
 
 ## Troubleshooting
 

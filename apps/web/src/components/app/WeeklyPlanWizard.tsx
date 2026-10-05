@@ -6,6 +6,7 @@ import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import { CUISINE_OPTIONS, MAX_SETTING_TEXT_LENGTH } from "@/lib/types/settings";
 import { redirectToLoginIfUnauthenticated } from "@/lib/api/client";
+import { imageUploadFormData, PhotoTooLargeError } from "@/lib/client/resizeImage";
 
 interface WeeklyPlanWizardProps {
   onComplete: (data: WeeklyPlanData) => void;
@@ -37,8 +38,8 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
     setScanError(null);
 
     try {
-      const formData = new FormData();
-      formData.append('image', file);
+      // Resized on the client to stay well under Vercel's 4.5 MB body limit (#82).
+      const formData = await imageUploadFormData(file);
 
       const response = await fetch('/api/scan-pantry-image', {
         method: 'POST',
@@ -46,6 +47,8 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
       });
 
       if (redirectToLoginIfUnauthenticated(response)) return;
+      // Vercel's 413 body isn't our JSON, so handle it before parsing.
+      if (response.status === 413) throw new PhotoTooLargeError();
 
       const data = await response.json();
 
@@ -65,13 +68,14 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
         setPantryItems([...pantryItems, ...newIngredients]);
       }
 
-      event.target.value = '';
     } catch (error) {
       console.error('Error scanning image:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to scan image';
       setScanError(errorMessage);
     } finally {
       setIsScanning(false);
+      // Clear the input even after an error, so picking the same photo again still fires onChange.
+      event.target.value = '';
     }
   };
 

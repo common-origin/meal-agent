@@ -65,6 +65,19 @@ export function parseBody<S extends z.ZodType>(
   return { ok: true, value: result.data };
 }
 
+/** The multipart `image` field, which must be a non-empty image/* file. */
+export async function readImageUpload(request: Request, route: string): Promise<Guarded<File>> {
+  const formData = await request.formData().catch(() => null);
+  const image = formData?.get('image');
+  if (!(image instanceof File) || image.size === 0 || !image.type.startsWith('image/')) {
+    console.warn(`${route}: invalid request body (expected an image file)`, {
+      type: image instanceof File ? image.type : typeof image,
+    });
+    return { ok: false, response: invalidRequestResponse() };
+  }
+  return { ok: true, value: image };
+}
+
 /** Request JSON, or undefined if the body isn't valid JSON (fails schema parsing). */
 export async function readJson(request: Request): Promise<unknown> {
   return request.json().catch(() => undefined);
