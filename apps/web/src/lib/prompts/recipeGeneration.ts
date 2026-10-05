@@ -259,15 +259,15 @@ export function buildRecipeGenerationPrompt(request: RecipeGenerationRequest): s
     ? familySettings.cuisines.join(', ')
     : 'any cuisine';
   
-  const dayType = specificDays && specificDays.length > 0
-    ? specificDays[0].type
-    : 'mixed weeknight and weekend';
+  // Without specificDays this is a weeknight request: the full plan fills
+  // Monday–Friday today. Per-day types for a 7-day plan come with #95.
+  const dayType = specificDays?.[0]?.type ?? 'weeknight';
   
   const maxTime = dayType === 'weekend' 
     ? familySettings.maxCookTime.weekend
     : familySettings.maxCookTime.weeknight;
 
-  let prompt = `Generate ${numberOfRecipes} ${dayType === 'weekend' ? 'weekend' : 'weeknight'} dinner recipes with these requirements:
+  let prompt = `Generate ${numberOfRecipes} ${dayType} dinner recipes with these requirements:
 
 FAMILY DETAILS:
 - Servings needed: ${familySettings.totalServings} (${familySettings.adults} adults, ${familySettings.children.length} children aged ${familySettings.children.map(c => c.age).join(', ')})`;

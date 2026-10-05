@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
 
     console.log('📥 Recipe generation request:', {
       numberOfRecipes: generationRequest.numberOfRecipes,
+      dayType: generationRequest.specificDays?.[0]?.type ?? 'weeknight',
       cuisines: generationRequest.familySettings.cuisines,
       servings: generationRequest.familySettings.totalServings,
       pantryItemsCount: generationRequest.pantryItems?.length || 0,
