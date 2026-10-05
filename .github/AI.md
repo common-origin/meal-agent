@@ -42,9 +42,12 @@ limit (429, `code: "rate_limited"`): 20 per 10 minutes for
 `generate-recipes` and `extract-recipe-from-url`, 10 per 10 minutes for the
 two image routes. The limits are set in `apps/web/src/lib/api/rateLimit.ts`.
 They are in-memory, so each server instance counts separately; they're burst
-control, not a daily cap (that's #85). Request bodies are validated with the
-Zod schemas in `apps/web/src/lib/api/schemas.ts` (400,
-`code: "invalid_request"`, with the Zod issues logged server-side). A 429
+control, not a daily cap (that's #85). JSON request bodies
+(`generate-recipes`, `extract-recipe-from-url`) are validated with the Zod
+schemas in `apps/web/src/lib/api/schemas.ts`; the photo routes validate their
+multipart `image` field with `readImageUpload` in
+`apps/web/src/lib/api/guard.ts` (see below). Either way an invalid body gets
+400, `code: "invalid_request"`, with the problem logged server-side. A 429
 means wait a few minutes, not a bug.
 
 `extract-recipe-from-url` fetches the page with `safeFetchHtml`

@@ -22,6 +22,9 @@ export default function AddRecipePage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const previewUrlRef = useRef('');
+  // Bumped on every pick, clear and unmount, so a resize that finishes late
+  // (after a newer pick, or after leaving the page) is ignored.
+  const selectionRef = useRef(0);
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
   
@@ -47,20 +50,31 @@ export default function AddRecipePage() {
     setImagePreview(previewUrlRef.current);
   };
 
+  const clearImage = () => {
+    selectionRef.current++;
+    showImage(null);
+  };
+
   useEffect(() => () => {
+    selectionRef.current++;
     if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
   }, []);
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const input = e.target;
+    const file = input.files?.[0];
     if (!file) return;
+    const selection = ++selectionRef.current;
 
     try {
       // Resized on the client to stay well under Vercel's 4.5 MB body limit (#82).
-      showImage(await resizeImageForUpload(file));
+      const resized = await resizeImageForUpload(file);
+      if (selection !== selectionRef.current) return;
+      showImage(resized);
     } catch (error) {
+      if (selection !== selectionRef.current) return;
       alert(error instanceof Error ? error.message : PHOTO_TOO_LARGE_MESSAGE);
-      e.target.value = '';
+      input.value = '';
     }
   };
 
@@ -343,7 +357,7 @@ export default function AddRecipePage() {
                 </Button>
                 <Button 
                   variant="secondary" 
-                  onClick={() => showImage(null)}
+                  onClick={clearImage}
                 >
                   Choose different image
                 </Button>
