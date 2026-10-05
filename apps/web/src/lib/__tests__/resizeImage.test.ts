@@ -46,7 +46,8 @@ describe('resizeImageForUpload', () => {
 
   it('draws a large photo onto a 1600 px canvas and returns a JPEG named .jpg', async () => {
     const close = vi.fn();
-    vi.stubGlobal('createImageBitmap', vi.fn().mockResolvedValue({ width: 6000, height: 4000, close }));
+    const decode = vi.fn().mockResolvedValue({ width: 6000, height: 4000, close });
+    vi.stubGlobal('createImageBitmap', decode);
     const context = { fillStyle: '', fillRect: vi.fn(), drawImage: vi.fn() };
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(context as never);
     const toBlob = vi
@@ -65,11 +66,30 @@ describe('resizeImageForUpload', () => {
     const canvas = toBlob.mock.contexts[0] as HTMLCanvasElement;
     expect([canvas.width, canvas.height]).toEqual([1600, 1067]);
     expect(close).toHaveBeenCalled();
+    // EXIF is lost on re-encode, so orientation must be applied at decode.
+    expect(decode).toHaveBeenCalledWith(expect.any(File), { imageOrientation: 'from-image' });
   });
 
   it('sends the original when the browser cannot decode it and it is at most 4 MB', async () => {
     vi.stubGlobal('createImageBitmap', vi.fn().mockRejectedValue(new DOMException('unsupported', 'InvalidStateError')));
     const original = photo(MAX_ORIGINAL_UPLOAD_BYTES);
+    await expect(resizeImageForUpload(original)).resolves.toBe(original);
+  });
+
+  it.each([
+    ['IMG_1.HEIC', 'image/heic'],
+    ['scan.heif', 'image/heif'],
+    ['photo.JPG', 'image/jpeg'],
+  ])('gives an untyped fallback original (%s) its image type from the extension', async (name, type) => {
+    vi.stubGlobal('createImageBitmap', vi.fn().mockRejectedValue(new Error('no decoder')));
+    const result = await resizeImageForUpload(photo(1000, name, ''));
+    expect(result.type).toBe(type);
+    expect(result.name).toBe(name);
+  });
+
+  it('leaves an untyped original with an unknown extension as it is', async () => {
+    vi.stubGlobal('createImageBitmap', vi.fn().mockRejectedValue(new Error('no decoder')));
+    const original = photo(1000, 'mystery.bin', '');
     await expect(resizeImageForUpload(original)).resolves.toBe(original);
   });
 

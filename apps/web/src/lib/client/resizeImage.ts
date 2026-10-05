@@ -42,7 +42,8 @@ export function computeTargetSize(
  */
 export async function resizeImageForUpload(file: File): Promise<File> {
   try {
-    const bitmap = await createImageBitmap(file);
+    // Canvas re-encoding drops EXIF, so apply the orientation tag while decoding.
+    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
     try {
       const { width, height } = computeTargetSize(bitmap.width, bitmap.height, MAX_UPLOAD_EDGE_PX);
       const canvas = document.createElement('canvas');
@@ -65,7 +66,7 @@ export async function resizeImageForUpload(file: File): Promise<File> {
     }
   } catch (error) {
     console.warn('Could not resize photo before upload, considering the original:', error);
-    if (file.size <= MAX_ORIGINAL_UPLOAD_BYTES) return file;
+    if (file.size <= MAX_ORIGINAL_UPLOAD_BYTES) return withImageType(file);
     throw new PhotoTooLargeError();
   }
 }
@@ -75,6 +76,23 @@ export async function imageUploadFormData(file: File): Promise<FormData> {
   const formData = new FormData();
   formData.append('image', await resizeImageForUpload(file));
   return formData;
+}
+
+// Browsers report an empty type for formats they don't know (e.g. HEIC on
+// Windows Chrome), and the routes only accept image/*. Gemini accepts these.
+const TYPE_BY_EXTENSION: Record<string, string> = {
+  heic: 'image/heic',
+  heif: 'image/heif',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+};
+
+function withImageType(file: File): File {
+  if (file.type) return file;
+  const type = TYPE_BY_EXTENSION[file.name.split('.').pop()?.toLowerCase() ?? ''];
+  return type ? new File([file], file.name, { type }) : file;
 }
 
 function baseName(name: string): string {

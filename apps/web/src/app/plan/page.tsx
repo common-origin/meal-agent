@@ -599,8 +599,6 @@ export default function PlanPage() {
         setPantryItems([...pantryItems, ...newIngredients]);
       }
 
-      // Reset file input
-      event.target.value = '';
 
     } catch (error) {
       console.error('❌ Error scanning image:', error);
@@ -608,6 +606,8 @@ export default function PlanPage() {
       setScanError(errorMessage);
     } finally {
       setIsScanning(false);
+      // Clear the input even after an error, so picking the same photo again still fires onChange.
+      event.target.value = '';
     }
   };
 

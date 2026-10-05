@@ -68,13 +68,14 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
         setPantryItems([...pantryItems, ...newIngredients]);
       }
 
-      event.target.value = '';
     } catch (error) {
       console.error('Error scanning image:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to scan image';
       setScanError(errorMessage);
     } finally {
       setIsScanning(false);
+      // Clear the input even after an error, so picking the same photo again still fires onChange.
+      event.target.value = '';
     }
   };
 
