@@ -5,10 +5,10 @@
  * re-enabling sign-out while a second is still running, and without going
  * negative if end() is ever called more than begin().
  *
- * Kept separate from GenerationActivityProvider's React glue so the logic
- * that actually matters is testable without rendering — apps/web's
- * react/react-dom versions are currently mismatched (see package.json),
- * which breaks @testing-library/react's renderHook.
+ * Kept separate from GenerationActivityProvider's React glue so the
+ * counting logic can be unit-tested on its own. (It was split out while
+ * mismatched react/react-dom versions broke rendering in tests, #74; the
+ * provider itself now has rendered tests too.)
  */
 export function createActivityCounter(onChange: (active: boolean) => void) {
   let count = 0;
