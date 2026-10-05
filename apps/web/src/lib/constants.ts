@@ -51,14 +51,22 @@ export const MAX_RECIPE_TIME_MINS = 60;
 // ============================================
 
 /**
- * API request timeout in milliseconds
+ * Overall deadline per AI request in milliseconds, shared by the first
+ * attempt and every retry. Each route's `maxDuration` (seconds, a literal in
+ * its route.ts) sits above its deadline so the route can still return its
+ * 504 before the platform kills it.
  */
-export const API_REQUEST_TIMEOUT_MS = 30000; // 30 seconds
+export const AI_DEADLINES_MS = {
+  generateRecipes: 90_000, // gemini-2.5-pro is slow; maxDuration 120
+  extractRecipeFromImage: 45_000, // maxDuration 60
+  scanPantryImage: 30_000, // maxDuration 60
+  extractRecipeFromUrl: 30_000, // AI call only (page fetch has its own 10s); maxDuration 60
+} as const;
 
 /**
- * Maximum number of API retry attempts
+ * Maximum number of retries after the first attempt
  */
-export const API_MAX_RETRIES = 3;
+export const API_MAX_RETRIES = 2;
 
 /**
  * Initial delay for exponential backoff in milliseconds

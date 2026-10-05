@@ -55,6 +55,17 @@ and HTML content types only. A refusal returns 400/422 with a `code`
 (`invalid_url`, `blocked_host`, `timeout`, `too_large`, `not_html`,
 `http_error`) and the same friendly message for all of them.
 
+Every AI call runs under one overall deadline shared by its retries
+(`callWithDeadline` in `apps/web/src/lib/api/aiCall.ts`; values in
+`AI_DEADLINES_MS`, `apps/web/src/lib/constants.ts`): 90 s for
+`generate-recipes`, 45 s for `extract-recipe-from-image`, 30 s for
+`scan-pantry-image` and for the AI step of `extract-recipe-from-url`. The
+deadline's signal is passed to the SDK, so an in-flight call is cut off.
+Up to 2 retries (1 s then 2 s backoff) happen only on HTTP 429/500/502/503/504
+or a network error, never after the deadline. Each route's `maxDuration`
+sits above its deadline. Running out of time returns 504,
+`code: "timeout"`.
+
 ## Troubleshooting
 
 **"GEMINI_API_KEY is not configured"** — check the key is actually in
@@ -62,6 +73,10 @@ and HTML content types only. A refusal returns 400/422 with a `code`
 
 **"You've hit the limit for now"** — the per-user limit above; wait a
 few minutes.
+
+**"That took too long. Please try again."** — the AI call hit its
+deadline (see above). Usually transient; if it keeps happening, the model
+is slow or overloaded.
 
 **"Please sign in to use this feature"** — the session has expired; the
 app sends you to `/login` and back.

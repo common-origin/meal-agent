@@ -34,6 +34,13 @@ export function invalidRequestResponse(): NextResponse {
   );
 }
 
+export function timeoutResponse(): NextResponse {
+  return NextResponse.json(
+    { error: 'That took too long. Please try again.', code: 'timeout' },
+    { status: 504 }
+  );
+}
+
 /** Signed-in user, counted against `limiter`. */
 export async function requireUserWithinLimit(limiter: RateLimiter): Promise<Guarded<User>> {
   const user = await getCurrentUser();

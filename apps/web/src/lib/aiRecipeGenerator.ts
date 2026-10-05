@@ -9,8 +9,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Recipe } from './types/recipe';
 import type { RecipeGenerationRequest } from './prompts/recipeGeneration';
 import { buildSystemPrompt, buildRecipeGenerationPrompt } from './prompts/recipeGeneration';
-import { retryWithExponentialBackoff } from './utils/async';
-import { API_REQUEST_TIMEOUT_MS } from './constants';
+import { callWithDeadline, isTimeoutError } from './api/aiCall';
+import { AI_DEADLINES_MS } from './constants';
 
 // Initialize Gemini API
 const getGeminiClient = () => {
@@ -65,40 +65,10 @@ export async function generateRecipes(
       servings: request.familySettings.totalServings,
     });
 
-    // Create AbortController for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-      console.warn(`⏰ Request timed out after ${API_REQUEST_TIMEOUT_MS / 1000} seconds`);
-    }, API_REQUEST_TIMEOUT_MS);
-
-    let result;
-    try {
-      // Generate content with retry logic for transient errors
-      result = await retryWithExponentialBackoff(
-        async () => {
-          // Check if already aborted
-          if (controller.signal.aborted) {
-            throw new Error(`Request timeout: AI generation took longer than ${API_REQUEST_TIMEOUT_MS / 1000} seconds`);
-          }
-          return await model.generateContent(fullPrompt);
-        }
-      );
-      
-      clearTimeout(timeoutId);
-    } catch (error) {
-      clearTimeout(timeoutId);
-      
-      // Check if it was a timeout
-      if (error instanceof Error && error.message.includes('timeout')) {
-        return {
-          error: 'Request timeout',
-          details: `AI generation took longer than ${API_REQUEST_TIMEOUT_MS / 1000} seconds. Please try again with fewer recipes or simpler requirements.`,
-        };
-      }
-      
-      throw error;
-    }
+    // One deadline for the whole request, shared by any retries (#81).
+    const result = await callWithDeadline(AI_DEADLINES_MS.generateRecipes, (signal) =>
+      model.generateContent(fullPrompt, { signal })
+    );
     
     const response = result.response;
     const text = response.text();
@@ -141,6 +111,9 @@ export async function generateRecipes(
     };
 
   } catch (error) {
+    // The route turns a timeout into its 504 response.
+    if (isTimeoutError(error)) throw error;
+
     console.error('❌ Error generating recipes:', error);
     
     if (error instanceof Error) {

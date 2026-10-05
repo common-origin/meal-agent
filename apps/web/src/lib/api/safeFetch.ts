@@ -11,6 +11,7 @@
 
 import dns from 'node:dns';
 import { isIP } from 'node:net';
+import { raceAbort } from '@/lib/utils/async';
 
 export type SafeFetchErrorCode =
   | 'invalid_url'
@@ -122,7 +123,8 @@ async function assertPublicHost(hostname: string, signal: AbortSignal): Promise<
 
   let addresses: { address: string }[];
   try {
-    addresses = await abortable(dns.promises.lookup(host, { all: true }), signal);
+    // dns.lookup takes no AbortSignal, so race it against the overall timeout.
+    addresses = await raceAbort(dns.promises.lookup(host, { all: true }), signal);
   } catch (error) {
     if (signal.aborted) throw error;
     throw new SafeFetchError('invalid_url', `Could not resolve ${host}`);
@@ -130,19 +132,6 @@ async function assertPublicHost(hostname: string, signal: AbortSignal): Promise<
   if (addresses.length === 0 || addresses.some(({ address }) => isBlockedAddress(address))) {
     throw new SafeFetchError('blocked_host', `Host ${host} resolves to an address that is not allowed`);
   }
-}
-
-/** dns.lookup takes no AbortSignal, so race it against the overall timeout. */
-function abortable<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const onAbort = () => reject(signal.reason);
-    // Always observe `promise`, even after aborting, so a late rejection
-    // isn't left unhandled (it would crash the process under strict
-    // unhandled-rejection handling).
-    promise.then(resolve, reject).finally(() => signal.removeEventListener('abort', onAbort));
-    if (signal.aborted) onAbort();
-    else signal.addEventListener('abort', onAbort, { once: true });
-  });
 }
 
 /** Reads the body as a stream, aborting once it passes the size cap. */

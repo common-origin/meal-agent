@@ -24,7 +24,8 @@ vi.mock('@/lib/api/safeFetch', async (importOriginal) => ({
   safeFetchHtml: mocks.safeFetchHtml,
 }));
 
-vi.mock('@google/generative-ai', () => ({
+vi.mock('@google/generative-ai', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@google/generative-ai')>()),
   GoogleGenerativeAI: class {
     getGenerativeModel() {
       return { generateContent: mocks.generateContent };
@@ -236,6 +237,44 @@ describe('extract-recipe-from-url fetch errors', () => {
     });
     expect(mocks.generateContent).not.toHaveBeenCalled();
   });
+});
+
+describe('AI deadlines', () => {
+  const TIMEOUT_BODY = { error: 'That took too long. Please try again.', code: 'timeout' };
+  const realTimeout = AbortSignal.timeout.bind(AbortSignal);
+
+  it('generate-recipes returns 504 when the generator times out', async () => {
+    signIn();
+    mocks.generateRecipes.mockRejectedValue(new DOMException('deadline', 'TimeoutError'));
+    const res = await routes[0].call();
+    expect(res.status).toBe(504);
+    expect(await res.json()).toEqual(TIMEOUT_BODY);
+  });
+
+  it.each(routes.slice(1).map((r) => [r.name, r] as const))(
+    '%s aborts a model call that never answers and returns 504',
+    async (_name, route) => {
+      signIn();
+      route.prepareValid();
+      const deadlines: number[] = [];
+      // Real deadlines are 30-45 s; shrink them so the test runs quickly.
+      vi.spyOn(AbortSignal, 'timeout').mockImplementation((ms) => {
+        deadlines.push(ms);
+        return realTimeout(20);
+      });
+      mocks.generateContent.mockReturnValue(new Promise(() => {}));
+
+      const res = await route.call();
+      expect(res.status).toBe(504);
+      expect(await res.json()).toEqual(TIMEOUT_BODY);
+
+      const { signal } = mocks.generateContent.mock.calls[0][1] as { signal: AbortSignal };
+      expect(signal.aborted).toBe(true);
+      expect(deadlines).toContain(
+        { 'scan-pantry-image': 30_000, 'extract-recipe-from-image': 45_000, 'extract-recipe-from-url': 30_000 }[route.name]
+      );
+    }
+  );
 });
 
 describe('share-recipe-email rate limit (shared limiter)', () => {

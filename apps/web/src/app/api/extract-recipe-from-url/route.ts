@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
 import { extractRecipeFromUrlSchema } from '@/lib/api/schemas';
-import { parseBody, readJson, requireUserWithinLimit } from '@/lib/api/guard';
+import { parseBody, readJson, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
+import { callWithDeadline, isTimeoutError } from '@/lib/api/aiCall';
+import { AI_DEADLINES_MS } from '@/lib/constants';
 import { safeFetchHtml, SafeFetchError } from '@/lib/api/safeFetch';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+// Above the 30s AI deadline, so the route can return its 504 first.
+export const maxDuration = 60;
 
 const UNREADABLE_PAGE_MESSAGE = "We couldn't read that page. Check the link or add the recipe manually.";
 
@@ -69,7 +73,9 @@ CRITICAL RULES:
 Extract the recipe now:`;
 
     console.log('🤖 Calling Gemini API to extract recipe...');
-    const result = await model.generateContent(prompt);
+    const result = await callWithDeadline(AI_DEADLINES_MS.extractRecipeFromUrl, (signal) =>
+      model.generateContent(prompt, { signal })
+    );
     const responseText = result.response.text();
     console.log('📄 Raw Gemini response:', responseText.substring(0, 200));
 
@@ -87,6 +93,8 @@ Extract the recipe now:`;
     return NextResponse.json({ recipe });
   } catch (error) {
     console.error('❌ Error extracting recipe from URL:', error);
+    if (isTimeoutError(error)) return timeoutResponse();
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to extract recipe' },
       { status: 500 }
