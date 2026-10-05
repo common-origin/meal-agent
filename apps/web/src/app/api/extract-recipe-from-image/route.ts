@@ -9,8 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Recipe } from '@/lib/types/recipe';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
-import { extractRecipeFromImageSchema } from '@/lib/api/schemas';
-import { parseBody, readJson, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
+import { readImageUpload, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
 import { callWithDeadline, isTimeoutError } from '@/lib/api/aiCall';
 import { AI_DEADLINES_MS } from '@/lib/constants';
 
@@ -34,11 +33,14 @@ export async function POST(request: NextRequest) {
     const auth = await requireUserWithinLimit(aiRateLimiters.extractRecipeFromImage);
     if (!auth.ok) return auth.response;
 
-    const parsed = parseBody(extractRecipeFromImageSchema, await readJson(request), 'extract-recipe-from-image');
-    if (!parsed.ok) return parsed.response;
-    const body = parsed.value;
+    const upload = await readImageUpload(request, 'extract-recipe-from-image');
+    if (!upload.ok) return upload.response;
+    const image = upload.value;
 
-    console.log('📸 Extracting recipe from image...');
+    console.log('📸 Extracting recipe from image:', {
+      size: `${(image.size / 1024).toFixed(1)}KB`,
+      type: image.type,
+    });
 
     const genAI = getGeminiClient();
     const model = genAI.getGenerativeModel({ 
@@ -84,7 +86,7 @@ RULES:
 - If you can't read something clearly, make your best guess or omit it`;
 
     // Process image
-    const imageData = body.image.replace(/^data:image\/\w+;base64,/, '');
+    const imageData = Buffer.from(await image.arrayBuffer()).toString('base64');
     
     const result = await callWithDeadline(AI_DEADLINES_MS.extractRecipeFromImage, (signal) =>
       model.generateContent(
@@ -93,7 +95,7 @@ RULES:
           {
             inlineData: {
               data: imageData,
-              mimeType: 'image/jpeg', // or image/png
+              mimeType: image.type,
             },
           },
         ],

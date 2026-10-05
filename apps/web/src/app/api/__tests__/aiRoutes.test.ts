@@ -63,9 +63,9 @@ function formRequest(path: string, form: FormData): NextRequest {
   return new NextRequest(`http://localhost${path}`, { method: 'POST', body: form });
 }
 
-function imageForm(): FormData {
+function imageForm(type = 'image/jpeg', name = 'photo.jpg'): FormData {
   const form = new FormData();
-  form.append('image', new File([new Uint8Array([1, 2, 3])], 'fridge.jpg', { type: 'image/jpeg' }));
+  form.append('image', new File([new Uint8Array([1, 2, 3])], name, { type }));
   return form;
 }
 
@@ -110,9 +110,8 @@ const routes: RouteCase[] = [
   {
     name: 'extract-recipe-from-image',
     limit: 10,
-    call: () =>
-      extractFromImagePOST(jsonRequest('/api/extract-recipe-from-image', { image: 'data:image/jpeg;base64,AAAA' })),
-    callInvalid: () => extractFromImagePOST(jsonRequest('/api/extract-recipe-from-image', { image: '' })),
+    call: () => extractFromImagePOST(formRequest('/api/extract-recipe-from-image', imageForm())),
+    callInvalid: () => extractFromImagePOST(formRequest('/api/extract-recipe-from-image', new FormData())),
     prepareValid: () =>
       mocks.generateContent.mockResolvedValue(geminiText('{"name":"Soup","ingredients":[],"instructions":[]}')),
   },
@@ -215,6 +214,39 @@ describe('generate-recipes body handling', () => {
     const res = await generateRecipesPOST(
       new NextRequest('http://localhost/api/generate-recipes', { method: 'POST', body: 'not json' })
     );
+    expect(res.status).toBe(400);
+  });
+});
+
+describe.each([
+  ['scan-pantry-image', scanPantryPOST, '/api/scan-pantry-image'],
+  ['extract-recipe-from-image', extractFromImagePOST, '/api/extract-recipe-from-image'],
+] as const)('%s image uploads', (_name, post, path) => {
+  it.each(['image/png', 'image/webp', 'image/jpeg'])('passes the real %s MIME type to the model', async (type) => {
+    signIn();
+    mocks.generateContent.mockResolvedValue(
+      geminiText(path.includes('pantry') ? '["milk"]' : '{"name":"Soup","ingredients":[],"instructions":[]}')
+    );
+    const res = await post(formRequest(path, imageForm(type)));
+    expect(res.status).toBe(200);
+    const parts = mocks.generateContent.mock.calls[0][0] as Array<{ inlineData?: { mimeType: string; data: string } }>;
+    const inline = parts.find((part) => typeof part === 'object' && part.inlineData)?.inlineData;
+    expect(inline).toEqual({ mimeType: type, data: Buffer.from([1, 2, 3]).toString('base64') });
+  });
+
+  it.each([
+    ['a non-image file', () => imageForm('application/pdf', 'menu.pdf')],
+    ['an empty form', () => new FormData()],
+  ])('rejects %s with 400', async (_label, form) => {
+    signIn();
+    const res = await post(formRequest(path, form()));
+    expect(res.status).toBe(400);
+    expect(mocks.generateContent).not.toHaveBeenCalled();
+  });
+
+  it('rejects a JSON body with 400', async () => {
+    signIn();
+    const res = await post(jsonRequest(path, { image: 'data:image/jpeg;base64,AAAA' }));
     expect(res.status).toBe(400);
   });
 });

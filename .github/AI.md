@@ -66,6 +66,16 @@ or a network error, never after the deadline. Each route's `maxDuration`
 sits above its deadline. Running out of time returns 504,
 `code: "timeout"`.
 
+The two photo routes (`scan-pantry-image`, `extract-recipe-from-image`) take
+multipart `FormData` with an `image` field, which must be `image/*`; the
+route passes the file's real MIME type to Gemini. The browser resizes every
+photo first (`resizeImageForUpload` in
+`apps/web/src/lib/client/resizeImage.ts`: long edge at most 1600 px, JPEG
+quality 0.8) to stay far under Vercel's 4.5 MB request limit. If the browser
+can't decode a photo (e.g. HEIC in Chrome) it sends the original only when
+it's at most 4 MB; otherwise, or on a 413, the user sees "That photo is too
+large. Try a screenshot or a smaller photo."
+
 ## Troubleshooting
 
 **"GEMINI_API_KEY is not configured"** — check the key is actually in

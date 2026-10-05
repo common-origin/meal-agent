@@ -23,6 +23,7 @@ import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
 import { trackIngredientUsage } from "@/lib/ingredientAnalytics";
 import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
 import { redirectToLoginIfUnauthenticated } from "@/lib/api/client";
+import { imageUploadFormData, PhotoTooLargeError } from "@/lib/client/resizeImage";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -565,8 +566,8 @@ export default function PlanPage() {
     try {
       console.log('📸 Scanning pantry image:', file.name);
 
-      const formData = new FormData();
-      formData.append('image', file);
+      // Resized on the client to stay well under Vercel's 4.5 MB body limit (#82).
+      const formData = await imageUploadFormData(file);
 
       const response = await fetch('/api/scan-pantry-image', {
         method: 'POST',
@@ -574,6 +575,8 @@ export default function PlanPage() {
       });
 
       if (redirectToLoginIfUnauthenticated(response)) return;
+      // Vercel's 413 body isn't our JSON, so handle it before parsing.
+      if (response.status === 413) throw new PhotoTooLargeError();
 
       const data = await response.json();
 
