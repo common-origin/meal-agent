@@ -226,10 +226,18 @@ function isBlockedIPv6(address: string): boolean {
   if (allZeroPrefix && (h[5] === 0xffff || (h[5] === 0 && (h[6] !== 0 || h[7] > 1)))) {
     return isBlockedIPv4(h[6] * 0x10000 + h[7]);
   }
+  // NAT64 (64:ff9b::/96) and 6to4 (2002::/16) also carry an IPv4 address
+  // that a gateway on the path would forward to.
+  if (h[0] === 0x64 && h[1] === 0xff9b && h.slice(2, 6).every((x) => x === 0)) {
+    return isBlockedIPv4(h[6] * 0x10000 + h[7]);
+  }
+  if (h[0] === 0x64 && h[1] === 0xff9b && h[2] === 1) return true; // 64:ff9b:1::/48 local-use NAT64
+  if (h[0] === 0x2002) return isBlockedIPv4(h[1] * 0x10000 + h[2]);
   if (h.every((x) => x === 0)) return true; // ::
   if (h.slice(0, 7).every((x) => x === 0) && h[7] === 1) return true; // ::1
   if ((h[0] & 0xfe00) === 0xfc00) return true; // fc00::/7 unique local
   if ((h[0] & 0xffc0) === 0xfe80) return true; // fe80::/10 link-local
+  if ((h[0] & 0xffc0) === 0xfec0) return true; // fec0::/10 deprecated site-local
   if ((h[0] & 0xff00) === 0xff00) return true; // ff00::/8 multicast
   return false;
 }

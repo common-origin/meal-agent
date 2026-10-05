@@ -147,9 +147,16 @@ describe('safeFetchHtml', () => {
     await expect(safeFetchHtml('https://example.com/big')).resolves.toBeDefined();
   });
 
-  it.each(['application/pdf', 'application/json', ''])('rejects content type "%s"', async (type) => {
-    fetchMock.mockResolvedValue(new Response('%PDF-1.7', { headers: type ? { 'content-type': type } : {} }));
-    // A Response with a string body defaults to text/plain when no type is given.
+  it.each(['application/pdf', 'application/json', 'text/plain'])('rejects content type "%s"', async (type) => {
+    fetchMock.mockResolvedValue(new Response('%PDF-1.7', { headers: { 'content-type': type } }));
+    await expectCode(safeFetchHtml('https://example.com/file'), 'not_html');
+  });
+
+  it('rejects a response with no content type', async () => {
+    // A byte body, unlike a string body, gets no default content type.
+    const response = new Response(new TextEncoder().encode('<html></html>'));
+    expect(response.headers.get('content-type')).toBeNull();
+    fetchMock.mockResolvedValue(response);
     await expectCode(safeFetchHtml('https://example.com/file'), 'not_html');
   });
 
@@ -180,7 +187,8 @@ describe('isBlockedAddress', () => {
     '172.16.0.1', '172.31.255.255', '192.168.0.1', '198.18.0.1', '198.19.255.255',
     '224.0.0.1', '239.255.255.255', '255.255.255.255',
     '::', '::1', 'fc00::1', 'fdff::1', 'fe80::1', 'febf::1', 'ff02::1',
-    '::ffff:10.0.0.1', '::ffff:7f00:1', '::127.0.0.1', 'fe80::1%eth0',
+    '::ffff:10.0.0.1', '::ffff:7f00:1', '::127.0.0.1', 'fe80::1%eth0', 'fec0::1',
+    '64:ff9b::a9fe:a9fe', '64:ff9b::10.0.0.1', '64:ff9b:1::1', '2002:7f00:1::', '2002:c0a8:101::1',
   ])('blocks %s', (address) => {
     expect(isBlockedAddress(address)).toBe(true);
   });
@@ -188,7 +196,7 @@ describe('isBlockedAddress', () => {
   it.each([
     '93.184.215.14', '8.8.8.8', '100.63.255.255', '100.128.0.0', '172.15.255.255', '172.32.0.0',
     '198.17.255.255', '198.20.0.0', '223.255.255.255',
-    '2606:2800:220:1::1', '::ffff:8.8.8.8', 'fec0::1',
+    '2606:2800:220:1::1', '::ffff:8.8.8.8', '64:ff9b::8.8.8.8', '2002:808:808::1',
   ])('allows %s', (address) => {
     expect(isBlockedAddress(address)).toBe(false);
   });

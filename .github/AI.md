@@ -49,7 +49,8 @@ means wait a few minutes, not a bug.
 
 `extract-recipe-from-url` fetches the page with `safeFetchHtml`
 (`apps/web/src/lib/api/safeFetch.ts`): public http(s) hosts on default
-ports only, every redirect hop re-checked (max 3), 10 s and 3 MB limits,
+ports only (private, loopback, link-local and similar addresses refused,
+including IPv6 forms that embed them), every redirect hop re-checked (max 3), 10 s and 3 MB limits,
 and HTML content types only. A refusal returns 400/422 with a `code`
 (`invalid_url`, `blocked_host`, `timeout`, `too_large`, `not_html`,
 `http_error`) and the same friendly message for all of them.
