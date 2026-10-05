@@ -82,7 +82,7 @@ Not every route is an AI call — grouped by what they actually do:
 | Route | Model | Purpose |
 |---|---|---|
 | `generate-recipes` | `gemini-2.5-pro` | AI recipe generation from family settings |
-| `extract-recipe-from-url` | `gemini-2.5-flash` | Parse a recipe from an arbitrary URL |
+| `extract-recipe-from-url` | `gemini-2.5-flash` | Parse a recipe from a public web page, fetched via `lib/api/safeFetch.ts` |
 | `extract-recipe-from-image` | `gemini-3.8-flash` | Extract a recipe from a photo |
 | `scan-pantry-image` | `gemini-2.5-flash` | Detect ingredients from a pantry/fridge photo |
 

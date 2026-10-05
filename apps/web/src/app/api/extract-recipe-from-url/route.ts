@@ -3,8 +3,12 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
 import { extractRecipeFromUrlSchema } from '@/lib/api/schemas';
 import { parseBody, readJson, requireUserWithinLimit } from '@/lib/api/guard';
+import { safeFetchHtml, SafeFetchError } from '@/lib/api/safeFetch';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+const UNREADABLE_PAGE_MESSAGE = "We couldn't read that page. Check the link or add the recipe manually.";
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,24 +19,28 @@ export async function POST(req: NextRequest) {
     if (!parsed.ok) return parsed.response;
     const { url } = parsed.value;
 
-    console.log('📥 Fetching recipe from URL:', url);
-
-    // Fetch the webpage content
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch URL: ${response.statusText}`);
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: 'GEMINI_API_KEY is not configured' }, { status: 500 });
     }
 
-    const html = await response.text();
+    console.log('📥 Fetching recipe from URL:', url);
+
+    let html: string;
+    try {
+      ({ html } = await safeFetchHtml(url));
+    } catch (error) {
+      if (error instanceof SafeFetchError) {
+        console.warn(`extract-recipe-from-url: fetch refused (${error.code}):`, error.message);
+        const status = error.code === 'invalid_url' || error.code === 'blocked_host' ? 400 : 422;
+        return NextResponse.json({ error: UNREADABLE_PAGE_MESSAGE, code: error.code }, { status });
+      }
+      throw error;
+    }
     console.log('✅ Webpage fetched, length:', html.length);
 
     // Use Gemini to extract recipe from HTML (same model as recipe generation)
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `You are a recipe extraction expert. Extract recipe information from the following HTML content.
 
