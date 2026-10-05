@@ -41,7 +41,7 @@ const GenerationActivityContext = createContext<GenerationActivityContextValue |
  * or future one.
  *
  * See ./activityCounter.ts for the generation counter logic itself (kept
- * separate so it's unit-testable without rendering). isSignOutInProgress
+ * separate so it's unit-testable on its own). isSignOutInProgress
  * doesn't need the same overlapping-calls handling — only one sign-out can
  * ever be in flight at a time, since the button that starts it disables
  * itself immediately.

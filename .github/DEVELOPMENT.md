@@ -122,15 +122,26 @@ pnpm test:watch    # watch mode
 pnpm test:ui       # visual UI
 ```
 
-Three suites exist (`compose.test.ts`, `library.test.ts`, `scoring.test.ts`).
+Tests live in `__tests__/` folders next to the code they cover: pure
+`lib/` logic, API route handlers (`app/api/__tests__/`, `// @vitest-environment
+node`, with Supabase and Gemini mocked), and React components and hooks
+(`*.test.tsx` with `@testing-library/react`). Component tests only became
+possible once `react` and `react-dom` were on the same version (#74): React
+refuses to render with mismatched versions, so keep the two pinned together.
+
 The root `pnpm test` used to run bare `vitest run` with no config, which
 skipped `apps/web/vitest.config.ts` entirely (its `happy-dom` environment
 and setup file never applied) — combined with `RecipeLibrary` having no
 built-in seed data, that's what caused 12 of 30 tests to fail. Both are
 fixed (issue #5): the root scripts now pass `--root apps/web`, and
 `compose.test.ts`/`library.test.ts` seed a fixture recipe set via
-`__tests__/fixtures/`. There's still no coverage on the storage layers or
-any API route.
+`__tests__/fixtures/`.
+
+Remaining gaps: the Supabase-backed storage (`supabaseStorage.ts`, and
+`hybridStorage.ts`'s routing between it and local storage) has no tests (the
+local `storage.ts` layer does), and of the API routes only the AI routes and
+`share-recipe-email`'s auth and rate limit are tested. RLS-level tests are
+tracked in #67.
 
 Manual testing checklist for planning changes:
 - [ ] `/plan` loads a weekly grid

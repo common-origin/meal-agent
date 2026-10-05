@@ -263,11 +263,12 @@ signal now, but it was never actually gating what reached production.
   (see `PRODUCT.md`), and today the flow stops at a list. Same root cause
   as the pricing limitation — no public Coles API. Issue #36 has the
   researched options.
-- **No coverage on the storage layer or any API route.** `pnpm test`
-  passes in full (fixed in issue #5 — the root scripts weren't applying
-  `apps/web/vitest.config.ts`, and `RecipeLibrary`/`scoring.ts` now have
-  real test coverage), but the storage layers and every API route are
-  still untested.
+- **Gaps in test coverage for Supabase storage and most API routes.**
+  `pnpm test` passes in full (fixed in issue #5), and covers the local
+  `storage.ts` layer, the AI routes, and `share-recipe-email`'s auth and
+  rate limit. The Supabase-backed storage (`supabaseStorage.ts`,
+  `hybridStorage.ts`) and the other API routes are still untested, and
+  RLS-level tests need local Supabase infrastructure (#67).
 - **Editing an existing plan is more effort than it should be** — swapping
   out one night's meal isn't as seamless as the rest of the product aims
   for. Flagged in issue #38 as needing real UX research, not a quick fix.
