@@ -33,12 +33,13 @@ vi.mock('@google/generative-ai', async (importOriginal) => ({
   },
 }));
 
-import { POST as generateRecipesPOST } from '../generate-recipes/route';
-import { POST as scanPantryPOST } from '../scan-pantry-image/route';
-import { POST as extractFromImagePOST } from '../extract-recipe-from-image/route';
-import { POST as extractFromUrlPOST } from '../extract-recipe-from-url/route';
+import { POST as generateRecipesPOST, maxDuration as generateRecipesMaxDuration } from '../generate-recipes/route';
+import { POST as scanPantryPOST, maxDuration as scanPantryMaxDuration } from '../scan-pantry-image/route';
+import { POST as extractFromImagePOST, maxDuration as extractFromImageMaxDuration } from '../extract-recipe-from-image/route';
+import { POST as extractFromUrlPOST, maxDuration as extractFromUrlMaxDuration } from '../extract-recipe-from-url/route';
 import { POST as shareRecipeEmailPOST } from '../share-recipe-email/route';
-import { SafeFetchError } from '@/lib/api/safeFetch';
+import { SafeFetchError, SAFE_FETCH_TIMEOUT_MS } from '@/lib/api/safeFetch';
+import { AI_DEADLINES_MS } from '@/lib/constants';
 
 // Limiters are module-level and keyed by user, so each test signs in as a
 // fresh user to start from an empty window.
@@ -242,6 +243,16 @@ describe('extract-recipe-from-url fetch errors', () => {
 describe('AI deadlines', () => {
   const TIMEOUT_BODY = { error: 'That took too long. Please try again.', code: 'timeout' };
   const realTimeout = AbortSignal.timeout.bind(AbortSignal);
+
+  it.each([
+    ['generate-recipes', generateRecipesMaxDuration, AI_DEADLINES_MS.generateRecipes],
+    ['scan-pantry-image', scanPantryMaxDuration, AI_DEADLINES_MS.scanPantryImage],
+    ['extract-recipe-from-image', extractFromImageMaxDuration, AI_DEADLINES_MS.extractRecipeFromImage],
+    // The page fetch runs before the AI call, so both budgets count.
+    ['extract-recipe-from-url', extractFromUrlMaxDuration, AI_DEADLINES_MS.extractRecipeFromUrl + SAFE_FETCH_TIMEOUT_MS],
+  ])('%s maxDuration (%ss) leaves room after its deadline', (_route, maxDurationS, deadlineMs) => {
+    expect(maxDurationS * 1000).toBeGreaterThanOrEqual(deadlineMs + 10_000);
+  });
 
   it('generate-recipes returns 504 when the generator times out', async () => {
     signIn();

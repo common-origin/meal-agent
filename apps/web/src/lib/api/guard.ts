@@ -34,7 +34,9 @@ export function invalidRequestResponse(): NextResponse {
   );
 }
 
-export function timeoutResponse(): NextResponse {
+/** 504 for an AI call that hit its deadline; logs it so deadline hits show up server-side. */
+export function timeoutResponse(route: string): NextResponse {
+  console.warn(`${route}: AI call hit its deadline, returning 504`);
   return NextResponse.json(
     { error: 'That took too long. Please try again.', code: 'timeout' },
     { status: 504 }

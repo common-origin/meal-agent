@@ -15,7 +15,7 @@ import { isTimeoutError } from '@/lib/api/aiCall';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// Above the 90s AI deadline (AI_DEADLINES_MS.generateRecipes), so the route can return its 504 first.
+// Must stay above AI_DEADLINES_MS.generateRecipes, so the route can return its 504 first.
 export const maxDuration = 120;
 
 export async function POST(request: NextRequest) {
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    if (isTimeoutError(error)) return timeoutResponse();
+    if (isTimeoutError(error)) return timeoutResponse('generate-recipes');
 
     console.error('❌ Error in generate-recipes API:', error);
     

@@ -52,15 +52,15 @@ export const MAX_RECIPE_TIME_MINS = 60;
 
 /**
  * Overall deadline per AI request in milliseconds, shared by the first
- * attempt and every retry. Each route's `maxDuration` (seconds, a literal in
- * its route.ts) sits above its deadline so the route can still return its
+ * attempt and every retry. Each route's `maxDuration` (a literal in its
+ * route.ts) must stay above its deadline so the route can still return its
  * 504 before the platform kills it.
  */
 export const AI_DEADLINES_MS = {
-  generateRecipes: 90_000, // gemini-2.5-pro is slow; maxDuration 120
-  extractRecipeFromImage: 45_000, // maxDuration 60
-  scanPantryImage: 30_000, // maxDuration 60
-  extractRecipeFromUrl: 30_000, // AI call only (page fetch has its own 10s); maxDuration 60
+  generateRecipes: 90_000, // gemini-2.5-pro is slow
+  extractRecipeFromImage: 45_000,
+  scanPantryImage: 30_000,
+  extractRecipeFromUrl: 30_000, // AI call only; the page fetch has its own 10 s
 } as const;
 
 /**

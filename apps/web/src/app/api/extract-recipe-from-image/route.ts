@@ -16,7 +16,7 @@ import { AI_DEADLINES_MS } from '@/lib/constants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// Above the 45s AI deadline, so the route can return its 504 first.
+// Must stay above AI_DEADLINES_MS.extractRecipeFromImage, so the route can return its 504 first.
 export const maxDuration = 60;
 
 const getGeminiClient = () => {
@@ -160,7 +160,7 @@ RULES:
 
   } catch (error) {
     console.error('❌ Error extracting recipe from image:', error);
-    if (isTimeoutError(error)) return timeoutResponse();
+    if (isTimeoutError(error)) return timeoutResponse('extract-recipe-from-image');
 
     
     return NextResponse.json(

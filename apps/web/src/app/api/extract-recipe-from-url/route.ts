@@ -9,7 +9,7 @@ import { safeFetchHtml, SafeFetchError } from '@/lib/api/safeFetch';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// Above the 30s AI deadline, so the route can return its 504 first.
+// Must stay above AI_DEADLINES_MS.extractRecipeFromUrl, so the route can return its 504 first.
 export const maxDuration = 60;
 
 const UNREADABLE_PAGE_MESSAGE = "We couldn't read that page. Check the link or add the recipe manually.";
@@ -93,7 +93,7 @@ Extract the recipe now:`;
     return NextResponse.json({ recipe });
   } catch (error) {
     console.error('❌ Error extracting recipe from URL:', error);
-    if (isTimeoutError(error)) return timeoutResponse();
+    if (isTimeoutError(error)) return timeoutResponse('extract-recipe-from-url');
 
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to extract recipe' },

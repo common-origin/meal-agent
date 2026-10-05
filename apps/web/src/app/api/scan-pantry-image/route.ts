@@ -14,7 +14,7 @@ import { AI_DEADLINES_MS } from '@/lib/constants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// Above the 30s AI deadline, so the route can return its 504 first.
+// Must stay above AI_DEADLINES_MS.scanPantryImage, so the route can return its 504 first.
 export const maxDuration = 60;
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -138,7 +138,7 @@ Example output:
     });
 
   } catch (error) {
-    if (isTimeoutError(error)) return timeoutResponse();
+    if (isTimeoutError(error)) return timeoutResponse('scan-pantry-image');
 
     console.error('❌ Error scanning pantry image:', error);
     
