@@ -7,7 +7,7 @@ codebase.
 
 ## Getting started
 
-Prerequisites: Node 20+, pnpm 9+.
+Prerequisites: Node 20.19+ (react-email 6 requires it; Vercel runs Node 22 per `.nvmrc`), pnpm 9+.
 
 ```bash
 pnpm install
