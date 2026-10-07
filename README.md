@@ -66,7 +66,7 @@ An AI-powered multi-user meal planning application that helps households plan we
 
 ### Prerequisites
 
-- **Node.js 20.19+**
+- **Node.js 22+**
 - **PNPM 9+** (`corepack enable && corepack prepare pnpm@latest --activate`)
 - **Supabase Account** (for database access)
 - **Google Cloud Account** (for Gemini API)
