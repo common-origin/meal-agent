@@ -101,12 +101,18 @@ export async function runAiTask(task: AiTask, options: RunAiTaskOptions): Promis
 
 function tokenUsage(usage: {
   inputTokens: number | undefined;
+  outputTokens: number | undefined;
   outputTokenDetails: { textTokens: number | undefined; reasoningTokens: number | undefined };
 }): TokenUsage {
+  const reasoning = usage.outputTokenDetails.reasoningTokens;
+  // Some providers report only the output total; derive the text part from it.
+  const text =
+    usage.outputTokenDetails.textTokens ??
+    (usage.outputTokens !== undefined ? usage.outputTokens - (reasoning ?? 0) : undefined);
   return {
     inputTokens: usage.inputTokens ?? null,
-    outputTokens: usage.outputTokenDetails.textTokens ?? null,
-    thinkingTokens: usage.outputTokenDetails.reasoningTokens ?? null,
+    outputTokens: text ?? null,
+    thinkingTokens: reasoning ?? null,
   };
 }
 

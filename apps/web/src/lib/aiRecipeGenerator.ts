@@ -39,7 +39,15 @@ export async function generateRecipes(
     });
 
     // Model, thinking, deadline, retries and usage logging: lib/ai (#83).
-    const { text } = await runAiTask('generation', { system, prompt, userId });
+    const { text, blocked, rawFinishReason } = await runAiTask('generation', { system, prompt, userId });
+
+    // A withheld response is empty; say so rather than reporting a parse failure.
+    if (blocked) {
+      return {
+        error: 'Failed to generate recipes',
+        details: `The AI declined to generate recipes for these settings (${rawFinishReason ?? 'content filtered'}). Please try again or adjust your preferences.`,
+      };
+    }
 
     console.log('✅ Gemini response received');
     console.log('📄 Raw response length:', text.length);

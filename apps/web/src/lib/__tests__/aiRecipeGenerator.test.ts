@@ -73,8 +73,16 @@ describe('generateRecipes', () => {
     expect(result).toMatchObject({ error: 'Failed to generate recipes', details: expect.stringMatching(details) });
   });
 
-  it('returns a parse failure for an empty (e.g. blocked) response', async () => {
+  it('reports a blocked response as declined, not as a parse failure', async () => {
     runAiTask.mockResolvedValue({ text: '', blocked: true, rawFinishReason: 'SAFETY' });
+    await expect(generateRecipes(request, { userId: 'user-1' })).resolves.toEqual({
+      error: 'Failed to generate recipes',
+      details: expect.stringContaining('declined to generate recipes for these settings (SAFETY)'),
+    });
+  });
+
+  it('still reports unparseable text as a parse failure', async () => {
+    runAiTask.mockResolvedValue({ text: 'not json', blocked: false, rawFinishReason: 'STOP' });
     await expect(generateRecipes(request, { userId: 'user-1' })).resolves.toMatchObject({
       error: 'Failed to parse AI response',
     });

@@ -137,9 +137,19 @@ describe('runAiTask results and usage', () => {
     expect(mocks.recordAiUsage.mock.calls[0][1]).toMatchObject({ status: 'blocked', errorCode: 'RECITATION' });
   });
 
+  it('derives text output tokens from the total when a provider omits the breakdown', async () => {
+    mocks.generateText.mockResolvedValue(
+      sdkResult({ usage: { inputTokens: 50, outputTokens: 900, outputTokenDetails: { textTokens: undefined, reasoningTokens: 600 } } })
+    );
+    await runAiTask('generation', { userId: 'user-1', prompt: 'x' });
+    expect(mocks.recordAiUsage.mock.calls[0][1].tokens).toEqual({ inputTokens: 50, outputTokens: 300, thinkingTokens: 600 });
+  });
+
   it('records missing token counts as null', async () => {
     mocks.generateText.mockResolvedValue(
-      sdkResult({ usage: { inputTokens: undefined, outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined } } })
+      sdkResult({
+        usage: { inputTokens: undefined, outputTokens: undefined, outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined } },
+      })
     );
     await runAiTask('recipeFromUrl', { userId: 'user-1', prompt: 'x' });
     expect(mocks.recordAiUsage.mock.calls[0][1].tokens).toEqual({ inputTokens: null, outputTokens: null, thinkingTokens: null });
