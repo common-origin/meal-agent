@@ -8,11 +8,12 @@ const mocks = vi.hoisted(() => ({
   generateRecipes: vi.fn(),
   generateContent: vi.fn(),
   safeFetchHtml: vi.fn(),
+  createClient: vi.fn(),
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
   getCurrentUser: mocks.getCurrentUser,
-  createClient: vi.fn(),
+  createClient: mocks.createClient,
 }));
 
 vi.mock('@/lib/aiRecipeGenerator', () => ({
@@ -133,6 +134,9 @@ beforeEach(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
   vi.spyOn(console, 'warn').mockImplementation(() => {});
   vi.spyOn(console, 'error').mockImplementation(() => {});
+  vi.spyOn(console, 'info').mockImplementation(() => {});
+  // No ai_usage table by default: the daily cap fails open and usage writes are skipped.
+  mocks.createClient.mockRejectedValue(new Error('no Supabase in tests'));
 });
 
 describe.each(routes)('$name', (route) => {
@@ -177,6 +181,46 @@ describe.each(routes)('$name', (route) => {
   });
 });
 
+/** A Supabase client whose ai_usage count for today is `count`. */
+function supabaseWithUsageCount(count: number) {
+  const query = { eq: () => query, gte: async () => ({ count, error: null }) };
+  return { from: () => ({ select: () => query, insert: async () => ({ error: null }) }) };
+}
+
+describe.each(routes)('$name daily AI cap and usage logging', (route) => {
+  it("returns 429 daily_cap once the user has hit today's cap, before calling the model", async () => {
+    signIn();
+    route.prepareValid();
+    mocks.createClient.mockResolvedValue(supabaseWithUsageCount(100));
+    const res = await route.call();
+    expect(res.status).toBe(429);
+    expect(await res.json()).toEqual({ error: "You've reached today's AI limit. It resets tomorrow.", code: 'daily_cap' });
+    expect(mocks.generateRecipes).not.toHaveBeenCalled();
+    expect(mocks.generateContent).not.toHaveBeenCalled();
+  });
+
+  it('allows the call just under the cap', async () => {
+    signIn();
+    route.prepareValid();
+    mocks.createClient.mockResolvedValue(supabaseWithUsageCount(99));
+    expect((await route.call()).status).toBe(200);
+  });
+});
+
+describe.each(routes.slice(1))('$name usage logging', (route) => {
+  it('logs exactly one ai_call line for a model call', async () => {
+    signIn();
+    route.prepareValid();
+    await route.call();
+    const lines = vi
+      .mocked(console.info)
+      .mock.calls.map(([line]) => (typeof line === 'string' && line.startsWith('{') ? JSON.parse(line) : null))
+      .filter((entry) => entry?.type === 'ai_call');
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toMatchObject({ task: route.name, status: 'ok' });
+  });
+});
+
 describe('generate-recipes body handling', () => {
   it('passes validated, defaulted fields to the generator and strips unknown keys', async () => {
     signIn();
@@ -188,7 +232,8 @@ describe('generate-recipes body handling', () => {
         extra: true,
       })
     );
-    const request = mocks.generateRecipes.mock.calls[0][0];
+    const [request, usageContext] = mocks.generateRecipes.mock.calls[0];
+    expect(usageContext).toEqual({ userId: expect.stringMatching(/^user-/) });
     expect(request.numberOfRecipes).toBe(7);
     expect(request.excludeRecipeIds).toEqual([]);
     expect(request.pantryItems).toEqual([]);

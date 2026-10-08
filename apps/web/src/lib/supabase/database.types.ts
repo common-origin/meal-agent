@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_usage: {
+        Row: {
+          cost_usd: number | null
+          created_at: string
+          error_code: string | null
+          household_id: string | null
+          id: string
+          input_tokens: number | null
+          latency_ms: number
+          model: string
+          output_tokens: number | null
+          status: string
+          task: string
+          thinking_tokens: number | null
+          user_id: string
+        }
+        Insert: {
+          cost_usd?: number | null
+          created_at?: string
+          error_code?: string | null
+          household_id?: string | null
+          id?: string
+          input_tokens?: number | null
+          latency_ms: number
+          model: string
+          output_tokens?: number | null
+          status: string
+          task: string
+          thinking_tokens?: number | null
+          user_id: string
+        }
+        Update: {
+          cost_usd?: number | null
+          created_at?: string
+          error_code?: string | null
+          household_id?: string | null
+          id?: string
+          input_tokens?: number | null
+          latency_ms?: number
+          model?: string
+          output_tokens?: number | null
+          status?: string
+          task?: string
+          thinking_tokens?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       api_usage: {
         Row: {
           cost_usd: number | null

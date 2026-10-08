@@ -10,6 +10,7 @@ import type { User } from '@supabase/supabase-js';
 import type { z } from 'zod';
 import { getCurrentUser } from '@/lib/supabase/server';
 import type { RateLimiter } from './rateLimit';
+import { isOverDailyAiCap } from '@/lib/ai/usage';
 
 type Guarded<T> = { ok: true; value: T } | { ok: false; response: NextResponse };
 
@@ -43,11 +44,23 @@ export function timeoutResponse(route: string): NextResponse {
   );
 }
 
-/** Signed-in user, counted against `limiter`. */
+export function dailyCapResponse(): NextResponse {
+  return NextResponse.json(
+    { error: "You've reached today's AI limit. It resets tomorrow.", code: 'daily_cap' },
+    { status: 429 }
+  );
+}
+
+/**
+ * Signed-in user, counted against `limiter` (burst) and the daily AI cap.
+ * Each AI route makes one AI call per request, so checking the cap here is
+ * the same as checking it before the call.
+ */
 export async function requireUserWithinLimit(limiter: RateLimiter): Promise<Guarded<User>> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, response: unauthenticatedResponse() };
   if (!limiter.check(user.id)) return { ok: false, response: rateLimitedResponse() };
+  if (await isOverDailyAiCap(user.id)) return { ok: false, response: dailyCapResponse() };
   return { ok: true, value: user };
 }
 

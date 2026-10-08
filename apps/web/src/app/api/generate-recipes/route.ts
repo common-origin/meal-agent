@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Generate recipes with AI
-    const result = await generateRecipes(generationRequest);
+    const result = await generateRecipes(generationRequest, { userId: auth.value.id });
 
     // Check for errors
     if ('error' in result) {

@@ -4,6 +4,11 @@ import { DEFAULT_FAMILY_SETTINGS } from '../types/settings';
 
 const generateContent = vi.hoisted(() => vi.fn());
 
+// Usage rows are written through the server Supabase client; keep it out of these tests.
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn().mockRejectedValue(new Error('no Supabase in tests')),
+}));
+
 vi.mock('@google/generative-ai', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@google/generative-ai')>()),
   GoogleGenerativeAI: class {
@@ -44,7 +49,7 @@ afterEach(() => {
 describe('generateRecipes deadline', () => {
   it('passes the deadline signal to the model and throws a timeout when it never answers', async () => {
     generateContent.mockReturnValue(new Promise(() => {}));
-    const result = generateRecipes({ familySettings: DEFAULT_FAMILY_SETTINGS, numberOfRecipes: 1 });
+    const result = generateRecipes({ familySettings: DEFAULT_FAMILY_SETTINGS, numberOfRecipes: 1 }, { userId: 'user-1' });
     const assertion = expect(result).rejects.toSatisfy(isTimeoutError);
 
     await vi.advanceTimersByTimeAsync(AI_DEADLINES_MS.generateRecipes - 1);
@@ -62,7 +67,7 @@ describe('generateRecipes deadline', () => {
     generateContent
       .mockRejectedValueOnce(Object.assign(new Error('[503] overloaded'), { status: 503 }))
       .mockReturnValue(new Promise(() => {}));
-    const result = generateRecipes({ familySettings: DEFAULT_FAMILY_SETTINGS, numberOfRecipes: 1 });
+    const result = generateRecipes({ familySettings: DEFAULT_FAMILY_SETTINGS, numberOfRecipes: 1 }, { userId: 'user-1' });
     const assertion = expect(result).rejects.toSatisfy(isTimeoutError);
 
     await vi.advanceTimersByTimeAsync(AI_DEADLINES_MS.generateRecipes);
@@ -74,7 +79,7 @@ describe('generateRecipes deadline', () => {
   it('still returns a non-timeout failure as an error result', async () => {
     generateContent.mockRejectedValue(Object.assign(new Error('[400] bad request'), { status: 400 }));
     await expect(
-      generateRecipes({ familySettings: DEFAULT_FAMILY_SETTINGS, numberOfRecipes: 1 })
+      generateRecipes({ familySettings: DEFAULT_FAMILY_SETTINGS, numberOfRecipes: 1 }, { userId: 'user-1' })
     ).resolves.toMatchObject({ error: 'Failed to generate recipes' });
     expect(generateContent).toHaveBeenCalledTimes(1);
   });
