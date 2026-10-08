@@ -11,11 +11,11 @@ import type { RecipeGenerationRequest } from '@/lib/prompts/recipeGeneration';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
 import { generateRecipesSchema } from '@/lib/api/schemas';
 import { parseBody, readJson, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
-import { isTimeoutError } from '@/lib/api/aiCall';
+import { isAiTimeout } from '@/lib/ai/run';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// Must stay above AI_DEADLINES_MS.generateRecipes, so the route can return its 504 first.
+// Must stay above AI_TASKS.generation.deadlineMs, so the route can return its 504 first.
 export const maxDuration = 120;
 
 export async function POST(request: NextRequest) {
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    if (isTimeoutError(error)) return timeoutResponse('generate-recipes');
+    if (isAiTimeout(error)) return timeoutResponse('generate-recipes');
 
     console.error('❌ Error in generate-recipes API:', error);
     

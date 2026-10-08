@@ -2,10 +2,14 @@
 
 Merges what used to be two separate files (`AI_SETUP.md`, `DEBUGGING_AI.md`)
 per #35 — they overlapped heavily and both hardcoded a model name
-(`gemini-1.5-flash`) that no call site actually uses. See
-[`ARCHITECTURE.md`](./ARCHITECTURE.md#api-routes-appswebsrcappapi) for the
-real per-route model table; this file is intentionally light on
+(`gemini-1.5-flash`) that no call site actually uses. Models, thinking
+levels, deadlines and output caps live only in
+`apps/web/src/lib/ai/models.ts` (#83); this file is intentionally light on
 model-specific detail so it can't drift the same way again.
+
+All AI calls go through `runAiTask(task, …)` in `apps/web/src/lib/ai/run.ts`,
+built on the Vercel AI SDK (`ai` + `@ai-sdk/google`). The provider reads
+`GEMINI_API_KEY` (not the SDK's default `GOOGLE_GENERATIVE_AI_API_KEY`).
 
 ## Getting an API key
 
@@ -59,15 +63,14 @@ and HTML content types only. A refusal returns 400/422 with a `code`
 `http_error`) and the same friendly message for all of them.
 
 Every AI call runs under one overall deadline shared by its retries
-(`callWithDeadline` in `apps/web/src/lib/api/aiCall.ts`; values in
-`AI_DEADLINES_MS`, `apps/web/src/lib/constants.ts`): 90 s for
-`generate-recipes`, 45 s for `extract-recipe-from-image`, 30 s for
-`scan-pantry-image` and for the AI step of `extract-recipe-from-url`. The
-deadline's signal is passed to the SDK, so an in-flight call is cut off.
-Up to 2 retries (1 s then 2 s backoff) happen only on HTTP 429/500/502/503/504
-or a network error, never after the deadline. Each route's `maxDuration`
-sits above its deadline. Running out of time returns 504,
-`code: "timeout"`.
+(`runAiTask`, deadlines per task in `lib/ai/models.ts`): 60 s for recipe
+generation, 45 s for recipe-from-photo, 30 s for the pantry scan and for the
+AI step of URL import. The deadline is passed to the SDK as `abortSignal`,
+so an in-flight call is cut off. The SDK retries up to 2 times, only on
+HTTP 429/5xx or network errors and never after the deadline. Each route's
+`maxDuration` sits above its deadline (a test checks this). Running out of
+time returns 504, `code: "timeout"`. Failures reach routes as a typed
+`AiTaskError` (`timeout`, `rate_limited`, `unavailable`, `error`).
 
 The two photo routes (`scan-pantry-image`, `extract-recipe-from-image`) take
 multipart `FormData` with an `image` field, which must be `image/*`; the
@@ -120,7 +123,10 @@ endpoint — a public route that spends quota is the wrong tool):
 ## Usage, cost and the daily cap
 
 Every AI call (one logical call, including retries) is recorded once by
-`trackedAiCall` in `apps/web/src/lib/ai/usage.ts`:
+`runAiTask`, through `recordAiUsage` in `apps/web/src/lib/ai/usage.ts`. The
+`task` is the `lib/ai/models.ts` key (`generation`, `recipeFromImage`,
+`pantryScan`, `recipeFromUrl`); rows written before #83 used route names
+(`generate-recipes`, etc.).
 
 - a structured log line, `{"type":"ai_call", ...}`, with user, task, model,
   input/output/thinking tokens, estimated `cost_usd`, `latency_ms`,
@@ -131,7 +137,8 @@ Every AI call (one logical call, including retries) is recorded once by
   `household_id` from the caller's session. A failed write is only warned
   about; logging never fails a request.
 
-Cost is an estimate from per-model rates in `apps/web/src/lib/ai/pricing.ts`
+Cost is an estimate from per-model rates (`MODEL_PRICING` in
+`apps/web/src/lib/ai/models.ts`, computed by `lib/ai/pricing.ts`)
 (thinking tokens billed as output; an unknown model records a null cost).
 Prices change independently of this repo, so check Google's
 [pricing page](https://ai.google.dev/gemini-api/docs/pricing) and update the

@@ -78,19 +78,23 @@ won't be kept in sync with every bump.
 
 Not every route is an AI call — grouped by what they actually do:
 
-**AI (Gemini)**:
-| Route | Model | Purpose |
-|---|---|---|
-| `generate-recipes` | `gemini-2.5-pro` | AI recipe generation from family settings |
-| `extract-recipe-from-url` | `gemini-2.5-flash` | Parse a recipe from a public web page, fetched via `lib/api/safeFetch.ts` |
-| `extract-recipe-from-image` | `gemini-3.8-flash` | Extract a recipe from a photo |
-| `scan-pantry-image` | `gemini-2.5-flash` | Detect ingredients from a pantry/fridge photo |
+**AI (Gemini)**: `generate-recipes` (recipe generation from family
+settings), `extract-recipe-from-url` (a recipe from a public web page,
+fetched via `lib/api/safeFetch.ts`), `extract-recipe-from-image` (a recipe
+from a photo) and `scan-pantry-image` (ingredients from a pantry/fridge
+photo). Every AI call goes through `runAiTask` (`lib/ai/run.ts`, Vercel AI
+SDK). The model for each task is configured **only** in `lib/ai/models.ts`;
+as of #83:
 
-Model choice is per-route, not a single constant — check the route file
-directly for what's actually configured, not this table, since it's the
-kind of fact that's already drifted in this doc's history (see `CLAUDE.md`
-Known Drift). `aiRecipeGenerator.ts`'s `generateRecipes()` has no fallback
-model.
+| Task | Used by | Model | Thinking | Deadline | Max output tokens |
+|---|---|---|---|---|---|
+| `generation` | `generate-recipes` | `gemini-3.8-flash` | low | 60 s | 16,000 |
+| `recipeFromImage` | `extract-recipe-from-image` | `gemini-3.8-flash` | low | 45 s | 8,000 |
+| `pantryScan` | `scan-pantry-image` | `gemini-3.5-flash-lite` | minimal | 30 s | 2,000 |
+| `recipeFromUrl` | `extract-recipe-from-url` | `gemini-3.5-flash-lite` | minimal | 30 s | 8,000 |
+
+If this table and `models.ts` ever disagree, `models.ts` is right. There's
+no fallback model.
 
 These routes aren't covered by `proxy.ts`'s matcher, so each one checks the
 session itself, then applies a per-user rate limit and validates the body

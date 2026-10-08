@@ -47,7 +47,7 @@ An AI-powered multi-user meal planning application that helps households plan we
 - **9 Tables** - Complete schema with relationships and indexes
 
 ### AI & Machine Learning
-- **Google Gemini API** - gemini-2.0-flash-exp model
+- **Google Gemini 3 via the Vercel AI SDK** - models per task in `apps/web/src/lib/ai/models.ts`
   - Recipe generation
   - Image recognition (pantry scanning)
   - URL extraction and parsing

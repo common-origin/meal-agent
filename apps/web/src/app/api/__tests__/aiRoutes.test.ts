@@ -6,7 +6,7 @@ import { DEFAULT_FAMILY_SETTINGS } from '@/lib/types/settings';
 const mocks = vi.hoisted(() => ({
   getCurrentUser: vi.fn(),
   generateRecipes: vi.fn(),
-  generateContent: vi.fn(),
+  generateText: vi.fn(),
   safeFetchHtml: vi.fn(),
   createClient: vi.fn(),
 }));
@@ -25,13 +25,9 @@ vi.mock('@/lib/api/safeFetch', async (importOriginal) => ({
   safeFetchHtml: mocks.safeFetchHtml,
 }));
 
-vi.mock('@google/generative-ai', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@google/generative-ai')>()),
-  GoogleGenerativeAI: class {
-    getGenerativeModel() {
-      return { generateContent: mocks.generateContent };
-    }
-  },
+vi.mock('ai', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('ai')>()),
+  generateText: mocks.generateText,
 }));
 
 import { POST as generateRecipesPOST, maxDuration as generateRecipesMaxDuration } from '../generate-recipes/route';
@@ -40,7 +36,8 @@ import { POST as extractFromImagePOST, maxDuration as extractFromImageMaxDuratio
 import { POST as extractFromUrlPOST, maxDuration as extractFromUrlMaxDuration } from '../extract-recipe-from-url/route';
 import { POST as shareRecipeEmailPOST } from '../share-recipe-email/route';
 import { SafeFetchError, SAFE_FETCH_TIMEOUT_MS } from '@/lib/api/safeFetch';
-import { AI_DEADLINES_MS } from '@/lib/constants';
+import { AI_TASKS } from '@/lib/ai/models';
+import { AiTaskError } from '@/lib/ai/run';
 
 // Limiters are module-level and keyed by user, so each test signs in as a
 // fresh user to start from an empty window.
@@ -71,7 +68,12 @@ function imageForm(type = 'image/jpeg', name = 'photo.jpg'): FormData {
 }
 
 function geminiText(text: string) {
-  return { response: { text: () => text, candidates: [{ finishReason: 'STOP' }] } };
+  return {
+    text,
+    finishReason: 'stop',
+    rawFinishReason: 'STOP',
+    usage: { inputTokens: 100, outputTokenDetails: { textTokens: 20, reasoningTokens: 0 } },
+  };
 }
 
 // A real client payload: settings go over the wire as JSON.
@@ -106,7 +108,7 @@ const routes: RouteCase[] = [
     limit: 10,
     call: () => scanPantryPOST(formRequest('/api/scan-pantry-image', imageForm())),
     callInvalid: () => scanPantryPOST(formRequest('/api/scan-pantry-image', new FormData())),
-    prepareValid: () => mocks.generateContent.mockResolvedValue(geminiText('["milk"]')),
+    prepareValid: () => mocks.generateText.mockResolvedValue(geminiText('["milk"]')),
   },
   {
     name: 'extract-recipe-from-image',
@@ -114,7 +116,7 @@ const routes: RouteCase[] = [
     call: () => extractFromImagePOST(formRequest('/api/extract-recipe-from-image', imageForm())),
     callInvalid: () => extractFromImagePOST(formRequest('/api/extract-recipe-from-image', new FormData())),
     prepareValid: () =>
-      mocks.generateContent.mockResolvedValue(geminiText('{"name":"Soup","ingredients":[],"instructions":[]}')),
+      mocks.generateText.mockResolvedValue(geminiText('{"name":"Soup","ingredients":[],"instructions":[]}')),
   },
   {
     name: 'extract-recipe-from-url',
@@ -123,7 +125,7 @@ const routes: RouteCase[] = [
     callInvalid: () => extractFromUrlPOST(jsonRequest('/api/extract-recipe-from-url', { url: 42 })),
     prepareValid: () => {
       mocks.safeFetchHtml.mockResolvedValue({ html: '<html>soup</html>', finalUrl: 'https://example.com/soup' });
-      mocks.generateContent.mockResolvedValue(geminiText('{"title":"Soup"}'));
+      mocks.generateText.mockResolvedValue(geminiText('{"title":"Soup"}'));
     },
   },
 ];
@@ -147,7 +149,7 @@ describe.each(routes)('$name', (route) => {
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ error: 'Please sign in to use this feature.', code: 'unauthenticated' });
     expect(mocks.generateRecipes).not.toHaveBeenCalled();
-    expect(mocks.generateContent).not.toHaveBeenCalled();
+    expect(mocks.generateText).not.toHaveBeenCalled();
   });
 
   it('returns 400 for an invalid body', async () => {
@@ -156,7 +158,7 @@ describe.each(routes)('$name', (route) => {
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: 'Something was wrong with that request.', code: 'invalid_request' });
     expect(mocks.generateRecipes).not.toHaveBeenCalled();
-    expect(mocks.generateContent).not.toHaveBeenCalled();
+    expect(mocks.generateText).not.toHaveBeenCalled();
   });
 
   it(`returns 429 after ${route.limit} requests from the same user`, async () => {
@@ -177,7 +179,7 @@ describe.each(routes)('$name', (route) => {
     route.prepareValid();
     const res = await route.call();
     expect(res.status).toBe(200);
-    expect(mocks.generateRecipes.mock.calls.length + mocks.generateContent.mock.calls.length).toBe(1);
+    expect(mocks.generateRecipes.mock.calls.length + mocks.generateText.mock.calls.length).toBe(1);
   });
 });
 
@@ -196,7 +198,7 @@ describe.each(routes)('$name daily AI cap and usage logging', (route) => {
     expect(res.status).toBe(429);
     expect(await res.json()).toEqual({ error: "You've reached today's AI limit. It resets tomorrow.", code: 'daily_cap' });
     expect(mocks.generateRecipes).not.toHaveBeenCalled();
-    expect(mocks.generateContent).not.toHaveBeenCalled();
+    expect(mocks.generateText).not.toHaveBeenCalled();
   });
 
   it('allows the call just under the cap', async () => {
@@ -217,7 +219,12 @@ describe.each(routes.slice(1))('$name usage logging', (route) => {
       .mock.calls.map(([line]) => (typeof line === 'string' && line.startsWith('{') ? JSON.parse(line) : null))
       .filter((entry) => entry?.type === 'ai_call');
     expect(lines).toHaveLength(1);
-    expect(lines[0]).toMatchObject({ task: route.name, status: 'ok' });
+    const task = {
+      'scan-pantry-image': 'pantryScan',
+      'extract-recipe-from-image': 'recipeFromImage',
+      'extract-recipe-from-url': 'recipeFromUrl',
+    }[route.name];
+    expect(lines[0]).toMatchObject({ task, model: AI_TASKS[task as keyof typeof AI_TASKS].model, status: 'ok' });
   });
 });
 
@@ -269,14 +276,16 @@ describe.each([
 ] as const)('%s image uploads', (_name, post, path) => {
   it.each(['image/png', 'image/webp', 'image/jpeg'])('passes the real %s MIME type to the model', async (type) => {
     signIn();
-    mocks.generateContent.mockResolvedValue(
+    mocks.generateText.mockResolvedValue(
       geminiText(path.includes('pantry') ? '["milk"]' : '{"name":"Soup","ingredients":[],"instructions":[]}')
     );
     const res = await post(formRequest(path, imageForm(type)));
     expect(res.status).toBe(200);
-    const parts = mocks.generateContent.mock.calls[0][0] as Array<{ inlineData?: { mimeType: string; data: string } }>;
-    const inline = parts.find((part) => typeof part === 'object' && part.inlineData)?.inlineData;
-    expect(inline).toEqual({ mimeType: type, data: Buffer.from([1, 2, 3]).toString('base64') });
+    const { messages } = mocks.generateText.mock.calls[0][0] as {
+      messages: Array<{ content: Array<{ type: string; data?: Uint8Array; mediaType?: string }> }>;
+    };
+    const file = messages[0].content.find((part) => part.type === 'file');
+    expect(file).toEqual({ type: 'file', data: new Uint8Array([1, 2, 3]), mediaType: type });
   });
 
   it.each([
@@ -286,7 +295,7 @@ describe.each([
     signIn();
     const res = await post(formRequest(path, form()));
     expect(res.status).toBe(400);
-    expect(mocks.generateContent).not.toHaveBeenCalled();
+    expect(mocks.generateText).not.toHaveBeenCalled();
   });
 
   it('rejects a JSON body with 400', async () => {
@@ -313,7 +322,7 @@ describe('extract-recipe-from-url fetch errors', () => {
       error: "We couldn't read that page. Check the link or add the recipe manually.",
       code,
     });
-    expect(mocks.generateContent).not.toHaveBeenCalled();
+    expect(mocks.generateText).not.toHaveBeenCalled();
   });
 });
 
@@ -322,18 +331,18 @@ describe('AI deadlines', () => {
   const realTimeout = AbortSignal.timeout.bind(AbortSignal);
 
   it.each([
-    ['generate-recipes', generateRecipesMaxDuration, AI_DEADLINES_MS.generateRecipes],
-    ['scan-pantry-image', scanPantryMaxDuration, AI_DEADLINES_MS.scanPantryImage],
-    ['extract-recipe-from-image', extractFromImageMaxDuration, AI_DEADLINES_MS.extractRecipeFromImage],
+    ['generate-recipes', generateRecipesMaxDuration, AI_TASKS.generation.deadlineMs],
+    ['scan-pantry-image', scanPantryMaxDuration, AI_TASKS.pantryScan.deadlineMs],
+    ['extract-recipe-from-image', extractFromImageMaxDuration, AI_TASKS.recipeFromImage.deadlineMs],
     // The page fetch runs before the AI call, so both budgets count.
-    ['extract-recipe-from-url', extractFromUrlMaxDuration, AI_DEADLINES_MS.extractRecipeFromUrl + SAFE_FETCH_TIMEOUT_MS],
+    ['extract-recipe-from-url', extractFromUrlMaxDuration, AI_TASKS.recipeFromUrl.deadlineMs + SAFE_FETCH_TIMEOUT_MS],
   ])('%s maxDuration (%ss) leaves room after its deadline', (_route, maxDurationS, deadlineMs) => {
     expect(maxDurationS * 1000).toBeGreaterThanOrEqual(deadlineMs + 10_000);
   });
 
   it('generate-recipes returns 504 when the generator times out', async () => {
     signIn();
-    mocks.generateRecipes.mockRejectedValue(new DOMException('deadline', 'TimeoutError'));
+    mocks.generateRecipes.mockRejectedValue(new AiTaskError('timeout', 'deadline'));
     const res = await routes[0].call();
     expect(res.status).toBe(504);
     expect(await res.json()).toEqual(TIMEOUT_BODY);
@@ -350,16 +359,20 @@ describe('AI deadlines', () => {
         deadlines.push(ms);
         return realTimeout(20);
       });
-      mocks.generateContent.mockReturnValue(new Promise(() => {}));
+      mocks.generateText.mockReturnValue(new Promise(() => {}));
 
       const res = await route.call();
       expect(res.status).toBe(504);
       expect(await res.json()).toEqual(TIMEOUT_BODY);
 
-      const { signal } = mocks.generateContent.mock.calls[0][1] as { signal: AbortSignal };
-      expect(signal.aborted).toBe(true);
+      const { abortSignal } = mocks.generateText.mock.calls[0][0] as { abortSignal: AbortSignal };
+      expect(abortSignal.aborted).toBe(true);
       expect(deadlines).toContain(
-        { 'scan-pantry-image': 30_000, 'extract-recipe-from-image': 45_000, 'extract-recipe-from-url': 30_000 }[route.name]
+        {
+          'scan-pantry-image': AI_TASKS.pantryScan.deadlineMs,
+          'extract-recipe-from-image': AI_TASKS.recipeFromImage.deadlineMs,
+          'extract-recipe-from-url': AI_TASKS.recipeFromUrl.deadlineMs,
+        }[route.name]
       );
     }
   );

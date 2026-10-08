@@ -280,8 +280,8 @@ export default function AboutPage() {
                 <Typography variant="h4">Technology Stack</Typography>
                 <Typography variant="body" color="subdued">
                   • <strong>Framework:</strong> Next.js 16.0.0 (React 19, TypeScript 5.9.3)<br/>
-                  • <strong>UI:</strong> Common Origin Design System v1.14.0 (15+ components)<br/>
-                  • <strong>AI:</strong> Google Gemini 2.0 Flash Experimental (gemini-2.0-flash-exp)<br/>
+                  • <strong>UI:</strong> Common Origin Design System<br/>
+                  • <strong>AI:</strong> Google Gemini 3 (via Vercel AI SDK)<br/>
                   • <strong>Database:</strong> Supabase PostgreSQL (8 tables, 30+ RLS policies)<br/>
                   • <strong>Authentication:</strong> Supabase Auth (Google OAuth + Magic Link)<br/>
                   • <strong>Storage:</strong> 4-layer hybrid architecture (PostgreSQL + localStorage)<br/>

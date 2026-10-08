@@ -17,7 +17,7 @@ vi.mock('next/server', async (importOriginal) => ({
   },
 }));
 
-import { isOverDailyAiCap, trackedAiCall, startOfUtcDay, DAILY_AI_CALL_CAP } from '../ai/usage';
+import { isOverDailyAiCap, recordAiUsage, startOfUtcDay, DAILY_AI_CALL_CAP } from '../ai/usage';
 
 async function flushAfter() {
   const callbacks = mocks.afterCallbacks.splice(0);
@@ -39,22 +39,14 @@ function fakeSupabase({
   return { client, insert, select, countQuery };
 }
 
-const context = { task: 'scan-pantry-image' as const, model: 'gemini-2.5-flash', userId: 'user-1' };
+const context = { task: 'pantryScan' as const, model: 'gemini-3.5-flash-lite', userId: 'user-1' };
 
-function geminiResult({
-  usage = { promptTokenCount: 1_000, candidatesTokenCount: 200, totalTokenCount: 1_200, thoughtsTokenCount: 800 },
-  finishReason = 'STOP',
-  blockReason,
-}: { usage?: object; finishReason?: string; blockReason?: string } = {}) {
-  return {
-    response: {
-      text: () => '[]',
-      usageMetadata: usage,
-      candidates: [{ finishReason }],
-      ...(blockReason ? { promptFeedback: { blockReason } } : {}),
-    },
-  } as never;
-}
+const okOutcome = {
+  latencyMs: 850,
+  status: 'ok' as const,
+  errorCode: null,
+  tokens: { inputTokens: 1_000, outputTokens: 200, thinkingTokens: 800 },
+};
 
 beforeEach(() => {
   vi.restoreAllMocks();
@@ -107,79 +99,54 @@ describe('startOfUtcDay', () => {
   });
 });
 
-describe('trackedAiCall', () => {
-  it('returns the result and records one row and one log line with tokens and cost', async () => {
+describe('recordAiUsage', () => {
+  it('logs one ai_call line now and writes the row only after the response', async () => {
     const supabase = fakeSupabase();
     mocks.createClient.mockResolvedValue(supabase.client);
-    const result = geminiResult();
 
-    await expect(trackedAiCall(context, 30_000, async () => result)).resolves.toBe(result);
+    recordAiUsage(context, okOutcome);
 
     expect(console.info).toHaveBeenCalledTimes(1);
     const line = JSON.parse(vi.mocked(console.info).mock.calls[0][0] as string);
     expect(line).toMatchObject({
       type: 'ai_call',
       user_id: 'user-1',
-      task: 'scan-pantry-image',
-      model: 'gemini-2.5-flash',
+      task: 'pantryScan',
+      model: 'gemini-3.5-flash-lite',
       input_tokens: 1_000,
       output_tokens: 200,
       thinking_tokens: 800,
+      latency_ms: 850,
       status: 'ok',
       error_code: null,
     });
     // 1,000 in at $0.30/M + (200 + 800) out at $2.50/M
     expect(line.cost_usd).toBeCloseTo(0.0028, 9);
-    expect(line.latency_ms).toEqual(expect.any(Number));
 
-    // The row is written only once the response is done.
     expect(supabase.insert).not.toHaveBeenCalled();
     await flushAfter();
-    expect(supabase.insert).toHaveBeenCalledTimes(1);
     // household_id is left to the column default (get_user_household_id()).
     const row = Object.fromEntries(Object.entries(line).filter(([key]) => key !== 'type'));
     expect(supabase.insert).toHaveBeenCalledWith(row);
     expect(supabase.client.from).toHaveBeenCalledWith('ai_usage');
   });
 
-  it('records null tokens and cost when the response has no usage metadata', async () => {
+  it('records a null cost when token counts are missing', () => {
     mocks.createClient.mockResolvedValue(fakeSupabase().client);
-    const noUsage = { response: { text: () => '[]', candidates: [{ finishReason: 'STOP' }] } } as never;
-    await trackedAiCall(context, 30_000, async () => noUsage);
+    recordAiUsage(context, {
+      ...okOutcome,
+      status: 'timeout',
+      errorCode: 'timeout',
+      tokens: { inputTokens: null, outputTokens: null, thinkingTokens: null },
+    });
     const line = JSON.parse(vi.mocked(console.info).mock.calls[0][0] as string);
-    expect(line).toMatchObject({ input_tokens: null, output_tokens: null, thinking_tokens: null, cost_usd: null });
+    expect(line).toMatchObject({ status: 'timeout', error_code: 'timeout', input_tokens: null, cost_usd: null });
   });
 
-  it.each([
-    ['a RECITATION finish', { finishReason: 'RECITATION' }, 'RECITATION'],
-    ['a SAFETY finish', { finishReason: 'SAFETY' }, 'SAFETY'],
-    ['a blocked prompt', { blockReason: 'SAFETY', finishReason: 'STOP' }, 'SAFETY'],
-  ])('records %s as blocked', async (_label, options, code) => {
-    mocks.createClient.mockResolvedValue(fakeSupabase().client);
-    await trackedAiCall(context, 30_000, async () => geminiResult(options));
-    const line = JSON.parse(vi.mocked(console.info).mock.calls[0][0] as string);
-    expect(line).toMatchObject({ status: 'blocked', error_code: code });
-  });
-
-  it.each([
-    ['a timeout', new DOMException('deadline', 'TimeoutError'), 'timeout', 'timeout'],
-    ['Gemini rate limiting', Object.assign(new Error('[429]'), { status: 429 }), 'rate_limited', 'http_429'],
-    ['a 400 from Gemini', Object.assign(new Error('[400]'), { status: 400 }), 'error', 'http_400'],
-    ['an unexpected error', new TypeError('boom'), 'error', 'TypeError'],
-  ])('records %s and rethrows it', async (_label, error, status, code) => {
-    const supabase = fakeSupabase();
-    mocks.createClient.mockResolvedValue(supabase.client);
-    await expect(trackedAiCall(context, 30_000, async () => Promise.reject(error))).rejects.toBe(error);
-    const line = JSON.parse(vi.mocked(console.info).mock.calls[0][0] as string);
-    expect(line).toMatchObject({ status, error_code: code, input_tokens: null, cost_usd: null });
-    await flushAfter();
-    expect(supabase.insert).toHaveBeenCalledTimes(1);
-  });
-
-  it('never fails the call when the row cannot be written', async () => {
+  it('never throws when the row cannot be written', async () => {
     const supabase = fakeSupabase({ insertError: { message: 'relation "ai_usage" does not exist' } });
     mocks.createClient.mockResolvedValue(supabase.client);
-    await expect(trackedAiCall(context, 30_000, async () => geminiResult())).resolves.toBeDefined();
+    expect(() => recordAiUsage(context, okOutcome)).not.toThrow();
     await flushAfter();
     expect(supabase.insert).toHaveBeenCalledTimes(1);
     expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('ai_usage'), expect.anything());
@@ -187,7 +154,7 @@ describe('trackedAiCall', () => {
 
   it('swallows a client that cannot be created after the response', async () => {
     mocks.createClient.mockRejectedValue(new Error('no cookies'));
-    await trackedAiCall(context, 30_000, async () => geminiResult());
+    recordAiUsage(context, okOutcome);
     await expect(flushAfter()).resolves.toBeUndefined();
     expect(console.warn).toHaveBeenCalled();
   });

@@ -6,21 +6,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
 import { readImageUpload, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
-import { isTimeoutError } from '@/lib/api/aiCall';
-import { trackedAiCall } from '@/lib/ai/usage';
-import { AI_DEADLINES_MS } from '@/lib/constants';
+import { AiTaskError, isAiTimeout, runAiTask } from '@/lib/ai/run';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// Must stay above AI_DEADLINES_MS.scanPantryImage, so the route can return its 504 first.
+// Must stay above AI_TASKS.pantryScan.deadlineMs, so the route can return its 504 first.
 export const maxDuration = 60;
-
-const MODEL = 'gemini-2.5-flash';
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,21 +37,7 @@ export async function POST(request: NextRequest) {
       type: image.type,
     });
 
-    // Convert image to base64
-    const bytes = await image.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64Image = buffer.toString('base64');
-
-    // Use Gemini Vision to identify ingredients
-    const model = genAI.getGenerativeModel({ 
-      model: MODEL,
-      generationConfig: {
-        temperature: 0.3, // Slightly higher for variety in ingredient naming
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 2048,
-      },
-    });
+    const imageData = new Uint8Array(await image.arrayBuffer());
 
     const prompt = `Analyze this photo of a fridge/pantry and identify all visible food items and ingredients.
 
@@ -76,26 +55,20 @@ Return ONLY a JSON array of ingredient names, nothing else:
 Example output:
 ["chicken breast", "cherry tomatoes", "bell peppers", "milk", "cheddar cheese", "ground beef", "carrots", "broccoli"]`;
 
-    const result = await trackedAiCall(
-      { task: 'scan-pantry-image', model: MODEL, userId: auth.value.id },
-      AI_DEADLINES_MS.scanPantryImage,
-      (signal) =>
-        model.generateContent(
-          [
-            {
-              inlineData: {
-                data: base64Image,
-                mimeType: image.type,
-              },
-            },
-            prompt,
+    // Use Gemini Vision to identify ingredients (model and limits: lib/ai/models.ts)
+    const { text: rawText } = await runAiTask('pantryScan', {
+      userId: auth.value.id,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'file', data: imageData, mediaType: image.type },
+            { type: 'text', text: prompt },
           ],
-          { signal }
-        )
-    );
-
-    const response = await result.response;
-    const text = response.text().trim();
+        },
+      ],
+    });
+    const text = rawText.trim();
 
     console.log('🤖 Raw Gemini response:', text);
 
@@ -140,17 +113,11 @@ Example output:
     });
 
   } catch (error) {
-    if (isTimeoutError(error)) return timeoutResponse('scan-pantry-image');
+    if (isAiTimeout(error)) return timeoutResponse('scan-pantry-image');
 
     console.error('❌ Error scanning pantry image:', error);
-    
-    // Check for rate limit error
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const isRateLimit = errorMessage.includes('429') || 
-                       errorMessage.includes('Too Many Requests') ||
-                       errorMessage.includes('Resource exhausted');
-    
-    if (isRateLimit) {
+
+    if (error instanceof AiTaskError && error.code === 'rate_limited') {
       return NextResponse.json(
         {
           error: 'API rate limit exceeded',

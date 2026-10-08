@@ -51,29 +51,6 @@ export const MAX_RECIPE_TIME_MINS = 60;
 // ============================================
 
 /**
- * Overall deadline per AI request in milliseconds, shared by the first
- * attempt and every retry. Each route's `maxDuration` (a literal in its
- * route.ts) must stay above its deadline so the route can still return its
- * 504 before the platform kills it.
- */
-export const AI_DEADLINES_MS = {
-  generateRecipes: 90_000, // gemini-2.5-pro is slow
-  extractRecipeFromImage: 45_000,
-  scanPantryImage: 30_000,
-  extractRecipeFromUrl: 30_000, // AI call only; the page fetch has its own 10 s
-} as const;
-
-/**
- * Maximum number of retries after the first attempt
- */
-export const API_MAX_RETRIES = 2;
-
-/**
- * Initial delay for exponential backoff in milliseconds
- */
-export const API_INITIAL_RETRY_DELAY_MS = 1000; // 1 second
-
-/**
  * Debounce delay for text inputs in milliseconds
  */
 export const DEBOUNCE_DELAY_MS = 300;
