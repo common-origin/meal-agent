@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
 import { extractRecipeFromUrlSchema } from '@/lib/api/schemas';
 import { parseBody, readJson, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
-import { isTimeoutError } from '@/lib/api/aiCall';
-import { trackedAiCall } from '@/lib/ai/usage';
-import { AI_DEADLINES_MS } from '@/lib/constants';
+import { isAiTimeout, runAiTask } from '@/lib/ai/run';
 import { safeFetchHtml, SafeFetchError } from '@/lib/api/safeFetch';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// Must stay above AI_DEADLINES_MS.extractRecipeFromUrl, so the route can return its 504 first.
+// Must stay above AI_TASKS.recipeFromUrl.deadlineMs plus the 10 s page fetch, so the route can return its 504 first.
 export const maxDuration = 60;
-
-const MODEL = 'gemini-2.5-flash';
 
 const UNREADABLE_PAGE_MESSAGE = "We couldn't read that page. Check the link or add the recipe manually.";
 
@@ -26,8 +21,7 @@ export async function POST(req: NextRequest) {
     if (!parsed.ok) return parsed.response;
     const { url } = parsed.value;
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
+    if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json({ error: 'GEMINI_API_KEY is not configured' }, { status: 500 });
     }
 
@@ -46,8 +40,6 @@ export async function POST(req: NextRequest) {
     }
     console.log('✅ Webpage fetched, length:', html.length);
 
-    // Use Gemini to extract recipe from HTML (same model as recipe generation)
-    const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({ model: MODEL });
 
     const prompt = `You are a recipe extraction expert. Extract recipe information from the following HTML content.
 
@@ -76,13 +68,8 @@ CRITICAL RULES:
 Extract the recipe now:`;
 
     console.log('🤖 Calling Gemini API to extract recipe...');
-    const result = await trackedAiCall(
-      { task: 'extract-recipe-from-url', model: MODEL, userId: auth.value.id },
-      AI_DEADLINES_MS.extractRecipeFromUrl,
-      (signal) =>
-        model.generateContent(prompt, { signal })
-    );
-    const responseText = result.response.text();
+    // Model and limits: lib/ai/models.ts
+    const { text: responseText } = await runAiTask('recipeFromUrl', { userId: auth.value.id, prompt });
     console.log('📄 Raw Gemini response:', responseText.substring(0, 200));
 
     // Clean up the response - remove markdown code blocks if present
@@ -99,7 +86,7 @@ Extract the recipe now:`;
     return NextResponse.json({ recipe });
   } catch (error) {
     console.error('❌ Error extracting recipe from URL:', error);
-    if (isTimeoutError(error)) return timeoutResponse('extract-recipe-from-url');
+    if (isAiTimeout(error)) return timeoutResponse('extract-recipe-from-url');
 
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to extract recipe' },

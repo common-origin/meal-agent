@@ -6,30 +6,15 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Recipe } from '@/lib/types/recipe';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
 import { readImageUpload, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
-import { isTimeoutError } from '@/lib/api/aiCall';
-import { trackedAiCall } from '@/lib/ai/usage';
-import { AI_DEADLINES_MS } from '@/lib/constants';
+import { isAiTimeout, runAiTask } from '@/lib/ai/run';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// Must stay above AI_DEADLINES_MS.extractRecipeFromImage, so the route can return its 504 first.
+// Must stay above AI_TASKS.recipeFromImage.deadlineMs, so the route can return its 504 first.
 export const maxDuration = 60;
-
-const MODEL = 'gemini-3.8-flash';
-
-const getGeminiClient = () => {
-  const apiKey = process.env.GEMINI_API_KEY;
-  
-  if (!apiKey) {
-    throw new Error('GEMINI_API_KEY is not configured');
-  }
-  
-  return new GoogleGenerativeAI(apiKey);
-};
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,17 +28,6 @@ export async function POST(request: NextRequest) {
     console.log('📸 Extracting recipe from image:', {
       size: `${(image.size / 1024).toFixed(1)}KB`,
       type: image.type,
-    });
-
-    const genAI = getGeminiClient();
-    const model = genAI.getGenerativeModel({ 
-      model: MODEL,
-      generationConfig: {
-        temperature: 0.2, // Low temperature for accurate extraction
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 8192,
-      },
     });
 
     // Build the prompt for recipe extraction
@@ -88,61 +62,51 @@ RULES:
 - Return ONLY valid JSON, no extra text
 - If you can't read something clearly, make your best guess or omit it`;
 
-    // Process image
-    const imageData = Buffer.from(await image.arrayBuffer()).toString('base64');
-    
-    const result = await trackedAiCall(
-      { task: 'extract-recipe-from-image', model: MODEL, userId: auth.value.id },
-      AI_DEADLINES_MS.extractRecipeFromImage,
-      (signal) =>
-        model.generateContent(
-          [
-            prompt,
-            {
-              inlineData: {
-                data: imageData,
-                mimeType: image.type,
-              },
-            },
-          ],
-          { signal }
-        )
-    );
+    // Process image (model and limits: lib/ai/models.ts)
+    const imageData = new Uint8Array(await image.arrayBuffer());
 
-    const response = result.response;
-    
-    // Check for blocked responses (RECITATION, SAFETY, etc.)
-    const candidates = result.response.candidates;
-    if (candidates && candidates.length > 0) {
-      const candidate = candidates[0];
-      if (candidate.finishReason && candidate.finishReason !== 'STOP') {
-        console.log(`⚠️ Response blocked: ${candidate.finishReason}`, candidate);
-        
-        if (candidate.finishReason === 'RECITATION') {
-          return NextResponse.json(
-            {
-              error: 'Copyright Detection',
-              details: 'The image appears to contain copyrighted content. Please try:\n• Taking a photo of a handwritten recipe\n• Manually typing the recipe instead\n• Using a recipe you created yourself',
-              blocked: true,
-              reason: 'RECITATION'
-            },
-            { status: 422 }
-          );
-        }
-        
+    const result = await runAiTask('recipeFromImage', {
+      userId: auth.value.id,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: prompt },
+            { type: 'file', data: imageData, mediaType: image.type },
+          ],
+        },
+      ],
+    });
+
+    // Check for blocked or cut-off responses (RECITATION, SAFETY, MAX_TOKENS, ...)
+    const finishReason = result.rawFinishReason;
+    if (finishReason && finishReason !== 'STOP') {
+      console.log(`⚠️ Response blocked: ${finishReason}`);
+
+      if (finishReason === 'RECITATION') {
         return NextResponse.json(
           {
-            error: 'Content Blocked',
-            details: `The AI couldn't process this image (Reason: ${candidate.finishReason}). Please try a different image.`,
+            error: 'Copyright Detection',
+            details: 'The image appears to contain copyrighted content. Please try:\n• Taking a photo of a handwritten recipe\n• Manually typing the recipe instead\n• Using a recipe you created yourself',
             blocked: true,
-            reason: candidate.finishReason
+            reason: 'RECITATION'
           },
           { status: 422 }
         );
       }
+
+      return NextResponse.json(
+        {
+          error: 'Content Blocked',
+          details: `The AI couldn't process this image (Reason: ${finishReason}). Please try a different image.`,
+          blocked: true,
+          reason: finishReason
+        },
+        { status: 422 }
+      );
     }
-    
-    const text = response.text();
+
+    const text = result.text;
 
     console.log('✅ Gemini Vision response received');
 
@@ -168,7 +132,7 @@ RULES:
 
   } catch (error) {
     console.error('❌ Error extracting recipe from image:', error);
-    if (isTimeoutError(error)) return timeoutResponse('extract-recipe-from-image');
+    if (isAiTimeout(error)) return timeoutResponse('extract-recipe-from-image');
 
     
     return NextResponse.json(

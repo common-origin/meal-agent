@@ -5,27 +5,10 @@
  * personalized recipe suggestions based on family settings.
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Recipe } from './types/recipe';
 import type { RecipeGenerationRequest } from './prompts/recipeGeneration';
 import { buildSystemPrompt, buildRecipeGenerationPrompt } from './prompts/recipeGeneration';
-import { isTimeoutError } from './api/aiCall';
-import { trackedAiCall } from './ai/usage';
-import { AI_DEADLINES_MS } from './constants';
-
-// Initialize Gemini API
-const getGeminiClient = () => {
-  const apiKey = process.env.GEMINI_API_KEY;
-  
-  if (!apiKey) {
-    throw new Error('GEMINI_API_KEY is not configured. Please add it to your .env.local file.');
-  }
-  
-  return new GoogleGenerativeAI(apiKey);
-};
-
-// Use Gemini 2.5 Pro for higher quality outputs (requires billing enabled)
-const MODEL = 'gemini-2.5-pro';
+import { AiTaskError, isAiTimeout, runAiTask } from './ai/run';
 
 export interface GeneratedRecipeResponse {
   recipes: Recipe[];
@@ -45,23 +28,8 @@ export async function generateRecipes(
   { userId }: { userId: string }
 ): Promise<GeneratedRecipeResponse | GenerationError> {
   try {
-    const genAI = getGeminiClient();
-    
-    const model = genAI.getGenerativeModel({ 
-      model: MODEL,
-      generationConfig: {
-        temperature: 0.8, // Balanced creativity - reliable and family-friendly recipes
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 16384, // Ensures complete responses with detailed instructions
-      },
-    });
-
-    // Build the prompt
-    const systemPrompt = buildSystemPrompt();
-    const userPrompt = buildRecipeGenerationPrompt(request);
-    
-    const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
+    const system = buildSystemPrompt();
+    const prompt = buildRecipeGenerationPrompt(request);
 
     console.log('🤖 Generating recipes with Gemini...');
     console.log('📝 Request:', {
@@ -70,16 +38,16 @@ export async function generateRecipes(
       servings: request.familySettings.totalServings,
     });
 
-    // One deadline for the whole request, shared by any retries (#81),
-    // recorded as one AI call (#85).
-    const result = await trackedAiCall(
-      { task: 'generate-recipes', model: MODEL, userId },
-      AI_DEADLINES_MS.generateRecipes,
-      (signal) => model.generateContent(fullPrompt, { signal })
-    );
-    
-    const response = result.response;
-    const text = response.text();
+    // Model, thinking, deadline, retries and usage logging: lib/ai (#83).
+    const { text, blocked, rawFinishReason } = await runAiTask('generation', { system, prompt, userId });
+
+    // A withheld response is empty; say so rather than reporting a parse failure.
+    if (blocked) {
+      return {
+        error: 'Failed to generate recipes',
+        details: `The AI declined to generate recipes for these settings (${rawFinishReason ?? 'content filtered'}). Please try again or adjust your preferences.`,
+      };
+    }
 
     console.log('✅ Gemini response received');
     console.log('📄 Raw response length:', text.length);
@@ -120,28 +88,25 @@ export async function generateRecipes(
 
   } catch (error) {
     // The route turns a timeout into its 504 response.
-    if (isTimeoutError(error)) throw error;
+    if (isAiTimeout(error)) throw error;
 
     console.error('❌ Error generating recipes:', error);
-    
-    if (error instanceof Error) {
+
+    if (error instanceof AiTaskError) {
       // Provide user-friendly error messages for common issues
-      let userMessage = error.message;
-      
-      if (error.message.includes('503') || error.message.includes('overloaded')) {
-        userMessage = 'The AI service is temporarily overloaded. We tried 3 times but it\'s still busy. Please wait a minute and try again.';
-      } else if (error.message.includes('429')) {
-        userMessage = 'Rate limit reached. Please wait a minute before generating more recipes.';
-      } else if (error.message.includes('ETIMEDOUT') || error.message.includes('ECONNRESET')) {
-        userMessage = 'Network connection issue. Please check your internet and try again.';
-      }
-      
-      return {
-        error: 'Failed to generate recipes',
-        details: userMessage,
-      };
+      const details =
+        error.code === 'unavailable'
+          ? "The AI service is temporarily overloaded. We tried 3 times but it's still busy. Please wait a minute and try again."
+          : error.code === 'rate_limited'
+            ? 'Rate limit reached. Please wait a minute before generating more recipes.'
+            : error.message;
+      return { error: 'Failed to generate recipes', details };
     }
-    
+
+    if (error instanceof Error) {
+      return { error: 'Failed to generate recipes', details: error.message };
+    }
+
     return {
       error: 'Unknown error occurred',
       details: 'An unexpected error occurred while generating recipes',

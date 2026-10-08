@@ -1,86 +1,90 @@
 // @vitest-environment node
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DEFAULT_FAMILY_SETTINGS } from '../types/settings';
 
-const generateContent = vi.hoisted(() => vi.fn());
+const runAiTask = vi.hoisted(() => vi.fn());
 
-// Usage rows are written through the server Supabase client; keep it out of these tests.
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn().mockRejectedValue(new Error('no Supabase in tests')),
-}));
-
-vi.mock('@google/generative-ai', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@google/generative-ai')>()),
-  GoogleGenerativeAI: class {
-    getGenerativeModel() {
-      return { generateContent };
-    }
-  },
+// Deadlines, retries, error mapping and usage logging are runAiTask's job
+// (tested in lib/ai/__tests__/run.test.ts); here we check what the generator
+// asks for and how it handles the outcomes.
+vi.mock('../ai/run', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../ai/run')>()),
+  runAiTask,
 }));
 
 import { generateRecipes } from '../aiRecipeGenerator';
-import { isTimeoutError } from '../api/aiCall';
-import { AI_DEADLINES_MS } from '../constants';
+import { AiTaskError } from '../ai/run';
+import { buildSystemPrompt } from '../prompts/recipeGeneration';
 
-// AbortSignal.timeout runs on Node's own timers, which vi.useFakeTimers()
-// doesn't control, so tests build the same signal on the faked setTimeout.
-function fakeDeadline(ms: number): AbortSignal {
-  const controller = new AbortController();
-  setTimeout(() => controller.abort(new DOMException('The operation timed out.', 'TimeoutError')), ms);
-  return controller.signal;
-}
+const request = { familySettings: DEFAULT_FAMILY_SETTINGS, numberOfRecipes: 1 };
+
+const validRecipe = {
+  name: 'Lemon Chicken',
+  cuisine: 'italian',
+  totalTime: 30,
+  servings: 4,
+  ingredients: [{ name: 'chicken thighs', qty: 500, unit: 'g' }],
+  instructions: ['Cook it.'],
+};
 
 beforeEach(() => {
-  vi.useFakeTimers();
-  vi.spyOn(AbortSignal, 'timeout').mockImplementation(fakeDeadline);
-  vi.stubEnv('GEMINI_API_KEY', 'test-key');
+  runAiTask.mockReset();
   vi.spyOn(console, 'log').mockImplementation(() => {});
   vi.spyOn(console, 'warn').mockImplementation(() => {});
   vi.spyOn(console, 'error').mockImplementation(() => {});
-  generateContent.mockReset();
 });
 
-afterEach(() => {
-  vi.useRealTimers();
-  vi.unstubAllEnvs();
-  vi.restoreAllMocks();
-});
+describe('generateRecipes', () => {
+  it('runs the generation task with the system prompt separate from the request prompt', async () => {
+    runAiTask.mockResolvedValue({ text: JSON.stringify({ recipes: [validRecipe] }), blocked: false, rawFinishReason: 'STOP' });
+    await generateRecipes(request, { userId: 'user-1' });
 
-describe('generateRecipes deadline', () => {
-  it('passes the deadline signal to the model and throws a timeout when it never answers', async () => {
-    generateContent.mockReturnValue(new Promise(() => {}));
-    const result = generateRecipes({ familySettings: DEFAULT_FAMILY_SETTINGS, numberOfRecipes: 1 }, { userId: 'user-1' });
-    const assertion = expect(result).rejects.toSatisfy(isTimeoutError);
-
-    await vi.advanceTimersByTimeAsync(AI_DEADLINES_MS.generateRecipes - 1);
-    expect(generateContent).toHaveBeenCalledTimes(1);
-    const { signal } = generateContent.mock.calls[0][1] as { signal: AbortSignal };
-    expect(signal.aborted).toBe(false);
-
-    await vi.advanceTimersByTimeAsync(1);
-    await assertion;
-    // The SDK aborts its fetch through this same signal.
-    expect(signal.aborted).toBe(true);
+    expect(runAiTask).toHaveBeenCalledTimes(1);
+    const [task, options] = runAiTask.mock.calls[0];
+    expect(task).toBe('generation');
+    expect(options).toMatchObject({ userId: 'user-1', system: buildSystemPrompt() });
+    expect(options.prompt).toContain('Generate 1 weeknight dinner recipes');
+    expect(options.prompt).not.toContain(buildSystemPrompt());
   });
 
-  it('shares one deadline across retries', async () => {
-    generateContent
-      .mockRejectedValueOnce(Object.assign(new Error('[503] overloaded'), { status: 503 }))
-      .mockReturnValue(new Promise(() => {}));
-    const result = generateRecipes({ familySettings: DEFAULT_FAMILY_SETTINGS, numberOfRecipes: 1 }, { userId: 'user-1' });
-    const assertion = expect(result).rejects.toSatisfy(isTimeoutError);
-
-    await vi.advanceTimersByTimeAsync(AI_DEADLINES_MS.generateRecipes);
-    await assertion;
-    expect(generateContent).toHaveBeenCalledTimes(2);
-    expect(generateContent.mock.calls[1][1].signal).toBe(generateContent.mock.calls[0][1].signal);
+  it('parses the response exactly as before the SDK port', async () => {
+    runAiTask.mockResolvedValue({
+      text: '```json\n' + JSON.stringify({ recipes: [validRecipe] }) + '\n```',
+      blocked: false,
+      rawFinishReason: 'STOP',
+    });
+    const result = await generateRecipes(request, { userId: 'user-1' });
+    expect(result).toMatchObject({ recipes: [{ title: 'Lemon Chicken' }] });
   });
 
-  it('still returns a non-timeout failure as an error result', async () => {
-    generateContent.mockRejectedValue(Object.assign(new Error('[400] bad request'), { status: 400 }));
-    await expect(
-      generateRecipes({ familySettings: DEFAULT_FAMILY_SETTINGS, numberOfRecipes: 1 }, { userId: 'user-1' })
-    ).resolves.toMatchObject({ error: 'Failed to generate recipes' });
-    expect(generateContent).toHaveBeenCalledTimes(1);
+  it('rethrows a timeout so the route can return 504', async () => {
+    const timeout = new AiTaskError('timeout', 'deadline');
+    runAiTask.mockRejectedValue(timeout);
+    await expect(generateRecipes(request, { userId: 'user-1' })).rejects.toBe(timeout);
+  });
+
+  it.each([
+    ['unavailable', /temporarily overloaded/],
+    ['rate_limited', /Rate limit reached/],
+    ['error', /boom/],
+  ] as const)('returns a %s failure as an error result', async (code, details) => {
+    runAiTask.mockRejectedValue(new AiTaskError(code, 'boom'));
+    const result = await generateRecipes(request, { userId: 'user-1' });
+    expect(result).toMatchObject({ error: 'Failed to generate recipes', details: expect.stringMatching(details) });
+  });
+
+  it('reports a blocked response as declined, not as a parse failure', async () => {
+    runAiTask.mockResolvedValue({ text: '', blocked: true, rawFinishReason: 'SAFETY' });
+    await expect(generateRecipes(request, { userId: 'user-1' })).resolves.toEqual({
+      error: 'Failed to generate recipes',
+      details: expect.stringContaining('declined to generate recipes for these settings (SAFETY)'),
+    });
+  });
+
+  it('still reports unparseable text as a parse failure', async () => {
+    runAiTask.mockResolvedValue({ text: 'not json', blocked: false, rawFinishReason: 'STOP' });
+    await expect(generateRecipes(request, { userId: 'user-1' })).resolves.toMatchObject({
+      error: 'Failed to parse AI response',
+    });
   });
 });
