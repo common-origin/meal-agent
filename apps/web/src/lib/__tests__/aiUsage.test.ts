@@ -28,7 +28,6 @@ async function flushAfter() {
 function fakeSupabase({
   count = 0,
   countError = null as { message: string } | null,
-  householdId = 'household-1' as string | null,
   insertError = null as { message: string } | null,
 } = {}) {
   const countQuery = { eq: vi.fn(), gte: vi.fn() };
@@ -36,12 +35,7 @@ function fakeSupabase({
   countQuery.gte.mockResolvedValue({ count, error: countError });
   const insert = vi.fn().mockResolvedValue({ error: insertError });
   const select = vi.fn().mockReturnValue(countQuery);
-  const membership = {
-    select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: householdId ? { household_id: householdId } : null }) }) }),
-  };
-  const client = {
-    from: vi.fn((table: string) => (table === 'household_members' ? membership : { select, insert })),
-  };
+  const client = { from: vi.fn(() => ({ select, insert })) };
   return { client, insert, select, countQuery };
 }
 
@@ -142,7 +136,10 @@ describe('trackedAiCall', () => {
     expect(supabase.insert).not.toHaveBeenCalled();
     await flushAfter();
     expect(supabase.insert).toHaveBeenCalledTimes(1);
-    expect(supabase.insert).toHaveBeenCalledWith({ ...line, type: undefined, household_id: 'household-1' });
+    // household_id is left to the column default (get_user_household_id()).
+    const row = Object.fromEntries(Object.entries(line).filter(([key]) => key !== 'type'));
+    expect(supabase.insert).toHaveBeenCalledWith(row);
+    expect(supabase.client.from).toHaveBeenCalledWith('ai_usage');
   });
 
   it('records null tokens and cost when the response has no usage metadata', async () => {
@@ -180,11 +177,11 @@ describe('trackedAiCall', () => {
   });
 
   it('never fails the call when the row cannot be written', async () => {
-    const supabase = fakeSupabase({ insertError: { message: 'relation "ai_usage" does not exist' }, householdId: null });
+    const supabase = fakeSupabase({ insertError: { message: 'relation "ai_usage" does not exist' } });
     mocks.createClient.mockResolvedValue(supabase.client);
     await expect(trackedAiCall(context, 30_000, async () => geminiResult())).resolves.toBeDefined();
     await flushAfter();
-    expect(supabase.insert).toHaveBeenCalledWith(expect.objectContaining({ household_id: null }));
+    expect(supabase.insert).toHaveBeenCalledTimes(1);
     expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('ai_usage'), expect.anything());
   });
 

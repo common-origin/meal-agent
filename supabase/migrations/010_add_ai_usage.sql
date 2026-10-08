@@ -11,7 +11,9 @@
 CREATE TABLE IF NOT EXISTS public.ai_usage (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL,
-  household_id UUID NULL,
+  -- Filled in by the database from the caller's session, so the app doesn't
+  -- need a separate lookup (and multi-household users still get one).
+  household_id UUID NULL DEFAULT public.get_user_household_id(),
   task TEXT NOT NULL,
   model TEXT NOT NULL,
   input_tokens INT,

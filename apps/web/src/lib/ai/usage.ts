@@ -73,7 +73,12 @@ interface AiCallOutcome {
   tokens: TokenUsage;
 }
 
-/** Logs one `ai_call` line now, and inserts the ai_usage row after the response. */
+/**
+ * Logs one `ai_call` line now, and inserts the ai_usage row after the
+ * response. The row's household_id is filled in by the database
+ * (column default get_user_household_id()), so it's on the row but not in
+ * the log line.
+ */
 export function recordAiUsage(context: AiCallContext, outcome: AiCallOutcome): void {
   const row = {
     user_id: context.userId,
@@ -91,14 +96,7 @@ export function recordAiUsage(context: AiCallContext, outcome: AiCallOutcome): v
 
   runAfterResponse(async () => {
     const supabase = await createClient();
-    const { data: membership } = await supabase
-      .from('household_members')
-      .select('household_id')
-      .eq('user_id', context.userId)
-      .maybeSingle();
-    const { error } = await supabase
-      .from('ai_usage')
-      .insert({ ...row, household_id: membership?.household_id ?? null });
+    const { error } = await supabase.from('ai_usage').insert(row);
     if (error) console.warn('ai_usage: could not record AI call (is migration 010 applied?)', error.message);
   });
 }
@@ -107,6 +105,10 @@ export function recordAiUsage(context: AiCallContext, outcome: AiCallOutcome): v
  * True when the user has already made DAILY_AI_CALL_CAP AI calls since UTC
  * midnight. Fails open: if the count can't be read (e.g. the migration
  * hasn't run), the call is allowed and a warning is logged.
+ *
+ * The cap is approximate: rows are written after each response, so requests
+ * made at the same moment see the same count. The per-route burst limiter
+ * bounds how far that can overshoot.
  */
 export async function isOverDailyAiCap(userId: string, now: Date = new Date()): Promise<boolean> {
   try {

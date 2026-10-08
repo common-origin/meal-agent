@@ -127,7 +127,8 @@ Every AI call (one logical call, including retries) is recorded once by
   `status` (`ok`, `error`, `timeout`, `blocked`, `rate_limited`) and
   `error_code`;
 - the same fields as a row in the `ai_usage` table (migration 010), written
-  after the response with Next's `after()`. A failed write is only warned
+  after the response with Next's `after()`; the database fills in the row's
+  `household_id` from the caller's session. A failed write is only warned
   about; logging never fails a request.
 
 Cost is an estimate from per-model rates in `apps/web/src/lib/ai/pricing.ts`
