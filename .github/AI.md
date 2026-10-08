@@ -87,6 +87,10 @@ large. Try a screenshot or a smaller photo."
 **"You've hit the limit for now"** — the per-user limit above; wait a
 few minutes.
 
+**"You've reached today's AI limit"** — the daily cap (see
+[Usage, cost and the daily cap](#usage-cost-and-the-daily-cap)); it resets
+at midnight UTC.
+
 **"That took too long. Please try again."** — the AI call hit its
 deadline (see above). Usually transient; if it keeps happening, the model
 is slow or overloaded.
@@ -113,8 +117,33 @@ endpoint — a public route that spends quota is the wrong tool):
 3. Check the key and its quota in
    [Google AI Studio](https://aistudio.google.com/app/apikey)
 
-## Cost
+## Usage, cost and the daily cap
 
-Gemini's free tier and pricing change independently of this repo — check
-[Google AI Studio](https://aistudio.google.com/app/apikey) for current
-numbers rather than trusting a specific quota written here.
+Every AI call (one logical call, including retries) is recorded once by
+`trackedAiCall` in `apps/web/src/lib/ai/usage.ts`:
+
+- a structured log line, `{"type":"ai_call", ...}`, with user, task, model,
+  input/output/thinking tokens, estimated `cost_usd`, `latency_ms`,
+  `status` (`ok`, `error`, `timeout`, `blocked`, `rate_limited`) and
+  `error_code`;
+- the same fields as a row in the `ai_usage` table (migration 010), written
+  after the response with Next's `after()`. A failed write is only warned
+  about; logging never fails a request.
+
+Cost is an estimate from per-model rates in `apps/web/src/lib/ai/pricing.ts`
+(thinking tokens billed as output; an unknown model records a null cost).
+Prices change independently of this repo, so check Google's
+[pricing page](https://ai.google.dev/gemini-api/docs/pricing) and update the
+table when models or rates change.
+
+Each user gets **100 AI calls per UTC day**, counted from `ai_usage`
+(`DAILY_AI_CALL_CAP`). Over it, AI routes return 429,
+`code: "daily_cap"`: "You've reached today's AI limit. It resets
+tomorrow." If the count can't be read (e.g. migration 010 hasn't run), the
+cap fails open and logs a warning.
+
+Monthly cost by task (run in the Supabase SQL editor):
+
+```sql
+select date_trunc('month', created_at) m, task, count(*), sum(cost_usd) from ai_usage group by 1,2 order by 1 desc;
+```

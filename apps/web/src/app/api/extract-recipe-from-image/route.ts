@@ -10,13 +10,16 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Recipe } from '@/lib/types/recipe';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
 import { readImageUpload, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
-import { callWithDeadline, isTimeoutError } from '@/lib/api/aiCall';
+import { isTimeoutError } from '@/lib/api/aiCall';
+import { trackedAiCall } from '@/lib/ai/usage';
 import { AI_DEADLINES_MS } from '@/lib/constants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 // Must stay above AI_DEADLINES_MS.extractRecipeFromImage, so the route can return its 504 first.
 export const maxDuration = 60;
+
+const MODEL = 'gemini-3.8-flash';
 
 const getGeminiClient = () => {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -44,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     const genAI = getGeminiClient();
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-3.8-flash',
+      model: MODEL,
       generationConfig: {
         temperature: 0.2, // Low temperature for accurate extraction
         topK: 40,
@@ -88,19 +91,22 @@ RULES:
     // Process image
     const imageData = Buffer.from(await image.arrayBuffer()).toString('base64');
     
-    const result = await callWithDeadline(AI_DEADLINES_MS.extractRecipeFromImage, (signal) =>
-      model.generateContent(
-        [
-          prompt,
-          {
-            inlineData: {
-              data: imageData,
-              mimeType: image.type,
+    const result = await trackedAiCall(
+      { task: 'extract-recipe-from-image', model: MODEL, userId: auth.value.id },
+      AI_DEADLINES_MS.extractRecipeFromImage,
+      (signal) =>
+        model.generateContent(
+          [
+            prompt,
+            {
+              inlineData: {
+                data: imageData,
+                mimeType: image.type,
+              },
             },
-          },
-        ],
-        { signal }
-      )
+          ],
+          { signal }
+        )
     );
 
     const response = result.response;

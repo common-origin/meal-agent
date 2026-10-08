@@ -208,13 +208,21 @@ signup):
 - **`meal_plans`** — one row per household per week (`UNIQUE(household_id,
   week_start)`), `meals` is a JSONB object keyed by lowercase day name
   (`monday`..`sunday`)
-- **`shopping_lists`**, **`pantry_preferences`**, **`api_usage`**
+- **`shopping_lists`**, **`pantry_preferences`**
+- **`api_usage`** (001) — an early AI-cost table that nothing writes to;
+  superseded by `ai_usage`
 - **`recipe_history`** (migration 007) — one row per recipe used in a
   composed week, `UNIQUE(household_id, recipe_id, week_start)`; backs
   cross-device recency/variety-enforcement sync (see [Storage](#storage))
+- **`ai_usage`** (migration 010) — one row per AI call: user, household,
+  task, model, input/output/thinking tokens, estimated `cost_usd`,
+  latency and outcome. Written after the response by
+  `lib/ai/usage.ts`, and counted for the per-user daily AI cap (see
+  `AI.md`)
 
-Migrations run in order, 001 through 007 — see `supabase/README.md` for
-the exact steps. There's no migration-runner in CI; each one is applied by
+Migrations run in numeric order (001–008, then 010; 009 is reserved for
+#84 and independent of 010) — see `supabase/README.md` for the exact
+steps. There's no migration-runner in CI; each one is applied by
 hand in the Supabase SQL editor, same as every migration so far.
 
 ## Calendar export

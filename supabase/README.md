@@ -68,7 +68,15 @@
    - Verify success: Should see "Success. No rows returned"
    - This re-declares `handle_new_user()` and `get_user_household_id()` with a pinned `search_path`, closing the "Function Search Path Mutable" hardening gap on both SECURITY DEFINER functions
 
-10. **Verify Tables Created:**
+10. **Run AI Usage Migration (Step 10):**
+   - Click "New Query"
+   - Copy entire contents of `supabase/migrations/010_add_ai_usage.sql`
+   - Paste into SQL Editor
+   - Click "Run" or press Cmd+Enter
+   - Verify success: Should see "Success. No rows returned"
+   - This adds the `ai_usage` table: one row per AI call (tokens, estimated cost, latency, outcome), used for the per-user daily AI cap. It doesn't depend on `009` (reserved for #84) and can run before it. The app tolerates the table being missing: usage just isn't recorded and the daily cap isn't enforced
+
+11. **Verify Tables Created:**
    ```sql
    SELECT table_name 
    FROM information_schema.tables 
@@ -77,6 +85,7 @@
    ```
    
    Should see:
+   - ai_usage
    - api_usage
    - family_settings
    - household_members
@@ -87,7 +96,7 @@
    - recipes
    - shopping_lists
 
-11. **Verify RLS Enabled:**
+12. **Verify RLS Enabled:**
    ```sql
    SELECT tablename, rowsecurity 
    FROM pg_tables 
@@ -106,7 +115,8 @@
 - **meal_plans** - Weekly meal schedules (JSONB format)
 - **shopping_lists** - Aggregated shopping items per week
 - **pantry_preferences** - Items always in pantry (exclude from shopping)
-- **api_usage** - Track AI API costs per household
+- **api_usage** - Original AI cost table from 001; nothing writes to it (superseded by `ai_usage`)
+- **ai_usage** - One row per AI call: task, model, tokens, estimated cost, latency, outcome; backs the daily AI cap (#85)
 - **recipe_history** - Recipes used per composed week, for cross-device repeat-avoidance
 
 ### Automatic Behaviors:

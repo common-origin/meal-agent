@@ -3,7 +3,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
 import { extractRecipeFromUrlSchema } from '@/lib/api/schemas';
 import { parseBody, readJson, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
-import { callWithDeadline, isTimeoutError } from '@/lib/api/aiCall';
+import { isTimeoutError } from '@/lib/api/aiCall';
+import { trackedAiCall } from '@/lib/ai/usage';
 import { AI_DEADLINES_MS } from '@/lib/constants';
 import { safeFetchHtml, SafeFetchError } from '@/lib/api/safeFetch';
 
@@ -11,6 +12,8 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 // Must stay above AI_DEADLINES_MS.extractRecipeFromUrl, so the route can return its 504 first.
 export const maxDuration = 60;
+
+const MODEL = 'gemini-2.5-flash';
 
 const UNREADABLE_PAGE_MESSAGE = "We couldn't read that page. Check the link or add the recipe manually.";
 
@@ -44,7 +47,7 @@ export async function POST(req: NextRequest) {
     console.log('✅ Webpage fetched, length:', html.length);
 
     // Use Gemini to extract recipe from HTML (same model as recipe generation)
-    const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({ model: MODEL });
 
     const prompt = `You are a recipe extraction expert. Extract recipe information from the following HTML content.
 
@@ -73,8 +76,11 @@ CRITICAL RULES:
 Extract the recipe now:`;
 
     console.log('🤖 Calling Gemini API to extract recipe...');
-    const result = await callWithDeadline(AI_DEADLINES_MS.extractRecipeFromUrl, (signal) =>
-      model.generateContent(prompt, { signal })
+    const result = await trackedAiCall(
+      { task: 'extract-recipe-from-url', model: MODEL, userId: auth.value.id },
+      AI_DEADLINES_MS.extractRecipeFromUrl,
+      (signal) =>
+        model.generateContent(prompt, { signal })
     );
     const responseText = result.response.text();
     console.log('📄 Raw Gemini response:', responseText.substring(0, 200));

@@ -9,7 +9,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Recipe } from './types/recipe';
 import type { RecipeGenerationRequest } from './prompts/recipeGeneration';
 import { buildSystemPrompt, buildRecipeGenerationPrompt } from './prompts/recipeGeneration';
-import { callWithDeadline, isTimeoutError } from './api/aiCall';
+import { isTimeoutError } from './api/aiCall';
+import { trackedAiCall } from './ai/usage';
 import { AI_DEADLINES_MS } from './constants';
 
 // Initialize Gemini API
@@ -22,6 +23,9 @@ const getGeminiClient = () => {
   
   return new GoogleGenerativeAI(apiKey);
 };
+
+// Use Gemini 2.5 Pro for higher quality outputs (requires billing enabled)
+const MODEL = 'gemini-2.5-pro';
 
 export interface GeneratedRecipeResponse {
   recipes: Recipe[];
@@ -36,14 +40,15 @@ export interface GenerationError {
  * Generate recipes using Gemini AI with retry logic
  */
 export async function generateRecipes(
-  request: RecipeGenerationRequest
+  request: RecipeGenerationRequest,
+  /** The signed-in user, for usage logging and the daily AI cap (#85). */
+  { userId }: { userId: string }
 ): Promise<GeneratedRecipeResponse | GenerationError> {
   try {
     const genAI = getGeminiClient();
     
-    // Use Gemini 2.5 Pro for higher quality outputs (requires billing enabled)
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-pro',
+      model: MODEL,
       generationConfig: {
         temperature: 0.8, // Balanced creativity - reliable and family-friendly recipes
         topK: 40,
@@ -65,9 +70,12 @@ export async function generateRecipes(
       servings: request.familySettings.totalServings,
     });
 
-    // One deadline for the whole request, shared by any retries (#81).
-    const result = await callWithDeadline(AI_DEADLINES_MS.generateRecipes, (signal) =>
-      model.generateContent(fullPrompt, { signal })
+    // One deadline for the whole request, shared by any retries (#81),
+    // recorded as one AI call (#85).
+    const result = await trackedAiCall(
+      { task: 'generate-recipes', model: MODEL, userId },
+      AI_DEADLINES_MS.generateRecipes,
+      (signal) => model.generateContent(fullPrompt, { signal })
     );
     
     const response = result.response;
