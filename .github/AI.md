@@ -37,6 +37,14 @@ directly for the real contract rather than a hand-copied JSON example
 here, since that's exactly the kind of thing that drifts out of sync
 with the code silently — as this line itself did on a previous version.
 
+The prompt itself (#87) is split in two: `buildSystemPrompt()` holds the
+stable rules, each stated once, and `buildRecipeGenerationPrompt()` holds
+only the household's facts and the request's constraints. The plan page
+sends the browser's `timeZone` with each request, so the month, season and
+in-season produce (`getInSeasonIngredients` in `lib/seasonal.ts`) are the
+household's own; an unknown or missing zone falls back to
+`Australia/Melbourne`.
+
 ## Auth, rate limiting and validation
 
 Every AI route (`generate-recipes`, `scan-pantry-image`,
