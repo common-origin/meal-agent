@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { estimateRecipeCost } from '../recipeCost';
+import { estimateRecipeCost, planPricedFraction, planCostLabel, ROUGH_ESTIMATE_THRESHOLD } from '../recipeCost';
 import { estimateIngredientCost } from '../colesMapping';
 import type { Ingredient } from '../types/recipe';
 
@@ -39,5 +39,37 @@ describe('estimateRecipeCost (#89)', () => {
 
   it('handles a recipe with no ingredients', () => {
     expect(estimateRecipeCost({ ingredients: [], serves: 4 })).toEqual({ total: 0, perServe: 0, pricedFraction: 0 });
+  });
+});
+
+describe('planPricedFraction', () => {
+  it('weights by ingredient count across the whole plan', () => {
+    // 3 mapped + 1 unmapped across two recipes = 0.75
+    const fraction = planPricedFraction([
+      { ingredients: [chicken, garlic], serves: 4 },
+      { ingredients: [chicken, unmapped], serves: 4 },
+    ]);
+    expect(fraction).toBe(0.75);
+  });
+
+  it('is null for a plan with nothing to price', () => {
+    expect(planPricedFraction([])).toBeNull();
+    expect(planPricedFraction([{ ingredients: [], serves: 4 }])).toBeNull();
+  });
+});
+
+describe('planCostLabel', () => {
+  it('says the estimate comes from Coles prices at or above the threshold', () => {
+    expect(planCostLabel(1)).toBe('Estimated from Coles prices');
+    expect(planCostLabel(ROUGH_ESTIMATE_THRESHOLD)).toBe('Estimated from Coles prices');
+  });
+
+  it('flags a rough estimate below 70% priced', () => {
+    expect(planCostLabel(0.69)).toBe('Rough estimate: some ingredients unpriced');
+    expect(planCostLabel(0)).toBe('Rough estimate: some ingredients unpriced');
+  });
+
+  it('uses the default label when there is nothing to price', () => {
+    expect(planCostLabel(null)).toBe('Estimated from Coles prices');
   });
 });
