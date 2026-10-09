@@ -3,10 +3,12 @@
  * Shows weekly cost with daily breakdown, price sources, and API-enhanced estimates
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Box, Stack, Typography, ProgressBar, Chip, Button } from "@common-origin/design-system";
 import { RecipeLibrary } from "@/lib/library";
 import { estimateIngredientCostWithAPI } from "@/lib/colesMapping";
+import { planCostLabel, planPricedFraction } from "@/lib/recipeCost";
+import type { Recipe } from "@/lib/types/recipe";
 import type { MealCardProps } from "./MealCard";
 
 export interface BudgetSummaryProps {
@@ -31,6 +33,14 @@ export default function BudgetSummary({ weekPlan, budget, dayNames }: BudgetSumm
   const [dailyCosts, setDailyCosts] = useState<DailyCost[]>([]);
   const [loadingApiPrices, setLoadingApiPrices] = useState(false);
   const [apiEnhancedCost, setApiEnhancedCost] = useState<number | null>(null);
+
+  // Label for the default figure (#89): how much of the plan Coles prices cover.
+  const costLabel = useMemo(() => {
+    const recipes = weekPlan
+      .map((meal) => (meal ? RecipeLibrary.getById(meal.recipeId) : undefined))
+      .filter((recipe): recipe is Recipe => Boolean(recipe));
+    return planCostLabel(planPricedFraction(recipes));
+  }, [weekPlan]);
 
   const percentage = Math.min((budget.current / budget.total) * 100, 100);
   const isOverBudget = budget.current > budget.total;
@@ -167,6 +177,12 @@ export default function BudgetSummary({ weekPlan, budget, dayNames }: BudgetSumm
             </Stack>
           </Stack>
           
+          {!apiEnhancedCost && (
+            <Typography variant="small" color="subdued">
+              {costLabel}
+            </Typography>
+          )}
+
           <ProgressBar
             value={percentage}
             color={isOverBudget ? "error" : "success"}
