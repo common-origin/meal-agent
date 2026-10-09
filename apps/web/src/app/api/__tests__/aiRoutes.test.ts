@@ -38,6 +38,7 @@ import { POST as shareRecipeEmailPOST } from '../share-recipe-email/route';
 import { SafeFetchError, SAFE_FETCH_TIMEOUT_MS } from '@/lib/api/safeFetch';
 import { AI_TASKS } from '@/lib/ai/models';
 import { AiTaskError } from '@/lib/ai/run';
+import { validAiRecipe } from '@/lib/ai/__tests__/fixtures';
 
 // Limiters are module-level and keyed by user, so each test signs in as a
 // fresh user to start from an empty window.
@@ -67,13 +68,25 @@ function imageForm(type = 'image/jpeg', name = 'photo.jpg'): FormData {
   return form;
 }
 
-function geminiText(text: string) {
+function geminiOutput(output: unknown) {
   return {
-    text,
+    text: JSON.stringify(output),
+    output,
     finishReason: 'stop',
     rawFinishReason: 'STOP',
-    usage: { inputTokens: 100, outputTokenDetails: { textTokens: 20, reasoningTokens: 0 } },
+    usage: { inputTokens: 100, outputTokens: 20, outputTokenDetails: { textTokens: 20, reasoningTokens: 0 } },
   };
+}
+
+function geminiBlocked(rawFinishReason: string) {
+  return { text: '', output: undefined, finishReason: 'content-filter', rawFinishReason, usage: geminiOutput({}).usage };
+}
+
+function invalidOutputError() {
+  return Object.assign(new Error('No object generated: response did not match schema.'), {
+    name: 'AI_NoObjectGeneratedError',
+    finishReason: 'stop',
+  });
 }
 
 // A real client payload: settings go over the wire as JSON.
@@ -108,7 +121,7 @@ const routes: RouteCase[] = [
     limit: 10,
     call: () => scanPantryPOST(formRequest('/api/scan-pantry-image', imageForm())),
     callInvalid: () => scanPantryPOST(formRequest('/api/scan-pantry-image', new FormData())),
-    prepareValid: () => mocks.generateText.mockResolvedValue(geminiText('["milk"]')),
+    prepareValid: () => mocks.generateText.mockResolvedValue(geminiOutput({ ingredients: ['Milk', 'eggs', 'milk'] })),
   },
   {
     name: 'extract-recipe-from-image',
@@ -116,7 +129,7 @@ const routes: RouteCase[] = [
     call: () => extractFromImagePOST(formRequest('/api/extract-recipe-from-image', imageForm())),
     callInvalid: () => extractFromImagePOST(formRequest('/api/extract-recipe-from-image', new FormData())),
     prepareValid: () =>
-      mocks.generateText.mockResolvedValue(geminiText('{"name":"Soup","ingredients":[],"instructions":[]}')),
+      mocks.generateText.mockResolvedValue(geminiOutput(validAiRecipe())),
   },
   {
     name: 'extract-recipe-from-url',
@@ -125,7 +138,7 @@ const routes: RouteCase[] = [
     callInvalid: () => extractFromUrlPOST(jsonRequest('/api/extract-recipe-from-url', { url: 42 })),
     prepareValid: () => {
       mocks.safeFetchHtml.mockResolvedValue({ html: '<html>soup</html>', finalUrl: 'https://example.com/soup' });
-      mocks.generateText.mockResolvedValue(geminiText('{"title":"Soup"}'));
+      mocks.generateText.mockResolvedValue(geminiOutput(validAiRecipe()));
     },
   },
 ];
@@ -277,7 +290,7 @@ describe.each([
   it.each(['image/png', 'image/webp', 'image/jpeg'])('passes the real %s MIME type to the model', async (type) => {
     signIn();
     mocks.generateText.mockResolvedValue(
-      geminiText(path.includes('pantry') ? '["milk"]' : '{"name":"Soup","ingredients":[],"instructions":[]}')
+      geminiOutput(path.includes('pantry') ? { ingredients: ['milk'] } : validAiRecipe())
     );
     const res = await post(formRequest(path, imageForm(type)));
     expect(res.status).toBe(200);
@@ -302,6 +315,75 @@ describe.each([
     signIn();
     const res = await post(jsonRequest(path, { image: 'data:image/jpeg;base64,AAAA' }));
     expect(res.status).toBe(400);
+  });
+});
+
+describe('validated AI output (#84)', () => {
+  const INVALID_BODY = { error: "The AI returned something we couldn't read. Please try again.", code: 'invalid_output' };
+
+  it.each(routes.slice(1).map((r) => [r.name, r] as const))(
+    '%s returns 502 invalid_output after the output fails its schema twice',
+    async (_name, route) => {
+      signIn();
+      route.prepareValid();
+      mocks.generateText.mockRejectedValue(invalidOutputError());
+      const res = await route.call();
+      expect(res.status).toBe(502);
+      expect(await res.json()).toEqual(INVALID_BODY);
+      expect(mocks.generateText).toHaveBeenCalledTimes(2);
+    }
+  );
+
+  it('generate-recipes returns 502 invalid_output from the generator', async () => {
+    signIn();
+    mocks.generateRecipes.mockRejectedValue(new AiTaskError('invalid_output', 'x'));
+    const res = await routes[0].call();
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual(INVALID_BODY);
+  });
+
+  it('scan-pantry-image returns tidied, de-duplicated ingredient names', async () => {
+    signIn();
+    routes[1].prepareValid();
+    const res = await routes[1].call();
+    expect(await res.json()).toMatchObject({ success: true, ingredients: ['milk', 'eggs'], count: 2 });
+  });
+
+  it('extract-recipe-from-image returns a normalised recipe', async () => {
+    signIn();
+    routes[2].prepareValid();
+    const res = await routes[2].call();
+    const { recipe } = await res.json();
+    expect(recipe).toMatchObject({ title: 'Lemon Chicken Traybake', cuisine: 'italian', timeMins: 45, serves: 4 });
+    expect(recipe.id).toMatch(/^import-lemon-chicken-traybake-[0-9a-f]{8}$/);
+    expect(recipe.ingredients[0]).toEqual({ name: 'chicken thigh fillets', qty: 800, unit: 'g', prep: 'cut into 3cm pieces' });
+  });
+
+  it('extract-recipe-from-url records the fetched page as the source', async () => {
+    signIn();
+    routes[3].prepareValid();
+    const res = await routes[3].call();
+    const { recipe } = await res.json();
+    expect(recipe.source).toMatchObject({ url: 'https://example.com/soup', domain: 'example.com' });
+  });
+
+  it('extract-recipe-from-image keeps its copyright message for RECITATION', async () => {
+    signIn();
+    mocks.generateText.mockResolvedValue(geminiBlocked('RECITATION'));
+    const res = await routes[2].call();
+    expect(res.status).toBe(422);
+    expect(await res.json()).toMatchObject({ error: 'Copyright Detection', blocked: true, reason: 'RECITATION' });
+  });
+
+  it.each([
+    ['scan-pantry-image', 1],
+    ['extract-recipe-from-url', 3],
+  ])('%s returns 422 when the response is blocked', async (_name, index) => {
+    signIn();
+    routes[index].prepareValid();
+    mocks.generateText.mockResolvedValue(geminiBlocked('SAFETY'));
+    const res = await routes[index].call();
+    expect(res.status).toBe(422);
   });
 });
 

@@ -68,15 +68,23 @@
    - Verify success: Should see "Success. No rows returned"
    - This re-declares `handle_new_user()` and `get_user_household_id()` with a pinned `search_path`, closing the "Function Search Path Mutable" hardening gap on both SECURITY DEFINER functions
 
-10. **Run AI Usage Migration (Step 10):**
+10. **Run Recipe Cuisine Migration (Step 9):**
+   - Click "New Query"
+   - Copy entire contents of `supabase/migrations/009_add_recipe_cuisine.sql`
+   - Paste into SQL Editor
+   - Click "Run" or press Cmd+Enter
+   - Verify success: Should see "Success. No rows returned"
+   - This adds a nullable `cuisine` column to `recipes` (#84). Run it **before** deploying code that saves recipes with a cuisine; saves fail if the column is missing
+
+11. **Run AI Usage Migration (Step 10):**
    - Click "New Query"
    - Copy entire contents of `supabase/migrations/010_add_ai_usage.sql`
    - Paste into SQL Editor
    - Click "Run" or press Cmd+Enter
    - Verify success: Should see "Success. No rows returned"
-   - This adds the `ai_usage` table: one row per AI call (tokens, estimated cost, latency, outcome), used for the per-user daily AI cap. It doesn't depend on `009` (reserved for #84) and can run before it. The app tolerates the table being missing: usage just isn't recorded and the daily cap isn't enforced
+   - This adds the `ai_usage` table: one row per AI call (tokens, estimated cost, latency, outcome), used for the per-user daily AI cap. It doesn't depend on `009`; the two can run in either order. The app tolerates the table being missing: usage just isn't recorded and the daily cap isn't enforced
 
-11. **Verify Tables Created:**
+12. **Verify Tables Created:**
    ```sql
    SELECT table_name 
    FROM information_schema.tables 
@@ -96,7 +104,7 @@
    - recipes
    - shopping_lists
 
-12. **Verify RLS Enabled:**
+13. **Verify RLS Enabled:**
    ```sql
    SELECT tablename, rowsecurity 
    FROM pg_tables 

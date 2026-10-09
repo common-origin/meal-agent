@@ -44,6 +44,15 @@ export function timeoutResponse(route: string): NextResponse {
   );
 }
 
+/** 502 for AI output that failed its schema twice (#84). */
+export function invalidOutputResponse(route: string): NextResponse {
+  console.warn(`${route}: AI output failed schema validation twice, returning 502`);
+  return NextResponse.json(
+    { error: "The AI returned something we couldn't read. Please try again.", code: 'invalid_output' },
+    { status: 502 }
+  );
+}
+
 export function dailyCapResponse(): NextResponse {
   return NextResponse.json(
     { error: "You've reached today's AI limit. It resets tomorrow.", code: 'daily_cap' },

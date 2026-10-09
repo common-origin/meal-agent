@@ -356,6 +356,7 @@ export default function RecipePage({ params }: RecipePageProps) {
                     {ingredient.qty > 0 && `${ingredient.qty} `}
                     {ingredient.unit !== 'unit' && `${ingredient.unit} `}
                     {ingredient.name}
+                    {ingredient.prep && `, ${ingredient.prep}`}
                   </Typography>
                 </Stack>
               ))}

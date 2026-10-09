@@ -311,6 +311,7 @@ export type Database = {
       recipes: {
         Row: {
           cost_per_serve_est: number | null
+          cuisine: string | null
           created_at: string
           household_id: string
           id: string
@@ -328,6 +329,7 @@ export type Database = {
         }
         Insert: {
           cost_per_serve_est?: number | null
+          cuisine?: string | null
           created_at?: string
           household_id: string
           id: string
@@ -345,6 +347,7 @@ export type Database = {
         }
         Update: {
           cost_per_serve_est?: number | null
+          cuisine?: string | null
           created_at?: string
           household_id?: string
           id?: string

@@ -70,7 +70,20 @@ so an in-flight call is cut off. The SDK retries up to 2 times, only on
 HTTP 429/5xx or network errors and never after the deadline. Each route's
 `maxDuration` sits above its deadline (a test checks this). Running out of
 time returns 504, `code: "timeout"`. Failures reach routes as a typed
-`AiTaskError` (`timeout`, `rate_limited`, `unavailable`, `error`).
+`AiTaskError` (`timeout`, `rate_limited`, `unavailable`, `invalid_output`,
+`error`).
+
+Every AI response is structured output (#84): the caller passes a schema
+from `apps/web/src/lib/ai/schemas.ts` (`GeneratedRecipes`, `ExtractedRecipe`,
+`PantryScan`), the SDK sends it to the model as `Output.object`, and the
+result is validated before a route sees it. There is no free-text JSON
+parsing. Output that fails the schema is retried once; if the retry fails
+too, the route returns 502, `code: "invalid_output"`. Recipes from
+generation, photo and URL go through one normaliser,
+`lib/ai/normalizeRecipe.ts` (`toRecipe`): unique IDs (#90), valid tags,
+cuisine, ingredient `prep`, and a cost per serve from Coles prices
+(`lib/recipeCost.ts`, #89). Units are always `g | ml | tsp | tbsp | unit`;
+the shared prompt rules are in `lib/prompts/recipeFormat.ts`.
 
 The two photo routes (`scan-pantry-image`, `extract-recipe-from-image`) take
 multipart `FormData` with an `image` field, which must be `image/*`; the

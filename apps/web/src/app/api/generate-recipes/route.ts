@@ -10,8 +10,8 @@ import { generateRecipes } from '@/lib/aiRecipeGenerator';
 import type { RecipeGenerationRequest } from '@/lib/prompts/recipeGeneration';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
 import { generateRecipesSchema } from '@/lib/api/schemas';
-import { parseBody, readJson, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
-import { isAiTimeout } from '@/lib/ai/run';
+import { invalidOutputResponse, parseBody, readJson, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
+import { isAiInvalidOutput, isAiTimeout } from '@/lib/ai/run';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     if (isAiTimeout(error)) return timeoutResponse('generate-recipes');
+    if (isAiInvalidOutput(error)) return invalidOutputResponse('generate-recipes');
 
     console.error('❌ Error in generate-recipes API:', error);
     

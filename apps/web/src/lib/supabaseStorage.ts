@@ -9,6 +9,9 @@ import { createClient as createBrowserClient, getCurrentUser } from '@/lib/supab
 import type { FamilySettings } from './types/settings';
 import type { Recipe } from './types/recipe';
 import type { Database, Json } from './supabase/database.types';
+import { rowToRecipe } from './recipeRow';
+
+export { rowToRecipe };
 
 /**
  * Get the current user's household ID
@@ -256,6 +259,7 @@ export async function saveRecipe(recipe: Recipe): Promise<boolean> {
       ingredients: recipe.ingredients as unknown as Database['public']['Tables']['recipes']['Insert']['ingredients'],
       instructions: recipe.instructions || null,
       cost_per_serve_est: recipe.costPerServeEst || null,
+      cuisine: recipe.cuisine ?? null,
       nutrition: recipe.nutrition ? recipe.nutrition as unknown as Database['public']['Tables']['recipes']['Insert']['nutrition'] : null,
       updated_at: new Date().toISOString(),
     };
@@ -299,24 +303,7 @@ export async function loadRecipe(recipeId: string): Promise<Recipe | null> {
       return null;
     }
     
-    return {
-      id: data.id,
-      title: data.title,
-      source: {
-        url: data.source_url || '',
-        domain: data.source_domain,
-        chef: data.source_chef || '',
-        license: 'unknown',
-        fetchedAt: data.created_at,
-      },
-      timeMins: data.time_mins,
-      serves: data.serves,
-      tags: data.tags,
-      ingredients: data.ingredients as Recipe['ingredients'],
-      instructions: data.instructions || undefined,
-      costPerServeEst: data.cost_per_serve_est || undefined,
-      nutrition: data.nutrition as Recipe['nutrition'] || undefined,
-    };
+    return rowToRecipe(data);
   } catch (error) {
     console.error('Error in loadRecipe:', error);
     return null;
@@ -351,24 +338,7 @@ export async function loadAllRecipes(): Promise<Recipe[]> {
     }
     
     console.log(`✅ Loaded ${data.length} recipes from Supabase`);
-    return data.map(row => ({
-      id: row.id,
-      title: row.title,
-      source: {
-        url: row.source_url || '',
-        domain: row.source_domain,
-        chef: row.source_chef || '',
-        license: 'unknown',
-        fetchedAt: row.created_at,
-      },
-      timeMins: row.time_mins,
-      serves: row.serves,
-      tags: row.tags,
-      ingredients: row.ingredients as Recipe['ingredients'],
-      instructions: row.instructions || undefined,
-      costPerServeEst: row.cost_per_serve_est || undefined,
-      nutrition: row.nutrition as Recipe['nutrition'] || undefined,
-    }));
+    return data.map(rowToRecipe);
   } catch (error) {
     console.error('Error in loadAllRecipes:', error);
     return [];

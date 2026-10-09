@@ -27,10 +27,13 @@ export type RecipeSource = {
   fetchedAt: string 
 };
 
+export const INGREDIENT_UNITS = ['g', 'ml', 'tsp', 'tbsp', 'unit'] as const;
+
 export type Ingredient = { 
-  name: string; 
+  name: string; // Short and searchable, e.g. "chicken thigh fillets"
   qty: number; 
-  unit: 'g'|'ml'|'tsp'|'tbsp'|'unit';
+  unit: typeof INGREDIENT_UNITS[number];
+  prep?: string; // e.g. "cut into 3cm pieces"; shown after the name, ignored by the shopping list
   seasonal?: boolean; // True if ingredient is in season
 };
 
@@ -51,6 +54,7 @@ export type Recipe = {
   instructions?: string[]; // Step-by-step cooking instructions
   serves?: number; 
   costPerServeEst?: number;
+  cuisine?: string; // One of the CUISINE_OPTIONS ids in lib/types/settings.ts
   nutrition?: NutritionInfo; // Optional nutrition data per serving
   rating?: number; // User rating 1-5 stars (stored separately in localStorage)
   isBlocked?: boolean; // True if user selected "never show this recipe again"
