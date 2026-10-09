@@ -124,7 +124,8 @@ export async function runAiTask<SCHEMA extends z.ZodType>(
           return { blocked: true, output: undefined, rawFinishReason };
         }
         record('invalid_output', lastStep?.rawFinishReason ?? 'schema', usage);
-        if (attempt < AI_INVALID_OUTPUT_RETRIES) continue;
+        // Output cut off at the token cap would be cut off again; don't pay twice.
+        if (attempt < AI_INVALID_OUTPUT_RETRIES && finishReason !== 'length') continue;
         throw new AiTaskError('invalid_output', 'The AI response did not match the expected format', undefined, {
           cause: error,
         });

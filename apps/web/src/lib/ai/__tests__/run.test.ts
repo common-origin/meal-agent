@@ -214,6 +214,13 @@ describe('runAiTask structured output (#84)', () => {
     expect(mocks.generateText).toHaveBeenCalledTimes(2);
   });
 
+  it('does not retry output that was cut off at the token cap', async () => {
+    mocks.generateText.mockRejectedValue(noObjectError('length'));
+    const error = await runAiTask('generation', { schema, userId: 'user-1', prompt: 'x' }).catch((e: unknown) => e);
+    expect(isAiInvalidOutput(error)).toBe(true);
+    expect(mocks.generateText).toHaveBeenCalledTimes(1);
+  });
+
   it('treats a missing output (nothing parsed) as invalid', async () => {
     const noOutput = sdkResult();
     Object.defineProperty(noOutput, 'output', {

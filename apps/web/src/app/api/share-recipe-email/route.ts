@@ -17,7 +17,7 @@ import { render } from '@react-email/components';
 import { createClient, getCurrentUser } from '@/lib/supabase/server';
 import RecipeEmail from '@/emails/RecipeEmail';
 import { createRateLimiter } from '@/lib/api/rateLimit';
-import type { Recipe } from '@/lib/types/recipe';
+import { rowToRecipe } from '@/lib/recipeRow';
 import type { FamilySettings, RecipeRecipient } from '@/lib/types/settings';
 
 export const runtime = 'nodejs';
@@ -28,43 +28,6 @@ const MAX_RECIPIENTS_PER_SEND = 5;
 
 // Per-user rate limit: max 10 sends per 5 minutes
 const sendLimiter = createRateLimiter({ limit: 10, windowMs: 5 * 60 * 1000 });
-
-interface LoadedRecipeRow {
-  id: string;
-  title: string;
-  source_url: string | null;
-  source_domain: string;
-  source_chef: string | null;
-  created_at: string;
-  time_mins: number;
-  serves: number;
-  tags: string[];
-  ingredients: unknown;
-  instructions: string[] | null;
-  cost_per_serve_est: number | null;
-  nutrition: unknown;
-}
-
-function rowToRecipe(data: LoadedRecipeRow): Recipe {
-  return {
-    id: data.id,
-    title: data.title,
-    source: {
-      url: data.source_url || '',
-      domain: data.source_domain,
-      chef: data.source_chef || '',
-      license: 'unknown',
-      fetchedAt: data.created_at,
-    },
-    timeMins: data.time_mins,
-    serves: data.serves,
-    tags: data.tags,
-    ingredients: data.ingredients as Recipe['ingredients'],
-    instructions: data.instructions || undefined,
-    costPerServeEst: data.cost_per_serve_est || undefined,
-    nutrition: (data.nutrition as Recipe['nutrition']) || undefined,
-  };
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -169,7 +132,7 @@ export async function POST(request: NextRequest) {
     if (recipeErr || !recipeRow) {
       return NextResponse.json({ error: 'Recipe not found' }, { status: 404 });
     }
-    const recipe = rowToRecipe(recipeRow as unknown as LoadedRecipeRow);
+    const recipe = rowToRecipe(recipeRow);
 
     // Determine sender name (display name from auth metadata, fallback to email local-part)
     const senderName =

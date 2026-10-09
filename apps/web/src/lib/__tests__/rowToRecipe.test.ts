@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { rowToRecipe } from '../supabaseStorage';
+import { rowToRecipe } from '../recipeRow';
 
 const baseRow = {
   id: 'ai-lemon-chicken',
