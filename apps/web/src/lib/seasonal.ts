@@ -188,15 +188,6 @@ export function getSeasonalTag(
 }
 
 /**
- * Get seasonal description for display
- */
-export function getSeasonalDescription(hemisphere: Hemisphere = 'southern'): string {
-  const season = getCurrentSeason(hemisphere);
-  const seasonCapitalized = season.charAt(0).toUpperCase() + season.slice(1);
-  return `${seasonCapitalized} favourites`;
-}
-
-/**
  * Get seasonal emoji for current season
  */
 export function getSeasonalEmoji(hemisphere: Hemisphere = 'southern'): string {
