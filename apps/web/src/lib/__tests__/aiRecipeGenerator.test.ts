@@ -15,17 +15,12 @@ vi.mock('../ai/run', async (importOriginal) => ({
 import { generateRecipes } from '../aiRecipeGenerator';
 import { AiTaskError } from '../ai/run';
 import { buildSystemPrompt } from '../prompts/recipeGeneration';
+import { GeneratedRecipes } from '../ai/schemas';
+import { validAiRecipe } from '../ai/__tests__/fixtures';
 
 const request = { familySettings: DEFAULT_FAMILY_SETTINGS, numberOfRecipes: 1 };
 
-const validRecipe = {
-  name: 'Lemon Chicken',
-  cuisine: 'italian',
-  totalTime: 30,
-  servings: 4,
-  ingredients: [{ name: 'chicken thighs', qty: 500, unit: 'g' }],
-  instructions: ['Cook it.'],
-};
+const generated = (recipes = [validAiRecipe()]) => ({ blocked: false, output: { recipes }, rawFinishReason: 'STOP' });
 
 beforeEach(() => {
   runAiTask.mockReset();
@@ -35,32 +30,36 @@ beforeEach(() => {
 });
 
 describe('generateRecipes', () => {
-  it('runs the generation task with the system prompt separate from the request prompt', async () => {
-    runAiTask.mockResolvedValue({ text: JSON.stringify({ recipes: [validRecipe] }), blocked: false, rawFinishReason: 'STOP' });
+  it('runs the generation task with its schema, and the system prompt separate from the request prompt', async () => {
+    runAiTask.mockResolvedValue(generated());
     await generateRecipes(request, { userId: 'user-1' });
 
     expect(runAiTask).toHaveBeenCalledTimes(1);
     const [task, options] = runAiTask.mock.calls[0];
     expect(task).toBe('generation');
-    expect(options).toMatchObject({ userId: 'user-1', system: buildSystemPrompt() });
+    expect(options).toMatchObject({ userId: 'user-1', system: buildSystemPrompt(), schema: GeneratedRecipes });
     expect(options.prompt).toContain('Generate 1 weeknight dinner recipes');
     expect(options.prompt).not.toContain(buildSystemPrompt());
   });
 
-  it('parses the response exactly as before the SDK port', async () => {
-    runAiTask.mockResolvedValue({
-      text: '```json\n' + JSON.stringify({ recipes: [validRecipe] }) + '\n```',
-      blocked: false,
-      rawFinishReason: 'STOP',
-    });
+  it('normalises each validated recipe (unique IDs, cuisine, prep, Coles cost)', async () => {
+    runAiTask.mockResolvedValue(generated([validAiRecipe(), validAiRecipe()]));
     const result = await generateRecipes(request, { userId: 'user-1' });
-    expect(result).toMatchObject({ recipes: [{ title: 'Lemon Chicken' }] });
+    if (!('recipes' in result)) throw new Error('expected recipes');
+    expect(result.recipes).toHaveLength(2);
+    expect(result.recipes[0].id).not.toBe(result.recipes[1].id);
+    expect(result.recipes[0]).toMatchObject({
+      title: 'Lemon Chicken Traybake',
+      cuisine: 'italian',
+      ingredients: expect.arrayContaining([expect.objectContaining({ prep: 'cut into 3cm pieces' })]),
+    });
+    expect(result.recipes[0].costPerServeEst).toBeGreaterThan(0);
   });
 
-  it('rethrows a timeout so the route can return 504', async () => {
-    const timeout = new AiTaskError('timeout', 'deadline');
-    runAiTask.mockRejectedValue(timeout);
-    await expect(generateRecipes(request, { userId: 'user-1' })).rejects.toBe(timeout);
+  it.each(['timeout', 'invalid_output'] as const)('rethrows %s so the route can return 504/502', async (code) => {
+    const error = new AiTaskError(code, 'x');
+    runAiTask.mockRejectedValue(error);
+    await expect(generateRecipes(request, { userId: 'user-1' })).rejects.toBe(error);
   });
 
   it.each([
@@ -73,18 +72,11 @@ describe('generateRecipes', () => {
     expect(result).toMatchObject({ error: 'Failed to generate recipes', details: expect.stringMatching(details) });
   });
 
-  it('reports a blocked response as declined, not as a parse failure', async () => {
-    runAiTask.mockResolvedValue({ text: '', blocked: true, rawFinishReason: 'SAFETY' });
+  it('reports a blocked response as declined', async () => {
+    runAiTask.mockResolvedValue({ blocked: true, output: undefined, rawFinishReason: 'SAFETY' });
     await expect(generateRecipes(request, { userId: 'user-1' })).resolves.toEqual({
       error: 'Failed to generate recipes',
       details: expect.stringContaining('declined to generate recipes for these settings (SAFETY)'),
-    });
-  });
-
-  it('still reports unparseable text as a parse failure', async () => {
-    runAiTask.mockResolvedValue({ text: 'not json', blocked: false, rawFinishReason: 'STOP' });
-    await expect(generateRecipes(request, { userId: 'user-1' })).resolves.toMatchObject({
-      error: 'Failed to parse AI response',
     });
   });
 });

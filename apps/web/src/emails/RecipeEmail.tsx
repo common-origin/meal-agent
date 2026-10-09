@@ -40,7 +40,8 @@ function formatIngredient(ing: Recipe['ingredients'][number]): string {
   if (ing.qty > 0) parts.push(String(ing.qty));
   if (ing.unit && ing.unit !== 'unit') parts.push(ing.unit);
   parts.push(ing.name);
-  return parts.join(' ');
+  const line = parts.join(' ');
+  return ing.prep ? `${line}, ${ing.prep}` : line;
 }
 
 // Palette — kept self-contained so the template doesn't depend on design tokens

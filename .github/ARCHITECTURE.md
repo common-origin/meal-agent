@@ -207,8 +207,10 @@ signup):
   JSONB column (migration 004) holding the complete settings object, with
   a handful of columns duplicated out of it for querying
 - **`recipes`** — `id` is `TEXT`, not `UUID` (migration 003 — supports
-  semantic IDs like `ai-recipe-name` alongside real UUIDs), plus
-  `nutrition` JSONB (migration 005)
+  semantic IDs like `ai-recipe-name-1a2b3c4d` alongside real UUIDs), plus
+  `nutrition` JSONB (migration 005) and a nullable `cuisine` (migration
+  009). `ingredients` is JSONB: `{ name, qty, unit, prep? }` with `unit`
+  one of `g | ml | tsp | tbsp | unit`
 - **`meal_plans`** — one row per household per week (`UNIQUE(household_id,
   week_start)`), `meals` is a JSONB object keyed by lowercase day name
   (`monday`..`sunday`)
@@ -224,8 +226,8 @@ signup):
   `lib/ai/usage.ts`, and counted for the per-user daily AI cap (see
   `AI.md`)
 
-Migrations run in numeric order (001–008, then 010; 009 is reserved for
-#84 and independent of 010) — see `supabase/README.md` for the exact
+Migrations run in numeric order, 001 through 010 (009 and 010 are
+independent of each other) — see `supabase/README.md` for the exact
 steps. There's no migration-runner in CI; each one is applied by
 hand in the Supabase SQL editor, same as every migration so far.
 

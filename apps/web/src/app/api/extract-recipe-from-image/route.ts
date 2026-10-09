@@ -6,10 +6,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import type { Recipe } from '@/lib/types/recipe';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
-import { readImageUpload, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
-import { isAiTimeout, runAiTask } from '@/lib/ai/run';
+import { invalidOutputResponse, readImageUpload, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
+import { isAiInvalidOutput, isAiTimeout, runAiTask } from '@/lib/ai/run';
+import { ExtractedRecipe } from '@/lib/ai/schemas';
+import { toRecipe } from '@/lib/ai/normalizeRecipe';
+import { CUISINE_FORMAT_RULE, INGREDIENT_FORMAT_RULES } from '@/lib/prompts/recipeFormat';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -35,38 +37,23 @@ export async function POST(request: NextRequest) {
 
 The image may contain a recipe from a cookbook, magazine, or handwritten recipe card.
 
-Extract the following information and return it as VALID JSON ONLY (no markdown, no code blocks):
-
-{
-  "name": "Recipe Title",
-  "cuisine": "cuisine_type",
-  "totalTime": 30,
-  "prepTime": 10,
-  "cookTime": 20,
-  "servings": 4,
-  "ingredients": [
-    { "name": "ingredient name", "qty": "500", "unit": "g" }
-  ],
-  "instructions": ["Step 1", "Step 2", "Step 3"],
-  "tags": ["quick", "easy"],
-  "source": "Book title or source if visible",
-  "estimatedCost": 15
-}
-
 RULES:
-- Extract ingredients with EXACT quantities and units from the image
+- Extract the ingredients with the quantities shown, converted to the units below
 - Extract all instruction steps in order
-- If servings/time is not visible, estimate reasonably
-- Keep ingredient names exactly as written
-- Use standard units: g, ml, tsp, tbsp, cup, unit
-- Return ONLY valid JSON, no extra text
-- If you can't read something clearly, make your best guess or omit it`;
+- If servings or time are not visible, estimate reasonably
+- Estimate nutrition per serve
+- Put the book title or source in "source" if it is visible
+- If you can't read something clearly, make your best guess or omit it
+${CUISINE_FORMAT_RULE}
+
+${INGREDIENT_FORMAT_RULES}`;
 
     // Process image (model and limits: lib/ai/models.ts)
     const imageData = new Uint8Array(await image.arrayBuffer());
 
     const result = await runAiTask('recipeFromImage', {
       userId: auth.value.id,
+      schema: ExtractedRecipe,
       messages: [
         {
           role: 'user',
@@ -78,12 +65,12 @@ RULES:
       ],
     });
 
-    // Check for blocked or cut-off responses (RECITATION, SAFETY, MAX_TOKENS, ...)
-    const finishReason = result.rawFinishReason;
-    if (finishReason && finishReason !== 'STOP') {
-      console.log(`⚠️ Response blocked: ${finishReason}`);
+    // Check for blocked responses (RECITATION, SAFETY, ...)
+    if (result.blocked) {
+      const reason = result.rawFinishReason ?? 'content filtered';
+      console.log(`⚠️ Response blocked: ${reason}`);
 
-      if (finishReason === 'RECITATION') {
+      if (reason === 'RECITATION') {
         return NextResponse.json(
           {
             error: 'Copyright Detection',
@@ -98,30 +85,16 @@ RULES:
       return NextResponse.json(
         {
           error: 'Content Blocked',
-          details: `The AI couldn't process this image (Reason: ${finishReason}). Please try a different image.`,
+          details: `The AI couldn't process this image (Reason: ${reason}). Please try a different image.`,
           blocked: true,
-          reason: finishReason
+          reason
         },
         { status: 422 }
       );
     }
 
-    const text = result.text;
-
-    console.log('✅ Gemini Vision response received');
-
-    // Parse JSON response
-    const jsonResponse = parseGeminiResponse(text);
-    
-    if (!jsonResponse) {
-      return NextResponse.json(
-        { error: 'Failed to parse AI response', details: 'Invalid JSON returned' },
-        { status: 500 }
-      );
-    }
-
-    // Build Recipe object
-    const recipe = buildRecipeFromExtraction(jsonResponse);
+    // Validated against the schema already; normalise into a Recipe.
+    const recipe = toRecipe(result.output, 'user-added');
 
     console.log('✅ Recipe extracted:', recipe.title);
 
@@ -133,6 +106,7 @@ RULES:
   } catch (error) {
     console.error('❌ Error extracting recipe from image:', error);
     if (isAiTimeout(error)) return timeoutResponse('extract-recipe-from-image');
+    if (isAiInvalidOutput(error)) return invalidOutputResponse('extract-recipe-from-image');
 
     
     return NextResponse.json(
@@ -143,45 +117,6 @@ RULES:
       { status: 500 }
     );
   }
-}
-
-function parseGeminiResponse(text: string): Record<string, unknown> | null {
-  try {
-    let cleanText = text.trim();
-    
-    // Remove markdown code blocks if present
-    cleanText = cleanText.replace(/^```json\s*/i, '');
-    cleanText = cleanText.replace(/^```\s*/i, '');
-    cleanText = cleanText.replace(/\s*```$/i, '');
-    
-    return JSON.parse(cleanText);
-  } catch (error) {
-    console.error('Failed to parse JSON:', error);
-    console.error('Raw text:', text.substring(0, 500));
-    return null;
-  }
-}
-
-function buildRecipeFromExtraction(data: Record<string, unknown>): Partial<Recipe> {
-  return {
-    title: String(data.name || 'Untitled Recipe'),
-    timeMins: Number(data.totalTime) || Number(data.cookTime) + Number(data.prepTime) || undefined,
-    serves: Number(data.servings) || 4,
-    tags: Array.isArray(data.tags) ? data.tags as string[] : [],
-    ingredients: Array.isArray(data.ingredients) 
-      ? (data.ingredients as Array<Record<string, unknown>>).map(ing => ({
-          name: String(ing.name || ''),
-          qty: Number(ing.qty) || 1,
-          unit: (String(ing.unit) || 'unit') as 'g'|'ml'|'tsp'|'tbsp'|'unit',
-        }))
-      : [],
-    instructions: Array.isArray(data.instructions) 
-      ? (data.instructions as Array<unknown>).map(step => String(step))
-      : undefined,
-    costPerServeEst: Number(data.estimatedCost) 
-      ? Number(data.estimatedCost) / (Number(data.servings) || 4) 
-      : undefined,
-  };
 }
 
 export async function GET() {

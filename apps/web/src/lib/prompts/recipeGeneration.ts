@@ -5,6 +5,8 @@
  * based on family settings, dietary preferences, and constraints.
  */
 
+import { CUISINE_FORMAT_RULE, INGREDIENT_FORMAT_RULES } from './recipeFormat';
+import { VALID_TAGS } from '../tagNormalizer';
 import type { FamilySettings } from '../types/settings';
 import { getCurrentSeason, getSeasonalDescription, type Hemisphere } from '../seasonal';
 
@@ -39,24 +41,27 @@ CORE PRINCIPLES:
 - Flavor must be built in layers throughout the cooking process
 - Recipes should feel like they came from a real chef's tested kitchen, not an AI
 
-You must respond ONLY with valid JSON in this exact format:
+You must respond ONLY with valid JSON in this exact format (the response schema enforces it):
 {
   "recipes": [
     {
-      "name": "Recipe Name",
-      "cuisine": "cuisine_type",
-      "totalTime": 30,
+      "title": "Recipe Name",
+      "cuisine": "italian",
+      "totalTimeMins": 30,
       "servings": 4,
       "ingredients": [
-        { "name": "ingredient name", "qty": "500", "unit": "g" }
+        { "name": "chicken thigh fillets", "qty": 500, "unit": "g", "prep": "cut into 3cm pieces" }
       ],
       "instructions": ["Step 1", "Step 2"],
       "tags": ["quick"],
-      "estimatedCost": 18,
       "nutrition": { "calories": 450, "protein": 35, "carbs": 40, "fat": 15 }
     }
   ]
 }
+
+${INGREDIENT_FORMAT_RULES}
+${CUISINE_FORMAT_RULE}
+- "tags" may only use: ${VALID_TAGS.join(', ')}.
 
 CUISINE & FUSION RULES - AUTHENTICITY FIRST:
 
@@ -186,7 +191,7 @@ RECIPE QUALITY & SAFETY RULES:
 - Use 4–7 clear, numbered instruction steps per recipe.
 - Keep ingredient lists concise: around 8–12 core ingredients per recipe (basic staples like oil, salt, and pepper may be in addition).
 - Use brief, generic ingredient names that can be mapped to supermarket products (e.g., "chicken thigh", "red onion", "soy sauce").
-- All times must be in minutes, and all costs in whole dollars.
+- All times must be in minutes.
 - Use reasonable, realistic quantities for ingredients; avoid excessive salt or sugar per person that would be a health concern.
 - COMPLETE THE JSON – do not cut off mid-response.
 - Each recipe must be practical, cookable by a home cook, and likely to taste good.

@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
 import { extractRecipeFromUrlSchema } from '@/lib/api/schemas';
-import { parseBody, readJson, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
-import { isAiTimeout, runAiTask } from '@/lib/ai/run';
+import { invalidOutputResponse, parseBody, readJson, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
+import { isAiInvalidOutput, isAiTimeout, runAiTask } from '@/lib/ai/run';
+import { ExtractedRecipe } from '@/lib/ai/schemas';
+import { toRecipe } from '@/lib/ai/normalizeRecipe';
+import { CUISINE_FORMAT_RULE, INGREDIENT_FORMAT_RULES } from '@/lib/prompts/recipeFormat';
 import { safeFetchHtml, SafeFetchError } from '@/lib/api/safeFetch';
 
 export const runtime = 'nodejs';
@@ -28,8 +31,9 @@ export async function POST(req: NextRequest) {
     console.log('📥 Fetching recipe from URL:', url);
 
     let html: string;
+    let finalUrl: string;
     try {
-      ({ html } = await safeFetchHtml(url));
+      ({ html, finalUrl } = await safeFetchHtml(url));
     } catch (error) {
       if (error instanceof SafeFetchError) {
         console.warn(`extract-recipe-from-url: fetch refused (${error.code}):`, error.message);
@@ -46,47 +50,36 @@ export async function POST(req: NextRequest) {
 HTML Content:
 ${html.substring(0, 50000)}
 
-Extract and return ONLY a JSON object with this structure (no markdown, no code blocks):
-{
-  "title": "Recipe Name",
-  "timeMins": 30,
-  "serves": 4,
-  "ingredients": [
-    { "name": "ingredient name", "qty": 100, "unit": "g" }
-  ],
-  "instructions": ["Step 1", "Step 2", "Step 3"]
-}
+RULES:
+- Extract the recipe's title, ingredients and all instruction steps (keep each step concise and clear)
+- If you can't find servings or total time, use reasonable defaults (e.g. 4 servings)
+- Estimate nutrition per serve if the page doesn't give it
+- Put the site or author in "source" if shown
+${CUISINE_FORMAT_RULE}
 
-CRITICAL RULES:
-- Return ONLY valid JSON, no markdown formatting, no code blocks
-- Extract all ingredients with quantities and units
-- Keep instructions concise and clear
-- If you can't find certain fields, use reasonable defaults (e.g., serves: 4)
-- Units should be: g, ml, tsp, tbsp, or unit
-- Instructions should be an array of strings
+${INGREDIENT_FORMAT_RULES}
 
 Extract the recipe now:`;
 
     console.log('🤖 Calling Gemini API to extract recipe...');
     // Model and limits: lib/ai/models.ts
-    const { text: responseText } = await runAiTask('recipeFromUrl', { userId: auth.value.id, prompt });
-    console.log('📄 Raw Gemini response:', responseText.substring(0, 200));
-
-    // Clean up the response - remove markdown code blocks if present
-    let cleanedResponse = responseText.trim();
-    if (cleanedResponse.startsWith('```json')) {
-      cleanedResponse = cleanedResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-    } else if (cleanedResponse.startsWith('```')) {
-      cleanedResponse = cleanedResponse.replace(/```\n?/g, '');
+    const result = await runAiTask('recipeFromUrl', { userId: auth.value.id, prompt, schema: ExtractedRecipe });
+    if (result.blocked) {
+      return NextResponse.json(
+        { error: UNREADABLE_PAGE_MESSAGE, code: 'blocked', reason: result.rawFinishReason ?? 'content filtered' },
+        { status: 422 }
+      );
     }
 
-    const recipe = JSON.parse(cleanedResponse);
+    // Validated against the schema already; normalise into a Recipe.
+    const recipe = toRecipe(result.output, 'user-added', { sourceUrl: finalUrl });
     console.log('✅ Extracted recipe:', recipe.title);
 
     return NextResponse.json({ recipe });
   } catch (error) {
     console.error('❌ Error extracting recipe from URL:', error);
     if (isAiTimeout(error)) return timeoutResponse('extract-recipe-from-url');
+    if (isAiInvalidOutput(error)) return invalidOutputResponse('extract-recipe-from-url');
 
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to extract recipe' },

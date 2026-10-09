@@ -7,8 +7,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
-import { readImageUpload, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
-import { AiTaskError, isAiTimeout, runAiTask } from '@/lib/ai/run';
+import { invalidOutputResponse, readImageUpload, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
+import { AiTaskError, isAiInvalidOutput, isAiTimeout, runAiTask } from '@/lib/ai/run';
+import { PantryScan } from '@/lib/ai/schemas';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -49,15 +50,13 @@ INSTRUCTIONS:
 - Be specific but brief (e.g., "cherry tomatoes" not just "tomatoes" if you can tell)
 - Only include items you can clearly see and identify with reasonable confidence
 
-Return ONLY a JSON array of ingredient names, nothing else:
-["ingredient 1", "ingredient 2", "ingredient 3"]
-
-Example output:
-["chicken breast", "cherry tomatoes", "bell peppers", "milk", "cheddar cheese", "ground beef", "carrots", "broccoli"]`;
+Return the ingredient names in "ingredients", e.g.:
+{ "ingredients": ["chicken breast", "cherry tomatoes", "bell peppers", "milk", "cheddar cheese", "ground beef", "carrots", "broccoli"] }`;
 
     // Use Gemini Vision to identify ingredients (model and limits: lib/ai/models.ts)
-    const { text: rawText } = await runAiTask('pantryScan', {
+    const result = await runAiTask('pantryScan', {
       userId: auth.value.id,
+      schema: PantryScan,
       messages: [
         {
           role: 'user',
@@ -68,39 +67,22 @@ Example output:
         },
       ],
     });
-    const text = rawText.trim();
 
-    console.log('🤖 Raw Gemini response:', text);
-
-    // Parse the JSON array
-    let ingredients: string[];
-    try {
-      // Remove markdown code blocks if present
-      const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      ingredients = JSON.parse(cleanedText);
-
-      if (!Array.isArray(ingredients)) {
-        throw new Error('Response is not an array');
-      }
-
-      // Validate and clean ingredients
-      ingredients = ingredients
-        .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
-        .map(item => item.trim().toLowerCase());
-
-      console.log('✅ Extracted ingredients:', ingredients);
-
-    } catch (parseError) {
-      console.error('❌ Failed to parse Gemini response as JSON:', parseError);
+    if (result.blocked) {
       return NextResponse.json(
         {
-          error: 'Failed to parse AI response',
-          details: 'The AI response was not in the expected format',
-          rawResponse: text,
+          error: 'Content Blocked',
+          details: `The AI couldn't process this photo (Reason: ${result.rawFinishReason ?? 'content filtered'}). Please try a different photo or add ingredients manually.`,
+          blocked: true,
         },
-        { status: 500 }
+        { status: 422 }
       );
     }
+
+    const ingredients = [
+      ...new Set(result.output.ingredients.map((item) => item.trim().toLowerCase()).filter((item) => item.length > 0)),
+    ];
+    console.log('✅ Extracted ingredients:', ingredients);
 
     return NextResponse.json({
       success: true,
@@ -114,6 +96,7 @@ Example output:
 
   } catch (error) {
     if (isAiTimeout(error)) return timeoutResponse('scan-pantry-image');
+    if (isAiInvalidOutput(error)) return invalidOutputResponse('scan-pantry-image');
 
     console.error('❌ Error scanning pantry image:', error);
 
