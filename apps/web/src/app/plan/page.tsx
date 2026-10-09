@@ -22,7 +22,7 @@ import { addToRecipeHistory, getRecipeIdsToExclude } from "@/lib/recipeHistory";
 import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
 import { trackIngredientUsage } from "@/lib/ingredientAnalytics";
 import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
-import { redirectToLoginIfUnauthenticated } from "@/lib/api/client";
+import { clientTimeZone, redirectToLoginIfUnauthenticated } from "@/lib/api/client";
 import { imageUploadFormData, PhotoTooLargeError } from "@/lib/client/resizeImage";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -223,6 +223,7 @@ export default function PlanPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          timeZone: clientTimeZone(),
           familySettings,
           numberOfRecipes: 3,
           excludeRecipeIds,
@@ -454,6 +455,7 @@ export default function PlanPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          timeZone: clientTimeZone(),
           familySettings: weeklySettings,
           numberOfRecipes: 5,
           excludeRecipeIds,
@@ -648,6 +650,7 @@ export default function PlanPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          timeZone: clientTimeZone(),
           familySettings,
           numberOfRecipes: 5, // Start with 5 to avoid timeout/truncation
           excludeRecipeIds, // Pass recipe history to avoid repetition
@@ -796,6 +799,7 @@ export default function PlanPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          timeZone: clientTimeZone(),
           familySettings,
           numberOfRecipes: 1,
           excludeRecipeIds,

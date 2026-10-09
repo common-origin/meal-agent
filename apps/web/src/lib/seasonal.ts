@@ -80,9 +80,8 @@ const SEASONAL_INGREDIENTS: Record<string, number[]> = {
 /**
  * Get current season based on month and hemisphere
  */
-export function getCurrentSeason(hemisphere: Hemisphere = 'southern'): Season {
-  const month = new Date().getMonth(); // 0-11
-  
+export function getCurrentSeason(hemisphere: Hemisphere = 'southern', month: number = new Date().getMonth()): Season {
+  // month: 0-11
   if (hemisphere === 'northern') {
     if (month >= 2 && month <= 4) return 'spring';
     if (month >= 5 && month <= 7) return 'summer';
@@ -131,6 +130,27 @@ export function isIngredientInSeason(
   return false;
 }
 
+// Synonyms and generic groups that would duplicate or blur a produce list
+// written in Australian English; year-round staples aren't worth listing.
+const NOT_LISTED = new Set([
+  'courgette', 'aubergine', 'bell pepper', 'squash', 'stone fruit', 'berry', 'citrus',
+  'potato', 'onion', 'garlic',
+]);
+
+/**
+ * Produce in season for `month` (0-11) in `hemisphere`, in the table's order,
+ * at most `limit` items. Looks months up per item directly rather than via
+ * isIngredientInSeason, whose partial matching would give "grapefruit" the
+ * months of "grape".
+ */
+export function getInSeasonIngredients(hemisphere: Hemisphere, month: number, limit = 12): string[] {
+  const adjustedMonth = adjustMonthForHemisphere(month, hemisphere);
+  return Object.entries(SEASONAL_INGREDIENTS)
+    .filter(([name, months]) => !NOT_LISTED.has(name) && months.includes(adjustedMonth))
+    .map(([name]) => name)
+    .slice(0, limit);
+}
+
 /**
  * Calculate seasonal score for a recipe (0-1)
  * Higher score = more seasonal ingredients
@@ -165,15 +185,6 @@ export function getSeasonalTag(
     return 'seasonal';
   }
   return null;
-}
-
-/**
- * Get seasonal description for display
- */
-export function getSeasonalDescription(hemisphere: Hemisphere = 'southern'): string {
-  const season = getCurrentSeason(hemisphere);
-  const seasonCapitalized = season.charAt(0).toUpperCase() + season.slice(1);
-  return `${seasonCapitalized} favourites`;
 }
 
 /**

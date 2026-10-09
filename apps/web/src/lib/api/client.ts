@@ -13,3 +13,12 @@ export function redirectToLoginIfUnauthenticated(response: Response): boolean {
   window.location.assign(`/login?redirectTo=${encodeURIComponent(window.location.pathname)}`);
   return true;
 }
+
+/** The browser's IANA time zone, sent with generate requests so the season is local (#87). */
+export function clientTimeZone(): string | undefined {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch {
+    return undefined;
+  }
+}
