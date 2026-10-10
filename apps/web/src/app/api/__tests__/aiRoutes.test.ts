@@ -578,6 +578,18 @@ describe('extract-recipe-from-url structured data (#93)', () => {
     expect((await res.json()).recipe).toMatchObject({ title: 'Mystery Stew', ingredients: [], instructions: ['Stir.'] });
   });
 
+  it('sends at most 40 ingredient lines, the schema cap', async () => {
+    signIn();
+    const recipeIngredient = Array.from({ length: 45 }, (_, i) => `${i + 1} g ingredient number ${i + 1}`);
+    const html = `<script type="application/ld+json">${JSON.stringify({ '@type': 'Recipe', name: 'Banquet', recipeIngredient })}</script>`;
+    mocks.safeFetchHtml.mockResolvedValue({ html, finalUrl: 'https://example.com/banquet' });
+    mocks.generateText.mockResolvedValue(geminiOutput({ ingredients: validAiRecipe().ingredients }));
+    await callUrl();
+    const prompt = promptOf(0);
+    expect(prompt).toContain('- 40 g ingredient number 40');
+    expect(prompt).not.toContain('ingredient number 41');
+  });
+
   it('falls back to stripped page text, at most 20,000 chars, when there is no JSON-LD', async () => {
     signIn();
     const padding = `<p>${'Lots of story about this pasta. '.repeat(2_000)}</p>`;

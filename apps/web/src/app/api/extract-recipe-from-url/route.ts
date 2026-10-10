@@ -4,7 +4,7 @@ import { extractRecipeFromUrlSchema } from '@/lib/api/schemas';
 import { parseBody, readJson, requireUserWithinLimit } from '@/lib/api/guard';
 import { runAiTask } from '@/lib/ai/run';
 import { aiErrorResponse, aiFailureResponse, unreadablePageResponse } from '@/lib/ai/errors';
-import { ExtractedRecipe, PageIngredients } from '@/lib/ai/schemas';
+import { ExtractedRecipe, MAX_PAGE_INGREDIENTS, PageIngredients } from '@/lib/ai/schemas';
 import { toPageRecipe, toRecipe } from '@/lib/ai/normalizeRecipe';
 import { extractJsonLdRecipe, htmlToText, MAX_PAGE_TEXT_CHARS } from '@/lib/recipeJsonLd';
 import { CUISINE_FORMAT_RULE, INGREDIENT_FORMAT_RULES } from '@/lib/prompts/recipeFormat';
@@ -86,7 +86,8 @@ export async function POST(req: NextRequest) {
       if (page.ingredientLines.length > 0) {
         const result = await runAiTask('recipeFromUrl', {
           userId: auth.value.id,
-          prompt: ingredientLinesPrompt(page.ingredientLines),
+          // PageIngredients allows 40; more lines would make valid output impossible.
+          prompt: ingredientLinesPrompt(page.ingredientLines.slice(0, MAX_PAGE_INGREDIENTS)),
           schema: PageIngredients,
         });
         if (result.blocked) return blockedResponse(result.rawFinishReason);
