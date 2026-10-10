@@ -7,6 +7,7 @@ import type { Recipe } from '@/lib/types/recipe';
 import { enhanceRecipeWithTags } from '@/lib/tagNormalizer';
 import { estimateRecipeCost } from '@/lib/recipeCost';
 import type { AiRecipe, ExtractedRecipe, PhotoIngredients } from './schemas';
+import type { JsonLdRecipe } from '@/lib/recipeJsonLd';
 
 export type RecipeOrigin = 'ai-generated' | 'user-added';
 
@@ -68,6 +69,34 @@ export function toPartialRecipe(partial: PhotoIngredients, extras: Pick<ToRecipe
     tags: [],
     ingredients: toIngredients(partial.ingredients),
     instructions: [],
+  });
+}
+
+/**
+ * A recipe imported from a page's structured data (#93): title, steps, time,
+ * servings and source verbatim from the page; ingredients structured by the
+ * model (possibly none, for the household to fill in).
+ */
+export function toPageRecipe(
+  page: JsonLdRecipe,
+  ingredients: AiRecipe['ingredients'],
+  extras: Pick<ToRecipeExtras, 'sourceUrl' | 'fetchedAt'> = {}
+): Recipe {
+  return finish({
+    id: recipeId(page.title, 'import'),
+    title: page.title,
+    source: {
+      url: extras.sourceUrl ?? '',
+      domain: extras.sourceUrl ? hostOf(extras.sourceUrl) : 'user-added',
+      chef: page.source ?? '',
+      license: 'unknown',
+      fetchedAt: extras.fetchedAt ?? new Date().toISOString(),
+    },
+    timeMins: page.timeMins,
+    serves: page.serves,
+    tags: [],
+    ingredients: toIngredients(ingredients),
+    instructions: page.instructions,
   });
 }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toPartialRecipe, toRecipe, recipeId } from '../normalizeRecipe';
+import { toPageRecipe, toPartialRecipe, toRecipe, recipeId } from '../normalizeRecipe';
 import { VALID_TAGS } from '../../tagNormalizer';
 import { estimateRecipeCost } from '../../recipeCost';
 import { validAiRecipe } from './fixtures';
@@ -102,5 +102,36 @@ describe('toPartialRecipe (#92)', () => {
     expect(recipe.serves).toBeUndefined();
     expect(recipe.source.chef).toBe('');
     expect(recipe.id).toMatch(/^import-recipe-[0-9a-f]{8}$/);
+  });
+});
+
+describe('toPageRecipe (#93)', () => {
+  const page = {
+    title: 'Simple Tomato Soup',
+    serves: 6,
+    timeMins: 120,
+    instructions: ['Soften the onion.', 'Add the tomatoes and simmer.'],
+    ingredientLines: ['1 kg ripe tomatoes'],
+    source: 'Example Recipes',
+  };
+
+  it('keeps the page fields verbatim and records the final URL as the source', () => {
+    const recipe = toPageRecipe(page, validAiRecipe().ingredients, {
+      sourceUrl: 'https://www.example.com/soup',
+      fetchedAt: '2026-10-10T00:00:00.000Z',
+    });
+    expect(recipe).toMatchObject({
+      title: 'Simple Tomato Soup',
+      serves: 6,
+      timeMins: 120,
+      instructions: page.instructions,
+      source: { url: 'https://www.example.com/soup', domain: 'example.com', chef: 'Example Recipes' },
+    });
+    expect(recipe.ingredients).toHaveLength(3);
+    expect(recipe.costPerServeEst).toBe(estimateRecipeCost(recipe).perServe);
+  });
+
+  it('accepts no ingredients, for the household to fill in', () => {
+    expect(toPageRecipe(page, []).ingredients).toEqual([]);
   });
 });
