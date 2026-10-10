@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { AiRecipe, ExtractedRecipe, GeneratedRecipes, PantryScan, PhotoIngredients, PhotoRecipe } from '../schemas';
+import { AiRecipe, ExtractedRecipe, GeneratedRecipes, PageIngredients, PantryScan, PhotoIngredients, PhotoRecipe } from '../schemas';
 import { validAiRecipe } from './fixtures';
 
 const withIngredient = (ingredient: Record<string, unknown>) =>
@@ -94,5 +94,16 @@ describe('PhotoIngredients', () => {
     expect(PhotoIngredients.safeParse({ title: 'Soup', servings: 4, ingredients, source: 'A Book' }).success).toBe(true);
     expect(PhotoIngredients.safeParse({ title: 'Soup' }).success).toBe(false);
     expect(PhotoIngredients.safeParse({ ingredients: [] }).success).toBe(false);
+  });
+});
+
+describe('PageIngredients', () => {
+  const ingredient = validAiRecipe().ingredients[0];
+
+  it('is up to 40 structured ingredients, possibly none', () => {
+    expect(PageIngredients.safeParse({ ingredients: [] }).success).toBe(true);
+    expect(PageIngredients.safeParse({ ingredients: Array(40).fill(ingredient) }).success).toBe(true);
+    expect(PageIngredients.safeParse({ ingredients: Array(41).fill(ingredient) }).success).toBe(false);
+    expect(PageIngredients.safeParse({ ingredients: [{ name: 'flour', qty: 2, unit: 'cup' }] }).success).toBe(false);
   });
 });

@@ -1,5 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { NextRequest } from 'next/server';
 import { DEFAULT_FAMILY_SETTINGS } from '@/lib/types/settings';
 
@@ -532,6 +534,65 @@ describe('one error contract (#96)', () => {
     expect(body).toMatchObject({ code: 'blocked' });
     expect(Object.keys(body).sort()).toEqual(['code', 'error']);
     expect(body.error).not.toContain('SAFETY');
+  });
+});
+
+describe('extract-recipe-from-url structured data (#93)', () => {
+  const fixture = (name: string) => readFileSync(join(__dirname, '../../../lib/__tests__/fixtures', name), 'utf8');
+  const promptOf = (call: number) => (mocks.generateText.mock.calls[call][0] as { prompt: string }).prompt;
+  const callUrl = () => extractFromUrlPOST(jsonRequest('/api/extract-recipe-from-url', { url: 'https://example.com/traybake' }));
+
+  it('takes title, steps, time and servings from JSON-LD and sends only the ingredient lines to the model', async () => {
+    signIn();
+    mocks.safeFetchHtml.mockResolvedValue({ html: fixture('jsonld-recipe.html'), finalUrl: 'https://example.com/traybake' });
+    mocks.generateText.mockResolvedValue(geminiOutput({ ingredients: validAiRecipe().ingredients }));
+
+    const res = await callUrl();
+    expect(res.status).toBe(200);
+    expect(mocks.generateText).toHaveBeenCalledTimes(1);
+    const prompt = promptOf(0);
+    expect(prompt).toContain('- 800 g chicken thigh fillets, cut into 3cm pieces\n- 1 ½ cups chicken stock\n- 2 lemons, juiced');
+    expect(prompt).not.toContain('Heat the oven');
+    expect(prompt).not.toContain('<script');
+    expect(prompt.length).toBeLessThan(2_000);
+
+    const { recipe } = await res.json();
+    expect(recipe).toMatchObject({
+      title: 'Weeknight Lemon Chicken & Potato Traybake',
+      serves: 4,
+      timeMins: 60,
+      instructions: ['Heat the oven to 200°C.', 'Toss the chicken with the lemon juice.', 'Roast for 45 minutes, adding the stock halfway.'],
+      source: { url: 'https://example.com/traybake', domain: 'example.com', chef: 'Sam Example' },
+    });
+    expect(recipe.ingredients).toHaveLength(3);
+    expect(recipe.id).toMatch(/^import-weeknight-lemon-chicken-potato-traybake-[0-9a-f]{8}$/);
+  });
+
+  it('returns the JSON-LD recipe with no ingredients, without calling the model, when the page lists none', async () => {
+    signIn();
+    const html = '<script type="application/ld+json">{"@type":"Recipe","name":"Mystery Stew","recipeInstructions":"Stir."}</script>';
+    mocks.safeFetchHtml.mockResolvedValue({ html, finalUrl: 'https://example.com/stew' });
+    const res = await callUrl();
+    expect(res.status).toBe(200);
+    expect(mocks.generateText).not.toHaveBeenCalled();
+    expect((await res.json()).recipe).toMatchObject({ title: 'Mystery Stew', ingredients: [], instructions: ['Stir.'] });
+  });
+
+  it('falls back to stripped page text, at most 20,000 chars, when there is no JSON-LD', async () => {
+    signIn();
+    const padding = `<p>${'Lots of story about this pasta. '.repeat(2_000)}</p>`;
+    const html = fixture('no-jsonld.html').replace('</article>', `${padding}</article>`);
+    mocks.safeFetchHtml.mockResolvedValue({ html, finalUrl: 'https://example.com/pasta' });
+    mocks.generateText.mockResolvedValue(geminiOutput(validAiRecipe()));
+
+    const res = await callUrl();
+    expect(res.status).toBe(200);
+    const prompt = promptOf(0);
+    const pageText = prompt.slice(prompt.indexOf('PAGE TEXT:\n') + 'PAGE TEXT:\n'.length);
+    expect(pageText.length).toBeLessThanOrEqual(20_000);
+    expect(pageText).toContain('400 g spaghetti');
+    expect(prompt).not.toMatch(/<\/?(?:script|style|li|p)\b/);
+    expect(prompt).not.toContain('window.analytics');
   });
 });
 
