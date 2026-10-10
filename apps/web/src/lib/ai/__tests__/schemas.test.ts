@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { AiRecipe, ExtractedRecipe, GeneratedRecipes, PantryScan } from '../schemas';
+import { AiRecipe, ExtractedRecipe, GeneratedRecipes, PantryScan, PhotoIngredients, PhotoRecipe } from '../schemas';
 import { validAiRecipe } from './fixtures';
 
 const withIngredient = (ingredient: Record<string, unknown>) =>
@@ -75,5 +75,24 @@ describe('PantryScan', () => {
     expect(PantryScan.safeParse({ items: [item('x'.repeat(41))] }).success).toBe(false);
     expect(PantryScan.safeParse({ items: Array.from({ length: 40 }, (_, i) => item(`item ${i}`)) }).success).toBe(true);
     expect(PantryScan.safeParse({ items: Array.from({ length: 41 }, (_, i) => item(`item ${i}`)) }).success).toBe(false);
+  });
+});
+
+describe('PhotoRecipe', () => {
+  it('caps the paraphrased method at 10 steps', () => {
+    const steps = (n: number) => Array.from({ length: n }, (_, i) => `Step ${i + 1}.`);
+    expect(PhotoRecipe.safeParse(validAiRecipe({ instructions: steps(10) })).success).toBe(true);
+    expect(PhotoRecipe.safeParse(validAiRecipe({ instructions: steps(11) })).success).toBe(false);
+  });
+});
+
+describe('PhotoIngredients', () => {
+  const { ingredients } = validAiRecipe();
+
+  it('needs only ingredients; title, servings and source are optional', () => {
+    expect(PhotoIngredients.safeParse({ ingredients }).success).toBe(true);
+    expect(PhotoIngredients.safeParse({ title: 'Soup', servings: 4, ingredients, source: 'A Book' }).success).toBe(true);
+    expect(PhotoIngredients.safeParse({ title: 'Soup' }).success).toBe(false);
+    expect(PhotoIngredients.safeParse({ ingredients: [] }).success).toBe(false);
   });
 });

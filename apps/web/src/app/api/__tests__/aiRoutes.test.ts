@@ -393,12 +393,74 @@ describe('validated AI output (#84)', () => {
     expect(recipe.source).toMatchObject({ url: 'https://example.com/soup', domain: 'example.com' });
   });
 
-  it('extract-recipe-from-image keeps its copyright message for RECITATION', async () => {
+  it('extract-recipe-from-image maps a visible book title or author to the source', async () => {
+    signIn();
+    mocks.generateText.mockResolvedValue(geminiOutput({ ...validAiRecipe(), source: 'Family Favourites, Jo Bloggs' }));
+    const res = await routes[2].call();
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.recipe.source).toMatchObject({ domain: 'user-added', chef: 'Family Favourites, Jo Bloggs' });
+    expect(body).not.toHaveProperty('partial');
+  });
+
+  it('extract-recipe-from-image asks for a paraphrased method of at most 10 steps', async () => {
+    signIn();
+    routes[2].prepareValid();
+    await routes[2].call();
+    const { messages } = mocks.generateText.mock.calls[0][0] as { messages: { content: { type: string; text?: string }[] }[] };
+    const prompt = messages[0].content.find((part) => part.type === 'text')?.text ?? '';
+    expect(prompt).toContain('Rewrite the method in your own words');
+    expect(prompt).toContain('at most 10');
+    expect(prompt).toContain("Don't copy sentences from the page");
+  });
+
+  it('extract-recipe-from-image falls back to ingredients only after a RECITATION block', async () => {
+    signIn();
+    mocks.generateText
+      .mockResolvedValueOnce(geminiBlocked('RECITATION'))
+      .mockResolvedValueOnce(
+        geminiOutput({ title: 'Lemon Chicken Traybake', servings: 4, ingredients: validAiRecipe().ingredients, source: 'Family Favourites' })
+      );
+    const res = await routes[2].call();
+    expect(res.status).toBe(200);
+    expect(mocks.generateText).toHaveBeenCalledTimes(2);
+    const { messages } = mocks.generateText.mock.calls[1][0] as { messages: { content: { type: string; text?: string }[] }[] };
+    expect(messages[0].content.find((part) => part.type === 'text')?.text).toContain("Don't include the method");
+
+    const body = await res.json();
+    expect(body).toMatchObject({
+      success: true,
+      partial: true,
+      notice: 'We filled in the ingredients. Add the method in your own words.',
+    });
+    expect(body.recipe).toMatchObject({
+      title: 'Lemon Chicken Traybake',
+      serves: 4,
+      instructions: [],
+      source: { domain: 'user-added', chef: 'Family Favourites' },
+    });
+    expect(body.recipe.ingredients).toHaveLength(3);
+  });
+
+  it('extract-recipe-from-image returns 422 "recitation" when the retry is blocked too', async () => {
     signIn();
     mocks.generateText.mockResolvedValue(geminiBlocked('RECITATION'));
     const res = await routes[2].call();
     expect(res.status).toBe(422);
-    expect(await res.json()).toMatchObject({ error: 'Copyright Detection', blocked: true, reason: 'RECITATION' });
+    expect(mocks.generateText).toHaveBeenCalledTimes(2);
+    expect(await res.json()).toEqual({
+      error: "We couldn't read this page automatically. Please add the recipe manually.",
+      code: 'recitation',
+    });
+  });
+
+  it('extract-recipe-from-image returns 422 "blocked" for other blocks, without retrying', async () => {
+    signIn();
+    mocks.generateText.mockResolvedValue(geminiBlocked('SAFETY'));
+    const res = await routes[2].call();
+    expect(res.status).toBe(422);
+    expect(mocks.generateText).toHaveBeenCalledTimes(1);
+    expect(await res.json()).toEqual({ error: "We couldn't process this photo. Try a different one.", code: 'blocked' });
   });
 
   it.each([

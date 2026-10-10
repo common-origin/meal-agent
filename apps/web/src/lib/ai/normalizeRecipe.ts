@@ -6,7 +6,7 @@
 import type { Recipe } from '@/lib/types/recipe';
 import { enhanceRecipeWithTags } from '@/lib/tagNormalizer';
 import { estimateRecipeCost } from '@/lib/recipeCost';
-import type { AiRecipe, ExtractedRecipe } from './schemas';
+import type { AiRecipe, ExtractedRecipe, PhotoIngredients } from './schemas';
 
 export type RecipeOrigin = 'ai-generated' | 'user-added';
 
@@ -40,11 +40,42 @@ export function toRecipe(ai: AiRecipe | ExtractedRecipe, origin: RecipeOrigin, e
     serves: ai.servings,
     cuisine: ai.cuisine,
     tags: ai.tags,
-    ingredients: ai.ingredients.map(({ name, qty, unit, prep }) => ({ name, qty, unit, ...(prep ? { prep } : {}) })),
+    ingredients: toIngredients(ai.ingredients),
     instructions: ai.instructions,
     nutrition: ai.nutrition.calories > 0 ? ai.nutrition : undefined,
   };
 
+  return finish(recipe);
+}
+
+/**
+ * A user-added recipe with ingredients but no method: the cookbook photo
+ * fallback after a copyright block (#92). The household adds the method.
+ */
+export function toPartialRecipe(partial: PhotoIngredients, extras: Pick<ToRecipeExtras, 'fetchedAt'> = {}): Recipe {
+  const title = partial.title ?? '';
+  return finish({
+    id: recipeId(title, 'import'),
+    title,
+    source: {
+      url: '',
+      domain: 'user-added',
+      chef: partial.source ?? '',
+      license: 'unknown',
+      fetchedAt: extras.fetchedAt ?? new Date().toISOString(),
+    },
+    serves: partial.servings,
+    tags: [],
+    ingredients: toIngredients(partial.ingredients),
+    instructions: [],
+  });
+}
+
+function toIngredients(ingredients: AiRecipe['ingredients']): Recipe['ingredients'] {
+  return ingredients.map(({ name, qty, unit, prep }) => ({ name, qty, unit, ...(prep ? { prep } : {}) }));
+}
+
+function finish(recipe: Recipe): Recipe {
   const withTags = enhanceRecipeWithTags(recipe);
   return { ...withTags, costPerServeEst: estimateRecipeCost(withTags).perServe };
 }

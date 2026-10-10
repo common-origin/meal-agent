@@ -53,6 +53,19 @@ export const ExtractedRecipe = AiRecipe.extend({
   source: z.string().max(120).optional(),
 });
 
+/** Cookbook photo (#92): the method is paraphrased in the model's own words, at most 10 steps. */
+export const PhotoRecipe = ExtractedRecipe.extend({
+  instructions: z.array(z.string().min(1)).min(2).max(10),
+});
+
+/** Cookbook photo fallback after a copyright (RECITATION) block (#92): facts only, no method. */
+export const PhotoIngredients = z.object({
+  title: z.string().min(1).max(80).optional(),
+  servings: z.number().int().min(1).max(12).optional(),
+  ingredients: z.array(AiIngredient).min(1).max(20),
+  source: z.string().max(120).optional(),
+});
+
 /** Pantry/fridge photo scan (#91). */
 export const PantryScan = z.object({
   items: z
@@ -69,3 +82,4 @@ export const PantryScan = z.object({
 export type AiIngredient = z.infer<typeof AiIngredient>;
 export type AiRecipe = z.infer<typeof AiRecipe>;
 export type ExtractedRecipe = z.infer<typeof ExtractedRecipe>;
+export type PhotoIngredients = z.infer<typeof PhotoIngredients>;
