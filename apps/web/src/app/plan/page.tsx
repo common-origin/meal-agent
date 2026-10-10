@@ -13,12 +13,13 @@ import PantrySheet from "@/components/app/PantrySheet";
 import { type MealCardProps } from "@/components/app/MealCard";
 import { type Recipe } from "@/lib/types/recipe";
 import { scheduleSundayToast, isSaturdayAfter4, nextWeekMondayISO } from "@/lib/schedule";
-import { loadHousehold, getDefaultHousehold } from "@/lib/storage";
-import { getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan } from "@/lib/hybridStorage";
+import { loadHousehold, getDefaultHousehold, getRecipeRatings, getBlockedRecipes, getFavorites } from "@/lib/storage";
+import { getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan, hydrateRecencyFromSupabase, recordWeekHistory } from "@/lib/hybridStorage";
+import { getRecentRecipeIds } from "@/lib/recencyTracker";
+import { buildTasteSignals, type TasteSignals } from "@/lib/tasteSignals";
 import { getSuggestedSwaps } from "@/lib/compose";
 import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
-import { addToRecipeHistory, getRecipeIdsToExclude } from "@/lib/recipeHistory";
 import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
 import { trackIngredientUsage } from "@/lib/ingredientAnalytics";
 import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
@@ -26,6 +27,23 @@ import { clientTimeZone, redirectToLoginIfUnauthenticated } from "@/lib/api/clie
 import { imageUploadFormData, PhotoTooLargeError } from "@/lib/client/resizeImage";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+/**
+ * Taste and history titles for a generate request (#88), built from this
+ * week's plan plus the household's history, ratings, blocks and favourites.
+ */
+async function loadTasteSignals(plan: (MealCardProps | null)[]): Promise<TasteSignals> {
+  // Pull other devices' history first so "recent" covers the whole household.
+  await hydrateRecencyFromSupabase().catch((err) => console.warn('Could not load recipe history:', err));
+  return buildTasteSignals({
+    plan: plan.filter((meal): meal is MealCardProps => meal !== null).map((meal) => meal.recipeId),
+    recentIds: getRecentRecipeIds(),
+    ratings: getRecipeRatings(),
+    favorites: getFavorites(),
+    blockedIds: Array.from(getBlockedRecipes()),
+    library: RecipeLibrary,
+  });
+}
 
 export default function PlanPage() {
   const { beginGeneration, endGeneration, isSignOutInProgress } = useGenerationActivity();
@@ -206,15 +224,7 @@ export default function PlanPage() {
       const familySettings = await getFamilySettings();
       const dayType = swapDayIndex >= 5 ? 'weekend' : 'weeknight';
       
-      // Get existing recipe IDs to avoid duplicates
-      const existingRecipeIds = weekPlan
-        .filter(meal => meal !== null)
-        .map(meal => meal!.recipeId);
-      
-      // Combine with recipe history to avoid repetition
-      const historyIds = getRecipeIdsToExclude();
-      const excludeRecipeIds = [...new Set([...existingRecipeIds, ...historyIds])];
-      console.log('📚 Excluding', excludeRecipeIds.length, 'recipes from swap generation');
+      const tasteSignals = await loadTasteSignals(weekPlan);
       
       console.log('📡 Calling API for 3 swap suggestions...');
       const response = await fetch('/api/generate-recipes', {
@@ -226,7 +236,7 @@ export default function PlanPage() {
           timeZone: clientTimeZone(),
           familySettings,
           numberOfRecipes: 3,
-          excludeRecipeIds,
+          ...tasteSignals,
           specificDays: [{ index: swapDayIndex, type: dayType }],
         }),
       });
@@ -250,11 +260,6 @@ export default function PlanPage() {
       await RecipeLibrary.addTempAIRecipes(data.recipes);
       console.log('✅ AI swaps saved to Supabase and localStorage');
       
-      // Add to recipe history
-      const newRecipeIds = data.recipes.map((r: Recipe) => r.id);
-      addToRecipeHistory(newRecipeIds, 'ai-generated');
-      console.log('✅ Swap suggestions added to history tracking');
-
       // Update suggested swaps
       setSuggestedSwaps(data.recipes);
 
@@ -329,6 +334,7 @@ export default function PlanPage() {
     const nextWeekISO = nextWeekMondayISO();
     const recipeIds = newWeekPlan.map(meal => meal?.recipeId || "");
     await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
+    recordWeekHistory(nextWeekISO, [recipe.id]).catch((err) => console.warn('Could not record recipe history:', err));
     console.log('✅ Week plan updated after swap');
     
     // Close drawer
@@ -444,9 +450,8 @@ export default function PlanPage() {
         pantryItemsCount: wizardData.pantryItems.length,
       });
       
-      // Get recipe IDs to exclude from history
-      const excludeRecipeIds = getRecipeIdsToExclude();
-      console.log('📜 [3/6] Recipe history loaded:', excludeRecipeIds.length, 'recipes to avoid');
+      const tasteSignals = await loadTasteSignals(weekPlan);
+      console.log('📜 [3/6] Taste signals loaded:', tasteSignals);
       
       console.log('📡 [4/6] Calling API...');
       const response = await fetch('/api/generate-recipes', {
@@ -458,7 +463,7 @@ export default function PlanPage() {
           timeZone: clientTimeZone(),
           familySettings: weeklySettings,
           numberOfRecipes: 5,
-          excludeRecipeIds,
+          ...tasteSignals,
           pantryItems: wizardData.pantryItems,
         }),
       });
@@ -500,9 +505,8 @@ export default function PlanPage() {
         console.error('❌ Failed to save some recipes');
       }
       
-      // Add to recipe history
-      const newRecipeIds = data.recipes.map((r: Recipe) => r.id);
-      addToRecipeHistory(newRecipeIds, 'ai-generated');
+      // Record in the household's recipe history
+      recordWeekHistory(nextWeekMondayISO(), data.recipes.map((r: Recipe) => r.id)).catch((err) => console.warn('Could not record recipe history:', err));
 
       // Convert to meal plan
       const aiMeals: (MealCardProps | null)[] = data.recipes.map((recipe: Recipe) => ({
@@ -639,9 +643,8 @@ export default function PlanPage() {
         pantryItemsCount: pantryItems.length,
       });
       
-      // Get recipe IDs to exclude from history
-      const excludeRecipeIds = getRecipeIdsToExclude();
-      console.log('� [3/6] Recipe history loaded:', excludeRecipeIds.length, 'recipes to avoid');
+      const tasteSignals = await loadTasteSignals(weekPlan);
+      console.log('📜 [3/6] Taste signals loaded:', tasteSignals);
       
       console.log('📡 [4/6] Calling API...');
       const response = await fetch('/api/generate-recipes', {
@@ -653,7 +656,7 @@ export default function PlanPage() {
           timeZone: clientTimeZone(),
           familySettings,
           numberOfRecipes: 5, // Start with 5 to avoid timeout/truncation
-          excludeRecipeIds, // Pass recipe history to avoid repetition
+          ...tasteSignals,
           pantryItems, // Pass pantry items for AI to prioritize
         }),
       });
@@ -687,12 +690,8 @@ export default function PlanPage() {
         console.warn('⚠️ Failed to save recipes');
       }
       
-      // Add to recipe history to avoid repetition
-      const newRecipeIds = data.recipes.map((r: Recipe) => r.id);
-      const historyAdded = addToRecipeHistory(newRecipeIds, 'ai-generated');
-      if (historyAdded) {
-        console.log('✅ Recipes added to history tracking');
-      }
+      // Record in the household's recipe history
+      recordWeekHistory(nextWeekMondayISO(), data.recipes.map((r: Recipe) => r.id)).catch((err) => console.warn('Could not record recipe history:', err));
 
       // Convert AI recipes to meal plan
       const aiMeals: (MealCardProps | null)[] = data.recipes.map((recipe: Recipe) => ({
@@ -767,11 +766,6 @@ export default function PlanPage() {
       // Determine if it's a weekend or weeknight
       const dayType = dayIndex >= 5 ? 'weekend' : 'weeknight';
       
-      // Get existing recipe IDs to avoid duplicates
-      const existingRecipeIds = weekPlan
-        .filter(meal => meal !== null)
-        .map(meal => meal!.recipeId);
-      
       // Analyze existing proteins in the week plan for variety
       const existingProteins: string[] = [];
       weekPlan.forEach(meal => {
@@ -786,10 +780,7 @@ export default function PlanPage() {
         }
       });
       
-      // Combine with recipe history to avoid repetition
-      const historyIds = getRecipeIdsToExclude();
-      const excludeRecipeIds = [...new Set([...existingRecipeIds, ...historyIds])];
-      console.log('📚 Excluding', excludeRecipeIds.length, 'recipes from generation');
+      const tasteSignals = await loadTasteSignals(weekPlan);
       console.log('🥩 Existing proteins in week:', existingProteins.length > 0 ? existingProteins.join(', ') : 'none');
       
       console.log('📡 Calling API for single recipe...');
@@ -802,7 +793,7 @@ export default function PlanPage() {
           timeZone: clientTimeZone(),
           familySettings,
           numberOfRecipes: 1,
-          excludeRecipeIds,
+          ...tasteSignals,
           existingProteins, // Pass existing proteins for variety
           specificDays: [{ index: dayIndex, type: dayType }],
         }),
@@ -828,9 +819,8 @@ export default function PlanPage() {
       await RecipeLibrary.addTempAIRecipes([recipe]);
       console.log('✅ Recipe saved to Supabase and localStorage');
       
-      // Add to recipe history
-      addToRecipeHistory([recipe.id], 'ai-generated');
-      console.log('✅ Recipe added to history tracking');
+      // Record in the household's recipe history
+      recordWeekHistory(nextWeekMondayISO(), [recipe.id]).catch((err) => console.warn('Could not record recipe history:', err));
 
       // Create meal card
       const household = loadHousehold() || getDefaultHousehold();

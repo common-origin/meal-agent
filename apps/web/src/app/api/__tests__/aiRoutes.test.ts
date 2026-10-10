@@ -255,7 +255,9 @@ describe('generate-recipes body handling', () => {
     const [request, usageContext] = mocks.generateRecipes.mock.calls[0];
     expect(usageContext).toEqual({ userId: expect.stringMatching(/^user-/) });
     expect(request.numberOfRecipes).toBe(7);
-    expect(request.excludeRecipeIds).toEqual([]);
+    expect(request.recentMealTitles).toEqual([]);
+    expect(request.dislikedMealTitles).toEqual([]);
+    expect(request.lovedMealTitles).toEqual([]);
     expect(request.pantryItems).toEqual([]);
     expect(request.specificDays).toEqual([{ index: 1, type: 'weeknight' }]);
     expect(request).not.toHaveProperty('extra');

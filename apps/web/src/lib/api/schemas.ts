@@ -11,9 +11,8 @@ import { MAX_FLAVOR_PROFILE_LENGTH, MAX_SETTING_TEXT_LENGTH } from '@/lib/types/
 
 const text = z.string().max(MAX_SETTING_TEXT_LENGTH);
 const textList = z.array(text).max(30);
-// Recipe IDs aren't free text, and AI recipe IDs are derived from the full
-// title (generateRecipeId), so they get a looser per-item cap than prose.
-const recipeIdList = z.array(z.string().max(200)).max(30);
+// Meal titles for the taste and history lines (#88), built by tasteSignals.ts.
+const mealTitleList = z.array(z.string().max(100)).max(20).default([]);
 // Optional fields may arrive as null from stored settings; treat that as absent.
 const optionalText = text.nullish().transform((v) => v ?? undefined);
 const optionalTextList = textList.nullish().transform((v) => v ?? undefined);
@@ -45,9 +44,6 @@ export const familySettingsSchema = z.object({
     country: text,
     hemisphere: z.enum(['northern', 'southern']),
   }),
-
-  dislikedRecipeIds: recipeIdList,
-  dislikedPatterns: optionalTextList,
 
   budgetPerMeal: z.object({ min: z.number(), max: z.number() }),
   maxCookTime: z.object({ weeknight: z.number(), weekend: z.number() }),
@@ -82,7 +78,9 @@ export const specificDaysSchema = z
 export const generateRecipesSchema = z.object({
   familySettings: familySettingsSchema,
   numberOfRecipes: z.number().int().min(1).max(7).default(7),
-  excludeRecipeIds: recipeIdList.default([]),
+  recentMealTitles: mealTitleList,
+  dislikedMealTitles: mealTitleList,
+  lovedMealTitles: mealTitleList,
   specificDays: specificDaysSchema.optional(),
   pantryItems: z.array(z.string().max(60)).max(60).default([]),
   existingProteins: textList.default([]),

@@ -91,10 +91,6 @@ export interface FamilySettings {
   // Location & Seasonality
   location: LocationSettings;
   
-  // Learning & Preferences
-  dislikedRecipeIds: string[]; // Recipe IDs rated poorly
-  dislikedPatterns?: string[]; // Optional derived tags like 'too_spicy', 'too_creamy'
-  
   // Budget & Time
   budgetPerMeal: BudgetRange;
   maxCookTime: CookingTimeConstraints;
@@ -168,10 +164,6 @@ export const DEFAULT_FAMILY_SETTINGS: FamilySettings = {
     country: 'Australia',
     hemisphere: 'southern',
   },
-  
-  // Learning & Preferences
-  dislikedRecipeIds: [],
-  dislikedPatterns: [],
   
   budgetPerMeal: {
     min: 15,

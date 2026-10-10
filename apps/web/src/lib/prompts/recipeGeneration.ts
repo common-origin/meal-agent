@@ -16,7 +16,12 @@ import { getCurrentSeason, getInSeasonIngredients, type Hemisphere } from '../se
 export interface RecipeGenerationRequest {
   familySettings: FamilySettings;
   numberOfRecipes: number;
-  excludeRecipeIds?: string[]; // Recipes to avoid (for variety)
+  /** Titles of this week's and recent meals, most recent first (#88). */
+  recentMealTitles?: string[];
+  /** Titles of meals rated 1–2 stars or blocked (#88). */
+  dislikedMealTitles?: string[];
+  /** The taste profile: favourites, 4–5 star meals and the household's own recipes, with cuisine (#88). */
+  lovedMealTitles?: string[];
   specificDays?: { index: number; type: 'weeknight' | 'weekend' }[]; // If generating specific days (shape settled in #80)
   pantryItems?: string[]; // Ingredients already available
   existingProteins?: string[]; // Proteins already in the week plan (for single recipe variety)
@@ -128,7 +133,7 @@ const EFFORT_DESCRIPTIONS = {
  * Build the user prompt: this household's facts and this request's constraints.
  */
 export function buildRecipeGenerationPrompt(request: RecipeGenerationRequest): string {
-  const { familySettings, numberOfRecipes, excludeRecipeIds, specificDays, pantryItems } = request;
+  const { familySettings, numberOfRecipes, specificDays, pantryItems } = request;
 
   // Without specificDays this is a weeknight request: the full plan fills
   // Monday–Friday today. Per-day types for a 7-day plan come with #95.
@@ -178,13 +183,19 @@ export function buildRecipeGenerationPrompt(request: RecipeGenerationRequest): s
   if (familySettings.favoriteIngredients.length > 0) {
     dietary.push(`Favourite ingredients to include where they suit: ${familySettings.favoriteIngredients.join(', ')}.`);
   }
-  if (familySettings.dislikedPatterns && familySettings.dislikedPatterns.length > 0) {
-    dietary.push(`Avoid these patterns: ${familySettings.dislikedPatterns.join(', ')}.`);
-  }
-  if (familySettings.dislikedRecipeIds && familySettings.dislikedRecipeIds.length > 0) {
-    dietary.push(`Previously disliked recipe IDs (avoid similar styles): ${familySettings.dislikedRecipeIds.slice(0, 5).join(', ')}.`);
-  }
   section('DIETARY', dietary);
+
+  // Taste: what this household has loved and disliked before
+  const taste: string[] = [];
+  if (request.lovedMealTitles && request.lovedMealTitles.length > 0) {
+    taste.push(
+      `The household loves these. Use them as a guide to the flavours, styles and effort level they enjoy. Don't copy them: ${request.lovedMealTitles.join('; ')}.`
+    );
+  }
+  if (request.dislikedMealTitles && request.dislikedMealTitles.length > 0) {
+    taste.push(`The household disliked these. Avoid similar dishes: ${request.dislikedMealTitles.join('; ')}.`);
+  }
+  section('TASTE', taste);
 
   // Time and budget
   const timeAndBudget = [
@@ -237,8 +248,8 @@ export function buildRecipeGenerationPrompt(request: RecipeGenerationRequest): s
       'Across the plan, mix the preferred cuisines, primary proteins (poultry, red meat, seafood, legumes, tofu), cooking methods (stir-fry, roast, grill, braise) and flavour profiles (e.g. not three tomato-based pastas).'
     );
   }
-  if (excludeRecipeIds && excludeRecipeIds.length > 0) {
-    variety.push(`Avoid repeating recently used recipes: ${excludeRecipeIds.slice(0, 10).join(', ')}.`);
+  if (request.recentMealTitles && request.recentMealTitles.length > 0) {
+    variety.push(`Don't repeat or closely resemble these recent meals: ${request.recentMealTitles.join('; ')}.`);
   }
   if (request.existingProteins && request.existingProteins.length > 0 && numberOfRecipes === 1) {
     const used = [...new Set(request.existingProteins)];
