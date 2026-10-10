@@ -24,6 +24,7 @@ export interface RecipeGenerationRequest {
   lovedMealTitles?: string[];
   specificDays?: { index: number; type: 'weeknight' | 'weekend' }[]; // If generating specific days (shape settled in #80)
   pantryItems?: string[]; // Ingredients already available
+  useSoonItems?: string[]; // Pantry items that need using this week (#91)
   existingProteins?: string[]; // Proteins already in the week plan (for single recipe variety)
   /** IANA time zone the household plans in; month and season are computed there. */
   timeZone?: string;
@@ -232,14 +233,18 @@ export function buildRecipeGenerationPrompt(request: RecipeGenerationRequest): s
   ]);
 
   // Pantry
+  const pantry: string[] = [];
   if (pantryItems && pantryItems.length > 0) {
-    section(
-      'PANTRY',
+    pantry.push(
       familySettings.pantryPreference === 'soft'
-        ? [`Available if they fit naturally: ${pantryItems.join(', ')}. Never force a strange combination just to use them.`]
-        : [`Already available, use as many as possible across the plan to reduce waste: ${pantryItems.join(', ')}.`]
+        ? `Available if they fit naturally: ${pantryItems.join(', ')}. Never force a strange combination just to use them.`
+        : `Already available, use as many as possible across the plan to reduce waste: ${pantryItems.join(', ')}.`
     );
   }
+  if (request.useSoonItems && request.useSoonItems.length > 0) {
+    pantry.push(`Use these first; they need using this week: ${request.useSoonItems.join(', ')}.`);
+  }
+  section('PANTRY', pantry);
 
   // Variety
   const variety: string[] = [];

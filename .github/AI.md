@@ -52,6 +52,12 @@ week's meals plus `recencyTracker` history), `dislikedMealTitles` (rated
 household's own recipes, with cuisine). Titles, never recipe IDs, reach the
 prompt. Ratings, blocks and favourites are still per-device localStorage.
 
+The pantry scan (#91) returns `items: { name, useSoon }[]` with Coles-style
+names. `useSoon` flags (pre-filled from the scan, toggled on each pantry
+item) are per-week UI state, not saved with the pantry list. They're sent as
+`useSoonItems` and rendered in the prompt's PANTRY section as items to use
+first.
+
 ## Auth, rate limiting and validation
 
 Every AI route (`generate-recipes`, `scan-pantry-image`,

@@ -53,9 +53,17 @@ export const ExtractedRecipe = AiRecipe.extend({
   source: z.string().max(120).optional(),
 });
 
-/** Pantry/fridge photo scan. */
+/** Pantry/fridge photo scan (#91). */
 export const PantryScan = z.object({
-  ingredients: z.array(z.string().min(1).max(60)).max(60),
+  items: z
+    .array(
+      z.object({
+        name: z.string().min(1).max(40),
+        /** Visibly ripe or wilting produce, opened containers, fresh meat or fish. */
+        useSoon: z.boolean(),
+      })
+    )
+    .max(40),
 });
 
 export type AiIngredient = z.infer<typeof AiIngredient>;

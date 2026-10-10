@@ -121,7 +121,7 @@ const routes: RouteCase[] = [
     limit: 10,
     call: () => scanPantryPOST(formRequest('/api/scan-pantry-image', imageForm())),
     callInvalid: () => scanPantryPOST(formRequest('/api/scan-pantry-image', new FormData())),
-    prepareValid: () => mocks.generateText.mockResolvedValue(geminiOutput({ ingredients: ['Milk', 'eggs', 'milk'] })),
+    prepareValid: () => mocks.generateText.mockResolvedValue(geminiOutput({ items: [{ name: 'Milk', useSoon: false }, { name: 'eggs', useSoon: false }, { name: ' milk ', useSoon: true }] })),
   },
   {
     name: 'extract-recipe-from-image',
@@ -292,7 +292,7 @@ describe.each([
   it.each(['image/png', 'image/webp', 'image/jpeg'])('passes the real %s MIME type to the model', async (type) => {
     signIn();
     mocks.generateText.mockResolvedValue(
-      geminiOutput(path.includes('pantry') ? { ingredients: ['milk'] } : validAiRecipe())
+      geminiOutput(path.includes('pantry') ? { items: [{ name: 'milk', useSoon: false }] } : validAiRecipe())
     );
     const res = await post(formRequest(path, imageForm(type)));
     expect(res.status).toBe(200);
@@ -344,11 +344,35 @@ describe('validated AI output (#84)', () => {
     expect(await res.json()).toEqual(INVALID_BODY);
   });
 
-  it('scan-pantry-image returns tidied, de-duplicated ingredient names', async () => {
+  it('scan-pantry-image returns tidied, de-duplicated items, keeping any use-soon flag', async () => {
     signIn();
     routes[1].prepareValid();
     const res = await routes[1].call();
-    expect(await res.json()).toMatchObject({ success: true, ingredients: ['milk', 'eggs'], count: 2 });
+    const body = await res.json();
+    expect(body).toMatchObject({
+      success: true,
+      items: [
+        { name: 'milk', useSoon: true },
+        { name: 'eggs', useSoon: false },
+      ],
+      count: 2,
+    });
+    expect(body).not.toHaveProperty('confidence');
+    expect(body).not.toHaveProperty('ingredients');
+  });
+
+  it('scan-pantry-image asks for Australian names, readable condiments and use-soon flags', async () => {
+    signIn();
+    routes[1].prepareValid();
+    await routes[1].call();
+    const { messages } = mocks.generateText.mock.calls[0][0] as {
+      messages: { content: { type: string; text?: string }[] }[];
+    };
+    const prompt = messages[0].content.find((part) => part.type === 'text')?.text ?? '';
+    expect(prompt).toContain('"capsicum", "beef mince"');
+    expect(prompt).toContain('sauces, pastes, canned goods and spices');
+    expect(prompt).toContain('useSoon');
+    expect(prompt).not.toMatch(/bell pepper|ground beef|Ignore condiments/i);
   });
 
   it('extract-recipe-from-image returns a normalised recipe', async () => {

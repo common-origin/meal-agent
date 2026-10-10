@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Stack, Typography, IconButton, Box, TextField, Sheet, Button } from "@common-origin/design-system";
+import { Stack, Typography, IconButton, Box, TextField, Sheet, Button, BooleanChip } from "@common-origin/design-system";
+import { addItem, isUseSoon, removeItem, toggleUseSoon, type PantryState } from "@/lib/pantryItems";
 
 interface PantrySheetProps {
   isOpen: boolean;
   onClose: () => void;
-  pantryItems: string[];
-  onUpdatePantryItems: (items: string[]) => void;
+  pantry: PantryState;
+  onUpdatePantry: (pantry: PantryState) => void;
   onScanImage: (event: React.ChangeEvent<HTMLInputElement>) => void;
   isScanning: boolean;
   scanError: string | null;
@@ -16,8 +17,8 @@ interface PantrySheetProps {
 export default function PantrySheet({
   isOpen,
   onClose,
-  pantryItems,
-  onUpdatePantryItems,
+  pantry,
+  onUpdatePantry,
   onScanImage,
   isScanning,
   scanError
@@ -26,14 +27,16 @@ export default function PantrySheet({
 
   const handleAddItem = () => {
     if (newItem.trim()) {
-      onUpdatePantryItems([...pantryItems, newItem.trim()]);
+      onUpdatePantry(addItem(pantry, newItem));
       setNewItem('');
     }
   };
 
   const handleRemoveItem = (index: number) => {
-    onUpdatePantryItems(pantryItems.filter((_, i) => i !== index));
+    onUpdatePantry(removeItem(pantry, index));
   };
+
+  const pantryItems = pantry.items;
 
   if (!isOpen) return null;
 
@@ -59,7 +62,7 @@ export default function PantrySheet({
         </Stack>
 
         <Typography variant="body">
-          Manage the ingredients you already have for this week. The AI will prioritize recipes using these items to reduce waste and save money.
+          Manage the ingredients you already have for this week. The AI will prioritize recipes using these items to reduce waste and save money. Mark anything that needs using soon and it will be used first.
         </Typography>
 
         {/* Scan Photo Section */}
@@ -159,13 +162,23 @@ export default function PantrySheet({
                       alignItems="center"
                     >
                       <Typography variant="body">• {item}</Typography>
-                      <Button
-                        variant="secondary"
-                        size="small"
-                        onClick={() => handleRemoveItem(idx)}
-                      >
-                        Remove
-                      </Button>
+                      <Stack direction="row" gap="sm" alignItems="center">
+                        <BooleanChip
+                          size="small"
+                          selected={isUseSoon(pantry, item)}
+                          onClick={() => onUpdatePantry(toggleUseSoon(pantry, item))}
+                          aria-label={`Use ${item} soon`}
+                        >
+                          Use soon
+                        </BooleanChip>
+                        <Button
+                          variant="secondary"
+                          size="small"
+                          onClick={() => handleRemoveItem(idx)}
+                        >
+                          Remove
+                        </Button>
+                      </Stack>
                     </Stack>
                   </Box>
                 ))}

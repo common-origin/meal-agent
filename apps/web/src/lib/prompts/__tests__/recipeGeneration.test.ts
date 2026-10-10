@@ -89,3 +89,23 @@ describe('buildRecipeGenerationPrompt taste and history (#88)', () => {
     expect(text).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-/i);
   });
 });
+
+describe('buildRecipeGenerationPrompt use-soon pantry items (#91)', () => {
+  const line = 'Use these first; they need using this week:';
+
+  it('lists use-soon items in the PANTRY section', () => {
+    const text = buildRecipeGenerationPrompt({
+      familySettings,
+      numberOfRecipes: 3,
+      pantryItems: ['spinach', 'eggs'],
+      useSoonItems: ['spinach', 'beef mince'],
+    });
+    const pantry = text.slice(text.indexOf('PANTRY'));
+    expect(pantry).toContain(`${line} spinach, beef mince.`);
+  });
+
+  it('omits the line when nothing needs using soon', () => {
+    expect(buildRecipeGenerationPrompt({ familySettings, numberOfRecipes: 3, pantryItems: ['eggs'] })).not.toContain(line);
+    expect(buildRecipeGenerationPrompt({ familySettings, numberOfRecipes: 3, useSoonItems: [] })).not.toContain(line);
+  });
+});

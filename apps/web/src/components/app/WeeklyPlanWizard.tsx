@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, Divider, Stack, Typography, Button, Box, TextField, List, ListItem, IconButton, Chip } from "@common-origin/design-system";
+import { Alert, BooleanChip, Divider, Stack, Typography, Button, Box, TextField, List, ListItem, IconButton, Chip } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import { CUISINE_OPTIONS, MAX_SETTING_TEXT_LENGTH } from "@/lib/types/settings";
 import { redirectToLoginIfUnauthenticated } from "@/lib/api/client";
 import { imageUploadFormData, PhotoTooLargeError } from "@/lib/client/resizeImage";
+import { addItem, isUseSoon, itemsToUseSoon, mergeScan, removeItem, toggleUseSoon, type PantryState } from "@/lib/pantryItems";
 
 interface WeeklyPlanWizardProps {
   onComplete: (data: WeeklyPlanData) => void;
@@ -15,13 +16,16 @@ interface WeeklyPlanWizardProps {
 
 export interface WeeklyPlanData {
   pantryItems: string[];
+  /** Pantry items flagged to use this week (#91). */
+  useSoonItems: string[];
   cuisines: string[];
   preferredChef?: string;
 }
 
 export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [pantryItems, setPantryItems] = useState<string[]>([]);
+  const [pantry, setPantry] = useState<PantryState>({ items: [], useSoon: [] });
+  const pantryItems = pantry.items;
   const [newPantryItem, setNewPantryItem] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
@@ -60,13 +64,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
         throw new Error(data.error || data.details || 'Failed to scan image');
       }
 
-      const newIngredients = data.ingredients.filter(
-        (item: string) => !pantryItems.some(existing => existing.toLowerCase() === item.toLowerCase())
-      );
-
-      if (newIngredients.length > 0) {
-        setPantryItems([...pantryItems, ...newIngredients]);
-      }
+      setPantry((current) => mergeScan(current, data.items));
 
     } catch (error) {
       console.error('Error scanning image:', error);
@@ -81,13 +79,13 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
 
   const handleAddPantryItem = () => {
     if (newPantryItem.trim()) {
-      setPantryItems([...pantryItems, newPantryItem.trim()]);
+      setPantry((current) => addItem(current, newPantryItem));
       setNewPantryItem('');
     }
   };
 
   const handleRemovePantryItem = (index: number) => {
-    setPantryItems(items => items.filter((_, i) => i !== index));
+    setPantry((current) => removeItem(current, index));
   };
 
   const toggleCuisine = (cuisineId: string) => {
@@ -107,6 +105,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
       // Complete wizard
       onComplete({
         pantryItems,
+        useSoonItems: itemsToUseSoon(pantry),
         cuisines: selectedCuisines,
         preferredChef: preferredChef.trim() || undefined,
       });
@@ -243,13 +242,23 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
                             key={idx}
                             primary={item}
                             badge={
-                              <IconButton
-                                variant="naked"
-                                iconName="trash"
-                                size="small"
-                                onClick={() => handleRemovePantryItem(idx)}
-                                aria-label={`Remove ${item}`}
-                              />
+                              <Stack direction="row" gap="sm" alignItems="center">
+                                <BooleanChip
+                                  size="small"
+                                  selected={isUseSoon(pantry, item)}
+                                  onClick={() => setPantry((current) => toggleUseSoon(current, item))}
+                                  aria-label={`Use ${item} soon`}
+                                >
+                                  Use soon
+                                </BooleanChip>
+                                <IconButton
+                                  variant="naked"
+                                  iconName="trash"
+                                  size="small"
+                                  onClick={() => handleRemovePantryItem(idx)}
+                                  aria-label={`Remove ${item}`}
+                                />
+                              </Stack>
                             }
                           />
                         ))}

@@ -61,9 +61,19 @@ describe('ExtractedRecipe', () => {
 });
 
 describe('PantryScan', () => {
-  it('is a list of short ingredient names', () => {
-    expect(PantryScan.safeParse({ ingredients: ['milk', 'eggs'] }).success).toBe(true);
-    expect(PantryScan.safeParse(['milk']).success).toBe(false);
-    expect(PantryScan.safeParse({ ingredients: [''] }).success).toBe(false);
+  const item = (name: string, useSoon = false) => ({ name, useSoon });
+
+  it('is a list of short names, each with a use-soon flag', () => {
+    expect(PantryScan.safeParse({ items: [item('milk'), item('baby spinach', true)] }).success).toBe(true);
+    expect(PantryScan.safeParse({ items: [{ name: 'milk' }] }).success).toBe(false);
+    expect(PantryScan.safeParse({ items: [item('')] }).success).toBe(false);
+    expect(PantryScan.safeParse({ ingredients: ['milk'] }).success).toBe(false);
+  });
+
+  it('caps names at 40 chars and the list at 40 items', () => {
+    expect(PantryScan.safeParse({ items: [item('x'.repeat(40))] }).success).toBe(true);
+    expect(PantryScan.safeParse({ items: [item('x'.repeat(41))] }).success).toBe(false);
+    expect(PantryScan.safeParse({ items: Array.from({ length: 40 }, (_, i) => item(`item ${i}`)) }).success).toBe(true);
+    expect(PantryScan.safeParse({ items: Array.from({ length: 41 }, (_, i) => item(`item ${i}`)) }).success).toBe(false);
   });
 });
