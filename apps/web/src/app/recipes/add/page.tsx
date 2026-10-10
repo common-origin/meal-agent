@@ -7,7 +7,7 @@ import ButtonGroup from "@/components/app/ButtonGroup";
 import { tokens } from "@common-origin/design-system/tokens";
 import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
-import { redirectToLoginIfUnauthenticated } from "@/lib/api/client";
+import { apiErrorMessage, GENERIC_ERROR_MESSAGE, redirectToLoginIfUnauthenticated } from "@/lib/api/client";
 import { resizeImageForUpload, PhotoTooLargeError, PHOTO_TOO_LARGE_MESSAGE } from "@/lib/client/resizeImage";
 import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
 import type { Recipe, Ingredient } from "@/lib/types/recipe";
@@ -26,8 +26,9 @@ export default function AddRecipePage() {
   // (after a newer pick, or after leaving the page) is ignored.
   const selectionRef = useRef(0);
   const [extracting, setExtracting] = useState(false);
-  // Shown inline in the photo flow instead of alert() (#92).
-  const [photoMessage, setPhotoMessage] = useState<{ variant: 'error' | 'info'; text: string } | null>(null);
+  // Shown inline above the form, never in a browser alert (#92, #96).
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   // Set after an ingredients-only result, so the method input gets focus.
   const [focusMethod, setFocusMethod] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -45,6 +46,21 @@ export default function AddRecipePage() {
   const [ingredientQty, setIngredientQty] = useState('');
   const [ingredientUnit, setIngredientUnit] = useState<'g'|'ml'|'tsp'|'tbsp'|'unit'>('g');
   const [instructionInput, setInstructionInput] = useState('');
+
+  const showError = (message: string) => {
+    setNotice(null);
+    setError(message);
+  };
+
+  const clearMessages = () => {
+    setError(null);
+    setNotice(null);
+  };
+
+  const changeMode = (next: typeof mode) => {
+    clearMessages();
+    setMode(next);
+  };
 
   // Swaps the photo, revoking the previous preview URL.
   const showImage = (file: File | null) => {
@@ -69,7 +85,7 @@ export default function AddRecipePage() {
     const file = input.files?.[0];
     if (!file) return;
     const selection = ++selectionRef.current;
-    setPhotoMessage(null);
+    clearMessages();
 
     try {
       // Resized on the client to stay well under Vercel's 4.5 MB body limit (#82).
@@ -78,7 +94,7 @@ export default function AddRecipePage() {
       showImage(resized);
     } catch (error) {
       if (selection !== selectionRef.current) return;
-      setPhotoMessage({ variant: 'error', text: error instanceof Error ? error.message : PHOTO_TOO_LARGE_MESSAGE });
+      showError(error instanceof Error ? error.message : PHOTO_TOO_LARGE_MESSAGE);
       input.value = '';
     }
   };
@@ -87,7 +103,7 @@ export default function AddRecipePage() {
     if (!imageFile) return;
 
     setExtracting(true);
-    setPhotoMessage(null);
+    clearMessages();
     setFocusMethod(false);
 
     try {
@@ -103,11 +119,12 @@ export default function AddRecipePage() {
       // Vercel's 413 body isn't our JSON, so handle it before parsing.
       if (response.status === 413) throw new PhotoTooLargeError();
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
 
-      if (!response.ok) {
-        // 422 copyright or safety blocks carry a user-facing `error` (#92).
-        throw new Error(data.error || 'Failed to extract recipe');
+      // Every AI route error carries friendly copy in `error` (#96).
+      if (!response.ok || !data?.recipe) {
+        showError(apiErrorMessage(data));
+        return;
       }
 
       const recipe = data.recipe;
@@ -120,13 +137,15 @@ export default function AddRecipePage() {
       if (recipe.source?.chef) setSource(recipe.source.chef);
 
       if (data.partial) {
-        setPhotoMessage({ variant: 'info', text: data.notice });
+        setNotice(data.notice);
         setFocusMethod(true);
       }
 
       track('page_view', { page: 'recipe_extraction_success' });
     } catch (error) {
-      setPhotoMessage({ variant: 'error', text: error instanceof Error ? error.message : 'Failed to extract recipe' });
+      // PhotoTooLargeError carries friendly copy; anything else (e.g. offline) is logged.
+      console.error('Photo extraction failed:', error);
+      showError(error instanceof PhotoTooLargeError ? error.message : GENERIC_ERROR_MESSAGE);
     } finally {
       setExtracting(false);
     }
@@ -136,7 +155,8 @@ export default function AddRecipePage() {
     if (!recipeUrl) return;
 
     setExtracting(true);
-    
+    clearMessages();
+
     try {
       const response = await fetch('/api/extract-recipe-from-url', {
         method: 'POST',
@@ -146,10 +166,11 @@ export default function AddRecipePage() {
 
       if (redirectToLoginIfUnauthenticated(response)) return;
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to extract recipe');
+      if (!response.ok || !data?.recipe) {
+        showError(apiErrorMessage(data));
+        return;
       }
 
       const recipe = data.recipe;
@@ -162,7 +183,8 @@ export default function AddRecipePage() {
 
       track('page_view', { page: 'recipe_url_extraction_success' });
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to extract recipe from URL');
+      console.error('URL extraction failed:', error);
+      showError(GENERIC_ERROR_MESSAGE);
     } finally {
       setExtracting(false);
     }
@@ -200,20 +222,21 @@ export default function AddRecipePage() {
 
   const handleSaveRecipe = async () => {
     if (isSignOutInProgress) {
-      alert('Please wait for sign-out to finish before saving a recipe');
+      showError('Please wait for sign-out to finish before saving a recipe.');
       return;
     }
 
     if (!title || ingredients.length === 0) {
-      alert('Please provide at least a title and ingredients');
+      showError('Please provide at least a title and ingredients.');
       return;
     }
 
     if (!source.trim()) {
-      alert('Please provide a source/attribution for this recipe');
+      showError('Please provide a source/attribution for this recipe.');
       return;
     }
 
+    clearMessages();
     setSaving(true);
     beginGeneration();
 
@@ -249,7 +272,7 @@ export default function AddRecipePage() {
       router.push(`/recipe/${recipe.id}`);
     } catch (err) {
       console.error('Failed to save recipe:', err);
-      alert('Failed to save recipe');
+      showError("We couldn't save this recipe. Please try again.");
       setSaving(false);
     } finally {
       endGeneration();
@@ -273,7 +296,7 @@ export default function AddRecipePage() {
 
           <Stack direction="column" gap="md">
             <button
-              onClick={() => setMode('image')}
+              onClick={() => changeMode('image')}
               style={{
                 border: '1px solid #ddd',
                 borderRadius: '8px',
@@ -290,7 +313,7 @@ export default function AddRecipePage() {
             </button>
 
             <button
-              onClick={() => setMode('url')}
+              onClick={() => changeMode('url')}
               style={{
                 border: '1px solid #ddd',
                 borderRadius: '8px',
@@ -307,7 +330,7 @@ export default function AddRecipePage() {
             </button>
 
             <button
-              onClick={() => setMode('manual')}
+              onClick={() => changeMode('manual')}
               style={{
                 border: '1px solid #ddd',
                 borderRadius: '8px',
@@ -332,11 +355,7 @@ export default function AddRecipePage() {
         <Stack direction="column" gap="xl">
           <Typography variant="h1">Upload recipe photo</Typography>
 
-          {photoMessage && (
-            <Alert variant={photoMessage.variant} inline>
-              {photoMessage.text}
-            </Alert>
-          )}
+          {!imagePreview && <FormMessages error={error} notice={notice} />}
 
           {!imagePreview ? (
             <Box border="default" borderRadius="md" p="xl" bg="surface">
@@ -376,6 +395,8 @@ export default function AddRecipePage() {
                 </Button>
               </Stack>
 
+              <FormMessages error={error} notice={notice} />
+
               {(title || ingredients.length > 0) && (
                 <RecipeForm 
                   focusMethod={focusMethod}
@@ -404,7 +425,7 @@ export default function AddRecipePage() {
                   onAddInstruction={handleAddInstruction}
                   onRemoveInstruction={handleRemoveInstruction}
                   onSave={handleSaveRecipe}
-                  onBack={() => setMode('choice')}
+                  onBack={() => changeMode('choice')}
                   saving={saving}
                 />
               )}
@@ -441,6 +462,8 @@ export default function AddRecipePage() {
             </Stack>
           </Box>
 
+          <FormMessages error={error} notice={notice} />
+
           {title && (
             <RecipeForm 
               title={title}
@@ -468,7 +491,7 @@ export default function AddRecipePage() {
               onAddInstruction={handleAddInstruction}
               onRemoveInstruction={handleRemoveInstruction}
               onSave={handleSaveRecipe}
-              onBack={() => setMode('choice')}
+              onBack={() => changeMode('choice')}
               saving={saving}
             />
           )}
@@ -482,6 +505,8 @@ export default function AddRecipePage() {
     <Main maxWidth="md">
       <Stack direction="column" gap="xl">
         <Typography variant="h1">Add Recipe Manually</Typography>
+
+        <FormMessages error={error} notice={notice} />
 
         <RecipeForm 
           title={title}
@@ -509,11 +534,37 @@ export default function AddRecipePage() {
           onAddInstruction={handleAddInstruction}
           onRemoveInstruction={handleRemoveInstruction}
           onSave={handleSaveRecipe}
-          onBack={() => setMode('choice')}
+          onBack={() => changeMode('choice')}
           saving={saving}
         />
       </Stack>
     </Main>
+  );
+}
+
+/** The page's one error and one notice, inline (#96); scrolled into view when they change. */
+function FormMessages({ error, notice }: { error: string | null; notice: string | null }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (error || notice) ref.current?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+  }, [error, notice]);
+
+  if (!error && !notice) return null;
+  return (
+    <div ref={ref}>
+      <Stack direction="column" gap="sm">
+        {error && (
+          <Alert variant="error" inline>
+            {error}
+          </Alert>
+        )}
+        {notice && (
+          <Alert variant="info" inline>
+            {notice}
+          </Alert>
+        )}
+      </Stack>
+    </div>
   );
 }
 

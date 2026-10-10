@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { redirectToLoginIfUnauthenticated } from '../api/client';
+import { apiErrorMessage, GENERIC_ERROR_MESSAGE, redirectToLoginIfUnauthenticated } from '../api/client';
 
 describe('redirectToLoginIfUnauthenticated', () => {
   afterEach(() => {
@@ -18,4 +18,19 @@ describe('redirectToLoginIfUnauthenticated', () => {
     expect(redirectToLoginIfUnauthenticated(new Response(null, { status }))).toBe(false);
     expect(assign).not.toHaveBeenCalled();
   });
+});
+
+describe('apiErrorMessage (#96)', () => {
+  it('uses the route\'s friendly error', () => {
+    expect(apiErrorMessage({ error: 'That took too long. Please try again.', code: 'timeout' })).toBe(
+      'That took too long. Please try again.'
+    );
+  });
+
+  it.each([null, undefined, 'An error occurred with your deployment', {}, { error: '' }, { error: 42 }, { details: 'raw' }])(
+    'falls back to generic copy for %j',
+    (data) => {
+      expect(apiErrorMessage(data)).toBe(GENERIC_ERROR_MESSAGE);
+    }
+  );
 });

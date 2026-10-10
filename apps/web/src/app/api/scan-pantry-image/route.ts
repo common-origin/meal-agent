@@ -7,8 +7,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
-import { invalidOutputResponse, readImageUpload, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
-import { AiTaskError, isAiInvalidOutput, isAiTimeout, runAiTask } from '@/lib/ai/run';
+import { readImageUpload, requireUserWithinLimit } from '@/lib/api/guard';
+import { runAiTask } from '@/lib/ai/run';
+import { aiErrorResponse, aiFailureResponse } from '@/lib/ai/errors';
 import { PantryScan } from '@/lib/ai/schemas';
 import type { ScannedPantryItem } from '@/lib/pantryItems';
 
@@ -35,10 +36,8 @@ export async function POST(request: NextRequest) {
     if (!auth.ok) return auth.response;
 
     if (!process.env.GEMINI_API_KEY) {
-      return NextResponse.json(
-        { error: 'Gemini API key not configured' },
-        { status: 500 }
-      );
+      console.error('scan-pantry-image: GEMINI_API_KEY is not configured');
+      return aiErrorResponse('unknown');
     }
 
     const upload = await readImageUpload(request, 'scan-pantry-image');
@@ -78,14 +77,8 @@ INSTRUCTIONS:
     });
 
     if (result.blocked) {
-      return NextResponse.json(
-        {
-          error: 'Content Blocked',
-          details: `The AI couldn't process this photo (Reason: ${result.rawFinishReason ?? 'content filtered'}). Please try a different photo or add ingredients manually.`,
-          blocked: true,
-        },
-        { status: 422 }
-      );
+      console.warn(`scan-pantry-image: response blocked (${result.rawFinishReason ?? 'content filtered'})`);
+      return aiErrorResponse('blocked');
     }
 
     const items = tidyScannedItems(result.output.items);
@@ -101,29 +94,6 @@ INSTRUCTIONS:
     });
 
   } catch (error) {
-    if (isAiTimeout(error)) return timeoutResponse('scan-pantry-image');
-    if (isAiInvalidOutput(error)) return invalidOutputResponse('scan-pantry-image');
-
-    console.error('❌ Error scanning pantry image:', error);
-
-    if (error instanceof AiTaskError && error.code === 'rate_limited') {
-      return NextResponse.json(
-        {
-          error: 'API rate limit exceeded',
-          details: 'You\'ve reached the API usage limit. Please try again in a few minutes, or enter ingredients manually.',
-          isRateLimit: true,
-        },
-        { status: 429 }
-      );
-    }
-    
-    return NextResponse.json(
-      {
-        error: 'Failed to scan image',
-        details: error instanceof Error ? error.message : 'Unknown error',
-        isRateLimit: false,
-      },
-      { status: 500 }
-    );
+    return aiFailureResponse(error, 'scan-pantry-image');
   }
 }

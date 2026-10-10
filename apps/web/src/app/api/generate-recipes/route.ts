@@ -10,8 +10,8 @@ import { generateRecipes } from '@/lib/aiRecipeGenerator';
 import type { RecipeGenerationRequest } from '@/lib/prompts/recipeGeneration';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
 import { generateRecipesSchema } from '@/lib/api/schemas';
-import { invalidOutputResponse, parseBody, readJson, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
-import { isAiInvalidOutput, isAiTimeout } from '@/lib/ai/run';
+import { parseBody, readJson, requireUserWithinLimit } from '@/lib/api/guard';
+import { aiErrorResponse, aiFailureResponse } from '@/lib/ai/errors';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -39,13 +39,11 @@ export async function POST(request: NextRequest) {
     // Generate recipes with AI
     const result = await generateRecipes(generationRequest, { userId: auth.value.id });
 
-    // Check for errors
-    if ('error' in result) {
-      console.error('❌ Recipe generation failed:', result.error);
-      return NextResponse.json(
-        { error: result.error, details: result.details },
-        { status: 500 }
-      );
+    if ('blocked' in result) {
+      console.warn(`generate-recipes: response blocked (${result.rawFinishReason ?? 'content filtered'})`);
+      return aiErrorResponse('blocked', {
+        message: "We couldn't create recipes for these settings. Please try again or adjust your preferences.",
+      });
     }
 
     console.log('✅ Successfully generated recipes:', result.recipes.length);
@@ -58,18 +56,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    if (isAiTimeout(error)) return timeoutResponse('generate-recipes');
-    if (isAiInvalidOutput(error)) return invalidOutputResponse('generate-recipes');
-
-    console.error('❌ Error in generate-recipes API:', error);
-    
-    return NextResponse.json(
-      {
-        error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
+    return aiFailureResponse(error, 'generate-recipes');
   }
 }
 

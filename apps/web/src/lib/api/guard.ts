@@ -11,54 +11,9 @@ import type { z } from 'zod';
 import { getCurrentUser } from '@/lib/supabase/server';
 import type { RateLimiter } from './rateLimit';
 import { isOverDailyAiCap } from '@/lib/ai/usage';
+import { aiErrorResponse } from '@/lib/ai/errors';
 
 type Guarded<T> = { ok: true; value: T } | { ok: false; response: NextResponse };
-
-export function unauthenticatedResponse(): NextResponse {
-  return NextResponse.json(
-    { error: 'Please sign in to use this feature.', code: 'unauthenticated' },
-    { status: 401 }
-  );
-}
-
-export function rateLimitedResponse(): NextResponse {
-  return NextResponse.json(
-    { error: "You've hit the limit for now. Try again in a few minutes.", code: 'rate_limited' },
-    { status: 429 }
-  );
-}
-
-export function invalidRequestResponse(): NextResponse {
-  return NextResponse.json(
-    { error: 'Something was wrong with that request.', code: 'invalid_request' },
-    { status: 400 }
-  );
-}
-
-/** 504 for an AI call that hit its deadline; logs it so deadline hits show up server-side. */
-export function timeoutResponse(route: string): NextResponse {
-  console.warn(`${route}: AI call hit its deadline, returning 504`);
-  return NextResponse.json(
-    { error: 'That took too long. Please try again.', code: 'timeout' },
-    { status: 504 }
-  );
-}
-
-/** 502 for AI output that failed its schema twice (#84). */
-export function invalidOutputResponse(route: string): NextResponse {
-  console.warn(`${route}: AI output failed schema validation twice, returning 502`);
-  return NextResponse.json(
-    { error: "The AI returned something we couldn't read. Please try again.", code: 'invalid_output' },
-    { status: 502 }
-  );
-}
-
-export function dailyCapResponse(): NextResponse {
-  return NextResponse.json(
-    { error: "You've reached today's AI limit. It resets tomorrow.", code: 'daily_cap' },
-    { status: 429 }
-  );
-}
 
 /**
  * Signed-in user, counted against `limiter` (burst) and the daily AI cap.
@@ -67,9 +22,9 @@ export function dailyCapResponse(): NextResponse {
  */
 export async function requireUserWithinLimit(limiter: RateLimiter): Promise<Guarded<User>> {
   const user = await getCurrentUser();
-  if (!user) return { ok: false, response: unauthenticatedResponse() };
-  if (!limiter.check(user.id)) return { ok: false, response: rateLimitedResponse() };
-  if (await isOverDailyAiCap(user.id)) return { ok: false, response: dailyCapResponse() };
+  if (!user) return { ok: false, response: aiErrorResponse('unauthenticated') };
+  if (!limiter.check(user.id)) return { ok: false, response: aiErrorResponse('rate_limited') };
+  if (await isOverDailyAiCap(user.id)) return { ok: false, response: aiErrorResponse('daily_cap') };
   return { ok: true, value: user };
 }
 
@@ -82,7 +37,7 @@ export function parseBody<S extends z.ZodType>(
   const result = schema.safeParse(body);
   if (!result.success) {
     console.warn(`${route}: invalid request body`, result.error.issues);
-    return { ok: false, response: invalidRequestResponse() };
+    return { ok: false, response: aiErrorResponse('invalid_request') };
   }
   return { ok: true, value: result.data };
 }
@@ -95,7 +50,7 @@ export async function readImageUpload(request: Request, route: string): Promise<
     console.warn(`${route}: invalid request body (expected an image file)`, {
       type: image instanceof File ? image.type : typeof image,
     });
-    return { ok: false, response: invalidRequestResponse() };
+    return { ok: false, response: aiErrorResponse('invalid_request') };
   }
   return { ok: true, value: image };
 }

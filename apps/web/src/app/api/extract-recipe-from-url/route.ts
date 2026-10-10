@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
 import { extractRecipeFromUrlSchema } from '@/lib/api/schemas';
-import { invalidOutputResponse, parseBody, readJson, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
-import { isAiInvalidOutput, isAiTimeout, runAiTask } from '@/lib/ai/run';
+import { parseBody, readJson, requireUserWithinLimit } from '@/lib/api/guard';
+import { runAiTask } from '@/lib/ai/run';
+import { aiErrorResponse, aiFailureResponse, unreadablePageResponse } from '@/lib/ai/errors';
 import { ExtractedRecipe } from '@/lib/ai/schemas';
 import { toRecipe } from '@/lib/ai/normalizeRecipe';
 import { CUISINE_FORMAT_RULE, INGREDIENT_FORMAT_RULES } from '@/lib/prompts/recipeFormat';
@@ -12,8 +13,6 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 // Must stay above AI_TASKS.recipeFromUrl.deadlineMs plus the 10 s page fetch, so the route can return its 504 first.
 export const maxDuration = 60;
-
-const UNREADABLE_PAGE_MESSAGE = "We couldn't read that page. Check the link or add the recipe manually.";
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,7 +24,8 @@ export async function POST(req: NextRequest) {
     const { url } = parsed.value;
 
     if (!process.env.GEMINI_API_KEY) {
-      return NextResponse.json({ error: 'GEMINI_API_KEY is not configured' }, { status: 500 });
+      console.error('extract-recipe-from-url: GEMINI_API_KEY is not configured');
+      return aiErrorResponse('unknown');
     }
 
     console.log('📥 Fetching recipe from URL:', url);
@@ -37,8 +37,7 @@ export async function POST(req: NextRequest) {
     } catch (error) {
       if (error instanceof SafeFetchError) {
         console.warn(`extract-recipe-from-url: fetch refused (${error.code}):`, error.message);
-        const status = error.code === 'invalid_url' || error.code === 'blocked_host' ? 400 : 422;
-        return NextResponse.json({ error: UNREADABLE_PAGE_MESSAGE, code: error.code }, { status });
+        return unreadablePageResponse(error.code);
       }
       throw error;
     }
@@ -65,10 +64,10 @@ Extract the recipe now:`;
     // Model and limits: lib/ai/models.ts
     const result = await runAiTask('recipeFromUrl', { userId: auth.value.id, prompt, schema: ExtractedRecipe });
     if (result.blocked) {
-      return NextResponse.json(
-        { error: UNREADABLE_PAGE_MESSAGE, code: 'blocked', reason: result.rawFinishReason ?? 'content filtered' },
-        { status: 422 }
-      );
+      console.warn(`extract-recipe-from-url: response blocked (${result.rawFinishReason ?? 'content filtered'})`);
+      return aiErrorResponse('blocked', {
+        message: "We couldn't read that page. Check the link or add the recipe manually.",
+      });
     }
 
     // Validated against the schema already; normalise into a Recipe.
@@ -77,13 +76,6 @@ Extract the recipe now:`;
 
     return NextResponse.json({ recipe });
   } catch (error) {
-    console.error('❌ Error extracting recipe from URL:', error);
-    if (isAiTimeout(error)) return timeoutResponse('extract-recipe-from-url');
-    if (isAiInvalidOutput(error)) return invalidOutputResponse('extract-recipe-from-url');
-
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to extract recipe' },
-      { status: 500 }
-    );
+    return aiFailureResponse(error, 'extract-recipe-from-url');
   }
 }

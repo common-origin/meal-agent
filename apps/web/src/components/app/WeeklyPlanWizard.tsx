@@ -5,7 +5,7 @@ import { Alert, BooleanChip, Divider, Stack, Typography, Button, Box, TextField,
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import { CUISINE_OPTIONS, MAX_SETTING_TEXT_LENGTH } from "@/lib/types/settings";
-import { redirectToLoginIfUnauthenticated } from "@/lib/api/client";
+import { apiErrorMessage, redirectToLoginIfUnauthenticated } from "@/lib/api/client";
 import { imageUploadFormData, PhotoTooLargeError } from "@/lib/client/resizeImage";
 import { addItem, isUseSoon, itemsToUseSoon, mergeScan, removeItem, toggleUseSoon, type PantryState } from "@/lib/pantryItems";
 
@@ -54,14 +54,10 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
       // Vercel's 413 body isn't our JSON, so handle it before parsing.
       if (response.status === 413) throw new PhotoTooLargeError();
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
 
-      if (!response.ok || data.error) {
-        // Handle rate limit error specifically
-        if (data.isRateLimit) {
-          throw new Error('API rate limit reached. Please wait a few minutes and try again, or add ingredients manually.');
-        }
-        throw new Error(data.error || data.details || 'Failed to scan image');
+      if (!response.ok || !data || data.error) {
+        throw new Error(apiErrorMessage(data));
       }
 
       setPantry((current) => mergeScan(current, data.items));
