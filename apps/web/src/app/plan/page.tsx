@@ -17,6 +17,7 @@ import { loadHousehold, getDefaultHousehold, getRecipeRatings, getBlockedRecipes
 import { getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan, hydrateRecencyFromSupabase, recordWeekHistory } from "@/lib/hybridStorage";
 import { getRecentRecipeIds } from "@/lib/recencyTracker";
 import { buildTasteSignals, type TasteSignals } from "@/lib/tasteSignals";
+import { itemsToUseSoon, mergeScan, type PantryState } from "@/lib/pantryItems";
 import { getSuggestedSwaps } from "@/lib/compose";
 import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
@@ -66,6 +67,8 @@ export default function PlanPage() {
   
   // Pantry items state
   const [pantryItems, setPantryItems] = useState<string[]>([]);
+  // Per-week only: the saved pantry list stays string[] (#91).
+  const [useSoon, setUseSoon] = useState<string[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
 
@@ -179,8 +182,9 @@ export default function PlanPage() {
   }, []);
 
   // Handler for updating pantry items
-  const handleUpdatePantryItems = async (items: string[]) => {
+  const handleUpdatePantry = async ({ items, useSoon: soon }: PantryState) => {
     setPantryItems(items);
+    setUseSoon(soon);
     
     // Save updated pantry items to storage
     const nextWeekISO = nextWeekMondayISO();
@@ -416,6 +420,7 @@ export default function PlanPage() {
 
     // Set pantry items from wizard
     setPantryItems(wizardData.pantryItems);
+    setUseSoon(wizardData.useSoonItems);
     
     // Hide wizard and show plan view with loading states
     setShowWizard(false);
@@ -465,6 +470,7 @@ export default function PlanPage() {
           numberOfRecipes: 5,
           ...tasteSignals,
           pantryItems: wizardData.pantryItems,
+          useSoonItems: wizardData.useSoonItems,
         }),
       });
 
@@ -594,16 +600,12 @@ export default function PlanPage() {
         throw new Error(data.error || data.details || 'Failed to scan image');
       }
 
-      console.log('✅ Ingredients detected:', data.ingredients);
+      console.log('✅ Ingredients detected:', data.items);
 
-      // Add detected ingredients to pantry items (avoiding duplicates)
-      const newIngredients = data.ingredients.filter(
-        (item: string) => !pantryItems.some(existing => existing.toLowerCase() === item.toLowerCase())
-      );
-
-      if (newIngredients.length > 0) {
-        setPantryItems([...pantryItems, ...newIngredients]);
-      }
+      // Add detected ingredients to pantry items (avoiding duplicates), with their use-soon flags
+      const merged = mergeScan({ items: pantryItems, useSoon }, data.items);
+      setPantryItems(merged.items);
+      setUseSoon(merged.useSoon);
 
 
     } catch (error) {
@@ -658,6 +660,7 @@ export default function PlanPage() {
           numberOfRecipes: 5, // Start with 5 to avoid timeout/truncation
           ...tasteSignals,
           pantryItems, // Pass pantry items for AI to prioritize
+          useSoonItems: itemsToUseSoon({ items: pantryItems, useSoon }),
         }),
       });
 
@@ -1039,8 +1042,8 @@ export default function PlanPage() {
       <PantrySheet
         isOpen={showPantrySheet}
         onClose={() => setShowPantrySheet(false)}
-        pantryItems={pantryItems}
-        onUpdatePantryItems={handleUpdatePantryItems}
+        pantry={{ items: pantryItems, useSoon }}
+        onUpdatePantry={handleUpdatePantry}
         onScanImage={handleScanPantryImage}
         isScanning={isScanning}
         scanError={scanError}
