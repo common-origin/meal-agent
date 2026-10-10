@@ -56,27 +56,20 @@ describe('generateRecipes', () => {
     expect(result.recipes[0].costPerServeEst).toBeGreaterThan(0);
   });
 
-  it.each(['timeout', 'invalid_output'] as const)('rethrows %s so the route can return 504/502', async (code) => {
-    const error = new AiTaskError(code, 'x');
-    runAiTask.mockRejectedValue(error);
-    await expect(generateRecipes(request, { userId: 'user-1' })).rejects.toBe(error);
-  });
+  it.each(['timeout', 'invalid_output', 'unavailable', 'rate_limited', 'error'] as const)(
+    'rethrows %s for the route to map to a friendly response (#96)',
+    async (code) => {
+      const error = new AiTaskError(code, 'x');
+      runAiTask.mockRejectedValue(error);
+      await expect(generateRecipes(request, { userId: 'user-1' })).rejects.toBe(error);
+    }
+  );
 
-  it.each([
-    ['unavailable', /temporarily overloaded/],
-    ['rate_limited', /Rate limit reached/],
-    ['error', /boom/],
-  ] as const)('returns a %s failure as an error result', async (code, details) => {
-    runAiTask.mockRejectedValue(new AiTaskError(code, 'boom'));
-    const result = await generateRecipes(request, { userId: 'user-1' });
-    expect(result).toMatchObject({ error: 'Failed to generate recipes', details: expect.stringMatching(details) });
-  });
-
-  it('reports a blocked response as declined', async () => {
+  it('reports a blocked response without recipes', async () => {
     runAiTask.mockResolvedValue({ blocked: true, output: undefined, rawFinishReason: 'SAFETY' });
     await expect(generateRecipes(request, { userId: 'user-1' })).resolves.toEqual({
-      error: 'Failed to generate recipes',
-      details: expect.stringContaining('declined to generate recipes for these settings (SAFETY)'),
+      blocked: true,
+      rawFinishReason: 'SAFETY',
     });
   });
 });

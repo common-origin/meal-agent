@@ -31,7 +31,7 @@ The request goes to `POST /api/generate-recipes`. Its request type
 `aiRecipeGenerator.ts` where the generation logic itself lives — and the
 actual HTTP response isn't the generator's raw internal result type
 either: the route wraps it as `{ success: true, recipes, count }` on
-success or `{ error, details }` on failure
+success or the shared `{ error, code }` error body on failure
 (`apps/web/src/app/api/generate-recipes/route.ts`). Read the route file
 directly for the real contract rather than a hand-copied JSON example
 here, since that's exactly the kind of thing that drifts out of sync
@@ -93,6 +93,18 @@ HTTP 429/5xx or network errors and never after the deadline. Each route's
 time returns 504, `code: "timeout"`. Failures reach routes as a typed
 `AiTaskError` (`timeout`, `rate_limited`, `unavailable`, `invalid_output`,
 `error`).
+
+Every AI route fails with one contract (#96): `{ error, code }`, where
+`error` is always friendly copy and the raw error is only logged
+server-side; there is no `details` field. The codes, statuses and copy live
+in one table, `AI_ERRORS` in `apps/web/src/lib/ai/errors.ts`. Routes catch
+with `aiFailureResponse(error, route)`, which maps an `AiTaskError` (the
+provider's 429 or 5xx becomes 503 `provider_busy`; anything unrecognised
+becomes 500 `unknown`). The guards in `lib/api/guard.ts` use the same
+table. On the client, `apiErrorMessage()` in `lib/api/client.ts` shows
+`data.error` or a generic message, never raw response text, and
+`/recipes/add` shows errors and notices in inline `Alert`s rather than
+`alert()`.
 
 Every AI response is structured output (#84): the caller passes a schema
 from `apps/web/src/lib/ai/schemas.ts` (`GeneratedRecipes`, `ExtractedRecipe`,

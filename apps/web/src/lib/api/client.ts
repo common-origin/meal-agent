@@ -22,3 +22,16 @@ export function clientTimeZone(): string | undefined {
     return undefined;
   }
 }
+
+/** Shown when a response carries no friendly `error` (e.g. a platform error page). */
+export const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.';
+
+/**
+ * The friendly message from an AI route's `{ error, code }` body (#96), or a
+ * generic one. Never shows raw response text.
+ */
+export function apiErrorMessage(data: unknown): string {
+  const error = (data as { error?: unknown } | null)?.error;
+  return typeof error === 'string' && error.trim() ? error : GENERIC_ERROR_MESSAGE;
+}
+

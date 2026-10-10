@@ -8,8 +8,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
-import { invalidOutputResponse, readImageUpload, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
-import { isAiInvalidOutput, isAiTimeout, runAiTask } from '@/lib/ai/run';
+import { readImageUpload, requireUserWithinLimit } from '@/lib/api/guard';
+import { runAiTask } from '@/lib/ai/run';
+import { aiErrorResponse, aiFailureResponse } from '@/lib/ai/errors';
 import { PhotoIngredients, PhotoRecipe } from '@/lib/ai/schemas';
 import { toPartialRecipe, toRecipe } from '@/lib/ai/normalizeRecipe';
 import { CUISINE_FORMAT_RULE, INGREDIENT_FORMAT_RULES } from '@/lib/prompts/recipeFormat';
@@ -40,8 +41,6 @@ const INGREDIENTS_PROMPT = `Read the recipe in this image and list only its fact
 ${INGREDIENT_FORMAT_RULES}`;
 
 const PARTIAL_NOTICE = 'We filled in the ingredients. Add the method in your own words.';
-const RECITATION_MESSAGE = "We couldn't read this page automatically. Please add the recipe manually.";
-const BLOCKED_MESSAGE = "We couldn't process this photo. Try a different one.";
 
 export async function POST(request: NextRequest) {
   try {
@@ -85,7 +84,7 @@ export async function POST(request: NextRequest) {
     const reason = result.rawFinishReason ?? 'content filtered';
     console.log(`⚠️ Response blocked: ${reason}`);
     if (reason !== 'RECITATION') {
-      return NextResponse.json({ error: BLOCKED_MESSAGE, code: 'blocked' }, { status: 422 });
+      return aiErrorResponse('blocked');
     }
 
     // Copyright block: ingredients are facts, so ask for those alone, once.
@@ -97,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     if (fallback.blocked) {
       console.log(`⚠️ Ingredients-only retry blocked: ${fallback.rawFinishReason ?? 'content filtered'}`);
-      return NextResponse.json({ error: RECITATION_MESSAGE, code: 'recitation' }, { status: 422 });
+      return aiErrorResponse('recitation');
     }
 
     const recipe = toPartialRecipe(fallback.output);
@@ -105,18 +104,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, recipe, partial: true, notice: PARTIAL_NOTICE });
 
   } catch (error) {
-    console.error('❌ Error extracting recipe from image:', error);
-    if (isAiTimeout(error)) return timeoutResponse('extract-recipe-from-image');
-    if (isAiInvalidOutput(error)) return invalidOutputResponse('extract-recipe-from-image');
-
-    
-    return NextResponse.json(
-      {
-        error: 'Failed to extract recipe',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
+    return aiFailureResponse(error, 'extract-recipe-from-image');
   }
 }
 

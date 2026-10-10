@@ -475,6 +475,66 @@ describe('validated AI output (#84)', () => {
   });
 });
 
+describe('one error contract (#96)', () => {
+  const RAW = '404 Not Found: models/gemini-1.5-pro is not found for API version v1beta';
+
+  it.each([1, 2, 3])('route %i returns friendly copy, never the raw SDK error', async (index) => {
+    signIn();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    routes[index].prepareValid();
+    mocks.generateText.mockRejectedValue(new Error(RAW));
+    const res = await routes[index].call();
+    const body = await res.json();
+    expect(res.status).toBe(500);
+    expect(body).toEqual({ error: 'Something went wrong. Please try again.', code: 'unknown' });
+    expect(JSON.stringify(body)).not.toContain('gemini');
+  });
+
+  it('generate-recipes returns friendly copy, never the raw error', async () => {
+    signIn();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mocks.generateRecipes.mockRejectedValue(new AiTaskError('error', RAW, 404));
+    const res = await routes[0].call();
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: 'Something went wrong. Please try again.', code: 'unknown' });
+  });
+
+  it.each(['rate_limited', 'unavailable'] as const)('maps a provider %s to 503 provider_busy', async (code) => {
+    signIn();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mocks.generateRecipes.mockRejectedValue(new AiTaskError(code, RAW, code === 'rate_limited' ? 429 : 503));
+    const res = await routes[0].call();
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({
+      error: 'The AI service is busy right now. Please try again in a minute.',
+      code: 'provider_busy',
+    });
+  });
+
+  it('generate-recipes returns 422 blocked with generation copy', async () => {
+    signIn();
+    mocks.generateRecipes.mockResolvedValue({ blocked: true, rawFinishReason: 'SAFETY' });
+    const res = await routes[0].call();
+    expect(res.status).toBe(422);
+    expect(await res.json()).toEqual({
+      error: "We couldn't create recipes for these settings. Please try again or adjust your preferences.",
+      code: 'blocked',
+    });
+  });
+
+  it.each([1, 3])('route %i returns 422 blocked with friendly copy and no raw finish reason', async (index) => {
+    signIn();
+    routes[index].prepareValid();
+    mocks.generateText.mockResolvedValue(geminiBlocked('SAFETY'));
+    const res = await routes[index].call();
+    const body = await res.json();
+    expect(res.status).toBe(422);
+    expect(body).toMatchObject({ code: 'blocked' });
+    expect(Object.keys(body).sort()).toEqual(['code', 'error']);
+    expect(body.error).not.toContain('SAFETY');
+  });
+});
+
 describe('extract-recipe-from-url fetch errors', () => {
   it.each([
     ['invalid_url', 400],

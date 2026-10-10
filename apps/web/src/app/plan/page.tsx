@@ -24,7 +24,7 @@ import { track } from "@/lib/analytics";
 import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
 import { trackIngredientUsage } from "@/lib/ingredientAnalytics";
 import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
-import { clientTimeZone, redirectToLoginIfUnauthenticated } from "@/lib/api/client";
+import { apiErrorMessage, clientTimeZone, GENERIC_ERROR_MESSAGE, redirectToLoginIfUnauthenticated } from "@/lib/api/client";
 import { imageUploadFormData, PhotoTooLargeError } from "@/lib/client/resizeImage";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -247,11 +247,11 @@ export default function PlanPage() {
 
       if (redirectToLoginIfUnauthenticated(response)) return;
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
 
-      if (!response.ok || data.error) {
+      if (!response.ok || !data || data.error) {
         console.error('❌ API error:', data);
-        throw new Error(data.error || data.details || `HTTP ${response.status}`);
+        throw new Error(apiErrorMessage(data));
       }
 
       if (!data.recipes || data.recipes.length === 0) {
@@ -485,13 +485,14 @@ export default function PlanPage() {
       try {
         data = JSON.parse(text);
       } catch {
+        // Not our JSON (e.g. a platform timeout page): log it, show friendly copy (#96).
         console.error('❌ Failed to parse API response as JSON:', text.substring(0, 200));
-        throw new Error(`Invalid JSON response: ${text.substring(0, 100)}...`);
+        throw new Error(GENERIC_ERROR_MESSAGE);
       }
 
-      if (!response.ok || data.error) {
+      if (!response.ok || !data || data.error) {
         console.error('❌ API error:', data);
-        throw new Error(data.error || data.details || `HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(apiErrorMessage(data));
       }
 
       if (!data.recipes || !Array.isArray(data.recipes)) {
@@ -590,14 +591,10 @@ export default function PlanPage() {
       // Vercel's 413 body isn't our JSON, so handle it before parsing.
       if (response.status === 413) throw new PhotoTooLargeError();
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
 
-      if (!response.ok || data.error) {
-        // Handle rate limit error specifically
-        if (data.isRateLimit) {
-          throw new Error('API rate limit reached. Please wait a few minutes and try again, or add ingredients manually.');
-        }
-        throw new Error(data.error || data.details || 'Failed to scan image');
+      if (!response.ok || !data || data.error) {
+        throw new Error(apiErrorMessage(data));
       }
 
       console.log('✅ Ingredients detected:', data.items);
@@ -668,12 +665,12 @@ export default function PlanPage() {
 
       console.log('📥 [5/6] API response status:', response.status, response.statusText);
       
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
       console.log('📦 [5/6] API response data:', data);
 
-      if (!response.ok || data.error) {
+      if (!response.ok || !data || data.error) {
         console.error('❌ API error:', data);
-        throw new Error(data.error || data.details || `HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(apiErrorMessage(data));
       }
 
       if (!data.recipes || !Array.isArray(data.recipes)) {
@@ -804,11 +801,11 @@ export default function PlanPage() {
 
       if (redirectToLoginIfUnauthenticated(response)) return;
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
 
-      if (!response.ok || data.error) {
+      if (!response.ok || !data || data.error) {
         console.error('❌ API error:', data);
-        throw new Error(data.error || data.details || `HTTP ${response.status}`);
+        throw new Error(apiErrorMessage(data));
       }
 
       if (!data.recipes || data.recipes.length === 0) {
