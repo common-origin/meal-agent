@@ -315,6 +315,16 @@ export async function hydrateRecencyFromSupabase(): Promise<void> {
   })));
 }
 
+/**
+ * Record recipes the AI added to a week: locally for this device's next
+ * prompt, and in recipe_history for the household's other devices (#88).
+ */
+export async function recordWeekHistory(weekOfISO: string, recipeIds: string[]): Promise<void> {
+  const { recordWeekRecipes } = await import('./recencyTracker');
+  recordWeekRecipes(weekOfISO, recipeIds);
+  await syncRecencyToSupabase(weekOfISO, recipeIds);
+}
+
 export async function syncRecencyToSupabase(weekOfISO: string, recipeIds: string[]): Promise<void> {
   const authed = await isAuthenticated();
   if (!authed) return;

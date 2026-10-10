@@ -45,6 +45,13 @@ in-season produce (`getInSeasonIngredients` in `lib/seasonal.ts`) are the
 household's own; an unknown or missing zone falls back to
 `Australia/Melbourne`.
 
+The plan page also sends three title lists (#88), built client-side by
+`buildTasteSignals()` in `lib/tasteSignals.ts`: `recentMealTitles` (this
+week's meals plus `recencyTracker` history), `dislikedMealTitles` (rated
+≤ 2 stars or blocked) and `lovedMealTitles` (favourites, ≥ 4 stars and the
+household's own recipes, with cuisine). Titles, never recipe IDs, reach the
+prompt. Ratings, blocks and favourites are still per-device localStorage.
+
 ## Auth, rate limiting and validation
 
 Every AI route (`generate-recipes`, `scan-pantry-image`,

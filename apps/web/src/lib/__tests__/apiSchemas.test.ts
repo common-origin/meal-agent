@@ -25,6 +25,13 @@ describe('familySettingsSchema', () => {
     expect(result.data).not.toHaveProperty('recipeRecipients');
   });
 
+  it('still accepts stored settings with the retired dislike fields, and drops them', () => {
+    const result = familySettingsSchema.safeParse({ ...wireSettings(), dislikedRecipeIds: ['a'], dislikedPatterns: ['too_spicy'] });
+    expect(result.success).toBe(true);
+    expect(result.data).not.toHaveProperty('dislikedRecipeIds');
+    expect(result.data).not.toHaveProperty('dislikedPatterns');
+  });
+
   it('enforces the free-text caps', () => {
     expect(familySettingsSchema.safeParse(wireSettings({ preferredChef: 'x'.repeat(100) })).success).toBe(true);
     expect(familySettingsSchema.safeParse(wireSettings({ preferredChef: 'x'.repeat(101) })).success).toBe(false);
@@ -42,14 +49,20 @@ describe('generateRecipesSchema', () => {
     expect(generateRecipesSchema.safeParse({ familySettings, numberOfRecipes: 2.5 }).success).toBe(false);
   });
 
-  it('accepts a full week of exclusions (20 history + 7 current)', () => {
-    const excludeRecipeIds = Array.from({ length: 27 }, (_, i) => `recipe-${i}`);
-    expect(generateRecipesSchema.safeParse({ familySettings: wireSettings(), excludeRecipeIds }).success).toBe(true);
+  it('accepts up to 20 meal titles of up to 100 chars per list', () => {
+    const familySettings = wireSettings();
+    const titles = Array.from({ length: 20 }, (_, i) => `${'x'.repeat(98)}${i}`.slice(-100));
+    for (const key of ['recentMealTitles', 'dislikedMealTitles', 'lovedMealTitles']) {
+      expect(generateRecipesSchema.safeParse({ familySettings, [key]: titles }).success).toBe(true);
+      expect(generateRecipesSchema.safeParse({ familySettings, [key]: [...titles, 'one more'] }).success).toBe(false);
+      expect(generateRecipesSchema.safeParse({ familySettings, [key]: ['x'.repeat(101)] }).success).toBe(false);
+    }
   });
 
-  it('allows recipe IDs derived from long titles', () => {
-    const excludeRecipeIds = [`ai-${'a'.repeat(150)}`];
-    expect(generateRecipesSchema.safeParse({ familySettings: wireSettings(), excludeRecipeIds }).success).toBe(true);
+  it('defaults the meal title lists to empty and drops the old excludeRecipeIds', () => {
+    const result = generateRecipesSchema.safeParse({ familySettings: wireSettings(), excludeRecipeIds: ['recipe-1'] });
+    expect(result.data).toMatchObject({ recentMealTitles: [], dislikedMealTitles: [], lovedMealTitles: [] });
+    expect(result.data).not.toHaveProperty('excludeRecipeIds');
   });
 
   it('validates specificDays index and type', () => {

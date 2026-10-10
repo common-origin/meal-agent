@@ -91,14 +91,17 @@ export function mergeRemoteHistory(entries: RecipeHistory[]): void {
 }
 
 /**
- * Get recipes used within the repetition window
+ * Get recipes used within the repetition window, most recent first
  */
 export function getRecentRecipeIds(currentWeekISO?: string): string[] {
   const history = getRecipeHistory();
   const pruned = pruneOldHistory(history, currentWeekISO);
-  
+  const newestFirst = [...pruned].sort(
+    (a, b) => b.weekOfISO.localeCompare(a.weekOfISO) || b.usedAt.localeCompare(a.usedAt)
+  );
+
   // Return unique recipe IDs
-  return Array.from(new Set(pruned.map(h => h.recipeId)));
+  return Array.from(new Set(newestFirst.map(h => h.recipeId)));
 }
 
 /**

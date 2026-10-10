@@ -163,6 +163,9 @@ Of the four modules that used to bypass all of the above and read/write
   deliberately, since making them auth-aware internally would force their
   whole call graph (including `compose.test.ts`) async for no behavior
   change. Backed by the new `recipe_history` table (migration 007).
+  AI-generated plans, swaps and single days record through the same
+  table via `hybridStorage.ts`'s `recordWeekHistory` (#88), which replaced
+  the separate localStorage-only `recipeHistory.ts`.
 - `ingredientAnalytics.ts` — deliberately left localStorage-only: it's
   maintainer tooling for prioritizing `colesMapping.ts` entries (see
   `/api/ingredient-analytics` and `/debug/ingredient-analytics`), not
@@ -218,7 +221,7 @@ signup):
 - **`api_usage`** (001) — an early AI-cost table that nothing writes to;
   superseded by `ai_usage`
 - **`recipe_history`** (migration 007) — one row per recipe used in a
-  composed week, `UNIQUE(household_id, recipe_id, week_start)`; backs
+  composed or AI-generated week, `UNIQUE(household_id, recipe_id, week_start)`; backs
   cross-device recency/variety-enforcement sync (see [Storage](#storage))
 - **`ai_usage`** (migration 010) — one row per AI call: user, household,
   task, model, input/output/thinking tokens, estimated `cost_usd`,
