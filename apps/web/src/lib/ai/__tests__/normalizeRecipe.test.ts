@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toRecipe, recipeId } from '../normalizeRecipe';
+import { toPartialRecipe, toRecipe, recipeId } from '../normalizeRecipe';
 import { VALID_TAGS } from '../../tagNormalizer';
 import { estimateRecipeCost } from '../../recipeCost';
 import { validAiRecipe } from './fixtures';
@@ -74,5 +74,33 @@ describe('recipeId (#90)', () => {
   it('falls back to "recipe" for an empty or symbol-only title', () => {
     expect(recipeId('')).toMatch(/^ai-recipe-[0-9a-f]{8}$/);
     expect(recipeId('🍜🔥')).toMatch(/^ai-recipe-[0-9a-f]{8}$/);
+  });
+});
+
+describe('toPartialRecipe (#92)', () => {
+  const { ingredients } = validAiRecipe();
+
+  it('builds a user-added recipe with no method, attributing the source', () => {
+    const recipe = toPartialRecipe(
+      { title: 'Lemon Chicken Traybake', servings: 4, ingredients, source: 'Family Favourites' },
+      { fetchedAt: '2026-10-10T00:00:00.000Z' }
+    );
+    expect(recipe).toMatchObject({
+      title: 'Lemon Chicken Traybake',
+      serves: 4,
+      instructions: [],
+      source: { url: '', domain: 'user-added', chef: 'Family Favourites', fetchedAt: '2026-10-10T00:00:00.000Z' },
+    });
+    expect(recipe.id).toMatch(/^import-lemon-chicken-traybake-[0-9a-f]{8}$/);
+    expect(recipe.ingredients[0]).toEqual({ name: 'chicken thigh fillets', qty: 800, unit: 'g', prep: 'cut into 3cm pieces' });
+    expect(recipe.costPerServeEst).toBe(estimateRecipeCost(recipe).perServe);
+  });
+
+  it('leaves title, servings and source empty when the photo did not show them', () => {
+    const recipe = toPartialRecipe({ ingredients });
+    expect(recipe.title).toBe('');
+    expect(recipe.serves).toBeUndefined();
+    expect(recipe.source.chef).toBe('');
+    expect(recipe.id).toMatch(/^import-recipe-[0-9a-f]{8}$/);
   });
 });

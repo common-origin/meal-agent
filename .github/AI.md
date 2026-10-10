@@ -96,7 +96,7 @@ time returns 504, `code: "timeout"`. Failures reach routes as a typed
 
 Every AI response is structured output (#84): the caller passes a schema
 from `apps/web/src/lib/ai/schemas.ts` (`GeneratedRecipes`, `ExtractedRecipe`,
-`PantryScan`), the SDK sends it to the model as `Output.object`, and the
+`PhotoRecipe`, `PhotoIngredients`, `PantryScan`), the SDK sends it to the model as `Output.object`, and the
 result is validated before a route sees it. There is no free-text JSON
 parsing. Output that fails the schema is retried once; if the retry fails
 too, the route returns 502, `code: "invalid_output"`. Recipes from
@@ -105,6 +105,15 @@ generation, photo and URL go through one normaliser,
 cuisine, ingredient `prep`, and a cost per serve from Coles prices
 (`lib/recipeCost.ts`, #89). Units are always `g | ml | tsp | tbsp | unit`;
 the shared prompt rules are in `lib/prompts/recipeFormat.ts`.
+
+The cookbook photo route (#92) asks for the ingredients as data and the
+method paraphrased in the model's own words (at most 10 steps), plus the
+book title and/or author as `source` (stored in `source.chef`). If Gemini
+blocks the answer with `RECITATION` (copyright), the route retries once
+asking for ingredients only (`PhotoIngredients`) and returns
+`{ recipe, partial: true, notice }` with an empty method (`toPartialRecipe`).
+A second block returns 422, `code: "recitation"`; any other block returns
+422, `code: "blocked"`. Because of the retry, its `maxDuration` is 100 s.
 
 The two photo routes (`scan-pantry-image`, `extract-recipe-from-image`) take
 multipart `FormData` with an `image` field, which must be `image/*`; the

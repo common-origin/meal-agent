@@ -2,21 +2,46 @@
  * API Route: Extract Recipe from Image
  * POST /api/extract-recipe-from-image
  * 
- * Uses Gemini Vision to extract recipe data from cookbook/magazine photos
+ * Reads a recipe from a cookbook, magazine or handwritten photo. The method is
+ * paraphrased; after a copyright block it falls back to ingredients only (#92).
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
 import { invalidOutputResponse, readImageUpload, requireUserWithinLimit, timeoutResponse } from '@/lib/api/guard';
 import { isAiInvalidOutput, isAiTimeout, runAiTask } from '@/lib/ai/run';
-import { ExtractedRecipe } from '@/lib/ai/schemas';
-import { toRecipe } from '@/lib/ai/normalizeRecipe';
+import { PhotoIngredients, PhotoRecipe } from '@/lib/ai/schemas';
+import { toPartialRecipe, toRecipe } from '@/lib/ai/normalizeRecipe';
 import { CUISINE_FORMAT_RULE, INGREDIENT_FORMAT_RULES } from '@/lib/prompts/recipeFormat';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 // Must stay above AI_TASKS.recipeFromImage.deadlineMs, so the route can return its 504 first.
-export const maxDuration = 60;
+// A copyright block can mean two calls (#92), so leave room for both.
+export const maxDuration = 100;
+
+const RECIPE_PROMPT = `You are a recipe extraction assistant. Read the recipe in this image.
+
+The image may be a page from a cookbook or magazine, or a handwritten recipe card.
+
+RULES:
+- Extract the ingredients with the quantities shown, converted to the units below.
+- Rewrite the method in your own words as concise numbered steps, at most 10. Keep every quantity, temperature and time. Don't copy sentences from the page.
+- If servings or time are not visible, estimate reasonably.
+- Estimate nutrition per serve.
+- Put the book title and/or author in "source" if visible.
+- If you can't read something clearly, make your best guess or omit it.
+${CUISINE_FORMAT_RULE}
+
+${INGREDIENT_FORMAT_RULES}`;
+
+const INGREDIENTS_PROMPT = `Read the recipe in this image and list only its facts: the title, the servings, and the ingredients with the quantities shown, converted to the units below. Put the book title and/or author in "source" if visible. Don't include the method.
+
+${INGREDIENT_FORMAT_RULES}`;
+
+const PARTIAL_NOTICE = 'We filled in the ingredients. Add the method in your own words.';
+const RECITATION_MESSAGE = "We couldn't read this page automatically. Please add the recipe manually.";
+const BLOCKED_MESSAGE = "We couldn't process this photo. Try a different one.";
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,76 +57,52 @@ export async function POST(request: NextRequest) {
       type: image.type,
     });
 
-    // Build the prompt for recipe extraction
-    const prompt = `You are a recipe extraction assistant. Extract all recipe information from this image.
-
-The image may contain a recipe from a cookbook, magazine, or handwritten recipe card.
-
-RULES:
-- Extract the ingredients with the quantities shown, converted to the units below
-- Extract all instruction steps in order
-- If servings or time are not visible, estimate reasonably
-- Estimate nutrition per serve
-- Put the book title or source in "source" if it is visible
-- If you can't read something clearly, make your best guess or omit it
-${CUISINE_FORMAT_RULE}
-
-${INGREDIENT_FORMAT_RULES}`;
-
-    // Process image (model and limits: lib/ai/models.ts)
     const imageData = new Uint8Array(await image.arrayBuffer());
+    const askAbout = (text: string) => [
+      {
+        role: 'user' as const,
+        content: [
+          { type: 'text' as const, text },
+          { type: 'file' as const, data: imageData, mediaType: image.type },
+        ],
+      },
+    ];
 
+    // Model and limits: lib/ai/models.ts
     const result = await runAiTask('recipeFromImage', {
       userId: auth.value.id,
-      schema: ExtractedRecipe,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: prompt },
-            { type: 'file', data: imageData, mediaType: image.type },
-          ],
-        },
-      ],
+      schema: PhotoRecipe,
+      messages: askAbout(RECIPE_PROMPT),
     });
 
-    // Check for blocked responses (RECITATION, SAFETY, ...)
-    if (result.blocked) {
-      const reason = result.rawFinishReason ?? 'content filtered';
-      console.log(`⚠️ Response blocked: ${reason}`);
-
-      if (reason === 'RECITATION') {
-        return NextResponse.json(
-          {
-            error: 'Copyright Detection',
-            details: 'The image appears to contain copyrighted content. Please try:\n• Taking a photo of a handwritten recipe\n• Manually typing the recipe instead\n• Using a recipe you created yourself',
-            blocked: true,
-            reason: 'RECITATION'
-          },
-          { status: 422 }
-        );
-      }
-
-      return NextResponse.json(
-        {
-          error: 'Content Blocked',
-          details: `The AI couldn't process this image (Reason: ${reason}). Please try a different image.`,
-          blocked: true,
-          reason
-        },
-        { status: 422 }
-      );
+    if (!result.blocked) {
+      // Validated against the schema already; normalise into a Recipe.
+      const recipe = toRecipe(result.output, 'user-added');
+      console.log('✅ Recipe extracted:', recipe.title);
+      return NextResponse.json({ success: true, recipe });
     }
 
-    // Validated against the schema already; normalise into a Recipe.
-    const recipe = toRecipe(result.output, 'user-added');
+    const reason = result.rawFinishReason ?? 'content filtered';
+    console.log(`⚠️ Response blocked: ${reason}`);
+    if (reason !== 'RECITATION') {
+      return NextResponse.json({ error: BLOCKED_MESSAGE, code: 'blocked' }, { status: 422 });
+    }
 
-    console.log('✅ Recipe extracted:', recipe.title);
-
-    return NextResponse.json({
-      success: true,
-      recipe,
+    // Copyright block: ingredients are facts, so ask for those alone, once.
+    const fallback = await runAiTask('recipeFromImage', {
+      userId: auth.value.id,
+      schema: PhotoIngredients,
+      messages: askAbout(INGREDIENTS_PROMPT),
     });
+
+    if (fallback.blocked) {
+      console.log(`⚠️ Ingredients-only retry blocked: ${fallback.rawFinishReason ?? 'content filtered'}`);
+      return NextResponse.json({ error: RECITATION_MESSAGE, code: 'recitation' }, { status: 422 });
+    }
+
+    const recipe = toPartialRecipe(fallback.output);
+    console.log('✅ Ingredients extracted after a copyright block:', recipe.title || '(untitled)');
+    return NextResponse.json({ success: true, recipe, partial: true, notice: PARTIAL_NOTICE });
 
   } catch (error) {
     console.error('❌ Error extracting recipe from image:', error);

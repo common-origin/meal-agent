@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Stack, Typography, Button, Box, TextField, NumberInput, Dropdown, List, ListItem, IconButton } from "@common-origin/design-system";
+import { Alert, Stack, Typography, Button, Box, TextField, NumberInput, Dropdown, List, ListItem, IconButton } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import { tokens } from "@common-origin/design-system/tokens";
@@ -26,6 +26,10 @@ export default function AddRecipePage() {
   // (after a newer pick, or after leaving the page) is ignored.
   const selectionRef = useRef(0);
   const [extracting, setExtracting] = useState(false);
+  // Shown inline in the photo flow instead of alert() (#92).
+  const [photoMessage, setPhotoMessage] = useState<{ variant: 'error' | 'info'; text: string } | null>(null);
+  // Set after an ingredients-only result, so the method input gets focus.
+  const [focusMethod, setFocusMethod] = useState(false);
   const [saving, setSaving] = useState(false);
   
   const [recipeUrl, setRecipeUrl] = useState('');
@@ -65,6 +69,7 @@ export default function AddRecipePage() {
     const file = input.files?.[0];
     if (!file) return;
     const selection = ++selectionRef.current;
+    setPhotoMessage(null);
 
     try {
       // Resized on the client to stay well under Vercel's 4.5 MB body limit (#82).
@@ -73,7 +78,7 @@ export default function AddRecipePage() {
       showImage(resized);
     } catch (error) {
       if (selection !== selectionRef.current) return;
-      alert(error instanceof Error ? error.message : PHOTO_TOO_LARGE_MESSAGE);
+      setPhotoMessage({ variant: 'error', text: error instanceof Error ? error.message : PHOTO_TOO_LARGE_MESSAGE });
       input.value = '';
     }
   };
@@ -82,7 +87,9 @@ export default function AddRecipePage() {
     if (!imageFile) return;
 
     setExtracting(true);
-    
+    setPhotoMessage(null);
+    setFocusMethod(false);
+
     try {
       const formData = new FormData();
       formData.append('image', imageFile);
@@ -99,15 +106,8 @@ export default function AddRecipePage() {
       const data = await response.json();
 
       if (!response.ok) {
-        // Check if it's a copyright/recitation block
-        if (data.blocked && data.reason === 'RECITATION') {
-          alert('⚠️ Copyright Detected\n\n' + data.details);
-        } else if (data.blocked) {
-          alert('⚠️ Content Blocked\n\n' + data.details);
-        } else {
-          throw new Error(data.error || 'Failed to extract recipe');
-        }
-        return;
+        // 422 copyright or safety blocks carry a user-facing `error` (#92).
+        throw new Error(data.error || 'Failed to extract recipe');
       }
 
       const recipe = data.recipe;
@@ -116,10 +116,17 @@ export default function AddRecipePage() {
       setServes(recipe.serves?.toString() || '4');
       setIngredients(recipe.ingredients || []);
       setInstructions(recipe.instructions || []);
+      // The book title and/or author, when the photo shows it.
+      if (recipe.source?.chef) setSource(recipe.source.chef);
+
+      if (data.partial) {
+        setPhotoMessage({ variant: 'info', text: data.notice });
+        setFocusMethod(true);
+      }
 
       track('page_view', { page: 'recipe_extraction_success' });
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to extract recipe');
+      setPhotoMessage({ variant: 'error', text: error instanceof Error ? error.message : 'Failed to extract recipe' });
     } finally {
       setExtracting(false);
     }
@@ -325,6 +332,12 @@ export default function AddRecipePage() {
         <Stack direction="column" gap="xl">
           <Typography variant="h1">Upload recipe photo</Typography>
 
+          {photoMessage && (
+            <Alert variant={photoMessage.variant} inline>
+              {photoMessage.text}
+            </Alert>
+          )}
+
           {!imagePreview ? (
             <Box border="default" borderRadius="md" p="xl" bg="surface">
               <Stack direction="column" gap="md" alignItems="center">
@@ -363,8 +376,9 @@ export default function AddRecipePage() {
                 </Button>
               </Stack>
 
-              {title && (
+              {(title || ingredients.length > 0) && (
                 <RecipeForm 
+                  focusMethod={focusMethod}
                   title={title}
                   setTitle={setTitle}
                   source={source}
@@ -505,6 +519,7 @@ export default function AddRecipePage() {
 
 // Reusable form component
 function RecipeForm({
+  focusMethod = false,
   title,
   setTitle,
   source,
@@ -533,6 +548,8 @@ function RecipeForm({
   onBack,
   saving,
 }: {
+  /** Focus the method input, e.g. after an ingredients-only photo result. */
+  focusMethod?: boolean;
   title: string;
   setTitle: (v: string) => void;
   source: string;
@@ -561,6 +578,11 @@ function RecipeForm({
   onBack: () => void;
   saving: boolean;
 }) {
+  const instructionRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (focusMethod) instructionRef.current?.focus();
+  }, [focusMethod]);
+
   return (
     <Stack direction="column" gap="lg">
       {/* Basic Info */}
@@ -680,6 +702,7 @@ function RecipeForm({
                 Cooking step
               </label>
               <textarea
+                ref={instructionRef}
                 value={instructionInput}
                 onChange={(e) => setInstructionInput(e.target.value)}
                 placeholder="Enter a cooking step..."
