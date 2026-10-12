@@ -14,6 +14,20 @@ import { toRecipe } from './ai/normalizeRecipe';
 
 export interface GeneratedRecipeResponse {
   recipes: Recipe[];
+  /**
+   * Recipe ID → one line on why it suits this household this week (#94).
+   * Belongs to the week's plan, not the recipe, so it isn't on Recipe.
+   */
+  explanations: Record<string, string>;
+}
+
+/** Words the prompt bans in "whyThisMeal" (#94); a line that uses one anyway is dropped. */
+const BANNED_EXPLANATION_WORDS = /\b(delicious|personali[sz]ed|perfect|AI)\b/i;
+
+/** The model's line, tidied, or undefined if it breaks the prompt's word rule. */
+export function cleanExplanation(text: string): string | undefined {
+  const line = text.replace(/\s+/g, ' ').trim();
+  return line && !BANNED_EXPLANATION_WORDS.test(line) ? line : undefined;
 }
 
 /** The model withheld its answer (safety and so on); there are no recipes. */
@@ -48,7 +62,14 @@ export async function generateRecipes(
   if (result.blocked) return { blocked: true, rawFinishReason: result.rawFinishReason };
 
   // Validated against the schema already; normalise into Recipes (IDs, tags, cost).
-  const recipes = result.output.recipes.map((recipe) => toRecipe(recipe, 'ai-generated'));
+  const recipes: Recipe[] = [];
+  const explanations: Record<string, string> = {};
+  for (const generated of result.output.recipes) {
+    const recipe = toRecipe(generated, 'ai-generated');
+    recipes.push(recipe);
+    const explanation = cleanExplanation(generated.whyThisMeal);
+    if (explanation) explanations[recipe.id] = explanation;
+  }
   console.log(`✅ Generated ${recipes.length} valid recipes`);
-  return { recipes };
+  return { recipes, explanations };
 }

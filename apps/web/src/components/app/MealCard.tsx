@@ -51,6 +51,8 @@ export type MealCardProps = {
   timeMins: number;
   conflicts?: string[];
   reasons?: string[];
+  /** One line on why the AI chose this meal for this household this week (#94). */
+  explanation?: string;
   nutrition?: NutritionInfo;
   onSwapClick?: () => void;
   onDeleteClick?: () => void;
@@ -124,6 +126,7 @@ export default function MealCard({
   timeMins, 
   conflicts = [],
   reasons = [],
+  explanation,
   nutrition,
   onSwapClick,
   onDeleteClick,
@@ -250,6 +253,12 @@ export default function MealCard({
               )}
             </MenuWrapper>
           </Stack>
+
+          {explanation && (
+            <Typography variant="small" color="subdued">
+              {explanation}
+            </Typography>
+          )}
 
           {/* Spacer to push buttons to bottom */}
           <div style={{ flex: 1 }} />

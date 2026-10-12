@@ -52,6 +52,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       recipes: result.recipes,
+      // Recipe ID → why it suits this household this week (#94).
+      explanations: result.explanations,
       count: result.recipes.length,
     });
 

@@ -43,9 +43,14 @@ export const AiRecipe = z.object({
   }),
 });
 
-/** Recipe generation. (`whyThisMeal` arrives with #94; cost is computed, not asked for, per #89.) */
+/** A generated dinner plus one line on why it suits this household this week (#94). */
+export const GeneratedRecipe = AiRecipe.extend({
+  whyThisMeal: z.string().min(1).max(120),
+});
+
+/** Recipe generation. (Cost is computed, not asked for, per #89.) */
 export const GeneratedRecipes = z.object({
-  recipes: z.array(AiRecipe).min(1),
+  recipes: z.array(GeneratedRecipe).min(1),
 });
 
 /** Recipe from a photo or a web page: the recipe plus where it came from, if shown. */
@@ -93,5 +98,6 @@ export const PantryScan = z.object({
 export type AiIngredient = z.infer<typeof AiIngredient>;
 export type AiRecipe = z.infer<typeof AiRecipe>;
 export type ExtractedRecipe = z.infer<typeof ExtractedRecipe>;
+export type GeneratedRecipe = z.infer<typeof GeneratedRecipe>;
 export type PhotoIngredients = z.infer<typeof PhotoIngredients>;
 export type PageIngredients = z.infer<typeof PageIngredients>;

@@ -37,6 +37,14 @@ directly for the real contract rather than a hand-copied JSON example
 here, since that's exactly the kind of thing that drifts out of sync
 with the code silently — as this line itself did on a previous version.
 
+Each generated recipe also carries `whyThisMeal` (#94, `GeneratedRecipe`
+in `lib/ai/schemas.ts`): one second-person sentence, at most 120 chars,
+citing a concrete fact about the household or week. The generator drops a
+line that uses a banned word ("delicious", "personalised", "perfect", "AI")
+and returns the rest as `explanations` (recipe ID → line), not on the
+recipe, because the line belongs to that week's plan. The plan page shows it
+on the meal card and saves it as each day's `reason` in `meal_plans.meals`.
+
 The prompt itself (#87) is split in two: `buildSystemPrompt()` holds the
 stable rules, each stated once, and `buildRecipeGenerationPrompt()` holds
 only the household's facts and the request's constraints. The plan page

@@ -86,9 +86,12 @@ export async function saveMealPlan(
   } else {
     // For localStorage, we'll use the existing structure
     // This is a simplified version - you may need to adapt based on your current implementation
+    const days = DAYS_OF_WEEK.map(day => meals[day]);
     return LocalStorage.saveCurrentWeekPlan(
-      Object.values(meals).map(m => m?.recipeId || ''),
-      weekStart
+      days.map(m => m?.recipeId || ''),
+      weekStart,
+      undefined,
+      days.map(m => m?.reason || '')
     );
   }
 }
@@ -108,7 +111,8 @@ export async function loadMealPlan(weekStart: string): Promise<SupabaseStorage.M
 
     localPlan.recipeIds.forEach((recipeId, index) => {
       if (recipeId) {
-        meals[DAYS_OF_WEEK[index]] = { recipeId };
+        const reason = localPlan.reasons?.[index];
+        meals[DAYS_OF_WEEK[index]] = reason ? { recipeId, reason } : { recipeId };
       } else {
         meals[DAYS_OF_WEEK[index]] = null;
       }
@@ -130,13 +134,16 @@ export async function loadMealPlan(weekStart: string): Promise<SupabaseStorage.M
 export async function saveCurrentWeekPlan(
   recipeIds: string[],
   weekOfISO: string,
-  pantryItems?: string[]
+  pantryItems?: string[],
+  /** Per day, why the AI chose that meal (#94); '' or missing where there's none. */
+  reasons?: string[]
 ): Promise<boolean> {
   const meals: SupabaseStorage.MealPlan['meals'] = {};
 
   recipeIds.forEach((id, index) => {
     if (index < DAYS_OF_WEEK.length) {
-      meals[DAYS_OF_WEEK[index]] = id ? { recipeId: id } : null;
+      const reason = reasons?.[index];
+      meals[DAYS_OF_WEEK[index]] = id ? { recipeId: id, ...(reason ? { reason } : {}) } : null;
     }
   });
 
@@ -158,6 +165,8 @@ export async function loadCurrentWeekPlan(weekOfISO: string): Promise<StoredWeek
   if (!plan) return null;
 
   const recipeIds = DAYS_OF_WEEK.map(day => plan.meals[day]?.recipeId || '');
+  // Older plans have no reasons; '' keeps the array aligned with recipeIds.
+  const reasons = DAYS_OF_WEEK.map(day => plan.meals[day]?.reason || '');
 
   const pantryItems = await loadPantryItems();
 
@@ -166,6 +175,7 @@ export async function loadCurrentWeekPlan(weekOfISO: string): Promise<StoredWeek
     weekOfISO: plan.weekStart,
     createdAt: new Date().toISOString(),
     pantryItems: pantryItems.length > 0 ? pantryItems : undefined,
+    reasons,
   };
 }
 

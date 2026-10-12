@@ -29,6 +29,37 @@ import { imageUploadFormData, PhotoTooLargeError } from "@/lib/client/resizeImag
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
+/** Chips computed from the recipe itself ("quick", "kid-friendly", ...). */
+function mealReasons(recipe: Recipe, favorites: string[]): string[] {
+  const reasons: string[] = [];
+  if (recipe.timeMins && recipe.timeMins < 25) reasons.push("quick");
+  if (recipe.tags?.includes("kid_friendly")) reasons.push("kid-friendly");
+  if (recipe.tags?.includes("bulk_cook")) reasons.push("bulk cook");
+  if (favorites.includes(recipe.id)) reasons.push("favorite");
+  if (recipe.costPerServeEst && recipe.costPerServeEst < 4) reasons.push("best value");
+  return reasons;
+}
+
+/** Meal cards for a generated plan: computed chips plus the AI's line on each (#94). */
+function toAiMeals(data: { recipes: Recipe[]; explanations?: Record<string, string> }): MealCardProps[] {
+  const favorites = (loadHousehold() || getDefaultHousehold()).favorites;
+  return data.recipes.map((recipe) => ({
+    recipeId: recipe.id,
+    title: recipe.title,
+    chef: "",
+    timeMins: recipe.timeMins || 30,
+    conflicts: [],
+    reasons: mealReasons(recipe, favorites),
+    explanation: data.explanations?.[recipe.id],
+    nutrition: recipe.nutrition,
+  }));
+}
+
+/** Per day, the AI's "why this meal" line to save with the plan (#94); '' where there's none. */
+function planReasons(plan: (MealCardProps | null)[]): string[] {
+  return plan.map((meal) => meal?.explanation ?? "");
+}
+
 /**
  * Taste and history titles for a generate request (#88), built from this
  * week's plan plus the household's history, ratings, blocks and favourites.
@@ -57,6 +88,8 @@ export default function PlanPage() {
   const [budget, setBudget] = useState({ current: 0, total: 120 });
   const [swapDayIndex, setSwapDayIndex] = useState<number | null>(null);
   const [suggestedSwaps, setSuggestedSwaps] = useState<Recipe[]>([]);
+  // Recipe ID → the AI's "why this meal" line for AI swap suggestions (#94).
+  const [swapExplanations, setSwapExplanations] = useState<Record<string, string>>({});
   const [isGeneratingAISwaps, setIsGeneratingAISwaps] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
@@ -107,7 +140,7 @@ export default function PlanPage() {
       // Build a recipe lookup map from Supabase recipes for immediate access
       const recipeMap = new Map(supabaseRecipes.map(r => [r.id, r]));
       
-      const meals: (MealCardProps | null)[] = savedPlan.recipeIds.map(recipeId => {
+      const meals: (MealCardProps | null)[] = savedPlan.recipeIds.map((recipeId, index) => {
         if (!recipeId) return null;
         
         // Try Supabase recipes first, then fall back to RecipeLibrary
@@ -120,13 +153,7 @@ export default function PlanPage() {
         console.log(`✅ Found recipe: ${recipe.title} (${recipeId})`);
 
         
-        // Generate reasons for this meal
-        const reasons: string[] = [];
-        if (recipe.timeMins && recipe.timeMins < 25) reasons.push("quick");
-        if (recipe.tags.includes("kid_friendly")) reasons.push("kid-friendly");
-        if (recipe.tags.includes("bulk_cook")) reasons.push("bulk cook");
-        if (household.favorites.includes(recipe.id)) reasons.push("favorite");
-        if (recipe.costPerServeEst && recipe.costPerServeEst < 4) reasons.push("best value");
+        const reasons = mealReasons(recipe, household.favorites);
         
         // Get chef/source display name (hide "AI Generated" on Plan page)
         const chefDisplay = getRecipeSourceDisplay(recipe);
@@ -139,6 +166,7 @@ export default function PlanPage() {
           timeMins: recipe.timeMins || 0,
           conflicts: [],
           reasons,
+          explanation: savedPlan.reasons?.[index] || undefined,
           nutrition: recipe.nutrition,
         };
       });
@@ -189,7 +217,7 @@ export default function PlanPage() {
     // Save updated pantry items to storage
     const nextWeekISO = nextWeekMondayISO();
     const recipeIds = weekPlan.map(m => m?.recipeId || "");
-    await saveCurrentWeekPlan(recipeIds, nextWeekISO, items);
+    await saveCurrentWeekPlan(recipeIds, nextWeekISO, items, planReasons(weekPlan));
     console.log('✅ Pantry items updated and saved');
   };
 
@@ -264,8 +292,9 @@ export default function PlanPage() {
       await RecipeLibrary.addTempAIRecipes(data.recipes);
       console.log('✅ AI swaps saved to Supabase and localStorage');
       
-      // Update suggested swaps
+      // Update suggested swaps, with the AI's line on each
       setSuggestedSwaps(data.recipes);
+      setSwapExplanations(data.explanations ?? {});
 
       track('swap', {
         day: dayName,
@@ -296,13 +325,7 @@ export default function PlanPage() {
     
     const household = loadHousehold() || getDefaultHousehold();
     
-    // Generate reasons for the new meal
-    const reasons: string[] = [];
-    if (recipe.timeMins && recipe.timeMins < 25) reasons.push("quick");
-    if (recipe.tags.includes("kid_friendly")) reasons.push("kid-friendly");
-    if (recipe.tags.includes("bulk_cook")) reasons.push("bulk cook");
-    if (household.favorites.includes(recipe.id)) reasons.push("favorite");
-    if (recipe.costPerServeEst && recipe.costPerServeEst < 4) reasons.push("best value");
+    const reasons = mealReasons(recipe, household.favorites);
     
     // Get chef/source display name (hide "AI Generated" on Plan page)
     const chefName = getRecipeSourceDisplay(recipe);
@@ -315,6 +338,8 @@ export default function PlanPage() {
       timeMins: recipe.timeMins || 0,
       conflicts: [],
       reasons,
+      // Only AI suggestions carry a line; a saved recipe picked from the drawer has none.
+      explanation: swapExplanations[recipe.id],
       nutrition: recipe.nutrition,
     };
     
@@ -337,7 +362,7 @@ export default function PlanPage() {
     // Save updated week plan
     const nextWeekISO = nextWeekMondayISO();
     const recipeIds = newWeekPlan.map(meal => meal?.recipeId || "");
-    await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
+    await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems, planReasons(newWeekPlan));
     recordWeekHistory(nextWeekISO, [recipe.id]).catch((err) => console.warn('Could not record recipe history:', err));
     console.log('✅ Week plan updated after swap');
     
@@ -377,7 +402,7 @@ export default function PlanPage() {
     // Save updated week plan
     const nextWeekISO = nextWeekMondayISO();
     const recipeIds = newWeekPlan.map(m => m?.recipeId || "");
-    await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
+    await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems, planReasons(newWeekPlan));
     console.log('✅ Week plan updated after deletion');
     
     track('swap', {
@@ -400,7 +425,7 @@ export default function PlanPage() {
     // Save updated week plan
     const nextWeekISO = nextWeekMondayISO();
     const recipeIds = newWeekPlan.map(m => m?.recipeId || "");
-    await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
+    await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems, planReasons(newWeekPlan));
     console.log('✅ Week plan reordered and saved');
     
     // Track analytics
@@ -516,22 +541,14 @@ export default function PlanPage() {
       recordWeekHistory(nextWeekMondayISO(), data.recipes.map((r: Recipe) => r.id)).catch((err) => console.warn('Could not record recipe history:', err));
 
       // Convert to meal plan
-      const aiMeals: (MealCardProps | null)[] = data.recipes.map((recipe: Recipe) => ({
-        recipeId: recipe.id,
-        title: recipe.title,
-        chef: "",
-        timeMins: recipe.timeMins || 30,
-        conflicts: [],
-        reasons: ["AI suggested", "✨ personalized"],
-        nutrition: recipe.nutrition,
-      }));
+      const aiMeals: (MealCardProps | null)[] = toAiMeals(data);
 
       setWeekPlan(aiMeals);
       
       // Save week plan
       const nextWeekISO = nextWeekMondayISO();
       const recipeIds = data.recipes.map((r: Recipe) => r.id);
-      await saveCurrentWeekPlan(recipeIds, nextWeekISO, wizardData.pantryItems);
+      await saveCurrentWeekPlan(recipeIds, nextWeekISO, wizardData.pantryItems, planReasons(aiMeals));
       
       // Track ingredient usage for analytics
       trackIngredientUsage(recipeIds);
@@ -694,22 +711,14 @@ export default function PlanPage() {
       recordWeekHistory(nextWeekMondayISO(), data.recipes.map((r: Recipe) => r.id)).catch((err) => console.warn('Could not record recipe history:', err));
 
       // Convert AI recipes to meal plan
-      const aiMeals: (MealCardProps | null)[] = data.recipes.map((recipe: Recipe) => ({
-        recipeId: recipe.id,
-        title: recipe.title,
-        chef: "",
-        timeMins: recipe.timeMins || 30,
-        conflicts: [],
-        reasons: ["AI suggested", "✨ personalized"],
-        nutrition: recipe.nutrition,
-      }));
+      const aiMeals: (MealCardProps | null)[] = toAiMeals(data);
 
       setWeekPlan(aiMeals);
       
       // Save week plan to storage for shopping list
       const nextWeekISO = nextWeekMondayISO();
       const recipeIds = data.recipes.map((r: Recipe) => r.id);
-      const planSaved = await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
+      const planSaved = await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems, planReasons(aiMeals));
       if (planSaved) {
         console.log('✅ Week plan saved for shopping list');
         // Track ingredient usage for analytics
@@ -824,10 +833,6 @@ export default function PlanPage() {
 
       // Create meal card
       const household = loadHousehold() || getDefaultHousehold();
-      const reasons: string[] = [];
-      if (recipe.timeMins && recipe.timeMins < 25) reasons.push("quick");
-      if (recipe.tags?.includes("kid_friendly")) reasons.push("kid-friendly");
-      if (household.favorites.includes(recipe.id)) reasons.push("favorite");
       
       const newMeal: MealCardProps = {
         recipeId: recipe.id,
@@ -835,7 +840,8 @@ export default function PlanPage() {
         chef: "AI Generated",
         timeMins: recipe.timeMins || 30,
         conflicts: [],
-        reasons: ["AI suggested", "✨ personalized", ...reasons],
+        reasons: mealReasons(recipe, household.favorites),
+        explanation: data.explanations?.[recipe.id],
         nutrition: recipe.nutrition,
       };
 
@@ -853,7 +859,7 @@ export default function PlanPage() {
       // Save updated week plan
       const nextWeekISO = nextWeekMondayISO();
       const recipeIds = newWeekPlan.map(meal => meal?.recipeId || "");
-      await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems);
+      await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems, planReasons(newWeekPlan));
       console.log('✅ Week plan updated');
       setAriaLiveMessage(`Recipe generated for ${dayName}: ${recipe.title}`);
 
@@ -1031,6 +1037,7 @@ export default function PlanPage() {
             : null
         }
         suggestedSwaps={suggestedSwaps}
+        explanations={swapExplanations}
         onSelectSwap={handleSelectSwap}
         onGenerateAISuggestions={handleGenerateAISwaps}
         isGeneratingAI={isGeneratingAISwaps}

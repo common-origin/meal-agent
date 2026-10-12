@@ -163,6 +163,8 @@ export interface MealPlan {
     [day: string]: {
       recipeId: string;
       servings?: number;
+      /** Why this AI meal suits the household this week (#94); this week's plan, not the recipe. */
+      reason?: string;
     } | null;
   };
 }
