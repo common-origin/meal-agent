@@ -53,6 +53,17 @@ export const ExtractedRecipe = AiRecipe.extend({
   source: z.string().max(120).optional(),
 });
 
+/**
+ * URL import with structured recipe data (#93): only the page's raw
+ * ingredient lines, converted to the app's units. Title, steps, time and
+ * servings come from the page itself.
+ */
+export const MAX_PAGE_INGREDIENTS = 40;
+
+export const PageIngredients = z.object({
+  ingredients: z.array(AiIngredient).max(MAX_PAGE_INGREDIENTS),
+});
+
 /** Cookbook photo (#92): the method is paraphrased in the model's own words, at most 10 steps. */
 export const PhotoRecipe = ExtractedRecipe.extend({
   instructions: z.array(z.string().min(1)).min(2).max(10),
@@ -83,3 +94,4 @@ export type AiIngredient = z.infer<typeof AiIngredient>;
 export type AiRecipe = z.infer<typeof AiRecipe>;
 export type ExtractedRecipe = z.infer<typeof ExtractedRecipe>;
 export type PhotoIngredients = z.infer<typeof PhotoIngredients>;
+export type PageIngredients = z.infer<typeof PageIngredients>;

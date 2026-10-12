@@ -83,6 +83,14 @@ and HTML content types only. A refusal returns 400/422 with a `code`
 (`invalid_url`, `blocked_host`, `timeout`, `too_large`, `not_html`,
 `http_error`) and the same friendly message for all of them.
 
+It then reads the page's schema.org `Recipe` JSON-LD first (#93,
+`extractJsonLdRecipe` in `apps/web/src/lib/recipeJsonLd.ts`): title, steps,
+time, servings and author come from the page verbatim, and only the raw
+ingredient lines go to the model (`PageIngredients` schema) to fit the five
+units. A page without JSON-LD falls back to its readable text
+(`htmlToText`: scripts, styles, nav, header, footer, aside, svg and
+noscript stripped), at most 20,000 characters, with the full recipe schema.
+
 Every AI call runs under one overall deadline shared by its retries
 (`runAiTask`, deadlines per task in `lib/ai/models.ts`): 60 s for recipe
 generation, 45 s for recipe-from-photo, 30 s for the pantry scan and for the
