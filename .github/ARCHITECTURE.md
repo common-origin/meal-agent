@@ -114,6 +114,9 @@ feed URL for display in Settings
 
 ### Logic (`apps/web/src/lib/`)
 
+- **AI week lineup**: `planSlate.ts` (#95) picks each day's cuisine,
+  protein, method and pantry focus in code before the plan page generates
+  the 7 days in parallel; see `.github/AI.md`
 - **Meal composition**: `compose.ts` orchestrates `scoring.ts` (recipe
   scoring rules), `recencyTracker.ts` (avoids recent repeats),
   `tagNormalizer.ts`, `explainer.ts` (generates the "why this meal" reason

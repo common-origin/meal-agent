@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert, Badge, Stack, Typography, Button } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
@@ -18,13 +18,16 @@ import { getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan, hydrateRec
 import { getRecentRecipeIds } from "@/lib/recencyTracker";
 import { buildTasteSignals, type TasteSignals } from "@/lib/tasteSignals";
 import { itemsToUseSoon, mergeScan, type PantryState } from "@/lib/pantryItems";
+import { buildDaySlot, buildWeekSlate, newSlateSeed, type DaySlot } from "@/lib/planSlate";
+import { generateDay, type DayRequest } from "@/lib/client/generateDay";
+import type { FamilySettings } from "@/lib/types/settings";
 import { getSuggestedSwaps } from "@/lib/compose";
 import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
 import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
 import { trackIngredientUsage } from "@/lib/ingredientAnalytics";
 import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
-import { apiErrorMessage, clientTimeZone, GENERIC_ERROR_MESSAGE, redirectToLoginIfUnauthenticated } from "@/lib/api/client";
+import { apiErrorMessage, redirectToLoginIfUnauthenticated } from "@/lib/api/client";
 import { imageUploadFormData, PhotoTooLargeError } from "@/lib/client/resizeImage";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -40,19 +43,26 @@ function mealReasons(recipe: Recipe, favorites: string[]): string[] {
   return reasons;
 }
 
-/** Meal cards for a generated plan: computed chips plus the AI's line on each (#94). */
-function toAiMeals(data: { recipes: Recipe[]; explanations?: Record<string, string> }): MealCardProps[] {
+/** A meal card for an AI recipe: computed chips plus the AI's line on it (#94). */
+function toAiMeal(recipe: Recipe, explanation?: string): MealCardProps {
   const favorites = (loadHousehold() || getDefaultHousehold()).favorites;
-  return data.recipes.map((recipe) => ({
+  return {
     recipeId: recipe.id,
     title: recipe.title,
     chef: "",
     timeMins: recipe.timeMins || 30,
     conflicts: [],
     reasons: mealReasons(recipe, favorites),
-    explanation: data.explanations?.[recipe.id],
+    explanation,
     nutrition: recipe.nutrition,
-  }));
+  };
+}
+
+const PROTEIN_TAGS = ['chicken', 'beef', 'pork', 'lamb', 'fish', 'seafood'];
+
+/** A recipe's main protein from its tags, for days generated before this session (#95). */
+function proteinOf(recipe: Recipe | undefined): string | null {
+  return recipe?.tags.find((tag) => PROTEIN_TAGS.includes(tag)) ?? null;
 }
 
 /** Per day, the AI's "why this meal" line to save with the plan (#94); '' where there's none. */
@@ -85,6 +95,21 @@ export default function PlanPage() {
   const [showSaturdayBanner] = useState(() => isSaturdayAfter4());
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [weekPlan, setWeekPlan] = useState<(MealCardProps | null)[]>([]);
+  // The plan's source of truth for async work: days resolve out of order, so
+  // each update builds on the latest plan, not a render's stale copy (#95).
+  const weekPlanRef = useRef<(MealCardProps | null)[]>([]);
+  const commitPlan = (next: (MealCardProps | null)[]) => {
+    weekPlanRef.current = next;
+    setWeekPlan(next);
+    return next;
+  };
+  // Each day's lineup from this session's plan, kept for Retry and for building swaps (#95).
+  const [daySlots, setDaySlots] = useState<(DaySlot | null)[]>(Array(7).fill(null));
+  // The settings, pantry and taste a plan was generated with, so a day's retry matches it.
+  const planContextRef = useRef<Omit<DayRequest, 'slot'> | null>(null);
+  const [generatingDays, setGeneratingDays] = useState<number[]>([]);
+  // Per-day failures, shown on that day with a Retry button (#96 copy).
+  const [dayErrors, setDayErrors] = useState<Record<number, string>>({});
   const [budget, setBudget] = useState({ current: 0, total: 120 });
   const [swapDayIndex, setSwapDayIndex] = useState<number | null>(null);
   const [suggestedSwaps, setSuggestedSwaps] = useState<Recipe[]>([]);
@@ -93,7 +118,6 @@ export default function PlanPage() {
   const [isGeneratingAISwaps, setIsGeneratingAISwaps] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
-  const [generatingDayIndex, setGeneratingDayIndex] = useState<number | null>(null);
   const [ariaLiveMessage, setAriaLiveMessage] = useState<string>("");
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
 
@@ -182,7 +206,7 @@ export default function PlanPage() {
       const numberOfMeals = savedPlan.recipeIds.filter(id => id).length;
       const weeklyBudget = numberOfMeals * familySettings.budgetPerMeal.max;
       
-      setWeekPlan(meals);
+      commitPlan(meals);
       setBudget({ current: totalCost, total: weeklyBudget });
       console.log('✅ Loaded saved week plan with', meals.filter(m => m !== null).length, 'meals');
       
@@ -251,60 +275,33 @@ export default function PlanPage() {
 
     try {
       const dayName = DAYS[swapDayIndex];
-      console.log(`🤖 Generating AI swap suggestions for ${dayName}...`);
-      
-      const familySettings = await getFamilySettings();
-      const dayType = swapDayIndex >= 5 ? 'weekend' : 'weeknight';
-      
-      const tasteSignals = await loadTasteSignals(weekPlan);
-      
-      console.log('📡 Calling API for 3 swap suggestions...');
-      const response = await fetch('/api/generate-recipes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          timeZone: clientTimeZone(),
-          familySettings,
-          numberOfRecipes: 3,
-          ...tasteSignals,
-          specificDays: [{ index: swapDayIndex, type: dayType }],
-        }),
-      });
+      const context = await loadDayContext();
+      // Three parallel one-recipe requests, each with its own slot, so the
+      // suggestions differ from each other as well as from the week (#95).
+      const results = await Promise.all(
+        [0, 1, 2].map(() => generateDay({ ...context, slot: slotForDay(swapDayIndex, context) }))
+      );
+      if (results.some((r) => !r.ok && r.redirected)) return;
 
-      if (redirectToLoginIfUnauthenticated(response)) return;
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok || !data || data.error) {
-        console.error('❌ API error:', data);
-        throw new Error(apiErrorMessage(data));
+      const found = results.flatMap((r) => (r.ok ? [r] : []));
+      if (found.length === 0) {
+        const failure = results.find((r) => !r.ok);
+        throw new Error(failure && !failure.ok ? failure.error : apiErrorMessage(null));
       }
+      await RecipeLibrary.addTempAIRecipes(found.map((r) => r.recipe));
 
-      if (!data.recipes || data.recipes.length === 0) {
-        throw new Error('No recipes generated');
-      }
-
-      console.log('✅ Generated', data.recipes.length, 'AI swap suggestions');
-
-      // Save to Supabase and localStorage
-      await RecipeLibrary.addTempAIRecipes(data.recipes);
-      console.log('✅ AI swaps saved to Supabase and localStorage');
-      
-      // Update suggested swaps, with the AI's line on each
-      setSuggestedSwaps(data.recipes);
-      setSwapExplanations(data.explanations ?? {});
-
+      setSuggestedSwaps(found.map((r) => r.recipe));
+      setSwapExplanations(
+        Object.fromEntries(found.flatMap((r) => (r.explanation ? [[r.recipe.id, r.explanation]] : [])))
+      );
       track('swap', {
         day: dayName,
-        oldRecipeId: weekPlan[swapDayIndex]?.recipeId || 'unknown',
+        oldRecipeId: weekPlanRef.current[swapDayIndex]?.recipeId || 'unknown',
         newRecipeId: 'ai_suggestions_generated',
       });
-
     } catch (error) {
       console.error('❌ Error generating AI swaps:', error);
-      setGenerationError(error instanceof Error ? error.message : 'Unknown error');
+      setGenerationError(error instanceof Error ? error.message : apiErrorMessage(null));
     } finally {
       setIsGeneratingAISwaps(false);
       endGeneration();
@@ -344,10 +341,10 @@ export default function PlanPage() {
     };
     
     // Update the meal plan
-    const newWeekPlan = [...weekPlan];
+    const newWeekPlan = [...weekPlanRef.current];
     const oldMeal = newWeekPlan[swapDayIndex];
     newWeekPlan[swapDayIndex] = newMeal;
-    setWeekPlan(newWeekPlan);
+    commitPlan(newWeekPlan);
     
     // Update budget (recalculate total based on number of meals)
     const familySettings = await getFamilySettings();
@@ -387,9 +384,9 @@ export default function PlanPage() {
     console.log(`🗑️ Deleting meal for ${DAYS[dayIndex]}`);
     
     // Remove the meal from the plan
-    const newWeekPlan = [...weekPlan];
+    const newWeekPlan = [...weekPlanRef.current];
     newWeekPlan[dayIndex] = null;
-    setWeekPlan(newWeekPlan);
+    commitPlan(newWeekPlan);
     
     // Update budget (recalculate total based on number of meals)
     const familySettings = await getFamilySettings();
@@ -416,11 +413,11 @@ export default function PlanPage() {
     console.log(`🔄 Reordering: ${DAYS[oldIndex]} → ${DAYS[newIndex]}`);
     
     // Create new array with swapped meals
-    const newWeekPlan = [...weekPlan];
+    const newWeekPlan = [...weekPlanRef.current];
     const [movedMeal] = newWeekPlan.splice(oldIndex, 1);
     newWeekPlan.splice(newIndex, 0, movedMeal);
     
-    setWeekPlan(newWeekPlan);
+    commitPlan(newWeekPlan);
     
     // Save updated week plan
     const nextWeekISO = nextWeekMondayISO();
@@ -437,154 +434,21 @@ export default function PlanPage() {
   };
 
   const handleWizardComplete = async (wizardData: WeeklyPlanData) => {
-    if (isSignOutInProgress) {
-      console.warn('Sign-out in progress, refusing to start plan generation');
-      return;
-    }
     console.log('🧙 Wizard completed with data:', wizardData);
-
-    // Set pantry items from wizard
     setPantryItems(wizardData.pantryItems);
     setUseSoon(wizardData.useSoonItems);
-    
-    // Hide wizard and show plan view with loading states
     setShowWizard(false);
-    
-    // Clear previous week plan to show loading skeletons
-    setWeekPlan([null, null, null, null, null, null, null]);
-    
-    // Generate plan using wizard data
-    setIsGenerating(true);
-    beginGeneration();
-    setGenerationError(null);
-    setAriaLiveMessage("Generating weekly meal plan...");
 
-    try {
-      console.log('🤖 [1/6] Starting AI meal plan generation from wizard...');
-      
-      const familySettings = await getFamilySettings();
-      
-      // Override cuisines with wizard selection for this week only
-      const weeklySettings = {
-        ...familySettings,
-        cuisines: wizardData.cuisines.length > 0 ? wizardData.cuisines : familySettings.cuisines,
-        preferredChef: wizardData.preferredChef || familySettings.preferredChef
-      };
-      
-      console.log('✅ [2/6] Family settings loaded:', {
-        servings: weeklySettings.totalServings,
-        cuisines: weeklySettings.cuisines,
-        preferredChef: weeklySettings.preferredChef,
-        budgetRange: `$${weeklySettings.budgetPerMeal.min}-${weeklySettings.budgetPerMeal.max}`,
-        pantryPreference: weeklySettings.pantryPreference,
-        pantryItemsCount: wizardData.pantryItems.length,
-      });
-      
-      const tasteSignals = await loadTasteSignals(weekPlan);
-      console.log('📜 [3/6] Taste signals loaded:', tasteSignals);
-      
-      console.log('📡 [4/6] Calling API...');
-      const response = await fetch('/api/generate-recipes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          timeZone: clientTimeZone(),
-          familySettings: weeklySettings,
-          numberOfRecipes: 5,
-          ...tasteSignals,
-          pantryItems: wizardData.pantryItems,
-          useSoonItems: wizardData.useSoonItems,
-        }),
-      });
-
-      if (redirectToLoginIfUnauthenticated(response)) return;
-
-      console.log('📥 [5/6] API response status:', response.status, response.statusText);
-      
-      const text = await response.text();
-      console.log('📦 [5/6] API response text:', text.substring(0, 500));
-      
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        // Not our JSON (e.g. a platform timeout page): log it, show friendly copy (#96).
-        console.error('❌ Failed to parse API response as JSON:', text.substring(0, 200));
-        throw new Error(GENERIC_ERROR_MESSAGE);
-      }
-
-      if (!response.ok || !data || data.error) {
-        console.error('❌ API error:', data);
-        throw new Error(apiErrorMessage(data));
-      }
-
-      if (!data.recipes || !Array.isArray(data.recipes)) {
-        console.error('❌ Invalid response format:', data);
-        throw new Error('Invalid response format: missing recipes array');
-      }
-
-      console.log('✅ [6/6] Generated recipes:', data.recipes.length, 'recipes');
-      console.log('📋 Recipe IDs:', data.recipes.map((r: Recipe) => r.id));
-
-      // Save AI recipes to Supabase (and localStorage for backward compatibility)
-      console.log('💾 Saving recipes to Supabase...');
-      const saved = await RecipeLibrary.addTempAIRecipes(data.recipes);
-      if (saved) {
-        console.log('✅ All recipes saved successfully');
-      } else {
-        console.error('❌ Failed to save some recipes');
-      }
-      
-      // Record in the household's recipe history
-      recordWeekHistory(nextWeekMondayISO(), data.recipes.map((r: Recipe) => r.id)).catch((err) => console.warn('Could not record recipe history:', err));
-
-      // Convert to meal plan
-      const aiMeals: (MealCardProps | null)[] = toAiMeals(data);
-
-      setWeekPlan(aiMeals);
-      
-      // Save week plan
-      const nextWeekISO = nextWeekMondayISO();
-      const recipeIds = data.recipes.map((r: Recipe) => r.id);
-      await saveCurrentWeekPlan(recipeIds, nextWeekISO, wizardData.pantryItems, planReasons(aiMeals));
-      
-      // Track ingredient usage for analytics
-      trackIngredientUsage(recipeIds);
-      
-      // Update budget based on family settings
-      const totalCost = data.recipes.reduce((sum: number, r: Recipe) => {
-        return sum + ((r.costPerServeEst || 0) * (r.serves || 4));
-      }, 0);
-      const weeklyBudget = data.recipes.length * weeklySettings.budgetPerMeal.max;
-      setBudget({ current: totalCost, total: weeklyBudget });
-
-      console.log('🎉 Wizard-based generation complete!');
-      setAriaLiveMessage("Weekly meal plan generated successfully!");
-
-      track('plan_composed', {
-        dayCount: 7,
-        pantryItemCount: wizardData.pantryItems.length,
-        cuisineCount: wizardData.cuisines.length,
-        cost: totalCost,
-        conflicts: 0,
-        leftoverDays: 0,
-        proteinVariety: 0,
-      });
-
-    } catch (error) {
-      console.error('❌ Error generating plan from wizard:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setGenerationError(errorMessage);
-      setAriaLiveMessage(`Error generating plan: ${errorMessage}`);
-      setShowWizard(true); // Show wizard again on error
-    } finally {
-      setIsGenerating(false);
-      endGeneration();
-    }
+    const familySettings = await getFamilySettings();
+    // This week's cuisines and chef from the wizard, for this plan only.
+    const weeklySettings = {
+      ...familySettings,
+      cuisines: wizardData.cuisines.length > 0 ? wizardData.cuisines : familySettings.cuisines,
+      preferredChef: wizardData.preferredChef || familySettings.preferredChef,
+    };
+    const ok = await generateWeek(weeklySettings, wizardData.pantryItems, wizardData.useSoonItems);
+    if (!ok) setShowWizard(true);
   };
-
 
   const handleScanPantryImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -634,251 +498,206 @@ export default function PlanPage() {
   };
 
   const handleGenerateWithAI = async () => {
+    const familySettings = await getFamilySettings();
+    await generateWeek(familySettings, pantryItems, itemsToUseSoon({ items: pantryItems, useSoon }));
+  };
+
+  /** Settings, pantry and taste for a request outside a fresh plan (single day, retry, swap). */
+  const loadDayContext = async (): Promise<Omit<DayRequest, 'slot'>> => {
+    const tasteSignals = await loadTasteSignals(weekPlanRef.current);
+    // Within a session, match the plan's own settings (e.g. the wizard's cuisines);
+    // taste is refreshed so this week's newer meals count as recent.
+    if (planContextRef.current) return { ...planContextRef.current, tasteSignals };
+    return {
+      familySettings: await getFamilySettings(),
+      pantryItems,
+      useSoonItems: itemsToUseSoon({ items: pantryItems, useSoon }),
+      tasteSignals,
+    };
+  };
+
+  /** A fresh slot for one day, against the proteins and cuisines on the rest of the week. */
+  const slotForDay = (dayIndex: number, context: Omit<DayRequest, 'slot'>): DaySlot => {
+    const plan = weekPlanRef.current;
+    const recipes = plan.map((meal) => (meal ? RecipeLibrary.getById(meal.recipeId) : undefined));
+    return buildDaySlot({
+      settings: context.familySettings,
+      cuisines: context.familySettings.cuisines,
+      pantryItems: context.pantryItems,
+      useSoonItems: context.useSoonItems,
+      seed: newSlateSeed(),
+      index: dayIndex,
+      weekProteins: plan.map((meal, i) => (meal ? daySlots[i]?.protein ?? proteinOf(recipes[i]) : null)),
+      weekCuisines: plan.map((meal, i) => (meal ? recipes[i]?.cuisine ?? daySlots[i]?.cuisine : null)),
+    });
+  };
+
+  /**
+   * Generates and shows one day, returning its meal, or null on failure with
+   * the error shown on that day. Doesn't save: callers save once.
+   */
+  const runDay = async (context: Omit<DayRequest, 'slot'>, slot: DaySlot): Promise<MealCardProps | null> => {
+    const index = slot.index;
+    setGeneratingDays((days) => (days.includes(index) ? days : [...days, index]));
+    setDayErrors((errors) => {
+      const next = { ...errors };
+      delete next[index];
+      return next;
+    });
+    setDaySlots((slots) => slots.map((existing, i) => (i === index ? slot : existing)));
+    try {
+      const result = await generateDay({ ...context, slot });
+      if (!result.ok) {
+        if (!result.redirected) setDayErrors((errors) => ({ ...errors, [index]: result.error }));
+        return null;
+      }
+      await RecipeLibrary.addTempAIRecipes([result.recipe]);
+      const meal = toAiMeal(result.recipe, result.explanation);
+      const next = [...weekPlanRef.current];
+      next[index] = meal;
+      commitPlan(next);
+      setAriaLiveMessage(`${DAYS[index]}: ${result.recipe.title}`);
+      return meal;
+    } finally {
+      setGeneratingDays((days) => days.filter((d) => d !== index));
+    }
+  };
+
+  /** Saves the plan as it stands; records history and ingredient use for `newIds`; updates the budget. */
+  const savePlan = async (newIds: string[], familySettings: FamilySettings, pantry: string[]): Promise<number> => {
+    const plan = weekPlanRef.current;
+    const nextWeekISO = nextWeekMondayISO();
+    const recipeIds = plan.map((meal) => meal?.recipeId || "");
+    const saved = await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantry, planReasons(plan));
+    if (!saved) console.warn('⚠️ Failed to save week plan');
+    if (newIds.length > 0) {
+      recordWeekHistory(nextWeekISO, newIds).catch((err) => console.warn('Could not record recipe history:', err));
+      trackIngredientUsage(newIds);
+    }
+    const recipes = plan.flatMap((meal) => {
+      const recipe = meal ? RecipeLibrary.getById(meal.recipeId) : undefined;
+      return recipe ? [recipe] : [];
+    });
+    const current = recipes.reduce((sum, r) => sum + (r.costPerServeEst || 0) * (r.serves || 4), 0);
+    setBudget({ current, total: plan.filter(Boolean).length * familySettings.budgetPerMeal.max });
+    return current;
+  };
+
+  /**
+   * A full 7-day plan (#95): the lineup is chosen in code, then every day is
+   * generated in parallel and shown as soon as it arrives. Saves once all
+   * days have settled; failed days stay empty with a Retry button.
+   * Returns false if no day could be generated.
+   */
+  const generateWeek = async (familySettings: FamilySettings, pantry: string[], useSoonItems: string[]): Promise<boolean> => {
     if (isSignOutInProgress) {
       console.warn('Sign-out in progress, refusing to start plan generation');
-      return;
+      return false;
     }
-
-    // Clear previous plan to show loading skeletons
-    setWeekPlan([null, null, null, null, null, null, null]);
-
     setIsGenerating(true);
     beginGeneration();
     setGenerationError(null);
     setAriaLiveMessage("Generating weekly meal plan...");
+    const startedAt = performance.now();
 
     try {
-      console.log('🤖 [1/6] Starting AI meal plan generation...');
-      
-      const familySettings = await getFamilySettings();
-      console.log('✅ [2/6] Family settings loaded:', {
-        servings: familySettings.totalServings,
+      // Taste comes from the plan being replaced, before it's cleared.
+      const tasteSignals = await loadTasteSignals(weekPlanRef.current);
+      const recentCuisines = getRecentRecipeIds()
+        .map((id) => RecipeLibrary.getById(id)?.cuisine)
+        .filter((cuisine): cuisine is string => Boolean(cuisine));
+      const slate = buildWeekSlate({
+        settings: familySettings,
         cuisines: familySettings.cuisines,
-        budgetRange: `$${familySettings.budgetPerMeal.min}-${familySettings.budgetPerMeal.max}`,
-        pantryPreference: familySettings.pantryPreference,
-        pantryItemsCount: pantryItems.length,
+        pantryItems: pantry,
+        useSoonItems,
+        recentCuisines,
+        seed: newSlateSeed(),
       });
-      
-      const tasteSignals = await loadTasteSignals(weekPlan);
-      console.log('📜 [3/6] Taste signals loaded:', tasteSignals);
-      
-      console.log('📡 [4/6] Calling API...');
-      const response = await fetch('/api/generate-recipes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          timeZone: clientTimeZone(),
-          familySettings,
-          numberOfRecipes: 5, // Start with 5 to avoid timeout/truncation
-          ...tasteSignals,
-          pantryItems, // Pass pantry items for AI to prioritize
-          useSoonItems: itemsToUseSoon({ items: pantryItems, useSoon }),
-        }),
+      console.log('🗓️ Week lineup:', slate);
+
+      const context = { familySettings, pantryItems: pantry, useSoonItems, tasteSignals };
+      planContextRef.current = context;
+      commitPlan(Array(7).fill(null));
+      setDaySlots(slate);
+      setDayErrors({});
+      setGeneratingDays(slate.map((slot) => slot.index));
+
+      let firstCardMs: number | null = null;
+      const settled = await Promise.allSettled(
+        slate.map(async (slot) => {
+          const meal = await runDay(context, slot);
+          if (meal && firstCardMs === null) firstCardMs = performance.now() - startedAt;
+          return meal;
+        })
+      );
+      const newIds = settled.flatMap((r) => (r.status === 'fulfilled' && r.value ? [r.value.recipeId] : []));
+      console.log('⏱️ Week generation timings (ms):', {
+        firstCard: firstCardMs === null ? null : Math.round(firstCardMs),
+        fullWeek: Math.round(performance.now() - startedAt),
+        days: newIds.length,
       });
 
-      if (redirectToLoginIfUnauthenticated(response)) return;
-
-      console.log('📥 [5/6] API response status:', response.status, response.statusText);
-      
-      const data = await response.json().catch(() => null);
-      console.log('📦 [5/6] API response data:', data);
-
-      if (!response.ok || !data || data.error) {
-        console.error('❌ API error:', data);
-        throw new Error(apiErrorMessage(data));
+      if (newIds.length === 0) {
+        setGenerationError("We couldn't generate your plan. Please try again.");
+        setAriaLiveMessage("We couldn't generate your plan. Please try again.");
+        return false;
       }
 
-      if (!data.recipes || !Array.isArray(data.recipes)) {
-        console.error('❌ Invalid response format:', data);
-        throw new Error('Invalid response format: missing recipes array');
-      }
-
-      console.log('✅ [6/6] Generated recipes:', data.recipes.length, 'recipes');
-      console.log('Recipe titles:', data.recipes.map((r: Recipe) => r.title));
-
-      // Save AI recipes to Supabase and localStorage
-      console.log('💾 Saving AI recipes to Supabase...');
-      const saved = await RecipeLibrary.addTempAIRecipes(data.recipes);
-      if (saved) {
-        console.log('✅ Recipes saved to Supabase and will persist across sessions');
-      } else {
-        console.warn('⚠️ Failed to save recipes');
-      }
-      
-      // Record in the household's recipe history
-      recordWeekHistory(nextWeekMondayISO(), data.recipes.map((r: Recipe) => r.id)).catch((err) => console.warn('Could not record recipe history:', err));
-
-      // Convert AI recipes to meal plan
-      const aiMeals: (MealCardProps | null)[] = toAiMeals(data);
-
-      setWeekPlan(aiMeals);
-      
-      // Save week plan to storage for shopping list
-      const nextWeekISO = nextWeekMondayISO();
-      const recipeIds = data.recipes.map((r: Recipe) => r.id);
-      const planSaved = await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems, planReasons(aiMeals));
-      if (planSaved) {
-        console.log('✅ Week plan saved for shopping list');
-        // Track ingredient usage for analytics
-        trackIngredientUsage(recipeIds);
-      } else {
-        console.warn('⚠️ Failed to save week plan');
-      }
-      
-      // Update budget estimate based on family settings
-      const totalCost = data.recipes.reduce((sum: number, r: Recipe) => {
-        return sum + ((r.costPerServeEst || 0) * (r.serves || 4));
-      }, 0);
-      const weeklyBudget = data.recipes.length * familySettings.budgetPerMeal.max;
-      setBudget({ current: totalCost, total: weeklyBudget });
-
-      console.log('🎉 AI generation complete! Total cost:', totalCost);
-      setAriaLiveMessage("Weekly meal plan generated successfully!");
-
+      const cost = await savePlan(newIds, familySettings, pantry);
+      setAriaLiveMessage(
+        newIds.length === 7
+          ? "Weekly meal plan generated successfully!"
+          : `Generated ${newIds.length} of 7 days. You can retry the others.`
+      );
       track('plan_composed', {
-        dayCount: 7,
-        cost: totalCost,
+        dayCount: newIds.length,
+        pantryItemCount: pantry.length,
+        cuisineCount: familySettings.cuisines.length,
+        cost,
         conflicts: 0,
         leftoverDays: 0,
-        proteinVariety: 0,
+        proteinVariety: new Set(slate.map((slot) => slot.protein)).size,
       });
-
+      return true;
     } catch (error) {
-      console.error('❌ Error generating AI plan:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setGenerationError(errorMessage);
-      setAriaLiveMessage(`Error generating plan: ${errorMessage}`);
+      console.error('❌ Error generating plan:', error);
+      setGenerationError(apiErrorMessage(null));
+      return false;
     } finally {
+      setGeneratingDays([]);
       setIsGenerating(false);
       endGeneration();
     }
   };
 
-  const handleGenerateSingleRecipe = async (dayIndex: number) => {
+  /** One day: a fresh slot for an empty day ("Generate"), or the same slot again ("Retry"). */
+  const generateOneDay = async (dayIndex: number, retry: boolean) => {
     if (isSignOutInProgress) {
       console.warn('Sign-out in progress, refusing to start recipe generation');
       return;
     }
-    setGeneratingDayIndex(dayIndex);
     beginGeneration();
     setGenerationError(null);
-
+    setAriaLiveMessage(`Generating AI recipe for ${DAYS[dayIndex]}...`);
     try {
-      const dayName = DAYS[dayIndex];
-      console.log(`🤖 Generating single recipe for ${dayName}...`);
-      setAriaLiveMessage(`Generating AI recipe for ${dayName}...`);
-      
-      const familySettings = await getFamilySettings();
-      
-      // Determine if it's a weekend or weeknight
-      const dayType = dayIndex >= 5 ? 'weekend' : 'weeknight';
-      
-      // Analyze existing proteins in the week plan for variety
-      const existingProteins: string[] = [];
-      weekPlan.forEach(meal => {
-        if (meal) {
-          const recipe = RecipeLibrary.getById(meal.recipeId);
-          if (recipe) {
-            // Check tags for protein types
-            const proteinTags = ['chicken', 'beef', 'pork', 'fish', 'lamb', 'seafood', 'tofu', 'lentil', 'bean'];
-            const recipeProteins = recipe.tags.filter(tag => proteinTags.includes(tag));
-            existingProteins.push(...recipeProteins);
-          }
-        }
-      });
-      
-      const tasteSignals = await loadTasteSignals(weekPlan);
-      console.log('🥩 Existing proteins in week:', existingProteins.length > 0 ? existingProteins.join(', ') : 'none');
-      
-      console.log('📡 Calling API for single recipe...');
-      const response = await fetch('/api/generate-recipes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          timeZone: clientTimeZone(),
-          familySettings,
-          numberOfRecipes: 1,
-          ...tasteSignals,
-          existingProteins, // Pass existing proteins for variety
-          specificDays: [{ index: dayIndex, type: dayType }],
-        }),
-      });
-
-      if (redirectToLoginIfUnauthenticated(response)) return;
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok || !data || data.error) {
-        console.error('❌ API error:', data);
-        throw new Error(apiErrorMessage(data));
+      const context = await loadDayContext();
+      const slot = (retry && daySlots[dayIndex]) || slotForDay(dayIndex, context);
+      const meal = await runDay(context, slot);
+      if (meal) {
+        await savePlan([meal.recipeId], context.familySettings, context.pantryItems);
+        track('swap', { day: DAYS[dayIndex], oldRecipeId: 'empty', newRecipeId: meal.recipeId });
       }
-
-      if (!data.recipes || data.recipes.length === 0) {
-        throw new Error('No recipe generated');
-      }
-
-      const recipe: Recipe = data.recipes[0];
-      console.log('✅ Generated recipe:', recipe.title);
-
-      // Save to Supabase and localStorage
-      await RecipeLibrary.addTempAIRecipes([recipe]);
-      console.log('✅ Recipe saved to Supabase and localStorage');
-      
-      // Record in the household's recipe history
-      recordWeekHistory(nextWeekMondayISO(), [recipe.id]).catch((err) => console.warn('Could not record recipe history:', err));
-
-      // Create meal card
-      const household = loadHousehold() || getDefaultHousehold();
-      
-      const newMeal: MealCardProps = {
-        recipeId: recipe.id,
-        title: recipe.title,
-        chef: "AI Generated",
-        timeMins: recipe.timeMins || 30,
-        conflicts: [],
-        reasons: mealReasons(recipe, household.favorites),
-        explanation: data.explanations?.[recipe.id],
-        nutrition: recipe.nutrition,
-      };
-
-      // Update the week plan
-      const newWeekPlan = [...weekPlan];
-      newWeekPlan[dayIndex] = newMeal;
-      setWeekPlan(newWeekPlan);
-
-      // Update budget (recalculate total based on number of meals)
-      const numberOfMeals = newWeekPlan.filter(m => m !== null).length;
-      const newCost = (recipe.costPerServeEst || 0) * (recipe.serves || 4);
-      const weeklyBudget = numberOfMeals * familySettings.budgetPerMeal.max;
-      setBudget(prev => ({ current: prev.current + newCost, total: weeklyBudget }));
-
-      // Save updated week plan
-      const nextWeekISO = nextWeekMondayISO();
-      const recipeIds = newWeekPlan.map(meal => meal?.recipeId || "");
-      await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems, planReasons(newWeekPlan));
-      console.log('✅ Week plan updated');
-      setAriaLiveMessage(`Recipe generated for ${dayName}: ${recipe.title}`);
-
-      track('swap', {
-        day: dayName,
-        oldRecipeId: 'empty',
-        newRecipeId: recipe.id,
-      });
-
     } catch (error) {
       console.error('❌ Error generating recipe:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setGenerationError(errorMessage);
-      setAriaLiveMessage(`Error generating recipe for ${DAYS[dayIndex]}: ${errorMessage}`);
+      setDayErrors((errors) => ({ ...errors, [dayIndex]: apiErrorMessage(null) }));
     } finally {
-      setGeneratingDayIndex(null);
       endGeneration();
     }
   };
+
+  const handleGenerateSingleRecipe = (dayIndex: number) => generateOneDay(dayIndex, false);
+  const handleRetryDay = (dayIndex: number) => generateOneDay(dayIndex, true);
 
   return (
     <Main maxWidth="1400px">
@@ -975,13 +794,16 @@ export default function PlanPage() {
         
         <WeekPlannerGrid 
           meals={weekPlan} 
-          onSwapClick={handleSwapClick}
-          onGenerateClick={handleGenerateSingleRecipe}
-          onAddSavedRecipeClick={handleAddSavedRecipe}
-          generatingDayIndex={generatingDayIndex}
-          onDeleteClick={handleDeleteMeal}
-          isGeneratingPlan={isGenerating || isLoadingInitial}
-          onReorder={handleReorder}
+          // While a week generates, days fill in out of order: hold edits until it settles (#95).
+          onSwapClick={isGenerating ? undefined : handleSwapClick}
+          onGenerateClick={isGenerating ? undefined : handleGenerateSingleRecipe}
+          onAddSavedRecipeClick={isGenerating ? undefined : handleAddSavedRecipe}
+          generatingDays={generatingDays}
+          dayErrors={dayErrors}
+          onRetryDay={isGenerating ? undefined : handleRetryDay}
+          onDeleteClick={isGenerating ? undefined : handleDeleteMeal}
+          isGeneratingPlan={isLoadingInitial}
+          onReorder={isGenerating ? undefined : handleReorder}
         />
         
         {/* Actions */}
