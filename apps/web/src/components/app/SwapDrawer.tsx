@@ -52,6 +52,8 @@ export type SwapDrawerProps = {
   dayName: string;
   currentRecipe: Recipe | null;
   suggestedSwaps: Recipe[];
+  /** Recipe ID → the AI's "why this meal" line for AI suggestions (#94). */
+  explanations?: Record<string, string>;
   onSelectSwap: (recipe: Recipe) => void;
   onGenerateAISuggestions?: () => void;
   isGeneratingAI?: boolean;
@@ -65,6 +67,7 @@ export default function SwapDrawer({
   dayName,
   currentRecipe,
   suggestedSwaps,
+  explanations = {},
   onSelectSwap,
   onGenerateAISuggestions,
   isGeneratingAI = false
@@ -221,6 +224,7 @@ export default function SwapDrawer({
                     chef={chef}
                     timeMins={recipe.timeMins || 0}
                     reasons={reasons}
+                    explanation={explanations[recipe.id]}
                     onSwapClick={() => handleSelectSwap(recipe)}
                     disableLink={true}
                   />

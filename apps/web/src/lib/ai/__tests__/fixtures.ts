@@ -1,4 +1,4 @@
-import type { AiRecipe } from '../schemas';
+import type { AiRecipe, GeneratedRecipe } from '../schemas';
 
 /** A recipe that satisfies the AiRecipe schema. */
 export function validAiRecipe(overrides: Partial<AiRecipe> = {}): AiRecipe {
@@ -15,6 +15,15 @@ export function validAiRecipe(overrides: Partial<AiRecipe> = {}): AiRecipe {
     instructions: ['Heat the oven to 200°C.', 'Roast everything for 35 minutes.'],
     tags: ['chicken', 'one_pot'],
     nutrition: { calories: 520, protein: 42, carbs: 18, fat: 30 },
+    ...overrides,
+  };
+}
+
+/** A generation result: a recipe plus its "why this meal" line (#94). */
+export function validGeneratedRecipe(overrides: Partial<GeneratedRecipe> = {}): GeneratedRecipe {
+  return {
+    ...validAiRecipe(),
+    whyThisMeal: "Uses your chicken thighs, and it's mild enough for the kids on a 45-minute weeknight.",
     ...overrides,
   };
 }

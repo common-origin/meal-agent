@@ -257,17 +257,25 @@ export interface StoredWeekPlan {
   weekOfISO: string;
   createdAt: string;
   pantryItems?: string[]; // Items in pantry/fridge for this week
+  /** Per day, why the AI chose that meal (#94); '' where there's none. Absent on older plans. */
+  reasons?: string[];
 }
 
 /**
  * Save current week plan (from plan page)
  */
-export function saveCurrentWeekPlan(recipeIds: string[], weekOfISO: string, pantryItems?: string[]): boolean {
+export function saveCurrentWeekPlan(
+  recipeIds: string[],
+  weekOfISO: string,
+  pantryItems?: string[],
+  reasons?: string[]
+): boolean {
   const plan: StoredWeekPlan = {
     recipeIds,
     weekOfISO,
     createdAt: new Date().toISOString(),
     pantryItems,
+    reasons,
   };
   return Storage.set(CURRENT_WEEK_PLAN_KEY, plan);
 }

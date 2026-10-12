@@ -12,15 +12,15 @@ vi.mock('../ai/run', async (importOriginal) => ({
   runAiTask,
 }));
 
-import { generateRecipes } from '../aiRecipeGenerator';
+import { cleanExplanation, generateRecipes } from '../aiRecipeGenerator';
 import { AiTaskError } from '../ai/run';
 import { buildSystemPrompt } from '../prompts/recipeGeneration';
 import { GeneratedRecipes } from '../ai/schemas';
-import { validAiRecipe } from '../ai/__tests__/fixtures';
+import { validGeneratedRecipe } from '../ai/__tests__/fixtures';
 
 const request = { familySettings: DEFAULT_FAMILY_SETTINGS, numberOfRecipes: 1 };
 
-const generated = (recipes = [validAiRecipe()]) => ({ blocked: false, output: { recipes }, rawFinishReason: 'STOP' });
+const generated = (recipes = [validGeneratedRecipe()]) => ({ blocked: false, output: { recipes }, rawFinishReason: 'STOP' });
 
 beforeEach(() => {
   runAiTask.mockReset();
@@ -43,7 +43,7 @@ describe('generateRecipes', () => {
   });
 
   it('normalises each validated recipe (unique IDs, cuisine, prep, Coles cost)', async () => {
-    runAiTask.mockResolvedValue(generated([validAiRecipe(), validAiRecipe()]));
+    runAiTask.mockResolvedValue(generated([validGeneratedRecipe(), validGeneratedRecipe()]));
     const result = await generateRecipes(request, { userId: 'user-1' });
     if (!('recipes' in result)) throw new Error('expected recipes');
     expect(result.recipes).toHaveLength(2);
@@ -71,5 +71,39 @@ describe('generateRecipes', () => {
       blocked: true,
       rawFinishReason: 'SAFETY',
     });
+  });
+
+  it('returns each recipe\'s "why this meal" line keyed by its ID, not on the recipe (#94)', async () => {
+    runAiTask.mockResolvedValue(
+      generated([
+        validGeneratedRecipe({ whyThisMeal: '  Uses your  broccoli before it wilts. ' }),
+        validGeneratedRecipe({ whyThisMeal: 'A perfect weeknight dinner.' }),
+      ])
+    );
+    const result = await generateRecipes(request, { userId: 'user-1' });
+    if (!('recipes' in result)) throw new Error('expected recipes');
+    const [first, second] = result.recipes;
+    expect(result.explanations).toEqual({ [first.id]: 'Uses your broccoli before it wilts.' });
+    expect(second.id in result.explanations).toBe(false);
+    expect(first).not.toHaveProperty('whyThisMeal');
+  });
+});
+
+describe('cleanExplanation (#94)', () => {
+  it.each([
+    'A delicious midweek curry.',
+    'Personalised for your family.',
+    'Personalized for your family.',
+    'The perfect Tuesday dinner.',
+    'Our AI picked this for you.',
+    '   ',
+  ])('drops %j', (text) => {
+    expect(cleanExplanation(text)).toBeUndefined();
+  });
+
+  it('keeps a specific line, tidied, and does not trip on words that merely contain a banned one', () => {
+    expect(cleanExplanation(' Uses your  basil in a Thai   curry, ready in 30 minutes. ')).toBe(
+      'Uses your basil in a Thai curry, ready in 30 minutes.'
+    );
   });
 });

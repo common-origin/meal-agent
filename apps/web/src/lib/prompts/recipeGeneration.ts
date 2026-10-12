@@ -99,7 +99,8 @@ OUTPUT
 ${CUISINE_FORMAT_RULE}
 - "tags" may only use: ${VALID_TAGS.join(', ')}.
 - "totalTimeMins" is the total time including prep.
-- "nutrition" is a realistic per-serve estimate in kcal and grams, as whole numbers; a typical dinner is 350–700 kcal.`;
+- "nutrition" is a realistic per-serve estimate in kcal and grams, as whole numbers; a typical dinner is 350–700 kcal.
+- "whyThisMeal" is one sentence (at most 120 characters) telling the household why this dinner suits them this week, in the second person ("you", "your"). Cite at least one concrete fact from the request: a pantry or use-soon item it uses, how it suits the kids, how it fits the day's time limit, the season, or how it differs from recent meals. Never use the words "delicious", "personalised", "perfect" or "AI". Example: "Uses your broccoli and cheddar, and it's mild enough for the kids on a 30-minute Tuesday."`;
 }
 
 const DIET_DESCRIPTIONS: Record<string, string> = {

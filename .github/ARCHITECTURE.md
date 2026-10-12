@@ -216,7 +216,8 @@ signup):
   one of `g | ml | tsp | tbsp | unit`
 - **`meal_plans`** — one row per household per week (`UNIQUE(household_id,
   week_start)`), `meals` is a JSONB object keyed by lowercase day name
-  (`monday`..`sunday`)
+  (`monday`..`sunday`); each day is `{ recipeId, servings?, reason? }`,
+  where `reason` is the AI's "why this meal" line for that week (#94)
 - **`shopping_lists`**, **`pantry_preferences`**
 - **`api_usage`** (001) — an early AI-cost table that nothing writes to;
   superseded by `ai_usage`

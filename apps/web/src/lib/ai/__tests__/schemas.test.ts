@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { AiRecipe, ExtractedRecipe, GeneratedRecipes, PageIngredients, PantryScan, PhotoIngredients, PhotoRecipe } from '../schemas';
-import { validAiRecipe } from './fixtures';
+import { validAiRecipe, validGeneratedRecipe } from './fixtures';
 
 const withIngredient = (ingredient: Record<string, unknown>) =>
   ({ ...validAiRecipe(), ingredients: [ingredient] }) as unknown;
@@ -48,8 +48,15 @@ describe('AiRecipe', () => {
 
 describe('GeneratedRecipes', () => {
   it('needs at least one recipe', () => {
-    expect(GeneratedRecipes.safeParse({ recipes: [validAiRecipe()] }).success).toBe(true);
+    expect(GeneratedRecipes.safeParse({ recipes: [validGeneratedRecipe()] }).success).toBe(true);
     expect(GeneratedRecipes.safeParse({ recipes: [] }).success).toBe(false);
+  });
+
+  it('requires a "why this meal" line of at most 120 chars (#94)', () => {
+    expect(GeneratedRecipes.safeParse({ recipes: [validAiRecipe()] }).success).toBe(false);
+    expect(GeneratedRecipes.safeParse({ recipes: [validGeneratedRecipe({ whyThisMeal: '' })] }).success).toBe(false);
+    expect(GeneratedRecipes.safeParse({ recipes: [validGeneratedRecipe({ whyThisMeal: 'x'.repeat(120) })] }).success).toBe(true);
+    expect(GeneratedRecipes.safeParse({ recipes: [validGeneratedRecipe({ whyThisMeal: 'x'.repeat(121) })] }).success).toBe(false);
   });
 });
 
