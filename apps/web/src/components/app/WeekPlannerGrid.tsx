@@ -1,4 +1,4 @@
-import { Stack, Typography, ResponsiveGrid, Box } from "@common-origin/design-system";
+import { Alert, Button, Stack, Typography, ResponsiveGrid, Box } from "@common-origin/design-system";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { MemoizedMealCard, type MealCardProps } from "./MealCard";
@@ -10,8 +10,13 @@ export type WeekPlannerGridProps = {
   onSwapClick?: (dayIndex: number) => void;
   onGenerateClick?: (dayIndex: number) => void;
   onAddSavedRecipeClick?: (dayIndex: number) => void;
-  generatingDayIndex?: number | null;
+  /** Days whose AI recipe is still being generated; each shows a skeleton (#95). */
+  generatingDays?: number[];
+  /** Per-day generation errors (friendly copy, #96), shown with a Retry button. */
+  dayErrors?: Record<number, string>;
+  onRetryDay?: (dayIndex: number) => void;
   onDeleteClick?: (dayIndex: number) => void;
+  /** Whole-grid skeleton, for the initial load only. */
   isGeneratingPlan?: boolean;
   onReorder?: (oldIndex: number, newIndex: number) => void;
 };
@@ -25,7 +30,9 @@ export default function WeekPlannerGrid({
   onSwapClick, 
   onGenerateClick, 
   onAddSavedRecipeClick, 
-  generatingDayIndex, 
+  generatingDays = [],
+  dayErrors = {},
+  onRetryDay,
   onDeleteClick, 
   isGeneratingPlan,
   onReorder 
@@ -105,12 +112,34 @@ export default function WeekPlannerGrid({
               gapY={8}
             >
               {DAYS.map((day, index) => {
-                // Show individual loading state for specific day
-                if (generatingDayIndex === index) {
+                // Each day shows its own skeleton until its own request resolves (#95)
+                if (generatingDays.includes(index)) {
                   return (
                     <div key={day} style={{ display: "flex", flexDirection: "column", gap: "8px", height: "100%" }}>
                       <Typography variant="label">{day}</Typography>
                       <LoadingSkeleton ariaLabel={`Generating AI recipe for ${day}`} />
+                    </div>
+                  );
+                }
+
+                // A day whose generation failed: the error, and a retry for just this day
+                const error = dayErrors[index];
+                if (error && !meals[index]) {
+                  return (
+                    <div key={day} style={{ display: "flex", flexDirection: "column", gap: "8px", height: "100%" }}>
+                      <Typography variant="label">{day}</Typography>
+                      <Box borderRadius="lg" p="lg" bg="surface" border="subtle" minHeight="300px">
+                        <Stack direction="column" gap="md" alignItems="flex-start">
+                          <Alert variant="error" inline>
+                            {error}
+                          </Alert>
+                          {onRetryDay && (
+                            <Button variant="primary" size="small" onClick={() => onRetryDay(index)}>
+                              Retry this day
+                            </Button>
+                          )}
+                        </Stack>
+                      </Box>
                     </div>
                   );
                 }

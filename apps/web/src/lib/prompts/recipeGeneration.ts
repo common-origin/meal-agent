@@ -25,7 +25,8 @@ export interface RecipeGenerationRequest {
   specificDays?: { index: number; type: 'weeknight' | 'weekend' }[]; // If generating specific days (shape settled in #80)
   pantryItems?: string[]; // Ingredients already available
   useSoonItems?: string[]; // Pantry items that need using this week (#91)
-  existingProteins?: string[]; // Proteins already in the week plan (for single recipe variety)
+  /** This day's lineup from lib/planSlate.ts (#95), rendered as hard constraints. */
+  slot?: { cuisine: string | null; protein: string; method: string; pantryFocus: string[] };
   /** IANA time zone the household plans in; month and season are computed there. */
   timeZone?: string;
 }
@@ -50,14 +51,6 @@ export function monthInTimeZone(timeZone: string, now: Date = new Date()): { ind
   const index = Number(new Intl.DateTimeFormat('en-AU', { timeZone: zone, month: 'numeric' }).format(now)) - 1;
   const name = new Intl.DateTimeFormat('en-AU', { timeZone: zone, month: 'long' }).format(now);
   return { index, name };
-}
-
-/**
- * Get alternative protein suggestions based on what's already used
- */
-function getAlternativeProteins(usedProteins: string[]): string[] {
-  const allProteins = ['chicken', 'beef', 'pork', 'fish', 'lamb', 'seafood', 'tofu', 'lentils', 'beans'];
-  return allProteins.filter(protein => !usedProteins.includes(protein));
 }
 
 /**
@@ -152,6 +145,7 @@ export function buildRecipeGenerationPrompt(request: RecipeGenerationRequest): s
     ? `${familySettings.location.city}, ${familySettings.location.country}`
     : 'Melbourne, Australia';
   const cuisines = familySettings.cuisines.length > 0 ? familySettings.cuisines.join(', ') : 'any';
+  const slot = request.slot;
 
   const lines: string[] = [`Generate ${numberOfRecipes} ${dayType} dinner recipes with these requirements:`];
   const section = (heading: string, items: string[]) => {
@@ -162,7 +156,7 @@ export function buildRecipeGenerationPrompt(request: RecipeGenerationRequest): s
   const household = [
     `Servings: ${familySettings.totalServings} (${people}).`,
     `Location: ${place} (${hemisphere} hemisphere).`,
-    `Cuisines: ${cuisines}. Each recipe uses one of these.`,
+    slot?.cuisine ? `Cuisine: ${slot.cuisine}.` : `Cuisines: ${cuisines}. Each recipe uses one of these.`,
     `Spice: ${SPICE_DESCRIPTIONS[familySettings.spiceTolerance]}.`,
     `Cooking skill: ${SKILL_DESCRIPTIONS[familySettings.cookingSkill]}.`,
     `Effort: ${EFFORT_DESCRIPTIONS[familySettings.effortPreference]}.`,
@@ -235,15 +229,26 @@ export function buildRecipeGenerationPrompt(request: RecipeGenerationRequest): s
 
   // Pantry
   const pantry: string[] = [];
-  if (pantryItems && pantryItems.length > 0) {
-    pantry.push(
-      familySettings.pantryPreference === 'soft'
-        ? `Available if they fit naturally: ${pantryItems.join(', ')}. Never force a strange combination just to use them.`
-        : `Already available, use as many as possible across the plan to reduce waste: ${pantryItems.join(', ')}.`
-    );
-  }
-  if (request.useSoonItems && request.useSoonItems.length > 0) {
-    pantry.push(`Use these first; they need using this week: ${request.useSoonItems.join(', ')}.`);
+  if (slot) {
+    // One day of a parallel week (#95): its pantryFocus (in THIS DAY) is this
+    // day's share, with use-soon items already on the earliest days. Repeating
+    // the whole-week lines here would put the same items in every recipe.
+    const focus = new Set(slot.pantryFocus.map((item) => item.toLowerCase()));
+    const others = (pantryItems ?? []).filter((item) => !focus.has(item.toLowerCase()));
+    if (others.length > 0) {
+      pantry.push(`Also available if they fit naturally (other days use them too, so don't build around them): ${others.join(', ')}.`);
+    }
+  } else {
+    if (pantryItems && pantryItems.length > 0) {
+      pantry.push(
+        familySettings.pantryPreference === 'soft'
+          ? `Available if they fit naturally: ${pantryItems.join(', ')}. Never force a strange combination just to use them.`
+          : `Already available, use as many as possible across the plan to reduce waste: ${pantryItems.join(', ')}.`
+      );
+    }
+    if (request.useSoonItems && request.useSoonItems.length > 0) {
+      pantry.push(`Use these first; they need using this week: ${request.useSoonItems.join(', ')}.`);
+    }
   }
   section('PANTRY', pantry);
 
@@ -257,13 +262,18 @@ export function buildRecipeGenerationPrompt(request: RecipeGenerationRequest): s
   if (request.recentMealTitles && request.recentMealTitles.length > 0) {
     variety.push(`Don't repeat or closely resemble these recent meals: ${request.recentMealTitles.join('; ')}.`);
   }
-  if (request.existingProteins && request.existingProteins.length > 0 && numberOfRecipes === 1) {
-    const used = [...new Set(request.existingProteins)];
-    variety.push(
-      `This week already includes ${used.join(', ')}. Choose a different protein, e.g. ${getAlternativeProteins(used).join(', ')}.`
-    );
-  }
   section('VARIETY', variety);
+
+  // This day's lineup (#95): chosen in code so the week's variety is enforced.
+  if (slot) {
+    const day = [
+      ...(slot.cuisine ? [`Cuisine: ${slot.cuisine}.`] : []),
+      `Main protein: ${slot.protein}.`,
+      `Cooking method: ${slot.method}.`,
+      ...(slot.pantryFocus.length > 0 ? [`Build it around these pantry items: ${slot.pantryFocus.join(', ')}.`] : []),
+    ];
+    section('THIS DAY (hard constraints; every recipe must follow them)', day);
+  }
 
   return lines.join('\n');
 }

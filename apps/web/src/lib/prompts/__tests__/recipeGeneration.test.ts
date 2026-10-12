@@ -109,3 +109,50 @@ describe('buildRecipeGenerationPrompt use-soon pantry items (#91)', () => {
     expect(buildRecipeGenerationPrompt({ familySettings, numberOfRecipes: 3, useSoonItems: [] })).not.toContain(line);
   });
 });
+
+describe('buildRecipeGenerationPrompt day slot (#95)', () => {
+  const slot = { cuisine: 'thai', protein: 'tofu', method: 'stir-fry', pantryFocus: ['spinach', 'rice'] };
+
+  it('renders the slot as hard constraints, with its cuisine replacing the household list', () => {
+    const text = buildRecipeGenerationPrompt({
+      familySettings: { ...familySettings, cuisines: ['italian', 'mexican'] },
+      numberOfRecipes: 1,
+      specificDays: [{ index: 2, type: 'weeknight' }],
+      slot,
+    });
+    const day = text.slice(text.indexOf('THIS DAY'));
+    expect(day).toContain('- Cuisine: thai.');
+    expect(day).toContain('- Main protein: tofu.');
+    expect(day).toContain('- Cooking method: stir-fry.');
+    expect(day).toContain('- Build it around these pantry items: spinach, rice.');
+    expect(text).not.toContain('Cuisines: italian, mexican');
+  });
+
+  it('omits the cuisine and pantry lines when the slot has none, and the section without a slot', () => {
+    const text = buildRecipeGenerationPrompt({
+      familySettings,
+      numberOfRecipes: 1,
+      slot: { cuisine: null, protein: 'eggs', method: 'salad/bowl', pantryFocus: [] },
+    });
+    const day = text.slice(text.indexOf('THIS DAY'));
+    expect(day).not.toContain('Cuisine:');
+    expect(day).not.toContain('pantry items');
+    expect(buildRecipeGenerationPrompt({ familySettings, numberOfRecipes: 1 })).not.toContain('THIS DAY');
+  });
+});
+
+describe('buildRecipeGenerationPrompt pantry with a day slot (#95)', () => {
+  it("uses the day's pantry focus, not the whole week's pantry and use-soon lines", () => {
+    const text = buildRecipeGenerationPrompt({
+      familySettings,
+      numberOfRecipes: 1,
+      pantryItems: ['spinach', 'broccoli', 'rice'],
+      useSoonItems: ['spinach'],
+      slot: { cuisine: 'thai', protein: 'tofu', method: 'stir-fry', pantryFocus: ['broccoli'] },
+    });
+    expect(text).toContain('Build it around these pantry items: broccoli.');
+    expect(text).toContain("Also available if they fit naturally (other days use them too, so don't build around them): spinach, rice.");
+    expect(text).not.toContain('use as many as possible across the plan');
+    expect(text).not.toContain('Use these first');
+  });
+});

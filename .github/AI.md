@@ -25,6 +25,20 @@ built on the Vercel AI SDK (`ai` + `@ai-sdk/google`). The provider reads
 ## Using AI generation in the app
 
 `/settings` → configure family preferences → `/plan` → "Generate with AI."
+
+A week is 7 days, generated in parallel (#95). `buildWeekSlate()` in
+`apps/web/src/lib/planSlate.ts` first picks each day's cuisine, protein,
+cooking method and pantry focus in code (seeded, so variety rules are
+enforced and tested rather than only asked for). The plan page then sends
+one `POST /api/generate-recipes` per day, all at once, through
+`generateDay()` (`apps/web/src/lib/client/generateDay.ts`), each with
+`numberOfRecipes: 1`, its `specificDays` entry and its `slot`; the prompt
+renders the slot as hard constraints. Each card appears as its own request
+returns, a failed day shows its error with a Retry button, and the plan is
+saved once every day has settled. Single-day generation, retries and AI
+swaps (three parallel one-recipe requests) use the same per-slot request,
+with `buildDaySlot()` choosing a slot against the rest of the week.
+
 The request goes to `POST /api/generate-recipes`. Its request type
 (`RecipeGenerationRequest`) is defined in
 `apps/web/src/lib/prompts/recipeGeneration.ts`, not in

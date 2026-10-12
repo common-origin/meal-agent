@@ -75,6 +75,14 @@ export const specificDaysSchema = z
   )
   .max(7);
 
+// One day's lineup from lib/planSlate.ts (#95): hard constraints for that recipe.
+export const daySlotSchema = z.object({
+  cuisine: z.string().max(40).nullable(),
+  protein: z.string().max(60),
+  method: z.string().max(40),
+  pantryFocus: z.array(z.string().max(60)).max(3).default([]),
+});
+
 export const generateRecipesSchema = z.object({
   familySettings: familySettingsSchema,
   numberOfRecipes: z.number().int().min(1).max(7).default(7),
@@ -83,9 +91,10 @@ export const generateRecipesSchema = z.object({
   lovedMealTitles: mealTitleList,
   specificDays: specificDaysSchema.optional(),
   pantryItems: z.array(z.string().max(60)).max(60).default([]),
+  /** This day's lineup (#95); sent with numberOfRecipes 1 and one specificDays entry. */
+  slot: daySlotSchema.optional(),
   /** Pantry items flagged to use this week (#91). */
   useSoonItems: z.array(z.string().max(60)).max(60).default([]),
-  existingProteins: textList.default([]),
   /** IANA zone from the browser (#87); unknown zones fall back to Australia/Melbourne. */
   timeZone: z.string().max(64).optional(),
 });

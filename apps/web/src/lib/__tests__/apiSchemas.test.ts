@@ -65,6 +65,16 @@ describe('generateRecipesSchema', () => {
     expect(result.data).not.toHaveProperty('excludeRecipeIds');
   });
 
+  it('validates the day slot (#95)', () => {
+    const familySettings = wireSettings();
+    const slot = { cuisine: 'thai', protein: 'tofu', method: 'stir-fry', pantryFocus: ['spinach'] };
+    expect(generateRecipesSchema.safeParse({ familySettings, slot }).success).toBe(true);
+    expect(generateRecipesSchema.safeParse({ familySettings, slot: { ...slot, cuisine: null } }).success).toBe(true);
+    expect(generateRecipesSchema.safeParse({ familySettings, slot: { ...slot, pantryFocus: ['a', 'b', 'c', 'd'] } }).success).toBe(false);
+    expect(generateRecipesSchema.safeParse({ familySettings, slot: { ...slot, protein: 'x'.repeat(61) } }).success).toBe(false);
+    expect(generateRecipesSchema.safeParse({ familySettings, slot: { cuisine: 'thai' } }).success).toBe(false);
+  });
+
   it('validates specificDays index and type', () => {
     const familySettings = wireSettings();
     expect(generateRecipesSchema.safeParse({ familySettings, specificDays: [{ index: 6, type: 'weekend' }] }).success).toBe(true);
