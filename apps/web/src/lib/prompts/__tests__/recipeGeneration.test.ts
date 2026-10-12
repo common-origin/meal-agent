@@ -119,7 +119,6 @@ describe('buildRecipeGenerationPrompt day slot (#95)', () => {
       numberOfRecipes: 1,
       specificDays: [{ index: 2, type: 'weeknight' }],
       slot,
-      existingProteins: ['chicken'],
     });
     const day = text.slice(text.indexOf('THIS DAY'));
     expect(day).toContain('- Cuisine: thai.');
@@ -127,8 +126,6 @@ describe('buildRecipeGenerationPrompt day slot (#95)', () => {
     expect(day).toContain('- Cooking method: stir-fry.');
     expect(day).toContain('- Build it around these pantry items: spinach, rice.');
     expect(text).not.toContain('Cuisines: italian, mexican');
-    // The slot already fixes the protein; the old "choose a different protein" hint would contradict it.
-    expect(text).not.toContain('This week already includes chicken');
   });
 
   it('omits the cuisine and pantry lines when the slot has none, and the section without a slot', () => {

@@ -25,7 +25,6 @@ export interface RecipeGenerationRequest {
   specificDays?: { index: number; type: 'weeknight' | 'weekend' }[]; // If generating specific days (shape settled in #80)
   pantryItems?: string[]; // Ingredients already available
   useSoonItems?: string[]; // Pantry items that need using this week (#91)
-  existingProteins?: string[]; // Proteins already in the week plan (for single recipe variety)
   /** This day's lineup from lib/planSlate.ts (#95), rendered as hard constraints. */
   slot?: { cuisine: string | null; protein: string; method: string; pantryFocus: string[] };
   /** IANA time zone the household plans in; month and season are computed there. */
@@ -52,14 +51,6 @@ export function monthInTimeZone(timeZone: string, now: Date = new Date()): { ind
   const index = Number(new Intl.DateTimeFormat('en-AU', { timeZone: zone, month: 'numeric' }).format(now)) - 1;
   const name = new Intl.DateTimeFormat('en-AU', { timeZone: zone, month: 'long' }).format(now);
   return { index, name };
-}
-
-/**
- * Get alternative protein suggestions based on what's already used
- */
-function getAlternativeProteins(usedProteins: string[]): string[] {
-  const allProteins = ['chicken', 'beef', 'pork', 'fish', 'lamb', 'seafood', 'tofu', 'lentils', 'beans'];
-  return allProteins.filter(protein => !usedProteins.includes(protein));
 }
 
 /**
@@ -270,13 +261,6 @@ export function buildRecipeGenerationPrompt(request: RecipeGenerationRequest): s
   }
   if (request.recentMealTitles && request.recentMealTitles.length > 0) {
     variety.push(`Don't repeat or closely resemble these recent meals: ${request.recentMealTitles.join('; ')}.`);
-  }
-  // A slot already fixes the protein, chosen against the rest of the week.
-  if (!slot && request.existingProteins && request.existingProteins.length > 0 && numberOfRecipes === 1) {
-    const used = [...new Set(request.existingProteins)];
-    variety.push(
-      `This week already includes ${used.join(', ')}. Choose a different protein, e.g. ${getAlternativeProteins(used).join(', ')}.`
-    );
   }
   section('VARIETY', variety);
 

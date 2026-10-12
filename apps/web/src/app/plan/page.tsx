@@ -103,10 +103,24 @@ export default function PlanPage() {
     setWeekPlan(next);
     return next;
   };
-  // Each day's lineup from this session's plan, kept for Retry and for building swaps (#95).
-  const [daySlots, setDaySlots] = useState<(DaySlot | null)[]>(Array(7).fill(null));
-  // The settings, pantry and taste a plan was generated with, so a day's retry matches it.
-  const planContextRef = useRef<Omit<DayRequest, 'slot'> | null>(null);
+  // The slot each AI meal was generated for, by recipe ID, so it follows the
+  // meal through reorders and swaps when new slots are built around it (#95).
+  const slotByRecipeRef = useRef(new Map<string, DaySlot>());
+  // A failed day's slot, by day, so "Retry this day" asks for the same thing.
+  const failedSlotsRef = useRef<Record<number, DaySlot>>({});
+  // The settings (e.g. the wizard's cuisines for this week) the current plan was generated with.
+  const planSettingsRef = useRef<FamilySettings | null>(null);
+  // Saves run one at a time, each writing the latest plan, so an earlier
+  // save can't land after a later one and drop a day (#95).
+  const saveChainRef = useRef<Promise<unknown>>(Promise.resolve());
+  const persistPlan = (pantry: string[]): Promise<boolean> => {
+    const run = saveChainRef.current.then(() => {
+      const plan = weekPlanRef.current;
+      return saveCurrentWeekPlan(plan.map((meal) => meal?.recipeId || ""), nextWeekMondayISO(), pantry, planReasons(plan));
+    });
+    saveChainRef.current = run.catch(() => undefined);
+    return run;
+  };
   const [generatingDays, setGeneratingDays] = useState<number[]>([]);
   // Per-day failures, shown on that day with a Retry button (#96 copy).
   const [dayErrors, setDayErrors] = useState<Record<number, string>>({});
@@ -239,9 +253,7 @@ export default function PlanPage() {
     setUseSoon(soon);
     
     // Save updated pantry items to storage
-    const nextWeekISO = nextWeekMondayISO();
-    const recipeIds = weekPlan.map(m => m?.recipeId || "");
-    await saveCurrentWeekPlan(recipeIds, nextWeekISO, items, planReasons(weekPlan));
+    await persistPlan(items);
     console.log('✅ Pantry items updated and saved');
   };
 
@@ -358,8 +370,7 @@ export default function PlanPage() {
     
     // Save updated week plan
     const nextWeekISO = nextWeekMondayISO();
-    const recipeIds = newWeekPlan.map(meal => meal?.recipeId || "");
-    await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems, planReasons(newWeekPlan));
+    await persistPlan(pantryItems);
     recordWeekHistory(nextWeekISO, [recipe.id]).catch((err) => console.warn('Could not record recipe history:', err));
     console.log('✅ Week plan updated after swap');
     
@@ -397,9 +408,7 @@ export default function PlanPage() {
     setBudget(prev => ({ current: prev.current - costToRemove, total: weeklyBudget }));
     
     // Save updated week plan
-    const nextWeekISO = nextWeekMondayISO();
-    const recipeIds = newWeekPlan.map(m => m?.recipeId || "");
-    await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems, planReasons(newWeekPlan));
+    await persistPlan(pantryItems);
     console.log('✅ Week plan updated after deletion');
     
     track('swap', {
@@ -418,11 +427,12 @@ export default function PlanPage() {
     newWeekPlan.splice(newIndex, 0, movedMeal);
     
     commitPlan(newWeekPlan);
+    // Errors and retry slots belong to a day; once meals move, empty days just offer Generate.
+    failedSlotsRef.current = {};
+    setDayErrors({});
     
     // Save updated week plan
-    const nextWeekISO = nextWeekMondayISO();
-    const recipeIds = newWeekPlan.map(m => m?.recipeId || "");
-    await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantryItems, planReasons(newWeekPlan));
+    await persistPlan(pantryItems);
     console.log('✅ Week plan reordered and saved');
     
     // Track analytics
@@ -503,18 +513,14 @@ export default function PlanPage() {
   };
 
   /** Settings, pantry and taste for a request outside a fresh plan (single day, retry, swap). */
-  const loadDayContext = async (): Promise<Omit<DayRequest, 'slot'>> => {
-    const tasteSignals = await loadTasteSignals(weekPlanRef.current);
-    // Within a session, match the plan's own settings (e.g. the wizard's cuisines);
-    // taste is refreshed so this week's newer meals count as recent.
-    if (planContextRef.current) return { ...planContextRef.current, tasteSignals };
-    return {
-      familySettings: await getFamilySettings(),
-      pantryItems,
-      useSoonItems: itemsToUseSoon({ items: pantryItems, useSoon }),
-      tasteSignals,
-    };
-  };
+  const loadDayContext = async (): Promise<Omit<DayRequest, 'slot'>> => ({
+    // The plan's own settings within a session (e.g. the wizard's cuisines);
+    // the pantry as it is now, edits included; taste counting this week's meals.
+    familySettings: planSettingsRef.current ?? (await getFamilySettings()),
+    pantryItems,
+    useSoonItems: itemsToUseSoon({ items: pantryItems, useSoon }),
+    tasteSignals: await loadTasteSignals(weekPlanRef.current),
+  });
 
   /** A fresh slot for one day, against the proteins and cuisines on the rest of the week. */
   const slotForDay = (dayIndex: number, context: Omit<DayRequest, 'slot'>): DaySlot => {
@@ -527,8 +533,8 @@ export default function PlanPage() {
       useSoonItems: context.useSoonItems,
       seed: newSlateSeed(),
       index: dayIndex,
-      weekProteins: plan.map((meal, i) => (meal ? daySlots[i]?.protein ?? proteinOf(recipes[i]) : null)),
-      weekCuisines: plan.map((meal, i) => (meal ? recipes[i]?.cuisine ?? daySlots[i]?.cuisine : null)),
+      weekProteins: plan.map((meal, i) => (meal ? slotByRecipeRef.current.get(meal.recipeId)?.protein ?? proteinOf(recipes[i]) : null)),
+      weekCuisines: plan.map((meal, i) => (meal ? recipes[i]?.cuisine ?? slotByRecipeRef.current.get(meal.recipeId)?.cuisine : null)),
     });
   };
 
@@ -544,13 +550,15 @@ export default function PlanPage() {
       delete next[index];
       return next;
     });
-    setDaySlots((slots) => slots.map((existing, i) => (i === index ? slot : existing)));
+    delete failedSlotsRef.current[index];
     try {
       const result = await generateDay({ ...context, slot });
       if (!result.ok) {
+        failedSlotsRef.current[index] = slot;
         if (!result.redirected) setDayErrors((errors) => ({ ...errors, [index]: result.error }));
         return null;
       }
+      slotByRecipeRef.current.set(result.recipe.id, slot);
       await RecipeLibrary.addTempAIRecipes([result.recipe]);
       const meal = toAiMeal(result.recipe, result.explanation);
       const next = [...weekPlanRef.current];
@@ -565,13 +573,11 @@ export default function PlanPage() {
 
   /** Saves the plan as it stands; records history and ingredient use for `newIds`; updates the budget. */
   const savePlan = async (newIds: string[], familySettings: FamilySettings, pantry: string[]): Promise<number> => {
-    const plan = weekPlanRef.current;
-    const nextWeekISO = nextWeekMondayISO();
-    const recipeIds = plan.map((meal) => meal?.recipeId || "");
-    const saved = await saveCurrentWeekPlan(recipeIds, nextWeekISO, pantry, planReasons(plan));
+    const saved = await persistPlan(pantry);
     if (!saved) console.warn('⚠️ Failed to save week plan');
+    const plan = weekPlanRef.current;
     if (newIds.length > 0) {
-      recordWeekHistory(nextWeekISO, newIds).catch((err) => console.warn('Could not record recipe history:', err));
+      recordWeekHistory(nextWeekMondayISO(), newIds).catch((err) => console.warn('Could not record recipe history:', err));
       trackIngredientUsage(newIds);
     }
     const recipes = plan.flatMap((meal) => {
@@ -599,10 +605,16 @@ export default function PlanPage() {
     setGenerationError(null);
     setAriaLiveMessage("Generating weekly meal plan...");
     const startedAt = performance.now();
+    // Taste comes from the plan being replaced; skeletons show straight away.
+    const previousPlan = weekPlanRef.current;
+    commitPlan(Array(7).fill(null));
+    slotByRecipeRef.current.clear();
+    failedSlotsRef.current = {};
+    setDayErrors({});
+    setGeneratingDays([0, 1, 2, 3, 4, 5, 6]);
 
     try {
-      // Taste comes from the plan being replaced, before it's cleared.
-      const tasteSignals = await loadTasteSignals(weekPlanRef.current);
+      const tasteSignals = await loadTasteSignals(previousPlan);
       const recentCuisines = getRecentRecipeIds()
         .map((id) => RecipeLibrary.getById(id)?.cuisine)
         .filter((cuisine): cuisine is string => Boolean(cuisine));
@@ -617,11 +629,7 @@ export default function PlanPage() {
       console.log('🗓️ Week lineup:', slate);
 
       const context = { familySettings, pantryItems: pantry, useSoonItems, tasteSignals };
-      planContextRef.current = context;
-      commitPlan(Array(7).fill(null));
-      setDaySlots(slate);
-      setDayErrors({});
-      setGeneratingDays(slate.map((slot) => slot.index));
+      planSettingsRef.current = familySettings;
 
       let firstCardMs: number | null = null;
       const settled = await Promise.allSettled(
@@ -682,7 +690,7 @@ export default function PlanPage() {
     setAriaLiveMessage(`Generating AI recipe for ${DAYS[dayIndex]}...`);
     try {
       const context = await loadDayContext();
-      const slot = (retry && daySlots[dayIndex]) || slotForDay(dayIndex, context);
+      const slot = (retry && failedSlotsRef.current[dayIndex]) || slotForDay(dayIndex, context);
       const meal = await runDay(context, slot);
       if (meal) {
         await savePlan([meal.recipeId], context.familySettings, context.pantryItems);
@@ -824,7 +832,8 @@ export default function PlanPage() {
                 variant="secondary"
                 size="large"
                 onClick={handleGenerateWithAI}
-                disabled={isGenerating}
+                // A week can't start while a day or swap is still in flight (#95).
+                disabled={isGenerating || generatingDays.length > 0 || isGeneratingAISwaps}
               >
                 {isGenerating ? 'Generating...' : 'Generate new plan'}
               </Button>

@@ -95,7 +95,6 @@ export const generateRecipesSchema = z.object({
   slot: daySlotSchema.optional(),
   /** Pantry items flagged to use this week (#91). */
   useSoonItems: z.array(z.string().max(60)).max(60).default([]),
-  existingProteins: textList.default([]),
   /** IANA zone from the browser (#87); unknown zones fall back to Australia/Melbourne. */
   timeZone: z.string().max(64).optional(),
 });
