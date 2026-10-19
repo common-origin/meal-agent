@@ -13,7 +13,7 @@ const shimmer = keyframes`
   }
 `;
 
-const SkeletonBox = styled(Box)`
+const SkeletonBox = styled(Box)<{ $height: string }>`
   background: linear-gradient(
     to right,
     ${tokens.semantic.color.background.default} 0%,
@@ -23,13 +23,15 @@ const SkeletonBox = styled(Box)`
   background-size: 800px 104px;
   animation: ${shimmer} 1.5s linear infinite;
   border-radius: ${tokens.base.border.radius[4]};
-  height: 300px;
+  height: ${({ $height }) => $height};
   width: 100%;
 `;
 
 interface LoadingSkeletonProps {
   count?: number;
   ariaLabel?: string;
+  /** Card height by default; the plan list uses a shorter row (#38). */
+  height?: string;
 }
 
 /**
@@ -38,7 +40,8 @@ interface LoadingSkeletonProps {
  */
 export default function LoadingSkeleton({ 
   count = 1, 
-  ariaLabel = "Loading recipes" 
+  ariaLabel = "Loading recipes",
+  height = "300px",
 }: LoadingSkeletonProps) {
   return (
     <div 
@@ -50,9 +53,10 @@ export default function LoadingSkeleton({
       {Array.from({ length: count }).map((_, index) => (
         <SkeletonBox 
           key={index}
+          $height={height}
           border="subtle"
           p="lg"
-          mb="md"
+          mb={count > 1 ? "md" : undefined}
         />
       ))}
       {/* Screen reader text */}

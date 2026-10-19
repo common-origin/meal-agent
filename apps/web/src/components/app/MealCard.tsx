@@ -57,6 +57,8 @@ export type MealCardProps = {
   onSwapClick?: () => void;
   onDeleteClick?: () => void;
   disableLink?: boolean; // When true, card won't be a link (used in SwapDrawer)
+  /** 'row' fits the plan's Monday–Sunday list (#38): no fixed height, chips and nutrition on one line. */
+  variant?: 'card' | 'row';
   dragHandleRef?: (node: HTMLElement | null) => void;
   dragListeners?: SyntheticListenerMap;
 };
@@ -85,11 +87,11 @@ const CardWrapper = styled(Box)<{ $clickable?: boolean }>`
   }
 `;
 
-const StyledMealCardTitle = styled.h3`
+const StyledMealCardTitle = styled.h3<{ $row?: boolean }>`
   font: ${tokens.semantic.typography.h3};
   letter-spacing: ${tokens.base.letterSpacing[1]};
-  font-size: 1.5rem;
-  line-height: 1.75rem;
+  font-size: ${({ $row }) => ($row ? '1.125rem' : '1.5rem')};
+  line-height: ${({ $row }) => ($row ? '1.5rem' : '1.75rem')};
   color: ${tokens.semantic.color.text.default}
 `;
 
@@ -131,6 +133,7 @@ export default function MealCard({
   onSwapClick,
   onDeleteClick,
   disableLink = false,
+  variant = 'card',
   dragHandleRef,
   dragListeners,
 }: MealCardProps) {
@@ -183,15 +186,15 @@ export default function MealCard({
       <CardWrapper 
         bg="default"
         borderRadius="lg"
-        p="lg"
+        p={variant === 'row' ? "md" : "lg"}
         border="subtle"
-        minHeight="300px"
+        minHeight={variant === 'row' ? undefined : "300px"}
         $clickable={disableLink && !!onSwapClick}
       >
         <Stack direction="column" gap="md">
           {/* Top section - Title and Menu */}
           <Stack direction="row" gap="md" alignItems="flex-start">
-            <StyledMealCardTitle style={{ flex: 1 }}>{toSentenceCase(title)}</StyledMealCardTitle>
+            <StyledMealCardTitle $row={variant === 'row'} style={{ flex: 1 }}>{toSentenceCase(title)}</StyledMealCardTitle>
             {/* Kebab menu - stopPropagation prevents menu clicks from triggering card link */}
             <MenuWrapper ref={menuRef} onClick={(e: MouseEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); }}>
               <IconButton
@@ -260,20 +263,28 @@ export default function MealCard({
             </Typography>
           )}
 
-          {/* Spacer to push buttons to bottom */}
-          <div style={{ flex: 1 }} />
+ {variant === 'card' && (
+            // Spacer to push buttons to bottom
+            <div style={{ flex: 1 }} />
+          )}
           
-          <div>
+          {/* In a row, keep the chips clear of the drag handle in the bottom-right corner */}
+          <div style={variant === 'row' && dragHandleRef ? { paddingRight: 40 } : undefined}>
             <Stack direction="column" gap="sm">
-              <Stack direction="row" gap="sm">
+              <Stack direction="row" gap="sm" alignItems="center" wrap={variant === 'row'}>
                 {chef && <Tag variant="interactive" border={false}>{chef}</Tag>}
                 <Chip variant="default">{timeMins} mins</Chip>
                 {chipLabels.length > 0 && (
                   <ChipGroup labels={chipLabels} variant="default" />
                 )}
+                {variant === 'row' && nutrition && (
+                  <Typography variant="small" color="subdued">
+                    {nutrition.calories} cal · {nutrition.protein}g protein
+                  </Typography>
+                )}
               </Stack>
               {/* Nutrition summary (if available) */}
-              {nutrition && (
+              {variant === 'card' && nutrition && (
                 <Stack direction="row" gap="md">
                   <Typography variant="small" color="subdued">
                     {nutrition.calories} cal
