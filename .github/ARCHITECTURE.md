@@ -51,7 +51,7 @@ as "no user" rather than hanging the request.
 Pages, by area:
 
 - **Auth**: `/login`, `/signup`, `/auth/callback` (OAuth callback handler)
-- **Planning**: `/plan`, `/plan/review`
+- **Planning**: `/plan` (`/plan/review` merged into it in #38 and now redirects there via `next.config.ts`)
 - **Recipes**: `/recipes`, `/recipes/add` (URL/image/manual entry),
   `/recipe/[id]`
 - **Shopping**: `/shopping-list`
@@ -63,8 +63,10 @@ Pages, by area:
   `/debug/:path*`)
 - **Admin**: `/admin/debug` (not auth-gated — outside the proxy's matcher)
 
-Key components: `WeekPlannerGrid`, `SwapDrawer`, `RegenerateDrawer`,
-`WeeklyOverridesSheet`, `WeeklyPlanWizard` (planning); `PantrySheet`
+Key components: `WeekPlanList` (the Monday–Sunday list, rows via
+`SortableDay`/`DayRow`), `PlanDetailsSheet` (budget and nutrition behind the
+header's summary line, from `lib/planSummary.ts`), `SwapDrawer`,
+`WeeklyPlanWizard` (planning); `PantrySheet`
 (pantry photo scanning); `MealCard`, `LeftoverCard`; `ColesShoppingModal`,
 `ColesProductCard`, `BudgetBar`, `BudgetSummary`, `PriceSourceBadge`,
 `ReportPriceModal` (shopping/pricing).

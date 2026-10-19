@@ -1,18 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Alert, Badge, Stack, Typography, Button } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
-import WeekPlannerGrid from "@/components/app/WeekPlannerGrid";
-import BudgetSummary from "@/components/app/BudgetSummary";
-import WeeklyOverridesSheet from "@/components/app/WeeklyOverridesSheet";
+import WeekPlanList from "@/components/app/WeekPlanList";
+import PlanDetailsSheet from "@/components/app/PlanDetailsSheet";
 import SwapDrawer from "@/components/app/SwapDrawer";
 import WeeklyPlanWizard, { type WeeklyPlanData } from "@/components/app/WeeklyPlanWizard";
 import PantrySheet from "@/components/app/PantrySheet";
 import { type MealCardProps } from "@/components/app/MealCard";
 import { type Recipe } from "@/lib/types/recipe";
-import { scheduleSundayToast, isSaturdayAfter4, nextWeekMondayISO } from "@/lib/schedule";
+import { scheduleSundayToast, nextWeekMondayISO } from "@/lib/schedule";
+import { formatPlanSummary, summarisePlan } from "@/lib/planSummary";
 import { loadHousehold, getDefaultHousehold, getRecipeRatings, getBlockedRecipes, getFavorites } from "@/lib/storage";
 import { getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan, hydrateRecencyFromSupabase, recordWeekHistory } from "@/lib/hybridStorage";
 import { getRecentRecipeIds } from "@/lib/recencyTracker";
@@ -90,10 +91,9 @@ async function loadTasteSignals(plan: (MealCardProps | null)[]): Promise<TasteSi
 export default function PlanPage() {
   const { beginGeneration, endGeneration, isSignOutInProgress } = useGenerationActivity();
   const [showWizard, setShowWizard] = useState(false);
-  const [showOverridesSheet, setShowOverridesSheet] = useState(false);
   const [showPantrySheet, setShowPantrySheet] = useState(false);
-  const [showSaturdayBanner] = useState(() => isSaturdayAfter4());
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  const router = useRouter();
   const [weekPlan, setWeekPlan] = useState<(MealCardProps | null)[]>([]);
   // The plan's source of truth for async work: days resolve out of order, so
   // each update builds on the latest plan, not a render's stale copy (#95).
@@ -124,7 +124,8 @@ export default function PlanPage() {
   const [generatingDays, setGeneratingDays] = useState<number[]>([]);
   // Per-day failures, shown on that day with a Retry button (#96 copy).
   const [dayErrors, setDayErrors] = useState<Record<number, string>>({});
-  const [budget, setBudget] = useState({ current: 0, total: 120 });
+  // The household's max per meal; the weekly budget is this × the plan's dinners.
+  const [budgetPerMeal, setBudgetPerMeal] = useState(20);
   const [swapDayIndex, setSwapDayIndex] = useState<number | null>(null);
   const [suggestedSwaps, setSuggestedSwaps] = useState<Recipe[]>([]);
   // Recipe ID → the AI's "why this meal" line for AI swap suggestions (#94).
@@ -169,6 +170,7 @@ export default function PlanPage() {
       }
       
       const household = loadHousehold() || getDefaultHousehold();
+      setBudgetPerMeal(familySettings.budgetPerMeal.max);
     
     if (savedPlan && savedPlan.recipeIds.length > 0) {
       // Use the saved plan
@@ -209,19 +211,7 @@ export default function PlanPage() {
         };
       });
       
-      // Calculate budget from saved recipes
-      const totalCost = savedPlan.recipeIds.reduce((sum, recipeId) => {
-        if (!recipeId) return sum;
-        const recipe = RecipeLibrary.getById(recipeId);
-        return sum + ((recipe?.costPerServeEst || 0) * (recipe?.serves || 4));
-      }, 0);
-      
-      // Calculate weekly budget based on number of meals and budget per meal setting
-      const numberOfMeals = savedPlan.recipeIds.filter(id => id).length;
-      const weeklyBudget = numberOfMeals * familySettings.budgetPerMeal.max;
-      
       commitPlan(meals);
-      setBudget({ current: totalCost, total: weeklyBudget });
       console.log('✅ Loaded saved week plan with', meals.filter(m => m !== null).length, 'meals');
       
       // Track ingredient usage from saved plan
@@ -255,11 +245,6 @@ export default function PlanPage() {
     // Save updated pantry items to storage
     await persistPlan(items);
     console.log('✅ Pantry items updated and saved');
-  };
-
-  const handleOverridesSuccess = () => {
-    setShowSuccessToast(true);
-    setTimeout(() => setShowSuccessToast(false), 3000);
   };
 
   const handleSwapClick = (dayIndex: number) => {
@@ -354,19 +339,8 @@ export default function PlanPage() {
     
     // Update the meal plan
     const newWeekPlan = [...weekPlanRef.current];
-    const oldMeal = newWeekPlan[swapDayIndex];
     newWeekPlan[swapDayIndex] = newMeal;
     commitPlan(newWeekPlan);
-    
-    // Update budget (recalculate total based on number of meals)
-    const familySettings = await getFamilySettings();
-    const numberOfMeals = newWeekPlan.filter(m => m !== null).length;
-    const oldRecipe = oldMeal ? RecipeLibrary.getById(oldMeal.recipeId) : null;
-    const oldCost = oldRecipe ? (oldRecipe.costPerServeEst || 0) * (oldRecipe.serves || 4) : 0;
-    const newCost = (recipe.costPerServeEst || 0) * (recipe.serves || 4);
-    const budgetDiff = newCost - oldCost;
-    const weeklyBudget = numberOfMeals * familySettings.budgetPerMeal.max;
-    setBudget(prev => ({ current: prev.current + budgetDiff, total: weeklyBudget }));
     
     // Save updated week plan
     const nextWeekISO = nextWeekMondayISO();
@@ -398,14 +372,6 @@ export default function PlanPage() {
     const newWeekPlan = [...weekPlanRef.current];
     newWeekPlan[dayIndex] = null;
     commitPlan(newWeekPlan);
-    
-    // Update budget (recalculate total based on number of meals)
-    const familySettings = await getFamilySettings();
-    const numberOfMeals = newWeekPlan.filter(m => m !== null).length;
-    const recipe = RecipeLibrary.getById(meal.recipeId);
-    const costToRemove = recipe ? (recipe.costPerServeEst || 0) * (recipe.serves || 4) : 0;
-    const weeklyBudget = numberOfMeals * familySettings.budgetPerMeal.max;
-    setBudget(prev => ({ current: prev.current - costToRemove, total: weeklyBudget }));
     
     // Save updated week plan
     await persistPlan(pantryItems);
@@ -571,7 +537,7 @@ export default function PlanPage() {
     }
   };
 
-  /** Saves the plan as it stands; records history and ingredient use for `newIds`; updates the budget. */
+  /** Saves the plan as it stands; records history and ingredient use for `newIds`; returns its cost. */
   const savePlan = async (newIds: string[], familySettings: FamilySettings, pantry: string[]): Promise<number> => {
     const saved = await persistPlan(pantry);
     if (!saved) console.warn('⚠️ Failed to save week plan');
@@ -584,9 +550,8 @@ export default function PlanPage() {
       const recipe = meal ? RecipeLibrary.getById(meal.recipeId) : undefined;
       return recipe ? [recipe] : [];
     });
-    const current = recipes.reduce((sum, r) => sum + (r.costPerServeEst || 0) * (r.serves || 4), 0);
-    setBudget({ current, total: plan.filter(Boolean).length * familySettings.budgetPerMeal.max });
-    return current;
+    setBudgetPerMeal(familySettings.budgetPerMeal.max);
+    return summarisePlan(recipes, familySettings.budgetPerMeal.max).cost;
   };
 
   /**
@@ -707,8 +672,33 @@ export default function PlanPage() {
   const handleGenerateSingleRecipe = (dayIndex: number) => generateOneDay(dayIndex, false);
   const handleRetryDay = (dayIndex: number) => generateOneDay(dayIndex, true);
 
+  // The header's one-line summary and the Details sheet (#38), derived from the plan itself.
+  const planRecipes = useMemo(
+    () =>
+      weekPlan.flatMap((meal) => {
+        const recipe = meal ? RecipeLibrary.getById(meal.recipeId) : undefined;
+        return recipe ? [recipe] : [];
+      }),
+    [weekPlan]
+  );
+  const summary = useMemo(() => summarisePlan(planRecipes, budgetPerMeal), [planRecipes, budgetPerMeal]);
+  const weekLabel = new Date(`${nextWeekMondayISO()}T00:00:00`).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+  const planBusy = isGenerating || generatingDays.length > 0 || isGeneratingAISwaps;
+
+  /**
+   * Confirm the week (#38, moved from /plan/review): the recipes join My
+   * Recipes, then the shopping list opens. Make, edit, confirm, shop.
+   */
+  const handleConfirmPlan = () => {
+    const recipeIds = weekPlanRef.current.flatMap((meal) => (meal ? [meal.recipeId] : []));
+    if (recipeIds.length === 0) return;
+    RecipeLibrary.markRecipesAsConfirmed(recipeIds);
+    track('plan_confirmed', { finalCost: summary.cost, dayCount: recipeIds.length });
+    router.push('/shopping-list');
+  };
+
   return (
-    <Main maxWidth="1400px">
+    <Main maxWidth="960px">
       {/* ARIA live region for screen reader announcements */}
       <div
         role="status"
@@ -735,127 +725,91 @@ export default function PlanPage() {
           }}
         />
       ) : (
-        <Stack direction="column" gap="xl">
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="h1">Weekly meal plan</Typography>
-            <Stack direction="row" gap="md">
+        <Stack direction="column" gap="lg">
+          {/* Header: the week, a one-line summary, and the plan's actions (#38) */}
+          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" wrap gap="md">
+            <Stack direction="column" gap="xs">
+              <Typography variant="h1">Week of {weekLabel}</Typography>
+              {summary.dinners > 0 && (
+                <Typography variant="body" color="subdued">
+                  {formatPlanSummary(summary)}
+                </Typography>
+              )}
+            </Stack>
+            <Stack direction="row" gap="sm" alignItems="center" wrap>
               <Badge count={pantryItems.length}>
-                <Button
-                  variant="secondary"
-                  size="large"
-                  onClick={() => setShowPantrySheet(true)}
-                >
-                  View pantry items
+                <Button variant="secondary" size="medium" onClick={() => setShowPantrySheet(true)}>
+                  Pantry
                 </Button>
               </Badge>
+              <Button
+                variant="secondary"
+                size="medium"
+                onClick={() => setShowDetails(true)}
+                disabled={summary.dinners === 0}
+              >
+                Details
+              </Button>
+              <Button
+                variant="primary"
+                size="medium"
+                onClick={handleConfirmPlan}
+                // Confirm the week once it's settled, not mid-generation.
+                disabled={summary.dinners === 0 || planBusy}
+              >
+                Confirm plan
+              </Button>
             </Stack>
           </Stack>
 
-        {/* Error Message */}
-        {generationError && (
-          <Alert variant="error">
-            {generationError}
-          </Alert>
-        )}
+          {generationError && (
+            <Alert variant="error">
+              {generationError}
+            </Alert>
+          )}
 
-        {/* Saturday Banner for Weekly Overrides */}
-        {showSaturdayBanner && (
-          <Alert 
-            variant="warning" 
-            title="Plan for next week"
-            action={
-              <Button
-                variant="primary"
-                size="small"
-                onClick={() => setShowOverridesSheet(true)}
-              >
-                Update next week inputs
-              </Button>
-            }
-          >
-            Update your preferences for next week&apos;s meal plan
-          </Alert>
-        )}
+          <WeekPlanList
+            meals={weekPlan}
+            // While a week generates, days fill in out of order: hold edits until it settles (#95).
+            onSwapClick={isGenerating ? undefined : handleSwapClick}
+            onGenerateClick={isGenerating ? undefined : handleGenerateSingleRecipe}
+            onAddSavedRecipeClick={isGenerating ? undefined : handleAddSavedRecipe}
+            generatingDays={generatingDays}
+            dayErrors={dayErrors}
+            onRetryDay={isGenerating ? undefined : handleRetryDay}
+            onDeleteClick={isGenerating ? undefined : handleDeleteMeal}
+            isGeneratingPlan={isLoadingInitial}
+            onReorder={isGenerating ? undefined : handleReorder}
+          />
 
-        {/* Success Toast */}
-        {showSuccessToast && (
-          <div style={{
-            position: "fixed",
-            top: "20px",
-            right: "20px",
-            padding: "16px 24px",
-            backgroundColor: "#28a745",
-            color: "white",
-            borderRadius: "8px",
-            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-            zIndex: 100
-          }}>
-            <Typography variant="body">Overrides saved for next week ✓</Typography>
-          </div>
-        )}
-        
-        <BudgetSummary 
-          weekPlan={weekPlan}
-          budget={budget}
-          dayNames={DAYS}
-        />
-        
-        <WeekPlannerGrid 
-          meals={weekPlan} 
-          // While a week generates, days fill in out of order: hold edits until it settles (#95).
-          onSwapClick={isGenerating ? undefined : handleSwapClick}
-          onGenerateClick={isGenerating ? undefined : handleGenerateSingleRecipe}
-          onAddSavedRecipeClick={isGenerating ? undefined : handleAddSavedRecipe}
-          generatingDays={generatingDays}
-          dayErrors={dayErrors}
-          onRetryDay={isGenerating ? undefined : handleRetryDay}
-          onDeleteClick={isGenerating ? undefined : handleDeleteMeal}
-          isGeneratingPlan={isLoadingInitial}
-          onReorder={isGenerating ? undefined : handleReorder}
-        />
-        
-        {/* Actions */}
-        <ButtonGroup
-          left={
-            <Button
-                variant="secondary"
-                size="large"
-                iconName="refresh"
-                onClick={() => setShowWizard(true)}
-              >
+          {/* Starting over sits after the week, apart from Confirm plan */}
+          <ButtonGroup
+            left={
+              <Button variant="secondary" size="medium" iconName="refresh" onClick={() => setShowWizard(true)}>
                 Start new week
               </Button>
-          }
-          right={
-            <>
+            }
+            right={
               <Button
                 variant="secondary"
-                size="large"
+                size="medium"
                 onClick={handleGenerateWithAI}
                 // A week can't start while a day or swap is still in flight (#95).
-                disabled={isGenerating || generatingDays.length > 0 || isGeneratingAISwaps}
+                disabled={planBusy}
               >
-                {isGenerating ? 'Generating...' : 'Generate new plan'}
+                {isGenerating ? 'Generating...' : 'Regenerate whole week'}
               </Button>
-              <Button
-                variant="primary"
-                size="large"
-                iconName="fileDocSearch"
-                purpose="link"
-                url="/plan/review"
-              >
-                Review plan
-              </Button>
-            </>
-          }
-        />
+            }
+          />
         </Stack>
       )}
 
-      <WeeklyOverridesSheet
-        isOpen={showOverridesSheet}
-        onClose={() => setShowOverridesSheet(false)}
-        onSuccess={handleOverridesSuccess}
+      <PlanDetailsSheet
+        isOpen={showDetails}
+        onClose={() => setShowDetails(false)}
+        weekPlan={weekPlan}
+        summary={summary}
+        dayNames={DAYS}
       />
 
       <SwapDrawer
