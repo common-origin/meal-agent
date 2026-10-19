@@ -634,11 +634,13 @@ export default function PlanPage() {
       const meal =
         proposal?.kind === 'remove' ? null : proposal?.status === 'ready' ? proposal.meal : weekPlanRef.current[day] ?? null;
       const recipe = meal ? RecipeLibrary.getById(meal.recipeId) : undefined;
+      // Clipped to the request's limits: a saved recipe's title can be any length.
+      const protein = meal ? slotByRecipeRef.current.get(meal.recipeId)?.protein ?? proteinOf(recipe) : null;
       return {
         day,
-        title: meal?.title ?? null,
-        cuisine: recipe?.cuisine ?? null,
-        protein: meal ? slotByRecipeRef.current.get(meal.recipeId)?.protein ?? proteinOf(recipe) : null,
+        title: meal ? meal.title.slice(0, 100) : null,
+        cuisine: recipe?.cuisine?.slice(0, 40) ?? null,
+        protein: protein?.slice(0, 60) ?? null,
       };
     });
 
@@ -665,6 +667,12 @@ export default function PlanPage() {
     setEditBusy(true);
     setEditMessage(null);
     beginGeneration();
+    // Busy covers reading the instruction only; once released, a later instruction owns it.
+    let released = false;
+    const release = () => {
+      if (!released) setEditBusy(false);
+      released = true;
+    };
     try {
       const response = await fetch('/api/edit-plan', {
         method: 'POST',
@@ -691,6 +699,8 @@ export default function PlanPage() {
       const token = ++previewTokenRef.current;
       setPreview((current) => proposeEdits(current, edits, token));
       track('plan_edit', { nights: edits.length, followUp: preview !== null });
+      // The instruction is read; nights generate in the preview, and the input is free for a follow-up.
+      release();
 
       const context = await loadDayContext();
       await Promise.all(
@@ -700,7 +710,7 @@ export default function PlanPage() {
       console.error('❌ Plan edit failed:', error);
       setEditMessage({ text: apiErrorMessage(null), tone: 'error' });
     } finally {
-      setEditBusy(false);
+      release();
       endGeneration();
     }
   };
@@ -900,7 +910,8 @@ export default function PlanPage() {
           />
 
           {/* Docked at the bottom: type what to change (#38) */}
-          {summary.dinners > 0 || preview ? (
+          {/* Shown whenever a week is on screen, even with every night empty ("add something Friday") */}
+          {!isLoadingInitial && weekPlan.length > 0 ? (
             <PlanEditBar
               ref={editInputRef}
               value={editInput}
