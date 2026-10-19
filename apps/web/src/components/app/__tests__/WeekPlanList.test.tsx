@@ -55,3 +55,46 @@ describe('WeekPlanList layout (#38)', () => {
     expect(screen.getByLabelText('Loading recipe for Sunday')).toBeInTheDocument();
   });
 });
+
+describe('WeekPlanList proposals from a typed edit (#38)', () => {
+  it('shows a ready proposal in place, naming the meal it replaces, and a removal', () => {
+    const meals = [meal('Pumpkin soup'), meal('Beef polenta'), null, null, null, null, null];
+    render(
+      <WeekPlanList
+        meals={meals}
+        proposals={{
+          0: { kind: 'replace', status: 'ready', meal: meal('Vietnamese rice paper bowls') },
+          1: { kind: 'remove' },
+        }}
+      />
+    );
+    expect(screen.getByText('Vietnamese rice paper bowls')).toBeInTheDocument();
+    expect(screen.getByText('Pumpkin soup')).toHaveStyle({ textDecoration: 'line-through' });
+    expect(screen.getByText('Proposed')).toBeInTheDocument();
+    expect(screen.getByText('To be removed')).toBeInTheDocument();
+  });
+
+  it('shows a loading proposal and a failed one with Try again', () => {
+    const onRetryProposal = vi.fn();
+    render(
+      <WeekPlanList
+        meals={[meal('Pumpkin soup'), meal('Beef polenta'), null, null, null, null, null]}
+        proposals={{
+          0: { kind: 'replace', status: 'loading', token: 1 },
+          1: { kind: 'replace', status: 'failed', error: 'That took too long. Please try again.' },
+        }}
+        onRetryProposal={onRetryProposal}
+      />
+    );
+    expect(screen.getByLabelText('Finding something new for Monday')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(onRetryProposal).toHaveBeenCalledWith(1);
+  });
+
+  it('"Change" on a meal reports its night', () => {
+    const onChangeClick = vi.fn();
+    render(<WeekPlanList meals={[null, null, meal('Roast chicken'), null, null, null, null]} onChangeClick={onChangeClick} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Change Roast chicken' }));
+    expect(onChangeClick).toHaveBeenCalledWith(2);
+  });
+});

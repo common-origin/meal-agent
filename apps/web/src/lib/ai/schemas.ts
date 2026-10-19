@@ -82,6 +82,24 @@ export const PhotoIngredients = z.object({
   source: z.string().max(120).optional(),
 });
 
+/** A typed change to the week's plan, read into per-night edits (#38). Days: 0 = Monday … 6 = Sunday. */
+export const PlanEdit = z.object({
+  /** One short line on what will change, or on why nothing will. */
+  reply: z.string().min(1).max(200),
+  /** Set when the instruction is unclear; then `edits` is empty. */
+  question: z.string().max(200).optional(),
+  edits: z
+    .array(
+      z.object({
+        day: z.number().int().min(0).max(6),
+        action: z.enum(['replace', 'remove']),
+        /** For `replace`: what the new dinner should be, from the instruction. */
+        guidance: z.string().max(120).optional(),
+      })
+    )
+    .max(7),
+});
+
 /** Pantry/fridge photo scan (#91). */
 export const PantryScan = z.object({
   items: z
@@ -101,3 +119,4 @@ export type ExtractedRecipe = z.infer<typeof ExtractedRecipe>;
 export type GeneratedRecipe = z.infer<typeof GeneratedRecipe>;
 export type PhotoIngredients = z.infer<typeof PhotoIngredients>;
 export type PageIngredients = z.infer<typeof PageIngredients>;
+export type PlanEdit = z.infer<typeof PlanEdit>;

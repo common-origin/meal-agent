@@ -15,6 +15,8 @@ export type SortableDayProps = {
   onDeleteClick?: (index: number) => void;
   onGenerateClick?: (index: number) => void;
   onAddSavedRecipeClick?: (index: number) => void;
+  /** "Change this": puts the night in the edit input (#38). */
+  onChangeClick?: (index: number) => void;
 };
 
 /** One night of the plan list (#38): drag to reorder when it has a meal. */
@@ -27,6 +29,7 @@ export default function SortableDay({
   onDeleteClick,
   onGenerateClick,
   onAddSavedRecipeClick,
+  onChangeClick,
 }: SortableDayProps) {
   const {
     attributes,
@@ -56,6 +59,7 @@ export default function SortableDay({
             variant="row"
             onSwapClick={onSwapClick ? () => onSwapClick(index) : undefined}
             onDeleteClick={onDeleteClick ? () => onDeleteClick(index) : undefined}
+            onChangeClick={onChangeClick ? () => onChangeClick(index) : undefined}
             dragHandleRef={setActivatorNodeRef}
             dragListeners={listeners}
           />

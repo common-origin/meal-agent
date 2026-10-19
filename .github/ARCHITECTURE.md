@@ -83,8 +83,9 @@ Not every route is an AI call — grouped by what they actually do:
 **AI (Gemini)**: `generate-recipes` (recipe generation from family
 settings), `extract-recipe-from-url` (a recipe from a public web page,
 fetched via `lib/api/safeFetch.ts`), `extract-recipe-from-image` (a recipe
-from a photo) and `scan-pantry-image` (ingredients from a pantry/fridge
-photo). Every AI call goes through `runAiTask` (`lib/ai/run.ts`, Vercel AI
+from a photo), `scan-pantry-image` (ingredients from a pantry/fridge
+photo) and `edit-plan` (reads a typed change to the week into per-night
+edits, #38). Every AI call goes through `runAiTask` (`lib/ai/run.ts`, Vercel AI
 SDK). The model for each task is configured **only** in `lib/ai/models.ts`;
 as of #83:
 
@@ -94,6 +95,7 @@ as of #83:
 | `recipeFromImage` | `extract-recipe-from-image` | `gemini-3.8-flash` | low | 45 s | 8,000 |
 | `pantryScan` | `scan-pantry-image` | `gemini-3.5-flash-lite` | minimal | 30 s | 2,000 |
 | `recipeFromUrl` | `extract-recipe-from-url` | `gemini-3.5-flash-lite` | minimal | 30 s | 8,000 |
+| `planEdit` | `edit-plan` | `gemini-3.5-flash-lite` | minimal | 15 s | 1,000 |
 
 If this table and `models.ts` ever disagree, `models.ts` is right. There's
 no fallback model.

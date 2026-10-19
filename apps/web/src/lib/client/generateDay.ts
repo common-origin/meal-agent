@@ -15,6 +15,8 @@ export interface DayRequest {
   tasteSignals: TasteSignals;
   pantryItems: string[];
   useSoonItems: string[];
+  /** What the household asked for this night, from a typed plan edit (#38). */
+  guidance?: string;
 }
 
 export type DayResult =
@@ -35,6 +37,7 @@ export async function generateDay(request: DayRequest, fetchImpl: typeof fetch =
         numberOfRecipes: 1,
         specificDays: [{ index: slot.index, type: slot.type }],
         slot: { cuisine: slot.cuisine, protein: slot.protein, method: slot.method, pantryFocus: slot.pantryFocus },
+        ...(request.guidance ? { guidance: request.guidance } : {}),
         ...request.tasteSignals,
         pantryItems: request.pantryItems,
         useSoonItems: request.useSoonItems,

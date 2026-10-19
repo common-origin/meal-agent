@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Alert, Stack, Typography, IconButton, Button, Sheet, TextField, Dropdown } from "@common-origin/design-system";
+import { Alert, Stack, Typography, IconButton, Sheet, TextField, Dropdown } from "@common-origin/design-system";
 import { type Recipe } from "@/lib/types/recipe";
 import { RecipeLibrary } from "@/lib/library";
 import { getFavorites } from "@/lib/storage";
@@ -51,28 +51,16 @@ export type SwapDrawerProps = {
   onClose: () => void;
   dayName: string;
   currentRecipe: Recipe | null;
-  suggestedSwaps: Recipe[];
-  /** Recipe ID → the AI's "why this meal" line for AI suggestions (#94). */
-  explanations?: Record<string, string>;
   onSelectSwap: (recipe: Recipe) => void;
-  onGenerateAISuggestions?: () => void;
-  isGeneratingAI?: boolean;
 };
-
-type TabType = "ai" | "saved";
 
 export default function SwapDrawer({
   isOpen,
   onClose,
   dayName,
   currentRecipe,
-  suggestedSwaps,
-  explanations = {},
   onSelectSwap,
-  onGenerateAISuggestions,
-  isGeneratingAI = false
 }: SwapDrawerProps) {
-  const [activeTab, setActiveTab] = useState<TabType>("ai");
   const [savedRecipes, setSavedRecipes] = useState<Recipe[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterBy, setFilterBy] = useState<"all" | "favorites">("all");
@@ -89,11 +77,8 @@ export default function SwapDrawer({
       setFavorites(getFavorites());
       setSearchQuery("");
       setFilterBy("all");
-      // Default to saved tab when adding new, AI tab when swapping
-      const isAdding = !currentRecipe;
-      setActiveTab(isAdding ? "saved" : "ai");
     }
-  }, [isOpen, currentRecipe]);
+  }, [isOpen]);
 
   // Filter saved recipes — pure derivation from other state, so compute it
   // during render instead of syncing a copy via an effect.
@@ -128,7 +113,8 @@ export default function SwapDrawer({
   ];
 
   const isAddingNew = !currentRecipe;
-  const title = isAddingNew ? `Add recipe for ${dayName}` : `Swap ${dayName} meal`;
+  // Typing a change on the plan replaced AI swaps (#38); this drawer is for your own recipes.
+  const title = isAddingNew ? `Add a saved recipe for ${dayName}` : `Use a saved recipe for ${dayName}`;
 
   return (
     <Sheet
@@ -161,84 +147,10 @@ export default function SwapDrawer({
           </Alert>
         )}
 
-        {/* Tabs */}
-        <Stack direction="row" gap="md">
-          <Button
-            variant={activeTab === "ai" ? "primary" : "secondary"}
-            size="medium"
-            onClick={() => setActiveTab("ai")}
-            style={{ flex: 1 }}
-          >
-            AI Suggestions
-          </Button>
-          <Button
-            variant={activeTab === "saved" ? "primary" : "secondary"}
-            size="medium"
-            onClick={() => setActiveTab("saved")}
-            style={{ flex: 1 }}
-          >
-            My Saved Recipes ({savedRecipes.length})
-          </Button>
-        </Stack>
-
-        {/* AI Suggestions Tab */}
-        {activeTab === "ai" && (
-          <Stack direction="column" gap="md">
+        {/* Saved recipes */}
+        <Stack direction="column" gap="md">
             <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <Typography variant="h3">AI suggested alternatives</Typography>
-              {onGenerateAISuggestions && (
-                <Button
-                  variant="primary"
-                  size="medium"
-                  onClick={onGenerateAISuggestions}
-                  disabled={isGeneratingAI}
-                >
-                  {isGeneratingAI ? 'Generating...' : 'Generate'}
-                </Button>
-              )}
-            </Stack>
-            
-            {suggestedSwaps.length === 0 ? (
-              <div style={{ 
-                padding: "24px", 
-                textAlign: "center",
-                backgroundColor: "#f8f9fa",
-                borderRadius: "8px"
-              }}>
-                <Typography variant="body">
-                  {onGenerateAISuggestions 
-                    ? 'Click "Generate" to get personalized recipe alternatives'
-                    : 'No alternative recipes available for this day'
-                  }
-                </Typography>
-              </div>
-            ) : (
-              suggestedSwaps.map((recipe) => {
-                const reasons = generateReasonCodes(recipe, favorites.includes(recipe.id));
-                const chef = getRecipeSourceDisplay(recipe);
-                return (
-                  <MealCard
-                    key={recipe.id}
-                    recipeId={recipe.id}
-                    title={recipe.title}
-                    chef={chef}
-                    timeMins={recipe.timeMins || 0}
-                    reasons={reasons}
-                    explanation={explanations[recipe.id]}
-                    onSwapClick={() => handleSelectSwap(recipe)}
-                    disableLink={true}
-                  />
-                );
-              })
-            )}
-          </Stack>
-        )}
-
-        {/* Saved Recipes Tab */}
-        {activeTab === "saved" && (
-          <Stack direction="column" gap="md">
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <Typography variant="h3">Your saved recipes</Typography>
+              <Typography variant="h3">Your saved recipes ({savedRecipes.length})</Typography>
             </Stack>
 
             {/* Filters */}
@@ -270,7 +182,7 @@ export default function SwapDrawer({
                 borderRadius: "8px"
               }}>
                 <Typography variant="body">
-                  No saved recipes yet. Add recipes from the Add Recipe page or generate them with AI.
+                  No saved recipes yet. Add recipes from the Add Recipe page, or favourite a meal from your plan.
                 </Typography>
               </div>
             ) : filteredSavedRecipes.length === 0 ? (
@@ -308,7 +220,6 @@ export default function SwapDrawer({
               </div>
             )}
           </Stack>
-        )}
       </Stack>
     </Sheet>
   );
