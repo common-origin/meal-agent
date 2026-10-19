@@ -37,6 +37,7 @@ import { POST as scanPantryPOST, maxDuration as scanPantryMaxDuration } from '..
 import { POST as extractFromImagePOST, maxDuration as extractFromImageMaxDuration } from '../extract-recipe-from-image/route';
 import { POST as extractFromUrlPOST, maxDuration as extractFromUrlMaxDuration } from '../extract-recipe-from-url/route';
 import { POST as shareRecipeEmailPOST } from '../share-recipe-email/route';
+import { POST as editPlanPOST, maxDuration as editPlanMaxDuration } from '../edit-plan/route';
 import { SafeFetchError, SAFE_FETCH_TIMEOUT_MS } from '@/lib/api/safeFetch';
 import { AI_TASKS } from '@/lib/ai/models';
 import { AiTaskError } from '@/lib/ai/run';
@@ -102,10 +103,19 @@ interface RouteCase {
   prepareValid: () => void;
 }
 
+const EDIT_BODY = {
+  instruction: 'swap Tuesday for something lighter',
+  plan: [
+    { day: 0, title: 'Thai red curry lamb meatballs', cuisine: 'thai', protein: 'lamb' },
+    { day: 1, title: 'Cheesy beef polenta skillet', cuisine: 'italian', protein: 'beef' },
+    { day: 2, title: null },
+  ],
+};
+
 const routes: RouteCase[] = [
   {
     name: 'generate-recipes',
-    limit: 20,
+    limit: 40,
     call: () =>
       generateRecipesPOST(
         jsonRequest('/api/generate-recipes', {
@@ -142,6 +152,16 @@ const routes: RouteCase[] = [
       mocks.safeFetchHtml.mockResolvedValue({ html: '<html>soup</html>', finalUrl: 'https://example.com/soup' });
       mocks.generateText.mockResolvedValue(geminiOutput(validAiRecipe()));
     },
+  },
+  {
+    name: 'edit-plan',
+    limit: 30,
+    call: () => editPlanPOST(jsonRequest('/api/edit-plan', EDIT_BODY)),
+    callInvalid: () => editPlanPOST(jsonRequest('/api/edit-plan', { instruction: '', plan: [] })),
+    prepareValid: () =>
+      mocks.generateText.mockResolvedValue(
+        geminiOutput({ reply: 'Swapping Tuesday for something lighter.', edits: [{ day: 1, action: 'replace', guidance: 'lighter' }] })
+      ),
   },
 ];
 
@@ -238,6 +258,7 @@ describe.each(routes.slice(1))('$name usage logging', (route) => {
       'scan-pantry-image': 'pantryScan',
       'extract-recipe-from-image': 'recipeFromImage',
       'extract-recipe-from-url': 'recipeFromUrl',
+      'edit-plan': 'planEdit',
     }[route.name];
     expect(lines[0]).toMatchObject({ task, model: AI_TASKS[task as keyof typeof AI_TASKS].model, status: 'ok' });
   });
@@ -608,6 +629,85 @@ describe('extract-recipe-from-url structured data (#93)', () => {
   });
 });
 
+describe('edit-plan (#38)', () => {
+  const promptOf = () => mocks.generateText.mock.calls[0][0] as { system: string; prompt: string };
+
+  it('returns per-night edits and the reply', async () => {
+    signIn();
+    routes[4].prepareValid();
+    const res = await routes[4].call();
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      reply: 'Swapping Tuesday for something lighter.',
+      edits: [{ day: 1, action: 'replace', guidance: 'lighter' }],
+    });
+  });
+
+  it('sends the plan, recent edits and the instruction to the planEdit model', async () => {
+    signIn();
+    routes[4].prepareValid();
+    await editPlanPOST(
+      jsonRequest('/api/edit-plan', { ...EDIT_BODY, history: [{ instruction: 'swap Monday', summary: 'Swapping Monday.' }] })
+    );
+    const { system, prompt } = promptOf();
+    expect(system).toContain('0 = Monday to 6 = Sunday');
+    expect(prompt).toContain('1 Tuesday: Cheesy beef polenta skillet (italian, beef)');
+    expect(prompt).toContain('2 Wednesday: (no dinner planned)');
+    expect(prompt).toContain('- "swap Monday" → Swapping Monday.');
+    expect(prompt).toContain('INSTRUCTION\nswap Tuesday for something lighter');
+  });
+
+  it('returns a question with no edits when the model asks one', async () => {
+    signIn();
+    mocks.generateText.mockResolvedValue(
+      geminiOutput({ reply: 'Which night?', question: 'Which night would you like to change?', edits: [{ day: 0, action: 'remove' }] })
+    );
+    expect(await (await routes[4].call()).json()).toEqual({
+      reply: 'Which night?',
+      question: 'Which night would you like to change?',
+      edits: [],
+    });
+  });
+
+  it('keeps one edit per night (the last wins), in day order', async () => {
+    signIn();
+    mocks.generateText.mockResolvedValue(
+      geminiOutput({
+        reply: 'Changing a few nights.',
+        edits: [
+          { day: 4, action: 'remove' },
+          { day: 1, action: 'replace', guidance: 'lighter' },
+          { day: 4, action: 'replace', guidance: 'pizza night' },
+        ],
+      })
+    );
+    const { edits } = await (await routes[4].call()).json();
+    expect(edits).toEqual([
+      { day: 1, action: 'replace', guidance: 'lighter' },
+      { day: 4, action: 'replace', guidance: 'pizza night' },
+    ]);
+  });
+
+  it.each([
+    ['an over-long instruction', { ...EDIT_BODY, instruction: 'x'.repeat(301) }],
+    ['a day outside 0–6', { ...EDIT_BODY, plan: [{ day: 7, title: 'x' }] }],
+    ['more than 5 history entries', { ...EDIT_BODY, history: Array(6).fill({ instruction: 'x', summary: 'y' }) }],
+  ])('rejects %s with 400', async (_label, body) => {
+    signIn();
+    const res = await editPlanPOST(jsonRequest('/api/edit-plan', body));
+    expect(res.status).toBe(400);
+    expect(mocks.generateText).not.toHaveBeenCalled();
+  });
+
+  it('returns 422 blocked with friendly copy when the model withholds its answer', async () => {
+    signIn();
+    mocks.generateText.mockResolvedValue(geminiBlocked('SAFETY'));
+    const res = await routes[4].call();
+    expect(res.status).toBe(422);
+    expect(await res.json()).toEqual({ error: "We couldn't work out that change. Try rewording it.", code: 'blocked' });
+  });
+});
+
 describe('extract-recipe-from-url fetch errors', () => {
   it.each([
     ['invalid_url', 400],
@@ -639,6 +739,7 @@ describe('AI deadlines', () => {
     ['extract-recipe-from-image', extractFromImageMaxDuration, AI_TASKS.recipeFromImage.deadlineMs],
     // The page fetch runs before the AI call, so both budgets count.
     ['extract-recipe-from-url', extractFromUrlMaxDuration, AI_TASKS.recipeFromUrl.deadlineMs + SAFE_FETCH_TIMEOUT_MS],
+    ['edit-plan', editPlanMaxDuration, AI_TASKS.planEdit.deadlineMs],
   ])('%s maxDuration (%ss) leaves room after its deadline', (_route, maxDurationS, deadlineMs) => {
     expect(maxDurationS * 1000).toBeGreaterThanOrEqual(deadlineMs + 10_000);
   });
@@ -675,6 +776,7 @@ describe('AI deadlines', () => {
           'scan-pantry-image': AI_TASKS.pantryScan.deadlineMs,
           'extract-recipe-from-image': AI_TASKS.recipeFromImage.deadlineMs,
           'extract-recipe-from-url': AI_TASKS.recipeFromUrl.deadlineMs,
+          'edit-plan': AI_TASKS.planEdit.deadlineMs,
         }[route.name]
       );
     }

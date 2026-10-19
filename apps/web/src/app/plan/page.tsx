@@ -7,6 +7,7 @@ import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import WeekPlanList from "@/components/app/WeekPlanList";
 import PlanDetailsSheet from "@/components/app/PlanDetailsSheet";
+import PlanEditBar from "@/components/app/PlanEditBar";
 import SwapDrawer from "@/components/app/SwapDrawer";
 import WeeklyPlanWizard, { type WeeklyPlanData } from "@/components/app/WeeklyPlanWizard";
 import PantrySheet from "@/components/app/PantrySheet";
@@ -22,8 +23,8 @@ import { itemsToUseSoon, mergeScan, type PantryState } from "@/lib/pantryItems";
 import { buildDaySlot, buildWeekSlate, newSlateSeed, type DaySlot } from "@/lib/planSlate";
 import { generateDay, type DayRequest } from "@/lib/client/generateDay";
 import { confirmPlan } from "@/lib/client/confirmPlan";
+import { acceptPreview, changeCount, isPreviewPending, proposeEdits, resolveNight, retryNight, type EditInstruction, type PlanEditPreview } from "@/lib/planEdit";
 import type { FamilySettings } from "@/lib/types/settings";
-import { getSuggestedSwaps } from "@/lib/compose";
 import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
 import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
@@ -102,6 +103,8 @@ export default function PlanPage() {
   const commitPlan = (next: (MealCardProps | null)[]) => {
     weekPlanRef.current = next;
     setWeekPlan(next);
+    // Undo only covers the last typed edit, so any later change retires it (#38).
+    setUndoPlan(null);
     return next;
   };
   // The slot each AI meal was generated for, by recipe ID, so it follows the
@@ -128,10 +131,16 @@ export default function PlanPage() {
   // The household's max per meal; the weekly budget is this × the plan's dinners.
   const [budgetPerMeal, setBudgetPerMeal] = useState(20);
   const [swapDayIndex, setSwapDayIndex] = useState<number | null>(null);
-  const [suggestedSwaps, setSuggestedSwaps] = useState<Recipe[]>([]);
-  // Recipe ID → the AI's "why this meal" line for AI swap suggestions (#94).
-  const [swapExplanations, setSwapExplanations] = useState<Record<string, string>>({});
-  const [isGeneratingAISwaps, setIsGeneratingAISwaps] = useState(false);
+  // Editing by typing (#38): the open preview, the reply line, the input and one-step undo.
+  const [preview, setPreview] = useState<PlanEditPreview | null>(null);
+  const previewTokenRef = useRef(0);
+  const [editMessage, setEditMessage] = useState<{ text: string; tone: 'info' | 'error' } | null>(null);
+  const [editInput, setEditInput] = useState('');
+  const [editBusy, setEditBusy] = useState(false);
+  const [undoPlan, setUndoPlan] = useState<(MealCardProps | null)[] | null>(null);
+  // This session's recent edits, so a follow-up ("lighter than that") has a referent.
+  const editHistoryRef = useRef<{ instruction: string; summary: string }[]>([]);
+  const editInputRef = useRef<HTMLInputElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [ariaLiveMessage, setAriaLiveMessage] = useState<string>("");
@@ -248,62 +257,10 @@ export default function PlanPage() {
     console.log('✅ Pantry items updated and saved');
   };
 
+  // "Use a saved recipe" for a night: the drawer is your own recipes only (#38).
   const handleSwapClick = (dayIndex: number) => {
-    const meal = weekPlan[dayIndex];
-    if (!meal) return;
-    
-    const household = loadHousehold() || getDefaultHousehold();
-    const isWeekend = dayIndex >= 5; // Saturday or Sunday
-    const kidFriendly = household.diet.glutenLight || true; // Use household preference
-    
-    const swaps = getSuggestedSwaps(meal.recipeId, isWeekend, kidFriendly);
-    setSuggestedSwaps(swaps);
+    if (!weekPlan[dayIndex]) return;
     setSwapDayIndex(dayIndex);
-  };
-
-  const handleGenerateAISwaps = async () => {
-    if (swapDayIndex === null) return;
-    if (isSignOutInProgress) {
-      console.warn('Sign-out in progress, refusing to start AI swap generation');
-      return;
-    }
-
-    setIsGeneratingAISwaps(true);
-    beginGeneration();
-
-    try {
-      const dayName = DAYS[swapDayIndex];
-      const context = await loadDayContext();
-      // Three parallel one-recipe requests, each with its own slot, so the
-      // suggestions differ from each other as well as from the week (#95).
-      const results = await Promise.all(
-        [0, 1, 2].map(() => generateDay({ ...context, slot: slotForDay(swapDayIndex, context) }))
-      );
-      if (results.some((r) => !r.ok && r.redirected)) return;
-
-      const found = results.flatMap((r) => (r.ok ? [r] : []));
-      if (found.length === 0) {
-        const failure = results.find((r) => !r.ok);
-        throw new Error(failure && !failure.ok ? failure.error : apiErrorMessage(null));
-      }
-      await RecipeLibrary.addTempAIRecipes(found.map((r) => r.recipe));
-
-      setSuggestedSwaps(found.map((r) => r.recipe));
-      setSwapExplanations(
-        Object.fromEntries(found.flatMap((r) => (r.explanation ? [[r.recipe.id, r.explanation]] : [])))
-      );
-      track('swap', {
-        day: dayName,
-        oldRecipeId: weekPlanRef.current[swapDayIndex]?.recipeId || 'unknown',
-        newRecipeId: 'ai_suggestions_generated',
-      });
-    } catch (error) {
-      console.error('❌ Error generating AI swaps:', error);
-      setGenerationError(error instanceof Error ? error.message : apiErrorMessage(null));
-    } finally {
-      setIsGeneratingAISwaps(false);
-      endGeneration();
-    }
   };
 
   const handleSelectSwap = async (recipe: Recipe) => {
@@ -333,8 +290,6 @@ export default function PlanPage() {
       timeMins: recipe.timeMins || 0,
       conflicts: [],
       reasons,
-      // Only AI suggestions carry a line; a saved recipe picked from the drawer has none.
-      explanation: swapExplanations[recipe.id],
       nutrition: recipe.nutrition,
     };
     
@@ -358,7 +313,6 @@ export default function PlanPage() {
     
     // Open swap drawer for adding a new recipe
     setSwapDayIndex(dayIndex);
-    setSuggestedSwaps([]); // Clear AI suggestions so it defaults to saved tab
     
     track('page_view', { page: 'add_saved_recipe', day: DAYS[dayIndex] });
   };
@@ -673,6 +627,148 @@ export default function PlanPage() {
   const handleGenerateSingleRecipe = (dayIndex: number) => generateOneDay(dayIndex, false);
   const handleRetryDay = (dayIndex: number) => generateOneDay(dayIndex, true);
 
+  /** The plan as the edit model should see it: the open preview's proposals in place. */
+  const planForEdit = () =>
+    DAYS.map((_, day) => {
+      const proposal = preview?.nights[day];
+      const meal =
+        proposal?.kind === 'remove' ? null : proposal?.status === 'ready' ? proposal.meal : weekPlanRef.current[day] ?? null;
+      const recipe = meal ? RecipeLibrary.getById(meal.recipeId) : undefined;
+      // Clipped to the request's limits: a saved recipe's title can be any length.
+      const protein = meal ? slotByRecipeRef.current.get(meal.recipeId)?.protein ?? proteinOf(recipe) : null;
+      return {
+        day,
+        title: meal ? meal.title.slice(0, 100) : null,
+        cuisine: recipe?.cuisine?.slice(0, 40) ?? null,
+        protein: protein?.slice(0, 60) ?? null,
+      };
+    });
+
+  /** Generates one proposed night under `token`; the result lands only if that night still waits on it. */
+  const generateProposal = async (context: Omit<DayRequest, 'slot'>, day: number, guidance: string | undefined, token: number) => {
+    const slot = slotForDay(day, context);
+    const result = await generateDay({ ...context, slot, guidance });
+    if (result.ok) {
+      await RecipeLibrary.addTempAIRecipes([result.recipe]);
+      slotByRecipeRef.current.set(result.recipe.id, slot);
+      setPreview((current) => resolveNight(current, day, token, { ok: true, meal: toAiMeal(result.recipe, result.explanation) }));
+    } else if (!result.redirected) {
+      setPreview((current) => resolveNight(current, day, token, { ok: false, error: result.error }));
+    }
+  };
+
+  /**
+   * A typed change (#38): the edit model reads it into per-night edits, which
+   * open (or refine) a preview; each replaced night is then generated in
+   * parallel with the instruction's guidance.
+   */
+  const handleEditSubmit = async (instruction: string) => {
+    if (editBusy || isSignOutInProgress) return;
+    setEditBusy(true);
+    setEditMessage(null);
+    beginGeneration();
+    // Busy covers reading the instruction only; once released, a later instruction owns it.
+    let released = false;
+    const release = () => {
+      if (!released) setEditBusy(false);
+      released = true;
+    };
+    try {
+      const response = await fetch('/api/edit-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instruction, plan: planForEdit(), history: editHistoryRef.current }),
+      });
+      if (redirectToLoginIfUnauthenticated(response)) return;
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data || data.error) {
+        setEditMessage({ text: apiErrorMessage(data), tone: 'error' });
+        return;
+      }
+
+      setEditInput('');
+      const edits: EditInstruction[] = data.edits ?? [];
+      if (data.question || edits.length === 0) {
+        // Nothing changes yet: show the model's question or its reply.
+        setEditMessage({ text: data.question ?? data.reply, tone: 'info' });
+        return;
+      }
+
+      editHistoryRef.current = [...editHistoryRef.current, { instruction, summary: data.reply }].slice(-5);
+      setEditMessage({ text: data.reply, tone: 'info' });
+      const token = ++previewTokenRef.current;
+      setPreview((current) => proposeEdits(current, edits, token));
+      track('plan_edit', { nights: edits.length, followUp: preview !== null });
+      // The instruction is read; nights generate in the preview, and the input is free for a follow-up.
+      release();
+
+      const context = await loadDayContext();
+      await Promise.all(
+        edits.filter((edit) => edit.action === 'replace').map((edit) => generateProposal(context, edit.day, edit.guidance, token))
+      );
+    } catch (error) {
+      console.error('❌ Plan edit failed:', error);
+      setEditMessage({ text: apiErrorMessage(null), tone: 'error' });
+    } finally {
+      release();
+      endGeneration();
+    }
+  };
+
+  /** "Try again" on a proposed night that failed. */
+  const handleRetryProposal = async (day: number) => {
+    const night = preview?.nights[day];
+    if (!night || night.kind !== 'replace') return;
+    const token = ++previewTokenRef.current;
+    setPreview((current) => (current ? retryNight(current, day, token) : current));
+    beginGeneration();
+    try {
+      await generateProposal(await loadDayContext(), day, night.guidance, token);
+    } finally {
+      endGeneration();
+    }
+  };
+
+  /** Apply the preview: one save, history for the new meals, and Undo on offer. */
+  const handleAcceptEdit = async () => {
+    if (!preview || isPreviewPending(preview)) return;
+    const before = weekPlanRef.current;
+    const { plan, newIds } = acceptPreview(before, preview);
+    previewTokenRef.current++;
+    setPreview(null);
+    commitPlan(plan);
+    setUndoPlan(before);
+    const changed = changeCount(preview);
+    setEditMessage({ text: `Updated ${changed} ${changed === 1 ? 'night' : 'nights'}.`, tone: 'info' });
+    track('plan_edit_accepted', { nights: changed });
+    const familySettings = planSettingsRef.current ?? (await getFamilySettings());
+    await savePlan(newIds, familySettings, pantryItems);
+  };
+
+  const handleDiscardEdit = () => {
+    previewTokenRef.current++;
+    setPreview(null);
+    editHistoryRef.current = [];
+    setEditMessage({ text: 'Discarded. Your plan is unchanged.', tone: 'info' });
+  };
+
+  const handleUndoEdit = async () => {
+    if (!undoPlan) return;
+    commitPlan(undoPlan);
+    editHistoryRef.current = [];
+    setEditMessage({ text: 'Undone.', tone: 'info' });
+    await persistPlan(pantryItems);
+  };
+
+  /** "Change this" on a meal: name the night in the input, ready to type (#38). */
+  const handleChangeClick = (day: number) => {
+    setEditInput(`${DAYS[day]}: `);
+    requestAnimationFrame(() => {
+      editInputRef.current?.focus();
+      editInputRef.current?.scrollIntoView({ block: 'nearest' });
+    });
+  };
+
   // The header's one-line summary and the Details sheet (#38), derived from the plan itself.
   const planRecipes = useMemo(
     () =>
@@ -684,7 +780,8 @@ export default function PlanPage() {
   );
   const summary = useMemo(() => summarisePlan(planRecipes, budgetPerMeal), [planRecipes, budgetPerMeal]);
   const weekLabel = new Date(`${nextWeekMondayISO()}T00:00:00`).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
-  const planBusy = isGenerating || generatingDays.length > 0 || isGeneratingAISwaps;
+  // Confirm waits for generation and for an open edit preview (accept or discard it first).
+  const planBusy = isGenerating || generatingDays.length > 0 || editBusy || preview !== null;
 
   /** Confirm the week (#38, moved from /plan/review); see lib/client/confirmPlan.ts. */
   const [isConfirming, setIsConfirming] = useState(false);
@@ -777,15 +874,19 @@ export default function PlanPage() {
           <WeekPlanList
             meals={weekPlan}
             // While a week generates, days fill in out of order: hold edits until it settles (#95).
-            onSwapClick={isGenerating ? undefined : handleSwapClick}
-            onGenerateClick={isGenerating ? undefined : handleGenerateSingleRecipe}
-            onAddSavedRecipeClick={isGenerating ? undefined : handleAddSavedRecipe}
+            // While an edit preview is open, nights stay put until it's accepted or discarded (#38).
+            onSwapClick={isGenerating || preview ? undefined : handleSwapClick}
+            onGenerateClick={isGenerating || preview ? undefined : handleGenerateSingleRecipe}
+            onAddSavedRecipeClick={isGenerating || preview ? undefined : handleAddSavedRecipe}
             generatingDays={generatingDays}
             dayErrors={dayErrors}
-            onRetryDay={isGenerating ? undefined : handleRetryDay}
-            onDeleteClick={isGenerating ? undefined : handleDeleteMeal}
+            onRetryDay={isGenerating || preview ? undefined : handleRetryDay}
+            onDeleteClick={isGenerating || preview ? undefined : handleDeleteMeal}
             isGeneratingPlan={isLoadingInitial}
-            onReorder={isGenerating ? undefined : handleReorder}
+            onReorder={isGenerating || preview ? undefined : handleReorder}
+            proposals={preview?.nights}
+            onRetryProposal={handleRetryProposal}
+            onChangeClick={isGenerating ? undefined : handleChangeClick}
           />
 
           {/* Starting over sits after the week, apart from Confirm plan */}
@@ -807,6 +908,27 @@ export default function PlanPage() {
               </Button>
             }
           />
+
+          {/* Docked at the bottom: type what to change (#38) */}
+          {/* Shown whenever a week is on screen, even with every night empty ("add something Friday") */}
+          {!isLoadingInitial && weekPlan.length > 0 ? (
+            <PlanEditBar
+              ref={editInputRef}
+              value={editInput}
+              onChange={setEditInput}
+              onSubmit={handleEditSubmit}
+              message={editMessage}
+              busy={editBusy}
+              disabled={isGenerating}
+              previewOpen={preview !== null}
+              acceptCount={changeCount(preview)}
+              acceptPending={isPreviewPending(preview)}
+              onAccept={handleAcceptEdit}
+              onDiscard={handleDiscardEdit}
+              canUndo={undoPlan !== null}
+              onUndo={handleUndoEdit}
+            />
+          ) : null}
         </Stack>
       )}
 
@@ -827,11 +949,7 @@ export default function PlanPage() {
             ? RecipeLibrary.getById(weekPlan[swapDayIndex]!.recipeId) ?? null
             : null
         }
-        suggestedSwaps={suggestedSwaps}
-        explanations={swapExplanations}
         onSelectSwap={handleSelectSwap}
-        onGenerateAISuggestions={handleGenerateAISwaps}
-        isGeneratingAI={isGeneratingAISwaps}
       />
 
       <PantrySheet

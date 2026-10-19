@@ -25,6 +25,8 @@ export interface RecipeGenerationRequest {
   specificDays?: { index: number; type: 'weeknight' | 'weekend' }[]; // If generating specific days (shape settled in #80)
   pantryItems?: string[]; // Ingredients already available
   useSoonItems?: string[]; // Pantry items that need using this week (#91)
+  /** What the household asked for this night, from a typed plan edit (#38). */
+  guidance?: string;
   /** This day's lineup from lib/planSlate.ts (#95), rendered as hard constraints. */
   slot?: { cuisine: string | null; protein: string; method: string; pantryFocus: string[] };
   /** IANA time zone the household plans in; month and season are computed there. */
@@ -272,6 +274,8 @@ export function buildRecipeGenerationPrompt(request: RecipeGenerationRequest): s
       `Cooking method: ${slot.method}.`,
       ...(slot.pantryFocus.length > 0 ? [`Build it around these pantry items: ${slot.pantryFocus.join(', ')}.`] : []),
     ];
+    // A typed edit (#38) outranks the lineup: it's what the household just asked for.
+    if (request.guidance) day.unshift(`The household asked for: ${request.guidance}. This comes first; follow the lines below where they don't conflict with it.`);
     section('THIS DAY (hard constraints; every recipe must follow them)', day);
   }
 

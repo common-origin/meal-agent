@@ -39,6 +39,18 @@ saved once every day has settled. Single-day generation, retries and AI
 swaps (three parallel one-recipe requests) use the same per-slot request,
 with `buildDaySlot()` choosing a slot against the rest of the week.
 
+**Editing by typing (#38).** On `/plan`, an input docked at the bottom takes
+an instruction such as "swap Tuesday for something lighter". `POST
+/api/edit-plan` (task `planEdit`; prompts in `lib/prompts/planEdit.ts`)
+reads it against the current plan and this session's last five edits, and
+returns `{ reply, question?, edits: { day, action: 'replace' | 'remove',
+guidance? }[] }`, or a question and no edits if the instruction is unclear.
+Each `replace` night is then generated through the normal per-day request
+with a `guidance` field, which the prompt puts first in its THIS DAY
+section. The results show as a preview in the list; the household accepts
+or discards it, and can undo the last accepted edit (logic in
+`lib/planEdit.ts`).
+
 The request goes to `POST /api/generate-recipes`. Its request type
 (`RecipeGenerationRequest`) is defined in
 `apps/web/src/lib/prompts/recipeGeneration.ts`, not in
@@ -83,14 +95,15 @@ first.
 ## Auth, rate limiting and validation
 
 Every AI route (`generate-recipes`, `scan-pantry-image`,
-`extract-recipe-from-image`, `extract-recipe-from-url`) requires a signed-in
-user (401, `code: "unauthenticated"`) and applies a per-user sliding-window
-limit (429, `code: "rate_limited"`): 20 per 10 minutes for
-`generate-recipes` and `extract-recipe-from-url`, 10 per 10 minutes for the
-two image routes. The limits are set in `apps/web/src/lib/api/rateLimit.ts`.
+`extract-recipe-from-image`, `extract-recipe-from-url`, `edit-plan`) requires
+a signed-in user (401, `code: "unauthenticated"`) and applies a per-user
+sliding-window limit (429, `code: "rate_limited"`): 40 per 10 minutes for
+`generate-recipes` (a week is 7 parallel requests, and each typed edit
+regenerates its nights), 30 for `edit-plan`, 20 for
+`extract-recipe-from-url`, and 10 for each of the two image routes. The limits are set in `apps/web/src/lib/api/rateLimit.ts`.
 They are in-memory, so each server instance counts separately; they're burst
 control, not a daily cap (that's #85). JSON request bodies
-(`generate-recipes`, `extract-recipe-from-url`) are validated with the Zod
+(`generate-recipes`, `extract-recipe-from-url`, `edit-plan`) are validated with the Zod
 schemas in `apps/web/src/lib/api/schemas.ts`; the photo routes validate their
 multipart `image` field with `readImageUpload` in
 `apps/web/src/lib/api/guard.ts` (see below). Either way an invalid body gets

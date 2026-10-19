@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, MouseEvent, memo } from "react";
 import styled from "styled-components";
 import Link from "next/link";
-import { Chip, Stack, Typography, Box, ChipGroup, IconButton, Tag, List, ListItem } from "@common-origin/design-system";
+import { Button, Chip, Stack, Typography, Box, ChipGroup, IconButton, Tag, List, ListItem } from "@common-origin/design-system";
 import { tokens } from "@common-origin/design-system";
 import { toggleFavorite, isFavorite } from "@/lib/storage";
 import { track } from "@/lib/analytics";
@@ -54,8 +54,11 @@ export type MealCardProps = {
   /** One line on why the AI chose this meal for this household this week (#94). */
   explanation?: string;
   nutrition?: NutritionInfo;
+  /** In the plan's ⋮ menu, "Use a saved recipe" for this night; in SwapDrawer, picking the card. */
   onSwapClick?: () => void;
   onDeleteClick?: () => void;
+  /** "Change this": puts the night in the plan's edit input (#38). */
+  onChangeClick?: () => void;
   disableLink?: boolean; // When true, card won't be a link (used in SwapDrawer)
   /** 'row' fits the plan's Monday–Sunday list (#38): no fixed height, chips and nutrition on one line. */
   variant?: 'card' | 'row';
@@ -132,6 +135,7 @@ export default function MealCard({
   nutrition,
   onSwapClick,
   onDeleteClick,
+  onChangeClick,
   disableLink = false,
   variant = 'card',
   dragHandleRef,
@@ -196,6 +200,14 @@ export default function MealCard({
           <Stack direction="row" gap="md" alignItems="flex-start">
             <StyledMealCardTitle $row={variant === 'row'} style={{ flex: 1 }}>{toSentenceCase(title)}</StyledMealCardTitle>
             {/* Kebab menu - stopPropagation prevents menu clicks from triggering card link */}
+            {onChangeClick && (
+              // Visible, not in the ⋮ menu: changing a night is the main edit (#38).
+              <div onClick={(e: MouseEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); }}>
+                <Button variant="secondary" size="small" onClick={onChangeClick} aria-label={`Change ${title}`}>
+                  Change
+                </Button>
+              </div>
+            )}
             <MenuWrapper ref={menuRef} onClick={(e: MouseEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); }}>
               <IconButton
                 variant="naked"
@@ -224,7 +236,7 @@ export default function MealCard({
                   <List dividers spacing="compact">
                     {onSwapClick && !disableLink && (
                       <ListItem
-                        primary="Swap meal"
+                        primary="Use a saved recipe"
                         interactive
                         onClick={() => {
                           onSwapClick();

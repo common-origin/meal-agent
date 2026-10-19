@@ -55,7 +55,9 @@ const TEN_MINUTES_MS = 10 * 60 * 1000;
 
 // One limiter per AI route, shared by every request this instance serves.
 export const aiRateLimiters = {
-  generateRecipes: createRateLimiter({ limit: 20, windowMs: TEN_MINUTES_MS }),
+  // A week is 7 parallel requests (#95) and each typed edit regenerates its nights (#38).
+  generateRecipes: createRateLimiter({ limit: 40, windowMs: TEN_MINUTES_MS }),
+  editPlan: createRateLimiter({ limit: 30, windowMs: TEN_MINUTES_MS }),
   scanPantryImage: createRateLimiter({ limit: 10, windowMs: TEN_MINUTES_MS }),
   extractRecipeFromImage: createRateLimiter({ limit: 10, windowMs: TEN_MINUTES_MS }),
   extractRecipeFromUrl: createRateLimiter({ limit: 20, windowMs: TEN_MINUTES_MS }),

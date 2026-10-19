@@ -91,12 +91,33 @@ export const generateRecipesSchema = z.object({
   lovedMealTitles: mealTitleList,
   specificDays: specificDaysSchema.optional(),
   pantryItems: z.array(z.string().max(60)).max(60).default([]),
+  /** What the household asked for this night, from a typed plan edit (#38). */
+  guidance: z.string().max(120).optional(),
   /** This day's lineup (#95); sent with numberOfRecipes 1 and one specificDays entry. */
   slot: daySlotSchema.optional(),
   /** Pantry items flagged to use this week (#91). */
   useSoonItems: z.array(z.string().max(60)).max(60).default([]),
   /** IANA zone from the browser (#87); unknown zones fall back to Australia/Melbourne. */
   timeZone: z.string().max(64).optional(),
+});
+
+// A typed plan edit (#38): the instruction, the plan as titles, and this session's recent edits.
+export const editPlanSchema = z.object({
+  instruction: z.string().trim().min(1).max(300),
+  plan: z
+    .array(
+      z.object({
+        day: z.number().int().min(0).max(6),
+        title: z.string().max(100).nullable(),
+        cuisine: z.string().max(40).nullish(),
+        protein: z.string().max(60).nullish(),
+      })
+    )
+    .max(7),
+  history: z
+    .array(z.object({ instruction: z.string().max(300), summary: z.string().max(200) }))
+    .max(5)
+    .default([]),
 });
 
 export const extractRecipeFromUrlSchema = z.object({

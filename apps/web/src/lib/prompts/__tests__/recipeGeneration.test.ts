@@ -156,3 +156,27 @@ describe('buildRecipeGenerationPrompt pantry with a day slot (#95)', () => {
     expect(text).not.toContain('Use these first');
   });
 });
+
+describe('buildRecipeGenerationPrompt guidance from a typed edit (#38)', () => {
+  it('puts what the household asked for first in THIS DAY', () => {
+    const text = buildRecipeGenerationPrompt({
+      familySettings,
+      numberOfRecipes: 1,
+      slot: { cuisine: 'thai', protein: 'chicken', method: 'stir-fry', pantryFocus: [] },
+      guidance: 'lighter, no cream',
+    });
+    const day = text.slice(text.indexOf('THIS DAY')).split('\n');
+    expect(day[1]).toBe(
+      "- The household asked for: lighter, no cream. This comes first; follow the lines below where they don't conflict with it."
+    );
+  });
+
+  it('adds nothing without guidance', () => {
+    const text = buildRecipeGenerationPrompt({
+      familySettings,
+      numberOfRecipes: 1,
+      slot: { cuisine: 'thai', protein: 'chicken', method: 'stir-fry', pantryFocus: [] },
+    });
+    expect(text).not.toContain('The household asked for');
+  });
+});

@@ -10,6 +10,8 @@ export type AnalyticsEventType =
   | 'plan_regenerated'
   | 'plan_confirmed'
   | 'plan_reviewed'
+  | 'plan_edit' // a typed change opened or refined a preview (#38)
+  | 'plan_edit_accepted'
   
   // Meal Swapping
   | 'swap'
