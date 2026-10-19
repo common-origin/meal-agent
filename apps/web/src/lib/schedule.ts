@@ -5,11 +5,6 @@ export function isSunday8AM(): boolean {
   return now.day() === 0 && now.hour() === 8 && now.minute() < 30;
 }
 
-export function isSaturdayAfter4(): boolean {
-  const now = dayjs();
-  return now.day() === 6 && now.hour() >= 16;
-}
-
 /**
  * Monday of the Monday–Sunday week containing `date`. dayjs numbers Sunday
  * as day 0, so `day(1)` on a Sunday would jump forward to the next Monday —

@@ -7,7 +7,7 @@ import Main from "@/components/app/Main";
 import ColesShoppingModal from "@/components/app/ColesShoppingModal";
 import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from "@/lib/shoppingListAggregator";
 import { generateShoppingListCSV, downloadCSV } from "@/lib/csv";
-import { loadHousehold, getDefaultHousehold, loadWeeklyOverrides, STORAGE_KEYS } from "@/lib/storage";
+import { loadHousehold, getDefaultHousehold, STORAGE_KEYS } from "@/lib/storage";
 import { loadCurrentWeekPlan, savePantryItems, loadPantryItems, hydrateRecencyFromSupabase, syncRecencyToSupabase } from "@/lib/hybridStorage";
 import { composeWeek } from "@/lib/compose";
 import { nextWeekMondayISO } from "@/lib/schedule";
@@ -160,11 +160,10 @@ export default function ShoppingListPage() {
     } else {
       // Fall back to auto-composition from library
       console.log('🔄 No saved plan found, composing from library...');
-      const overrides = loadWeeklyOverrides(nextWeekISO);
       // Pull in any recency history recorded on other devices first, so
       // variety enforcement below sees what's actually been cooked recently
       await hydrateRecencyFromSupabase();
-      plan = composeWeek(household, overrides || undefined);
+      plan = composeWeek(household);
       // Push this week's picks to Supabase (fire-and-forget) so other
       // devices see them too
       syncRecencyToSupabase(nextWeekISO, plan.days.map(d => d.recipeId))

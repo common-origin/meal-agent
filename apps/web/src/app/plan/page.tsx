@@ -21,6 +21,7 @@ import { buildTasteSignals, type TasteSignals } from "@/lib/tasteSignals";
 import { itemsToUseSoon, mergeScan, type PantryState } from "@/lib/pantryItems";
 import { buildDaySlot, buildWeekSlate, newSlateSeed, type DaySlot } from "@/lib/planSlate";
 import { generateDay, type DayRequest } from "@/lib/client/generateDay";
+import { confirmPlan } from "@/lib/client/confirmPlan";
 import type { FamilySettings } from "@/lib/types/settings";
 import { getSuggestedSwaps } from "@/lib/compose";
 import { RecipeLibrary } from "@/lib/library";
@@ -685,16 +686,21 @@ export default function PlanPage() {
   const weekLabel = new Date(`${nextWeekMondayISO()}T00:00:00`).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
   const planBusy = isGenerating || generatingDays.length > 0 || isGeneratingAISwaps;
 
-  /**
-   * Confirm the week (#38, moved from /plan/review): the recipes join My
-   * Recipes, then the shopping list opens. Make, edit, confirm, shop.
-   */
-  const handleConfirmPlan = () => {
-    const recipeIds = weekPlanRef.current.flatMap((meal) => (meal ? [meal.recipeId] : []));
-    if (recipeIds.length === 0) return;
-    RecipeLibrary.markRecipesAsConfirmed(recipeIds);
-    track('plan_confirmed', { finalCost: summary.cost, dayCount: recipeIds.length });
-    router.push('/shopping-list');
+  /** Confirm the week (#38, moved from /plan/review); see lib/client/confirmPlan.ts. */
+  const [isConfirming, setIsConfirming] = useState(false);
+  const handleConfirmPlan = async () => {
+    setIsConfirming(true);
+    const confirmed = await confirmPlan(
+      weekPlanRef.current.flatMap((meal) => (meal ? [meal.recipeId] : [])),
+      summary.cost,
+      {
+        pendingSaves: saveChainRef.current,
+        markConfirmed: (ids) => RecipeLibrary.markRecipesAsConfirmed(ids),
+        track: (meta) => track('plan_confirmed', meta),
+        navigate: (path) => router.push(path),
+      }
+    );
+    if (!confirmed) setIsConfirming(false);
   };
 
   return (
@@ -755,9 +761,9 @@ export default function PlanPage() {
                 size="medium"
                 onClick={handleConfirmPlan}
                 // Confirm the week once it's settled, not mid-generation.
-                disabled={summary.dinners === 0 || planBusy}
+                disabled={summary.dinners === 0 || planBusy || isConfirming}
               >
-                Confirm plan
+                {isConfirming ? 'Confirming...' : 'Confirm plan'}
               </Button>
             </Stack>
           </Stack>

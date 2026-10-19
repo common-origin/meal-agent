@@ -12,8 +12,6 @@ import {
   getRecipeRatings,
   blockRecipe,
   getBlockedRecipes,
-  saveWeeklyOverrides,
-  loadWeeklyOverrides,
   STORAGE_KEYS,
 } from '../storage';
 import { savePantryPreferences, loadPantryPreferences } from '../pantryPreferences';
@@ -61,28 +59,16 @@ describe('clearHouseholdScopedCaches', () => {
     expect(getBlockedRecipes().size).toBe(0);
   });
 
-  it('clears every weekly-overrides key, not just one week', () => {
-    saveWeeklyOverrides({
-      weekOfISO: '2026-01-05',
-      dinners: 5,
-      servingsPerMeal: 4,
-      kidFriendlyWeeknights: true,
-      dietAdjust: {},
-      pantryAdds: [],
-    });
-    saveWeeklyOverrides({
-      weekOfISO: '2026-01-12',
-      dinners: 3,
-      servingsPerMeal: 6,
-      kidFriendlyWeeknights: false,
-      dietAdjust: {},
-      pantryAdds: [],
-    });
+  it('clears every weekly-overrides key left from before #38, not just one week', () => {
+    // Nothing writes these any more (the preferences sheet was removed in #38),
+    // but devices may still hold them.
+    localStorage.setItem(`${STORAGE_KEYS.OVERRIDES_PREFIX}2026-01-05`, '{"dinners":5}');
+    localStorage.setItem(`${STORAGE_KEYS.OVERRIDES_PREFIX}2026-01-12`, '{"dinners":3}');
 
     clearHouseholdScopedCaches();
 
-    expect(loadWeeklyOverrides('2026-01-05')).toBeNull();
-    expect(loadWeeklyOverrides('2026-01-12')).toBeNull();
+    expect(localStorage.getItem(`${STORAGE_KEYS.OVERRIDES_PREFIX}2026-01-05`)).toBeNull();
+    expect(localStorage.getItem(`${STORAGE_KEYS.OVERRIDES_PREFIX}2026-01-12`)).toBeNull();
   });
 
   it('clears every shopping-completion key, not just one week', () => {

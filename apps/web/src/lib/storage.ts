@@ -86,23 +86,14 @@ export const STORAGE_KEYS = {
   USER_PREFERENCES: "meal-agent-preferences",
   ANALYTICS: "meal-agent-analytics",
   HOUSEHOLD: "ma_household",
+  // Weekly overrides came from the Next Week's Preferences sheet, removed in #38.
+  // Old keys may still exist on devices, so sign-out still clears them.
   OVERRIDES_PREFIX: "ma_overrides:", // followed by weekOfISO
   SHOPPING_COMPLETE_PREFIX: "shopping-complete-", // followed by weekOfISO, see shopping-list/page.tsx
 } as const;
 
 // Type imports
-import type { WeeklyOverrides, Household } from "./types/recipe";
-
-// Weekly Overrides helpers
-export function saveWeeklyOverrides(overrides: WeeklyOverrides): boolean {
-  const key = `${STORAGE_KEYS.OVERRIDES_PREFIX}${overrides.weekOfISO}`;
-  return Storage.set(key, overrides);
-}
-
-export function loadWeeklyOverrides(weekOfISO: string): WeeklyOverrides | null {
-  const key = `${STORAGE_KEYS.OVERRIDES_PREFIX}${weekOfISO}`;
-  return Storage.get<WeeklyOverrides | null>(key, null);
-}
+import type { Household } from "./types/recipe";
 
 // Household helpers
 export function saveHousehold(household: Household): boolean {
