@@ -7,7 +7,7 @@ import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import WeekPlanList from "@/components/app/WeekPlanList";
 import PlanDetailsSheet from "@/components/app/PlanDetailsSheet";
-import PlanEditBar from "@/components/app/PlanEditBar";
+import PlanEditBar, { PLAN_EDIT_INPUT_TEST_ID } from "@/components/app/PlanEditBar";
 import SwapDrawer from "@/components/app/SwapDrawer";
 import WeeklyPlanWizard, { type WeeklyPlanData } from "@/components/app/WeeklyPlanWizard";
 import PantrySheet from "@/components/app/PantrySheet";
@@ -140,7 +140,6 @@ export default function PlanPage() {
   const [undoPlan, setUndoPlan] = useState<(MealCardProps | null)[] | null>(null);
   // This session's recent edits, so a follow-up ("lighter than that") has a referent.
   const editHistoryRef = useRef<{ instruction: string; summary: string }[]>([]);
-  const editInputRef = useRef<HTMLInputElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [ariaLiveMessage, setAriaLiveMessage] = useState<string>("");
@@ -763,9 +762,11 @@ export default function PlanPage() {
   /** "Change this" on a meal: name the night in the input, ready to type (#38). */
   const handleChangeClick = (day: number) => {
     setEditInput(`${DAYS[day]}: `);
+    // AgentInput takes no ref, so find its field by the bar's test id.
     requestAnimationFrame(() => {
-      editInputRef.current?.focus();
-      editInputRef.current?.scrollIntoView({ block: 'nearest' });
+      const field = document.querySelector<HTMLInputElement>(`[data-testid="${PLAN_EDIT_INPUT_TEST_ID}"] input`);
+      field?.focus();
+      field?.scrollIntoView({ block: 'nearest' });
     });
   };
 
@@ -803,18 +804,7 @@ export default function PlanPage() {
   return (
     <Main maxWidth="960px">
       {/* ARIA live region for screen reader announcements */}
-      <div
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        style={{
-          position: "absolute",
-          left: "-10000px",
-          width: "1px",
-          height: "1px",
-          overflow: "hidden"
-        }}
-      >
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {ariaLiveMessage}
       </div>
 
@@ -833,8 +823,10 @@ export default function PlanPage() {
           <Stack direction="row" justifyContent="space-between" alignItems="flex-start" wrap gap="md">
             <Stack direction="column" gap="xs">
               <Typography variant="h1">Week of {weekLabel}</Typography>
+              {/* Title plus a subdued line, composed from Typography in a Stack as the design system
+                  documents (PageTitle is deprecated). `small`, not `caption`: caption is uppercase. */}
               {summary.dinners > 0 && (
-                <Typography variant="body" color="subdued">
+                <Typography variant="small" color="subdued">
                   {formatPlanSummary(summary)}
                 </Typography>
               )}
@@ -913,7 +905,6 @@ export default function PlanPage() {
           {/* Shown whenever a week is on screen, even with every night empty ("add something Friday") */}
           {!isLoadingInitial && weekPlan.length > 0 ? (
             <PlanEditBar
-              ref={editInputRef}
               value={editInput}
               onChange={setEditInput}
               onSubmit={handleEditSubmit}

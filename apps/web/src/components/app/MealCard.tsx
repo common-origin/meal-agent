@@ -90,11 +90,11 @@ const CardWrapper = styled(Box)<{ $clickable?: boolean }>`
   }
 `;
 
-const StyledMealCardTitle = styled.h3<{ $row?: boolean }>`
+const StyledMealCardTitle = styled.h3`
   font: ${tokens.semantic.typography.h3};
   letter-spacing: ${tokens.base.letterSpacing[1]};
-  font-size: ${({ $row }) => ($row ? '1.125rem' : '1.5rem')};
-  line-height: ${({ $row }) => ($row ? '1.5rem' : '1.75rem')};
+  font-size: 1.5rem;
+  line-height: 1.75rem;
   color: ${tokens.semantic.color.text.default}
 `;
 
@@ -198,7 +198,14 @@ export default function MealCard({
         <Stack direction="column" gap="md">
           {/* Top section - Title and Menu */}
           <Stack direction="row" gap="md" alignItems="flex-start">
-            <StyledMealCardTitle $row={variant === 'row'} style={{ flex: 1 }}>{toSentenceCase(title)}</StyledMealCardTitle>
+            {variant === 'row' ? (
+              // Rows use the design system's type scale directly (#38).
+              <Box style={{ flex: 1 }}>
+                <Typography variant="h5" as="h3">{toSentenceCase(title)}</Typography>
+              </Box>
+            ) : (
+              <StyledMealCardTitle style={{ flex: 1 }}>{toSentenceCase(title)}</StyledMealCardTitle>
+            )}
             {/* Kebab menu - stopPropagation prevents menu clicks from triggering card link */}
             {onChangeClick && (
               // Visible, not in the ⋮ menu: changing a night is the main edit (#38).
@@ -281,7 +288,7 @@ export default function MealCard({
           )}
           
           {/* In a row, keep the chips clear of the drag handle in the bottom-right corner */}
-          <div style={variant === 'row' && dragHandleRef ? { paddingRight: 40 } : undefined}>
+          <Box pr={variant === 'row' && dragHandleRef ? '2xl' : undefined}>
             <Stack direction="column" gap="sm">
               <Stack direction="row" gap="sm" alignItems="center" wrap={variant === 'row'}>
                 {chef && <Tag variant="interactive" border={false}>{chef}</Tag>}
@@ -321,7 +328,7 @@ export default function MealCard({
               </Stack>
             )}
 
-          </div>
+          </Box>
 
         </Stack>
       </CardWrapper>

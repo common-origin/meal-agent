@@ -24,24 +24,26 @@ function Harness(props: Partial<PlanEditBarProps> & { onSubmit?: (text: string) 
 }
 
 const input = () => screen.getByRole('textbox', { name: 'Tell me what to change' });
+const send = () => screen.getByRole('button', { name: 'Send message' });
 
-describe('PlanEditBar (#38)', () => {
+describe('PlanEditBar (#38), built on the design system AgentInput', () => {
   it('sends the trimmed instruction', () => {
     const onSubmit = vi.fn();
     render(<Harness onSubmit={onSubmit} />);
     fireEvent.change(input(), { target: { value: '  swap Tuesday for something lighter ' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    fireEvent.click(send());
     expect(onSubmit).toHaveBeenCalledWith('swap Tuesday for something lighter');
   });
 
-  it("asks for an instruction instead of sending an empty one, and clears that once you type", () => {
-    const onSubmit = vi.fn();
-    render(<Harness onSubmit={onSubmit} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
-    expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByText("Type what you'd like to change first.")).toBeInTheDocument();
-    fireEvent.change(input(), { target: { value: 'T' } });
-    expect(screen.queryByText("Type what you'd like to change first.")).toBeNull();
+  it("can't send an empty instruction", () => {
+    render(<Harness />);
+    expect(send()).toBeDisabled();
+  });
+
+  it("shows the plan's own helper, never AgentInput's default banking copy", () => {
+    render(<Harness />);
+    expect(screen.getByText('Change any night, add one or drop one. Press Enter to send.')).toBeInTheDocument();
+    expect(screen.queryByText(/transactions/i)).toBeNull();
   });
 
   it('shows the reply line, and Accept and Discard while a preview is open', () => {
@@ -61,6 +63,11 @@ describe('PlanEditBar (#38)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Discard' }));
     expect(onAccept).toHaveBeenCalled();
     expect(onDiscard).toHaveBeenCalled();
+  });
+
+  it('shows a request error in an inline alert', () => {
+    render(<Harness message={{ text: 'That took too long. Please try again.', tone: 'error' }} />);
+    expect(screen.getByText('That took too long. Please try again.')).toBeInTheDocument();
   });
 
   it('holds Accept while a proposed night is still generating', () => {
