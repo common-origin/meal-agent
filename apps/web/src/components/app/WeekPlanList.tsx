@@ -172,8 +172,9 @@ function ProposedNightView({
   onRetry?: () => void;
 }) {
   const replaces = current ? (
-    <Typography variant="small" color="subdued">
-      <span style={{ textDecoration: "line-through" }}>{current.title}</span>
+    // <s>: the meal this proposal replaces, struck through.
+    <Typography as="s" variant="small" color="subdued">
+      {current.title}
     </Typography>
   ) : null;
 

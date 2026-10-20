@@ -69,7 +69,7 @@ describe('WeekPlanList proposals from a typed edit (#38)', () => {
       />
     );
     expect(screen.getByText('Vietnamese rice paper bowls')).toBeInTheDocument();
-    expect(screen.getByText('Pumpkin soup')).toHaveStyle({ textDecoration: 'line-through' });
+    expect(screen.getByText('Pumpkin soup').tagName).toBe('S');
     expect(screen.getByText('Proposed')).toBeInTheDocument();
     expect(screen.getByText('To be removed')).toBeInTheDocument();
   });

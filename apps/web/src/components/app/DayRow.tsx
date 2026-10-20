@@ -1,37 +1,23 @@
 "use client";
 
-import styled from "styled-components";
-import { Typography } from "@common-origin/design-system";
-import { tokens } from "@common-origin/design-system";
+import { Box, Grid, GridCol, Typography } from "@common-origin/design-system";
 import type { ReactNode } from "react";
 
-// The day's name in a left column on wider screens, above the meal on phones (#38).
-const Row = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: ${tokens.semantic.spacing.layout.xs};
-  align-items: start;
-
-  @media (min-width: 640px) {
-    grid-template-columns: 112px minmax(0, 1fr);
-    gap: ${tokens.semantic.spacing.layout.md};
-  }
-`;
-
-const DayLabel = styled.div`
-  @media (min-width: 640px) {
-    padding-top: ${tokens.semantic.spacing.layout.md};
-  }
-`;
-
-/** One night of the plan list: the day's name and whatever that night shows. */
+/**
+ * One night of the plan list (#38): the day's name in a narrow left column
+ * from the design system's sm breakpoint up, and above the meal on phones.
+ */
 export default function DayRow({ day, children }: { day: string; children: ReactNode }) {
   return (
-    <Row>
-      <DayLabel>
-        <Typography variant="label">{day}</Typography>
-      </DayLabel>
-      <div>{children}</div>
-    </Row>
+    <Grid cols={12} gapX="4" gapY="2">
+      <GridCol span={12} spanSm={2}>
+        <Box pt="sm">
+          <Typography variant="label">{day}</Typography>
+        </Box>
+      </GridCol>
+      <GridCol span={12} spanSm={10}>
+        {children}
+      </GridCol>
+    </Grid>
   );
 }

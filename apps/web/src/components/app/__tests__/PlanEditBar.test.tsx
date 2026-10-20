@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import { useState } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import PlanEditBar, { type PlanEditBarProps } from '../PlanEditBar';
 
-function Harness(props: Partial<PlanEditBarProps> & { onSubmit?: (text: string) => void }) {
+function Harness(props: Partial<PlanEditBarProps>) {
   const [value, setValue] = useState(props.value ?? '');
   return (
     <PlanEditBar
@@ -18,30 +18,53 @@ function Harness(props: Partial<PlanEditBarProps> & { onSubmit?: (text: string) 
       {...props}
       value={value}
       onChange={setValue}
-      onSubmit={props.onSubmit ?? (() => {})}
+      onSubmit={props.onSubmit ?? (async () => {})}
     />
   );
 }
 
 const input = () => screen.getByRole('textbox', { name: 'Tell me what to change' });
+const send = () => screen.getByRole('button', { name: 'Send message' });
 
-describe('PlanEditBar (#38)', () => {
-  it('sends the trimmed instruction', () => {
-    const onSubmit = vi.fn();
+describe('PlanEditBar (#38), built on the design system AgentInput', () => {
+  it('sends the trimmed instruction, then clears the field once it is handled', async () => {
+    const onSubmit = vi.fn(async () => {});
     render(<Harness onSubmit={onSubmit} />);
     fireEvent.change(input(), { target: { value: '  swap Tuesday for something lighter ' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    fireEvent.click(send());
     expect(onSubmit).toHaveBeenCalledWith('swap Tuesday for something lighter');
+    await waitFor(() => expect(input()).toHaveValue(''));
   });
 
-  it("asks for an instruction instead of sending an empty one, and clears that once you type", () => {
-    const onSubmit = vi.fn();
-    render(<Harness onSubmit={onSubmit} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
-    expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByText("Type what you'd like to change first.")).toBeInTheDocument();
-    fireEvent.change(input(), { target: { value: 'T' } });
-    expect(screen.queryByText("Type what you'd like to change first.")).toBeNull();
+  it('keeps the typed instruction and shows the error when the request fails', async () => {
+    function Failing() {
+      const [message, setMessage] = useState<PlanEditBarProps['message']>(null);
+      return (
+        <Harness
+          message={message}
+          onSubmit={async () => {
+            setMessage({ text: 'That took too long. Please try again.', tone: 'error' });
+            throw new Error('timeout');
+          }}
+        />
+      );
+    }
+    render(<Failing />);
+    fireEvent.change(input(), { target: { value: 'swap Tuesday' } });
+    fireEvent.click(send());
+    expect(await screen.findByText('That took too long. Please try again.')).toBeInTheDocument();
+    expect(input()).toHaveValue('swap Tuesday');
+  });
+
+  it("can't send an empty instruction", () => {
+    render(<Harness />);
+    expect(send()).toBeDisabled();
+  });
+
+  it("shows the plan's own helper, never AgentInput's default banking copy", () => {
+    render(<Harness />);
+    expect(screen.getByText('Change any night, add one or drop one. Press Enter to send.')).toBeInTheDocument();
+    expect(screen.queryByText(/transactions/i)).toBeNull();
   });
 
   it('shows the reply line, and Accept and Discard while a preview is open', () => {

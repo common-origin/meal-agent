@@ -7,7 +7,7 @@ import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import WeekPlanList from "@/components/app/WeekPlanList";
 import PlanDetailsSheet from "@/components/app/PlanDetailsSheet";
-import PlanEditBar from "@/components/app/PlanEditBar";
+import PlanEditBar, { PLAN_EDIT_INPUT_TEST_ID } from "@/components/app/PlanEditBar";
 import SwapDrawer from "@/components/app/SwapDrawer";
 import WeeklyPlanWizard, { type WeeklyPlanData } from "@/components/app/WeeklyPlanWizard";
 import PantrySheet from "@/components/app/PantrySheet";
@@ -34,6 +34,9 @@ import { apiErrorMessage, redirectToLoginIfUnauthenticated } from "@/lib/api/cli
 import { imageUploadFormData, PhotoTooLargeError } from "@/lib/client/resizeImage";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+/** The edit request failed and its friendly message is already shown (#38). */
+class EditRequestError extends Error {}
 
 /** Chips computed from the recipe itself ("quick", "kid-friendly", ...). */
 function mealReasons(recipe: Recipe, favorites: string[]): string[] {
@@ -140,7 +143,6 @@ export default function PlanPage() {
   const [undoPlan, setUndoPlan] = useState<(MealCardProps | null)[] | null>(null);
   // This session's recent edits, so a follow-up ("lighter than that") has a referent.
   const editHistoryRef = useRef<{ instruction: string; summary: string }[]>([]);
-  const editInputRef = useRef<HTMLInputElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [ariaLiveMessage, setAriaLiveMessage] = useState<string>("");
@@ -657,22 +659,33 @@ export default function PlanPage() {
     }
   };
 
+  /** Generates a preview's replaced nights in the background, so the input stays free meanwhile. */
+  const generateProposals = async (edits: EditInstruction[], token: number) => {
+    beginGeneration();
+    try {
+      const context = await loadDayContext();
+      await Promise.all(
+        edits.filter((edit) => edit.action === 'replace').map((edit) => generateProposal(context, edit.day, edit.guidance, token))
+      );
+    } catch (error) {
+      console.error('❌ Generating proposed nights failed:', error);
+    } finally {
+      endGeneration();
+    }
+  };
+
   /**
    * A typed change (#38): the edit model reads it into per-night edits, which
-   * open (or refine) a preview; each replaced night is then generated in
-   * parallel with the instruction's guidance.
+   * open (or refine) a preview. Resolves as soon as the instruction is read
+   * (AgentInput then clears the field) and throws when it couldn't be, so
+   * AgentInput keeps the text for another try. The replaced nights generate
+   * separately, without blocking the next instruction.
    */
-  const handleEditSubmit = async (instruction: string) => {
-    if (editBusy || isSignOutInProgress) return;
+  const handleEditSubmit = async (instruction: string): Promise<void> => {
+    if (editBusy || isSignOutInProgress) throw new Error('busy');
     setEditBusy(true);
     setEditMessage(null);
     beginGeneration();
-    // Busy covers reading the instruction only; once released, a later instruction owns it.
-    let released = false;
-    const release = () => {
-      if (!released) setEditBusy(false);
-      released = true;
-    };
     try {
       const response = await fetch('/api/edit-plan', {
         method: 'POST',
@@ -683,10 +696,9 @@ export default function PlanPage() {
       const data = await response.json().catch(() => null);
       if (!response.ok || !data || data.error) {
         setEditMessage({ text: apiErrorMessage(data), tone: 'error' });
-        return;
+        throw new EditRequestError();
       }
 
-      setEditInput('');
       const edits: EditInstruction[] = data.edits ?? [];
       if (data.question || edits.length === 0) {
         // Nothing changes yet: show the model's question or its reply.
@@ -699,18 +711,15 @@ export default function PlanPage() {
       const token = ++previewTokenRef.current;
       setPreview((current) => proposeEdits(current, edits, token));
       track('plan_edit', { nights: edits.length, followUp: preview !== null });
-      // The instruction is read; nights generate in the preview, and the input is free for a follow-up.
-      release();
-
-      const context = await loadDayContext();
-      await Promise.all(
-        edits.filter((edit) => edit.action === 'replace').map((edit) => generateProposal(context, edit.day, edit.guidance, token))
-      );
+      void generateProposals(edits, token);
     } catch (error) {
-      console.error('❌ Plan edit failed:', error);
-      setEditMessage({ text: apiErrorMessage(null), tone: 'error' });
+      if (!(error instanceof EditRequestError)) {
+        console.error('❌ Plan edit failed:', error);
+        setEditMessage({ text: apiErrorMessage(null), tone: 'error' });
+      }
+      throw error;
     } finally {
-      release();
+      setEditBusy(false);
       endGeneration();
     }
   };
@@ -763,9 +772,11 @@ export default function PlanPage() {
   /** "Change this" on a meal: name the night in the input, ready to type (#38). */
   const handleChangeClick = (day: number) => {
     setEditInput(`${DAYS[day]}: `);
+    // AgentInput takes no ref, so find its field by the bar's test id.
     requestAnimationFrame(() => {
-      editInputRef.current?.focus();
-      editInputRef.current?.scrollIntoView({ block: 'nearest' });
+      const field = document.querySelector<HTMLInputElement>(`[data-testid="${PLAN_EDIT_INPUT_TEST_ID}"] input`);
+      field?.focus();
+      field?.scrollIntoView({ block: 'nearest' });
     });
   };
 
@@ -803,18 +814,7 @@ export default function PlanPage() {
   return (
     <Main maxWidth="960px">
       {/* ARIA live region for screen reader announcements */}
-      <div
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        style={{
-          position: "absolute",
-          left: "-10000px",
-          width: "1px",
-          height: "1px",
-          overflow: "hidden"
-        }}
-      >
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {ariaLiveMessage}
       </div>
 
@@ -833,8 +833,10 @@ export default function PlanPage() {
           <Stack direction="row" justifyContent="space-between" alignItems="flex-start" wrap gap="md">
             <Stack direction="column" gap="xs">
               <Typography variant="h1">Week of {weekLabel}</Typography>
+              {/* Title plus a subdued line, composed from Typography in a Stack as the design system
+                  documents (PageTitle is deprecated). `small`, not `caption`: caption is uppercase. */}
               {summary.dinners > 0 && (
-                <Typography variant="body" color="subdued">
+                <Typography variant="small" color="subdued">
                   {formatPlanSummary(summary)}
                 </Typography>
               )}
@@ -913,7 +915,6 @@ export default function PlanPage() {
           {/* Shown whenever a week is on screen, even with every night empty ("add something Friday") */}
           {!isLoadingInitial && weekPlan.length > 0 ? (
             <PlanEditBar
-              ref={editInputRef}
               value={editInput}
               onChange={setEditInput}
               onSubmit={handleEditSubmit}

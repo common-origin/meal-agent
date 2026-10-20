@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Alert, Stack, Typography, IconButton, Sheet, TextField, Dropdown } from "@common-origin/design-system";
+import { Alert, Box, EmptyState, Stack, Typography, IconButton, Sheet, SearchField, Dropdown } from "@common-origin/design-system";
 import { type Recipe } from "@/lib/types/recipe";
 import { RecipeLibrary } from "@/lib/library";
 import { getFavorites } from "@/lib/storage";
@@ -154,50 +154,38 @@ export default function SwapDrawer({
             </Stack>
 
             {/* Filters */}
-            <Stack direction="row" gap="md">
-              <div style={{ flex: 1 }}>
-                <TextField
-                  label="Search"
-                  placeholder="Search recipes..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <div style={{ minWidth: '160px' }}>
-                <Dropdown
-                  label="Filter"
-                  options={filterOptions}
-                  value={filterBy}
-                  onChange={(value) => setFilterBy(value as "all" | "favorites")}
-                />
-              </div>
+            <Stack direction="column" gap="sm">
+              <SearchField
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search by name or ingredient"
+                aria-label="Search your saved recipes"
+              />
+              <Dropdown
+                label="Filter"
+                options={filterOptions}
+                value={filterBy}
+                onChange={(value) => setFilterBy(value as "all" | "favorites")}
+              />
             </Stack>
 
             {/* Recipes List */}
             {savedRecipes.length === 0 ? (
-              <div style={{ 
-                padding: "24px", 
-                textAlign: "center",
-                backgroundColor: "#f8f9fa",
-                borderRadius: "8px"
-              }}>
-                <Typography variant="body">
-                  No saved recipes yet. Add recipes from the Add Recipe page, or favourite a meal from your plan.
-                </Typography>
-              </div>
+              <EmptyState
+                size="small"
+                illustration="empty"
+                title="No saved recipes yet"
+                description="Add recipes from the Add Recipe page, or favourite a meal from your plan."
+              />
             ) : filteredSavedRecipes.length === 0 ? (
-              <div style={{ 
-                padding: "24px", 
-                textAlign: "center",
-                backgroundColor: "#f8f9fa",
-                borderRadius: "8px"
-              }}>
-                <Typography variant="body">
-                  No recipes match your search or filter.
-                </Typography>
-              </div>
+              <EmptyState
+                size="small"
+                illustration="search"
+                title="No matches"
+                description="No saved recipes match your search or filter."
+              />
             ) : (
-              <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
+              <Box maxHeight="60vh" overflowY="auto">
                 <Stack direction="column" gap="md">
                   {filteredSavedRecipes.map((recipe) => {
                     const reasons = generateReasonCodes(recipe, favorites.includes(recipe.id));
@@ -217,7 +205,7 @@ export default function SwapDrawer({
                     );
                   })}
                 </Stack>
-              </div>
+              </Box>
             )}
           </Stack>
       </Stack>
