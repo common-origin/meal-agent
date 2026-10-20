@@ -1,6 +1,6 @@
 "use client";
 
-import { Alert, AgentInput, Box, Button, Stack } from "@common-origin/design-system";
+import { AgentInput, Box, Button, Stack } from "@common-origin/design-system";
 
 /** Shown under the input until there's a reply. */
 const DEFAULT_STATUS = "Change any night, add one or drop one. Press Enter to send.";
@@ -25,7 +25,11 @@ export interface PlanEditBarProps {
   disabled?: boolean;
   value: string;
   onChange: (value: string) => void;
-  onSubmit: (instruction: string) => void;
+  /**
+   * Resolves once the instruction is handled (AgentInput then clears the
+   * field); rejects if it couldn't be, so AgentInput keeps the text.
+   */
+  onSubmit: (instruction: string) => Promise<void>;
 }
 
 /**
@@ -63,12 +67,6 @@ export default function PlanEditBar({
       style={{ zIndex: 20 }}
     >
       <Stack direction="column" gap="sm">
-        {/* AgentInput's errorMessage only shows for its own voice errors, so request errors use an inline Alert */}
-        {message?.tone === "error" && (
-          <Alert variant="error" inline>
-            {message.text}
-          </Alert>
-        )}
         {previewOpen ? (
           <Stack direction="row" gap="sm" justifyContent="flex-end">
             <Button variant="secondary" size="small" onClick={onDiscard}>
@@ -89,10 +87,7 @@ export default function PlanEditBar({
           label="Tell me what to change"
           value={value}
           onChange={onChange}
-          onSubmit={({ text }) => {
-            const instruction = text.trim();
-            if (instruction) onSubmit(instruction);
-          }}
+          onSubmit={({ text }) => onSubmit(text.trim())}
           placeholder={
             previewOpen
               ? "Refine it, e.g. no, something with fish"
@@ -105,6 +100,9 @@ export default function PlanEditBar({
           disabled={disabled}
           // Always set: AgentInput's built-in helper is banking copy ("Ask about transactions…").
           statusMessage={message?.tone === "info" ? message.text : DEFAULT_STATUS}
+          // A failed submit rejects, which puts AgentInput in its error state: it keeps the
+          // typed text and shows this in its status line (with its own fallback copy if unset).
+          errorMessage={message?.tone === "error" ? message.text : undefined}
           data-testid={PLAN_EDIT_INPUT_TEST_ID}
         />
       </Stack>

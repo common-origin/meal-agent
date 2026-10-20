@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import { useState } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import PlanEditBar, { type PlanEditBarProps } from '../PlanEditBar';
 
-function Harness(props: Partial<PlanEditBarProps> & { onSubmit?: (text: string) => void }) {
+function Harness(props: Partial<PlanEditBarProps>) {
   const [value, setValue] = useState(props.value ?? '');
   return (
     <PlanEditBar
@@ -18,7 +18,7 @@ function Harness(props: Partial<PlanEditBarProps> & { onSubmit?: (text: string) 
       {...props}
       value={value}
       onChange={setValue}
-      onSubmit={props.onSubmit ?? (() => {})}
+      onSubmit={props.onSubmit ?? (async () => {})}
     />
   );
 }
@@ -27,12 +27,33 @@ const input = () => screen.getByRole('textbox', { name: 'Tell me what to change'
 const send = () => screen.getByRole('button', { name: 'Send message' });
 
 describe('PlanEditBar (#38), built on the design system AgentInput', () => {
-  it('sends the trimmed instruction', () => {
-    const onSubmit = vi.fn();
+  it('sends the trimmed instruction, then clears the field once it is handled', async () => {
+    const onSubmit = vi.fn(async () => {});
     render(<Harness onSubmit={onSubmit} />);
     fireEvent.change(input(), { target: { value: '  swap Tuesday for something lighter ' } });
     fireEvent.click(send());
     expect(onSubmit).toHaveBeenCalledWith('swap Tuesday for something lighter');
+    await waitFor(() => expect(input()).toHaveValue(''));
+  });
+
+  it('keeps the typed instruction and shows the error when the request fails', async () => {
+    function Failing() {
+      const [message, setMessage] = useState<PlanEditBarProps['message']>(null);
+      return (
+        <Harness
+          message={message}
+          onSubmit={async () => {
+            setMessage({ text: 'That took too long. Please try again.', tone: 'error' });
+            throw new Error('timeout');
+          }}
+        />
+      );
+    }
+    render(<Failing />);
+    fireEvent.change(input(), { target: { value: 'swap Tuesday' } });
+    fireEvent.click(send());
+    expect(await screen.findByText('That took too long. Please try again.')).toBeInTheDocument();
+    expect(input()).toHaveValue('swap Tuesday');
   });
 
   it("can't send an empty instruction", () => {
@@ -63,11 +84,6 @@ describe('PlanEditBar (#38), built on the design system AgentInput', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Discard' }));
     expect(onAccept).toHaveBeenCalled();
     expect(onDiscard).toHaveBeenCalled();
-  });
-
-  it('shows a request error in an inline alert', () => {
-    render(<Harness message={{ text: 'That took too long. Please try again.', tone: 'error' }} />);
-    expect(screen.getByText('That took too long. Please try again.')).toBeInTheDocument();
   });
 
   it('holds Accept while a proposed night is still generating', () => {
