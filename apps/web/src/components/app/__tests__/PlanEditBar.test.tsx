@@ -87,10 +87,13 @@ describe('PlanEditBar (#38), built on the design system AgentInput', () => {
     expect(onDiscard).toHaveBeenCalled();
   });
 
-  it('holds Accept back while a proposed night is still generating', () => {
-    render(<Harness preview={{ id: '1', changeCount: 1, pending: true }} />);
+  it('holds Accept back while a proposed night is still generating, and Stop discards it', () => {
+    const onDiscard = vi.fn();
+    render(<Harness preview={{ id: '1', changeCount: 1, pending: true }} onDiscard={onDiscard} />);
     expect(screen.queryByRole('button', { name: 'Accept' })).toBeNull();
     expect(screen.getByText('Finding new dinners…')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /stop/i }));
+    expect(onDiscard).toHaveBeenCalled();
   });
 
   it('offers Undo after an accepted edit', () => {

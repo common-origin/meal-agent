@@ -745,7 +745,11 @@ export default function PlanPage() {
 
   /** "Keep as is" on a proposed night that failed: the plan keeps its meal there. */
   const handleKeepNight = (day: number) => {
-    setPreview((current) => (current ? dropNight(current, day) : current));
+    if (!preview) return;
+    const next = dropNight(preview, day);
+    // Keeping the last proposed night is a discard.
+    if (!next) return handleDiscardEdit();
+    setPreview(next);
     setPreviewRevision((revision) => revision + 1);
   };
 

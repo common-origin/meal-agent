@@ -19,7 +19,8 @@ export interface PlanEditBarProps {
    * The open preview, if any. `id` changes with every refinement, so AgentInput
    * announces a replacement. The review bar shows once nothing is still
    * generating (AgentInput's Accept can't be disabled) and at least one night
-   * would change; a failed night is retried or kept from the list itself.
+   * would change; until then Stop discards it, and a failed night is retried
+   * or kept from the list itself.
    */
   preview?: { id: string; changeCount: number; pending: boolean } | null;
   onAccept: () => void;
@@ -60,6 +61,9 @@ const PlanEditBar = forwardRef<AgentInputHandle, PlanEditBarProps>(function Plan
     : !preview && canUndo
       ? { state: "applied", onUndo }
       : undefined;
+  // While proposed nights generate there's nothing to accept yet, so Send becomes Stop, which discards
+  // the preview. Not during the edit request itself: stopping can't cancel that.
+  const generating = Boolean(preview?.pending) && !busy;
 
   return (
     <AgentInput
@@ -78,7 +82,8 @@ const PlanEditBar = forwardRef<AgentInputHandle, PlanEditBarProps>(function Plan
       maxLength={PLAN_EDIT_MAX_LENGTH}
       // Off until the household decides they want voice.
       enableVoice={false}
-      isSubmitting={busy}
+      isSubmitting={busy || generating}
+      onStop={generating ? onDiscard : undefined}
       disabled={disabled}
       helperText={HELPER_TEXT}
       statusMessage={
