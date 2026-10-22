@@ -369,7 +369,7 @@ export default function ShoppingListPage() {
               cols={1} 
               colsSm={2} 
               colsMd={4} 
-              gap={2}
+              gap="2"
             >
               <Box bg="emphasis" borderRadius="lg" p="md">
                 <Typography variant="subtitle" color="inverse">Items to buy</Typography>
@@ -415,7 +415,7 @@ export default function ShoppingListPage() {
                       {weeklyNutrition.mealsWithNutrition} of {weeklyNutrition.mealCount} meals
                     </Typography>
                   </Stack>
-                  <ResponsiveGrid cols={2} colsMd={4} gap={2}>
+                  <ResponsiveGrid cols={2} colsMd={4} gap="2">
                     <Box bg="subtle" borderRadius="md" p="md">
                       <Stack direction="column" gap="xs">
                         <Typography variant="small" color="subdued">Total calories</Typography>

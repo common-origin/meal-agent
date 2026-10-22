@@ -321,7 +321,7 @@ export default function RecipePage({ params }: RecipePageProps) {
         {recipe.nutrition && (
           <Box border="subtle" borderRadius="lg" p="lg" bg="default">
             <Stack direction="column" gap="md">
-              <ResponsiveGrid cols={2} colsMd={4} gap={2}>
+              <ResponsiveGrid cols={2} colsMd={4} gap="2">
                 <Stack direction="column" gap="none">
                   <Typography variant="overline" color="subdued">CALORIES</Typography>
                   <Typography variant="subtitle">{recipe.nutrition.calories} kcal</Typography>

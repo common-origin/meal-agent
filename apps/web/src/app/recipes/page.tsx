@@ -292,8 +292,8 @@ export default function RecipesPage() {
             colsSm={2} 
             colsMd={3} 
             colsLg={4}
-            gapX={4}
-            gapY={6}
+            gapX="4"
+            gapY="6"
           >
             {filteredRecipes.map((recipe) => {
               // Get chef/source display name

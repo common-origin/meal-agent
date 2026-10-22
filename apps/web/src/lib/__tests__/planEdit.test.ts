@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { acceptPreview, changeCount, isPreviewPending, proposeEdits, resolveNight, retryNight } from '../planEdit';
+import { acceptPreview, changeCount, dropNight, isPreviewPending, proposeEdits, resolveNight, retryNight } from '../planEdit';
 import type { MealCardProps } from '@/components/app/MealCard';
 
 const meal = (id: string): MealCardProps => ({ recipeId: id, title: id, chef: '', timeMins: 30 });
@@ -67,5 +67,12 @@ describe('plan edit preview (#38)', () => {
   it('counts nothing for no preview', () => {
     expect(changeCount(null)).toBe(0);
     expect(isPreviewPending(null)).toBe(false);
+  });
+
+  it('drops a night from the preview, and closes it once none are left', () => {
+    let preview = proposeEdits(null, [{ day: 1, action: 'replace' }, { day: 4, action: 'remove' }], 1);
+    preview = dropNight(preview, 1)!;
+    expect(Object.keys(preview.nights)).toEqual(['4']);
+    expect(dropNight(preview, 4)).toBeNull();
   });
 });

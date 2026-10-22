@@ -1,15 +1,14 @@
 import { describe, it, expect, vi } from 'vitest';
-import { useState } from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import PlanEditBar, { type PlanEditBarProps } from '../PlanEditBar';
+import { createRef, useState, type Ref } from 'react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { AgentInputHandle } from '@common-origin/design-system';
+import PlanEditBar, { PLAN_EDIT_MAX_LENGTH, type PlanEditBarProps } from '../PlanEditBar';
 
-function Harness(props: Partial<PlanEditBarProps>) {
+function Harness({ inputRef, ...props }: Partial<PlanEditBarProps> & { inputRef?: Ref<AgentInputHandle> }) {
   const [value, setValue] = useState(props.value ?? '');
   return (
     <PlanEditBar
-      previewOpen={false}
-      acceptCount={0}
-      acceptPending={false}
+      ref={inputRef}
       onAccept={() => {}}
       onDiscard={() => {}}
       canUndo={false}
@@ -56,39 +55,42 @@ describe('PlanEditBar (#38), built on the design system AgentInput', () => {
     expect(input()).toHaveValue('swap Tuesday');
   });
 
-  it("can't send an empty instruction", () => {
+  it("can't send an empty instruction, or one past the edit API's limit", () => {
     render(<Harness />);
+    expect(send()).toBeDisabled();
+    fireEvent.change(input(), { target: { value: 'x'.repeat(PLAN_EDIT_MAX_LENGTH + 1) } });
     expect(send()).toBeDisabled();
   });
 
-  it("shows the plan's own helper, never AgentInput's default banking copy", () => {
+  it("shows the plan's own helper, never banking copy", () => {
     render(<Harness />);
     expect(screen.getByText('Change any night, add one or drop one. Press Enter to send.')).toBeInTheDocument();
     expect(screen.queryByText(/transactions/i)).toBeNull();
   });
 
-  it('shows the reply line, and Accept and Discard while a preview is open', () => {
+  it('offers Accept and Discard in the review bar once every proposed night is ready', () => {
     const onAccept = vi.fn();
     const onDiscard = vi.fn();
     render(
       <Harness
-        previewOpen
-        acceptCount={2}
+        preview={{ id: '1', changeCount: 2, pending: false }}
         onAccept={onAccept}
         onDiscard={onDiscard}
         message={{ text: 'Swapping Tuesday and Thursday.', tone: 'info' }}
       />
     );
     expect(screen.getByText('Swapping Tuesday and Thursday.')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Accept 2 changes' }));
+    expect(screen.getByText('2 nights change')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Accept' }));
     fireEvent.click(screen.getByRole('button', { name: 'Discard' }));
     expect(onAccept).toHaveBeenCalled();
     expect(onDiscard).toHaveBeenCalled();
   });
 
-  it('holds Accept while a proposed night is still generating', () => {
-    render(<Harness previewOpen acceptCount={1} acceptPending />);
-    expect(screen.getByRole('button', { name: 'Generating...' })).toBeDisabled();
+  it('holds Accept back while a proposed night is still generating', () => {
+    render(<Harness preview={{ id: '1', changeCount: 1, pending: true }} />);
+    expect(screen.queryByRole('button', { name: 'Accept' })).toBeNull();
+    expect(screen.getByText('Finding new dinners…')).toBeInTheDocument();
   });
 
   it('offers Undo after an accepted edit', () => {
@@ -96,5 +98,12 @@ describe('PlanEditBar (#38), built on the design system AgentInput', () => {
     render(<Harness canUndo onUndo={onUndo} message={{ text: 'Updated 1 night.', tone: 'info' }} />);
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect(onUndo).toHaveBeenCalled();
+  });
+
+  it("exposes AgentInput's handle, so Change on a meal can focus the field", () => {
+    const ref = createRef<AgentInputHandle>();
+    render(<Harness inputRef={ref} value="Tuesday: " />);
+    act(() => ref.current?.focus({ cursor: 'end' }));
+    expect(input()).toHaveFocus();
   });
 });

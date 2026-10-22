@@ -64,7 +64,7 @@ export default function HomePage() {
           </Stack>
         </Box>
         <div style={{ maxWidth: "600px", margin: "0 auto", textAlign: "center" }} >
-          <ResponsiveGrid cols={1} colsSm={3} gapX="lg" gapY="lg" gap="lg">
+          <ResponsiveGrid cols={1} colsSm={3}>
             <Box borderRight="strong" p="lg">
               <Typography variant="body" color="subdued">
                 AI-powered meal plans tailored to your family

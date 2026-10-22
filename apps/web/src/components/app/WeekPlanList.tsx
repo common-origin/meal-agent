@@ -1,4 +1,4 @@
-import { Alert, Button, Chip, Stack, Box, Typography } from "@common-origin/design-system";
+import { AILabel, Alert, Button, Stack, Box, Typography } from "@common-origin/design-system";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { MemoizedMealCard, type MealCardProps } from "./MealCard";
@@ -25,6 +25,8 @@ export type WeekPlanListProps = {
   proposals?: Record<number, ProposedNight>;
   /** Retry one proposed night whose generation failed. */
   onRetryProposal?: (dayIndex: number) => void;
+  /** Keep the plan's meal on a night whose proposal failed, dropping it from the preview. */
+  onKeepNight?: (dayIndex: number) => void;
   /** "Change this" on a meal: puts the night in the edit input (#38). */
   onChangeClick?: (dayIndex: number) => void;
 };
@@ -46,6 +48,7 @@ export default function WeekPlanList({
   onReorder,
   proposals = {},
   onRetryProposal,
+  onKeepNight,
   onChangeClick,
 }: WeekPlanListProps) {
   const sensors = useSensors(
@@ -111,7 +114,13 @@ export default function WeekPlanList({
               if (proposal) {
                 return (
                   <DayRow key={day} day={day}>
-                    <ProposedNightView proposal={proposal} current={meals[index] ?? null} day={day} onRetry={onRetryProposal ? () => onRetryProposal(index) : undefined} />
+                    <ProposedNightView
+                      proposal={proposal}
+                      current={meals[index] ?? null}
+                      day={day}
+                      onRetry={onRetryProposal ? () => onRetryProposal(index) : undefined}
+                      onKeep={onKeepNight ? () => onKeepNight(index) : undefined}
+                    />
                   </DayRow>
                 );
               }
@@ -165,11 +174,13 @@ function ProposedNightView({
   current,
   day,
   onRetry,
+  onKeep,
 }: {
   proposal: ProposedNight;
   current: MealCardProps | null;
   day: string;
   onRetry?: () => void;
+  onKeep?: () => void;
 }) {
   const replaces = current ? (
     // <s>: the meal this proposal replaces, struck through.
@@ -186,7 +197,7 @@ function ProposedNightView({
             {replaces}
             <Typography variant="label">No dinner this night</Typography>
           </Stack>
-          <Chip variant="emphasis">To be removed</Chip>
+          <AILabel kind="removal" />
         </Stack>
       </Box>
     );
@@ -197,7 +208,7 @@ function ProposedNightView({
       <Stack direction="column" gap="sm">
         <Stack direction="row" gap="sm" alignItems="center" justifyContent="space-between" wrap>
           {replaces ?? <Typography variant="small" color="subdued">New dinner</Typography>}
-          <Chip variant="emphasis">Proposed</Chip>
+          <AILabel kind="suggested" />
         </Stack>
         {proposal.status === "loading" && (
           <LoadingSkeleton ariaLabel={`Finding something new for ${day}`} height={ROW_SKELETON_HEIGHT} />
@@ -208,11 +219,18 @@ function ProposedNightView({
             <Alert variant="error" inline>
               {proposal.error}
             </Alert>
-            {onRetry && (
-              <Button variant="secondary" size="small" onClick={onRetry}>
-                Try again
-              </Button>
-            )}
+            <Stack direction="row" gap="sm">
+              {onKeep && (
+                <Button variant="naked" size="small" onClick={onKeep}>
+                  Keep as is
+                </Button>
+              )}
+              {onRetry && (
+                <Button variant="secondary" size="small" onClick={onRetry}>
+                  Try again
+                </Button>
+              )}
+            </Stack>
           </Stack>
         )}
       </Stack>
