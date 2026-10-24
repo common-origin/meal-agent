@@ -7,10 +7,15 @@ import { createClient } from '@/lib/supabase/client';
 import { getSiteUrl, isSafeRedirectPath } from '@/lib/utils/url';
 import { getAuthErrorMessage } from '@/lib/auth/authErrorMessages';
 
-function SignupForm() {
+type SignupFormProps = {
+  /** Where to go after sign-up (set by proxy.ts's login redirect). */
+  redirectTo: string | null;
+  /** The prerendered stand-in before hydration: shown, but disabled (as on /login). */
+  pending?: boolean;
+};
+
+function SignupForm({ redirectTo, pending = false }: SignupFormProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirectTo');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -146,7 +151,7 @@ function SignupForm() {
 
           <Button
             onClick={handleGoogleSignUp}
-            disabled={loading}
+            disabled={loading || pending}
             style={{ width: '100%' }}
           >
             {loading ? 'Signing up...' : 'Continue with Google'}
@@ -166,13 +171,13 @@ function SignupForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                disabled={loading}
+                disabled={loading || pending}
                 required
               />
               <Button
                 type="submit"
                 variant="secondary"
-                disabled={loading}
+                disabled={loading || pending}
                 style={{ width: '100%' }}
               >
                 {loading ? 'Sending link...' : 'Send magic link'}
@@ -186,7 +191,7 @@ function SignupForm() {
               <Button
                 variant="naked"
                 onClick={() => router.push(loginHref)}
-                disabled={loading}
+                disabled={loading || pending}
               >
                 Sign in
               </Button>
@@ -198,10 +203,18 @@ function SignupForm() {
   );
 }
 
+/** The form with the URL's redirect target. */
+function SignupFormFromUrl() {
+  const searchParams = useSearchParams();
+  return <SignupForm redirectTo={searchParams.get('redirectTo')} />;
+}
+
 export default function SignupPage() {
+  // As on /login (#164): the prerender renders the fallback, so it's the
+  // form without the URL's redirect target rather than nothing.
   return (
-    <Suspense fallback={null}>
-      <SignupForm />
+    <Suspense fallback={<SignupForm redirectTo={null} pending />}>
+      <SignupFormFromUrl />
     </Suspense>
   );
 }
