@@ -28,6 +28,7 @@ import type { FamilySettings } from "@/lib/types/settings";
 import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
 import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
+import { weekDateLabels } from "@/lib/dayCard";
 import { trackIngredientUsage } from "@/lib/ingredientAnalytics";
 import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
 import { apiErrorMessage, redirectToLoginIfUnauthenticated } from "@/lib/api/client";
@@ -369,6 +370,24 @@ export default function PlanPage() {
     });
   };
 
+  /** "Move to another night…" (#160): swaps two nights' meals, so no other night shifts. */
+  const handleMoveNight = async (fromIndex: number, toIndex: number) => {
+    const newWeekPlan = DAYS.map((_, day) => weekPlanRef.current[day] ?? null);
+    const movedMeal = newWeekPlan[fromIndex];
+    [newWeekPlan[fromIndex], newWeekPlan[toIndex]] = [newWeekPlan[toIndex], movedMeal];
+    commitPlan(newWeekPlan);
+    // As with a drag: errors and retry slots belong to a day
+    failedSlotsRef.current = {};
+    setDayErrors({});
+    setAriaLiveMessage(`Moved to ${DAYS[toIndex]}.`);
+    await persistPlan(pantryItems);
+    track('meal_reordered', {
+      fromDay: DAYS[fromIndex],
+      toDay: DAYS[toIndex],
+      recipeId: movedMeal?.recipeId || 'none',
+    });
+  };
+
   const handleWizardComplete = async (wizardData: WeeklyPlanData) => {
     console.log('🧙 Wizard completed with data:', wizardData);
     setPantryItems(wizardData.pantryItems);
@@ -448,21 +467,38 @@ export default function PlanPage() {
     tasteSignals: await loadTasteSignals(weekPlanRef.current),
   });
 
-  /** A fresh slot for one day, against the proteins and cuisines on the rest of the week. */
-  const slotForDay = (dayIndex: number, context: Omit<DayRequest, 'slot'>): DaySlot => {
+  /**
+   * Fresh slots for some days, each against the proteins and cuisines on the
+   * rest of the week, including the slots chosen before it here.
+   */
+  const slotsForDays = (dayIndices: number[], context: Omit<DayRequest, 'slot'>): DaySlot[] => {
     const plan = weekPlanRef.current;
     const recipes = plan.map((meal) => (meal ? RecipeLibrary.getById(meal.recipeId) : undefined));
-    return buildDaySlot({
-      settings: context.familySettings,
-      cuisines: context.familySettings.cuisines,
-      pantryItems: context.pantryItems,
-      useSoonItems: context.useSoonItems,
-      seed: newSlateSeed(),
-      index: dayIndex,
-      weekProteins: plan.map((meal, i) => (meal ? slotByRecipeRef.current.get(meal.recipeId)?.protein ?? proteinOf(recipes[i]) : null)),
-      weekCuisines: plan.map((meal, i) => (meal ? recipes[i]?.cuisine ?? slotByRecipeRef.current.get(meal.recipeId)?.cuisine : null)),
+    const weekProteins: (string | null | undefined)[] = plan.map((meal, i) =>
+      meal ? slotByRecipeRef.current.get(meal.recipeId)?.protein ?? proteinOf(recipes[i]) : null
+    );
+    const weekCuisines: (string | null | undefined)[] = plan.map((meal, i) =>
+      meal ? recipes[i]?.cuisine ?? slotByRecipeRef.current.get(meal.recipeId)?.cuisine : null
+    );
+    return dayIndices.map((index) => {
+      const slot = buildDaySlot({
+        settings: context.familySettings,
+        cuisines: context.familySettings.cuisines,
+        pantryItems: context.pantryItems,
+        useSoonItems: context.useSoonItems,
+        seed: newSlateSeed(),
+        index,
+        weekProteins,
+        weekCuisines,
+      });
+      weekProteins[index] = slot.protein;
+      weekCuisines[index] = slot.cuisine;
+      return slot;
     });
   };
+
+  /** A fresh slot for one day, against the proteins and cuisines on the rest of the week. */
+  const slotForDay = (dayIndex: number, context: Omit<DayRequest, 'slot'>): DaySlot => slotsForDays([dayIndex], context)[0];
 
   /**
    * Generates and shows one day, returning its meal, or null on failure with
@@ -631,6 +667,39 @@ export default function PlanPage() {
 
   const handleGenerateSingleRecipe = (dayIndex: number) => generateOneDay(dayIndex, false);
   const handleRetryDay = (dayIndex: number) => generateOneDay(dayIndex, true);
+
+  /** "Fill empty nights" (#160): every empty night, as Generate does for one, then one save. */
+  const handleFillEmptyNights = async () => {
+    if (isSignOutInProgress) {
+      console.warn('Sign-out in progress, refusing to start recipe generation');
+      return;
+    }
+    const emptyDays = DAYS.flatMap((_, day) => (weekPlanRef.current[day] ? [] : [day]));
+    if (emptyDays.length === 0) return;
+    beginGeneration();
+    setGenerationError(null);
+    setAriaLiveMessage(`Generating AI recipes for ${emptyDays.length} nights...`);
+    try {
+      const context = await loadDayContext();
+      const settled = await Promise.allSettled(slotsForDays(emptyDays, context).map((slot) => runDay(context, slot)));
+      const meals = settled.flatMap((r) => (r.status === 'fulfilled' && r.value ? [r.value] : []));
+      if (meals.length > 0) await savePlan(meals.map((meal) => meal.recipeId), context.familySettings, context.pantryItems);
+      setAriaLiveMessage(
+        meals.length === emptyDays.length
+          ? `Filled ${meals.length} nights.`
+          : `Filled ${meals.length} of ${emptyDays.length} nights. You can retry the others.`
+      );
+      emptyDays.forEach((day) => {
+        const meal = weekPlanRef.current[day];
+        if (meal) track('swap', { day: DAYS[day], oldRecipeId: 'empty', newRecipeId: meal.recipeId });
+      });
+    } catch (error) {
+      console.error('❌ Error filling empty nights:', error);
+      setGenerationError(apiErrorMessage(null));
+    } finally {
+      endGeneration();
+    }
+  };
 
   /** The plan as the edit model should see it: the open preview's proposals in place. */
   const planForEdit = () =>
@@ -801,7 +870,9 @@ export default function PlanPage() {
     [weekPlan]
   );
   const summary = useMemo(() => summarisePlan(planRecipes, budgetPerMeal), [planRecipes, budgetPerMeal]);
-  const weekLabel = new Date(`${nextWeekMondayISO()}T00:00:00`).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+  const weekMonday = nextWeekMondayISO();
+  const weekDates = useMemo(() => weekDateLabels(weekMonday), [weekMonday]);
+  const weekLabel = weekDates[0];
   // Confirm waits for generation and for an open edit preview (accept or discard it first).
   const planBusy = isGenerating || generatingDays.length > 0 || editBusy || preview !== null;
 
@@ -886,6 +957,7 @@ export default function PlanPage() {
 
           <WeekPlanList
             meals={weekPlan}
+            dates={weekDates}
             // While a week generates, days fill in out of order: hold edits until it settles (#95).
             // While an edit preview is open, nights stay put until it's accepted or discarded (#38).
             onSwapClick={isGenerating || preview ? undefined : handleSwapClick}
@@ -897,6 +969,8 @@ export default function PlanPage() {
             onDeleteClick={isGenerating || preview ? undefined : handleDeleteMeal}
             isGeneratingPlan={isLoadingInitial}
             onReorder={isGenerating || preview ? undefined : handleReorder}
+            onMoveNight={isGenerating || preview ? undefined : handleMoveNight}
+            onFillEmptyClick={planBusy ? undefined : handleFillEmptyNights}
             proposals={preview?.nights}
             onRetryProposal={handleRetryProposal}
             onKeepNight={handleKeepNight}
