@@ -61,8 +61,8 @@ importers:
         specifier: ^4.0.92
         version: 4.0.92(zod@4.6.5)
       '@common-origin/design-system':
-        specifier: ^2.21.0
-        version: 2.21.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(styled-components@6.5.3(css-to-react-native@3.2.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))
+        specifier: ^2.22.0
+        version: 2.22.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(styled-components@6.5.3(css-to-react-native@3.2.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))
       '@dnd-kit/core':
         specifier: ^6.3.1
         version: 6.3.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -288,8 +288,8 @@ packages:
       react-dom: ^18.0.0 || ^19.0.0
       styled-components: ^6.0.0
 
-  '@common-origin/design-system@2.21.0':
-    resolution: {integrity: sha512-a+3VjWo3hUIyDun6Z+wB8TCljvpIGhMbtiXJnSJPX+/BifWZhWmqS/wcjNXfhvTyiD5QM0ceTrjx+37/KX4JGw==}
+  '@common-origin/design-system@2.22.0':
+    resolution: {integrity: sha512-/ht7dQl3trg6A0aQPa84vczA9lMqbxdAT+uiKo8deAkCoh+BUsK4dtHSBN3reQ7gEyKFCVQ6McloBbMIBl/86A==}
     engines: {node: '>=20'}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
@@ -3858,7 +3858,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@common-origin/design-system@2.21.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(styled-components@6.5.3(css-to-react-native@3.2.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))':
+  '@common-origin/design-system@2.22.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(styled-components@6.5.3(css-to-react-native@3.2.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))':
     dependencies:
       date-fns: 4.1.0
       react: 19.3.0
