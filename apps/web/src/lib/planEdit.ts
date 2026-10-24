@@ -94,6 +94,16 @@ export function acceptPreview(plan: Plan, preview: PlanEditPreview): { plan: Pla
   return { plan: next, newIds };
 }
 
+/**
+ * Drops one night from the preview, keeping the plan's meal there (e.g. "Keep
+ * as is" after a failure). Returns null once no proposed nights are left.
+ */
+export function dropNight(preview: PlanEditPreview, day: number): PlanEditPreview | null {
+  const nights = { ...preview.nights };
+  delete nights[day];
+  return Object.keys(nights).length > 0 ? { nights } : null;
+}
+
 /** How many nights an accept would change. */
 export function changeCount(preview: PlanEditPreview | null): number {
   if (!preview) return 0;

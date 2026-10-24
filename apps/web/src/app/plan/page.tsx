@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Badge, Stack, Typography, Button } from "@common-origin/design-system";
+import { Alert, Badge, Stack, Typography, Button, type AgentInputHandle } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import WeekPlanList from "@/components/app/WeekPlanList";
 import PlanDetailsSheet from "@/components/app/PlanDetailsSheet";
-import PlanEditBar, { PLAN_EDIT_INPUT_TEST_ID } from "@/components/app/PlanEditBar";
+import PlanEditBar from "@/components/app/PlanEditBar";
 import SwapDrawer from "@/components/app/SwapDrawer";
 import WeeklyPlanWizard, { type WeeklyPlanData } from "@/components/app/WeeklyPlanWizard";
 import PantrySheet from "@/components/app/PantrySheet";
@@ -23,7 +23,7 @@ import { itemsToUseSoon, mergeScan, type PantryState } from "@/lib/pantryItems";
 import { buildDaySlot, buildWeekSlate, newSlateSeed, type DaySlot } from "@/lib/planSlate";
 import { generateDay, type DayRequest } from "@/lib/client/generateDay";
 import { confirmPlan } from "@/lib/client/confirmPlan";
-import { acceptPreview, changeCount, isPreviewPending, proposeEdits, resolveNight, retryNight, type EditInstruction, type PlanEditPreview } from "@/lib/planEdit";
+import { acceptPreview, changeCount, dropNight, isPreviewPending, proposeEdits, resolveNight, retryNight, type EditInstruction, type PlanEditPreview } from "@/lib/planEdit";
 import type { FamilySettings } from "@/lib/types/settings";
 import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
@@ -137,6 +137,9 @@ export default function PlanPage() {
   // Editing by typing (#38): the open preview, the reply line, the input and one-step undo.
   const [preview, setPreview] = useState<PlanEditPreview | null>(null);
   const previewTokenRef = useRef(0);
+  // Bumped whenever an instruction or retry changes the preview, so the review bar announces a replacement.
+  const [previewRevision, setPreviewRevision] = useState(0);
+  const editInputRef = useRef<AgentInputHandle>(null);
   const [editMessage, setEditMessage] = useState<{ text: string; tone: 'info' | 'error' } | null>(null);
   const [editInput, setEditInput] = useState('');
   const [editBusy, setEditBusy] = useState(false);
@@ -710,6 +713,7 @@ export default function PlanPage() {
       setEditMessage({ text: data.reply, tone: 'info' });
       const token = ++previewTokenRef.current;
       setPreview((current) => proposeEdits(current, edits, token));
+      setPreviewRevision((revision) => revision + 1);
       track('plan_edit', { nights: edits.length, followUp: preview !== null });
       void generateProposals(edits, token);
     } catch (error) {
@@ -730,12 +734,23 @@ export default function PlanPage() {
     if (!night || night.kind !== 'replace') return;
     const token = ++previewTokenRef.current;
     setPreview((current) => (current ? retryNight(current, day, token) : current));
+    setPreviewRevision((revision) => revision + 1);
     beginGeneration();
     try {
       await generateProposal(await loadDayContext(), day, night.guidance, token);
     } finally {
       endGeneration();
     }
+  };
+
+  /** "Keep as is" on a proposed night that failed: the plan keeps its meal there. */
+  const handleKeepNight = (day: number) => {
+    if (!preview) return;
+    const next = dropNight(preview, day);
+    // Keeping the last proposed night is a discard.
+    if (!next) return handleDiscardEdit();
+    setPreview(next);
+    setPreviewRevision((revision) => revision + 1);
   };
 
   /** Apply the preview: one save, history for the new meals, and Undo on offer. */
@@ -772,12 +787,8 @@ export default function PlanPage() {
   /** "Change this" on a meal: name the night in the input, ready to type (#38). */
   const handleChangeClick = (day: number) => {
     setEditInput(`${DAYS[day]}: `);
-    // AgentInput takes no ref, so find its field by the bar's test id.
-    requestAnimationFrame(() => {
-      const field = document.querySelector<HTMLInputElement>(`[data-testid="${PLAN_EDIT_INPUT_TEST_ID}"] input`);
-      field?.focus();
-      field?.scrollIntoView({ block: 'nearest' });
-    });
+    // After the new value renders, so the caret lands after the night's name.
+    requestAnimationFrame(() => editInputRef.current?.focus({ cursor: 'end' }));
   };
 
   // The header's one-line summary and the Details sheet (#38), derived from the plan itself.
@@ -888,6 +899,7 @@ export default function PlanPage() {
             onReorder={isGenerating || preview ? undefined : handleReorder}
             proposals={preview?.nights}
             onRetryProposal={handleRetryProposal}
+            onKeepNight={handleKeepNight}
             onChangeClick={isGenerating ? undefined : handleChangeClick}
           />
 
@@ -915,15 +927,18 @@ export default function PlanPage() {
           {/* Shown whenever a week is on screen, even with every night empty ("add something Friday") */}
           {!isLoadingInitial && weekPlan.length > 0 ? (
             <PlanEditBar
+              ref={editInputRef}
               value={editInput}
               onChange={setEditInput}
               onSubmit={handleEditSubmit}
               message={editMessage}
               busy={editBusy}
               disabled={isGenerating}
-              previewOpen={preview !== null}
-              acceptCount={changeCount(preview)}
-              acceptPending={isPreviewPending(preview)}
+              preview={
+                preview
+                  ? { id: String(previewRevision), changeCount: changeCount(preview), pending: isPreviewPending(preview) }
+                  : null
+              }
               onAccept={handleAcceptEdit}
               onDiscard={handleDiscardEdit}
               canUndo={undoPlan !== null}

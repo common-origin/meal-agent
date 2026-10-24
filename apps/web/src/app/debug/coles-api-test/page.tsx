@@ -78,7 +78,7 @@ export default function ColesApiTestPage() {
         </Box>
 
         {/* Stats Cards */}
-        <ResponsiveGrid cols={1} colsSm={2} gapX={4} gapY={4}>
+        <ResponsiveGrid cols={1} colsSm={2} gapX="4" gapY="4">
           <Box bg="surface" p="md" style={{ borderRadius: '8px' }}>
             <Typography variant="h2">Rate Limit</Typography>
             <Stack direction="column" gap="sm">

@@ -97,7 +97,7 @@ export default function IngredientAnalyticsPage() {
         {/* Summary Stats */}
         <Stack direction="column" gap="md">
           <Typography variant="h2">Summary</Typography>
-          <ResponsiveGrid cols={1} colsSm={2} colsLg={4} gapX={4} gapY={4}>
+          <ResponsiveGrid cols={1} colsSm={2} colsLg={4} gapX="4" gapY="4">
             <Box bg="surface" p="lg" borderRadius="lg" border="subtle">
               <Stack direction="column" gap="xs">
                 <Typography variant="caption" color="subdued">Tracked Recipes</Typography>

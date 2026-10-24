@@ -70,12 +70,13 @@ describe('WeekPlanList proposals from a typed edit (#38)', () => {
     );
     expect(screen.getByText('Vietnamese rice paper bowls')).toBeInTheDocument();
     expect(screen.getByText('Pumpkin soup').tagName).toBe('S');
-    expect(screen.getByText('Proposed')).toBeInTheDocument();
-    expect(screen.getByText('To be removed')).toBeInTheDocument();
+    expect(screen.getByText('Suggested')).toBeInTheDocument();
+    expect(screen.getByText('Will be removed')).toBeInTheDocument();
   });
 
-  it('shows a loading proposal and a failed one with Try again', () => {
+  it('shows a loading proposal and a failed one with Try again and Keep as is', () => {
     const onRetryProposal = vi.fn();
+    const onKeepNight = vi.fn();
     render(
       <WeekPlanList
         meals={[meal('Pumpkin soup'), meal('Beef polenta'), null, null, null, null, null]}
@@ -84,11 +85,14 @@ describe('WeekPlanList proposals from a typed edit (#38)', () => {
           1: { kind: 'replace', status: 'failed', error: 'That took too long. Please try again.' },
         }}
         onRetryProposal={onRetryProposal}
+        onKeepNight={onKeepNight}
       />
     );
     expect(screen.getByLabelText('Finding something new for Monday')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(onRetryProposal).toHaveBeenCalledWith(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Keep as is' }));
+    expect(onKeepNight).toHaveBeenCalledWith(1);
   });
 
   it('"Change" on a meal reports its night', () => {
