@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef } from "react";
+import styled from "styled-components";
 import { AgentInput, type AgentInputHandle, type AgentInputProps } from "@common-origin/design-system";
 
 // The package exports AgentInputProps but not its review type.
@@ -39,6 +40,21 @@ export interface PlanEditBarProps {
   onSubmit: (instruction: string) => Promise<void>;
 }
 
+/**
+ * Docked, AgentInput sits on a band coloured with the design system's
+ * surface (near-white), which showed as a white box on this app's grey page
+ * (#167). The band takes the page's own background instead, so it still hides
+ * content scrolling under the input but has no visible edges. `display:
+ * contents` draws no box, so the input still sticks to the page's bottom.
+ * (AgentInput has no className prop; its root carries `data-docked`.)
+ */
+const PageBand = styled.div`
+  display: contents;
+  & > [data-docked] {
+    background-color: var(--background);
+  }
+`;
+
 /** What the review bar says about a preview: the nights an accept would change. */
 function proposalSummary(changeCount: number): string {
   return changeCount === 1 ? "1 night changes" : `${changeCount} nights change`;
@@ -48,8 +64,8 @@ function proposalSummary(changeCount: number): string {
  * The plan's edit input, docked at the bottom of the page (#38): the design
  * system's AgentInput, with its review bar for Accept, Discard and Undo. The
  * ref is AgentInput's handle, so "Change" on a meal can focus the field.
- * Render it as the page's last child, with no wrapper, so the docked input
- * sticks to the bottom of the page rather than of a wrapper.
+ * Render it as the page's last child, so the docked input sticks to the
+ * bottom of the page (its only wrapper, PageBand, draws no box).
  */
 const PlanEditBar = forwardRef<AgentInputHandle, PlanEditBarProps>(function PlanEditBar(
   { message, preview, onAccept, onDiscard, canUndo, onUndo, busy, disabled, value, onChange, onSubmit },
@@ -66,31 +82,33 @@ const PlanEditBar = forwardRef<AgentInputHandle, PlanEditBarProps>(function Plan
   const generating = Boolean(preview?.pending) && !busy;
 
   return (
-    <AgentInput
-      ref={ref}
-      docked
-      label="Tell me what to change"
-      value={value}
-      onChange={onChange}
-      onSubmit={({ text }) => onSubmit(text.trim())}
-      placeholder={
-        preview
-          ? "Refine it, e.g. no, something with fish"
-          : "Tell me what to change, e.g. swap Tuesday for something lighter"
-      }
-      review={review}
-      maxLength={PLAN_EDIT_MAX_LENGTH}
-      // Off until the household decides they want voice.
-      enableVoice={false}
-      isSubmitting={busy || generating}
-      onStop={generating ? onDiscard : undefined}
-      disabled={disabled}
-      helperText={HELPER_TEXT}
-      statusMessage={
-        message?.tone === "info" ? message.text : preview?.pending ? "Finding new dinners…" : undefined
-      }
-      errorMessage={message?.tone === "error" ? message.text : undefined}
-    />
+    <PageBand>
+      <AgentInput
+        ref={ref}
+        docked
+        label="Tell me what to change"
+        value={value}
+        onChange={onChange}
+        onSubmit={({ text }) => onSubmit(text.trim())}
+        placeholder={
+          preview
+            ? "Refine it, e.g. no, something with fish"
+            : "Tell me what to change, e.g. swap Tuesday for something lighter"
+        }
+        review={review}
+        maxLength={PLAN_EDIT_MAX_LENGTH}
+        // Off until the household decides they want voice.
+        enableVoice={false}
+        isSubmitting={busy || generating}
+        onStop={generating ? onDiscard : undefined}
+        disabled={disabled}
+        helperText={HELPER_TEXT}
+        statusMessage={
+          message?.tone === "info" ? message.text : preview?.pending ? "Finding new dinners…" : undefined
+        }
+        errorMessage={message?.tone === "error" ? message.text : undefined}
+      />
+    </PageBand>
   );
 });
 
