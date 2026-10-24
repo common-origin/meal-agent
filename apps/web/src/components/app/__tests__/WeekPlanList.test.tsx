@@ -159,8 +159,23 @@ describe('WeekPlanList day cards (#160)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Fill empty nights' }));
     expect(onFill).toHaveBeenCalled();
 
+    // No plan yet is a week to compose, not nights to fill
+    rerender(<WeekPlanList meals={[]} onFillEmptyClick={onFill} />);
+    expect(screen.queryByRole('button', { name: 'Fill empty nights' })).toBeNull();
+
     // Nights already generating don't count as empty
     rerender(<WeekPlanList meals={[...full.slice(0, 4), null, null, null]} generatingDays={[4, 5]} onFillEmptyClick={onFill} />);
     expect(screen.queryByRole('button', { name: 'Fill empty nights' })).toBeNull();
+  });
+
+  it('closes the move sheet for good when moving is switched off', () => {
+    const meals = [meal('Pumpkin soup'), null, null, null, null, null, null];
+    const { rerender } = render(<WeekPlanList meals={meals} onMoveNight={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'More options for Pumpkin soup' }));
+    fireEvent.click(screen.getByText('Move to another night…'));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    rerender(<WeekPlanList meals={meals} />);
+    rerender(<WeekPlanList meals={meals} onMoveNight={() => {}} />);
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

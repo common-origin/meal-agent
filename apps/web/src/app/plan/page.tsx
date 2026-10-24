@@ -674,13 +674,14 @@ export default function PlanPage() {
       console.warn('Sign-out in progress, refusing to start recipe generation');
       return;
     }
-    const emptyDays = DAYS.flatMap((_, day) => (weekPlanRef.current[day] ? [] : [day]));
-    if (emptyDays.length === 0) return;
     beginGeneration();
     setGenerationError(null);
-    setAriaLiveMessage(`Generating AI recipes for ${emptyDays.length} nights...`);
     try {
       const context = await loadDayContext();
+      // After the await, so a night filled meanwhile isn't generated over
+      const emptyDays = DAYS.flatMap((_, day) => (weekPlanRef.current[day] ? [] : [day]));
+      if (emptyDays.length === 0) return;
+      setAriaLiveMessage(`Generating AI recipes for ${emptyDays.length} nights...`);
       const settled = await Promise.allSettled(slotsForDays(emptyDays, context).map((slot) => runDay(context, slot)));
       const meals = settled.flatMap((r) => (r.status === 'fulfilled' && r.value ? [r.value] : []));
       if (meals.length > 0) await savePlan(meals.map((meal) => meal.recipeId), context.familySettings, context.pantryItems);
@@ -968,8 +969,9 @@ export default function PlanPage() {
             onRetryDay={isGenerating || preview ? undefined : handleRetryDay}
             onDeleteClick={isGenerating || preview ? undefined : handleDeleteMeal}
             isGeneratingPlan={isLoadingInitial}
-            onReorder={isGenerating || preview ? undefined : handleReorder}
-            onMoveNight={isGenerating || preview ? undefined : handleMoveNight}
+            // Not while any night is generating: its result lands by index, over a meal moved there
+            onReorder={planBusy ? undefined : handleReorder}
+            onMoveNight={planBusy ? undefined : handleMoveNight}
             onFillEmptyClick={planBusy ? undefined : handleFillEmptyNights}
             proposals={preview?.nights}
             onRetryProposal={handleRetryProposal}

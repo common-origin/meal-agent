@@ -97,6 +97,9 @@ const Frame = styled.article<{ $layout: DayCardLayout; $tone: DayCardTone }>`
 const Lead = styled.div`
   grid-area: lead;
   align-self: start;
+  /* Above a stretched title link, so the grip gets the press */
+  position: relative;
+  z-index: 1;
   /* Centres a 40px control on the 28px first line */
   margin-top: -0.375rem;
   ${phone} {

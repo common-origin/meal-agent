@@ -88,6 +88,8 @@ export default function WeekPlanList({
 
   // The night whose "Move to another night…" sheet is open
   const [moveFrom, setMoveFrom] = useState<number | null>(null);
+  // Moving was switched off (e.g. generation started): close the sheet for good, not just hide it
+  if (!onMoveNight && moveFrom !== null) setMoveFrom(null);
 
   // Tags the whole week shares don't tell meals apart, so they're hidden (#160)
   const tagsByNight = useMemo(
@@ -120,7 +122,9 @@ export default function WeekPlanList({
     );
   }
 
-  const emptyNights = DAYS.filter((_, i) => !meals[i] && !generatingDays.includes(i) && !proposals[i]).length;
+  // No plan yet (meals is []) is a week to compose, not seven nights to fill
+  const emptyNights =
+    meals.length === 0 ? 0 : DAYS.filter((_, i) => !meals[i] && !generatingDays.includes(i) && !proposals[i]).length;
   const moving = moveFrom !== null ? meals[moveFrom] : null;
 
   return (
