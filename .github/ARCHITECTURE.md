@@ -63,8 +63,9 @@ Pages, by area:
   `/debug/:path*`)
 - **Admin**: `/admin/debug` (not auth-gated — outside the proxy's matcher)
 
-Key components: `WeekPlanList` (the Monday–Sunday list, rows via
-`SortableDay`/`DayRow`), `PlanDetailsSheet` (budget and nutrition behind the
+Key components: `WeekPlanList` (the Monday–Sunday list; each night is a
+`DayCard` frame, with `SortableDay`/`PlanMeal`/`MealMenu` for a planned meal and
+display rules from `lib/dayCard.ts`), `PlanDetailsSheet` (budget and nutrition behind the
 header's summary line, from `lib/planSummary.ts`), `SwapDrawer`,
 `WeeklyPlanWizard` (planning); `PantrySheet`
 (pantry photo scanning); `MealCard`, `LeftoverCard`; `ColesShoppingModal`,
