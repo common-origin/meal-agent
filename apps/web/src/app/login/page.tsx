@@ -7,11 +7,15 @@ import { createClient } from '@/lib/supabase/client';
 import { getSiteUrl, isSafeRedirectPath } from '@/lib/utils/url';
 import { getAuthErrorMessage, getAuthErrorMessageForCode } from '@/lib/auth/authErrorMessages';
 
-function LoginForm() {
+type LoginFormProps = {
+  /** Where to go after sign-in (set by proxy.ts's login redirect). */
+  redirectTo: string | null;
+  /** An error code from auth/callback/route.ts. */
+  errorCode: string | null;
+};
+
+function LoginForm({ redirectTo, errorCode }: LoginFormProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirectTo');
-  const errorCode = searchParams.get('error');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -209,10 +213,19 @@ function LoginForm() {
   );
 }
 
+/** The form with the URL's redirect target and error code. */
+function LoginFormFromUrl() {
+  const searchParams = useSearchParams();
+  return <LoginForm redirectTo={searchParams.get('redirectTo')} errorCode={searchParams.get('error')} />;
+}
+
 export default function LoginPage() {
+  // useSearchParams() makes the static prerender render the fallback (#164),
+  // so the fallback is the form itself without the URL's values, not
+  // nothing: the page arrives with its content and styles.
   return (
-    <Suspense fallback={null}>
-      <LoginForm />
+    <Suspense fallback={<LoginForm redirectTo={null} errorCode={null} />}>
+      <LoginFormFromUrl />
     </Suspense>
   );
 }

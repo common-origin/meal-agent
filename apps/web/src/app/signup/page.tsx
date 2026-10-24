@@ -7,10 +7,8 @@ import { createClient } from '@/lib/supabase/client';
 import { getSiteUrl, isSafeRedirectPath } from '@/lib/utils/url';
 import { getAuthErrorMessage } from '@/lib/auth/authErrorMessages';
 
-function SignupForm() {
+function SignupForm({ redirectTo }: { redirectTo: string | null }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirectTo');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -198,10 +196,18 @@ function SignupForm() {
   );
 }
 
+/** The form with the URL's redirect target. */
+function SignupFormFromUrl() {
+  const searchParams = useSearchParams();
+  return <SignupForm redirectTo={searchParams.get('redirectTo')} />;
+}
+
 export default function SignupPage() {
+  // As on /login (#164): the prerender renders the fallback, so it's the
+  // form without the URL's redirect target rather than nothing.
   return (
-    <Suspense fallback={null}>
-      <SignupForm />
+    <Suspense fallback={<SignupForm redirectTo={null} />}>
+      <SignupFormFromUrl />
     </Suspense>
   );
 }
