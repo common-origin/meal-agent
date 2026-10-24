@@ -1,18 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef, MouseEvent, memo } from "react";
 import styled from "styled-components";
 import Link from "next/link";
-import { Button, Chip, Stack, Typography, Box, ChipGroup, IconButton, Tag, List, ListItem } from "@common-origin/design-system";
+import { Chip, Stack, Typography, Box, ChipGroup, Tag } from "@common-origin/design-system";
 import { tokens } from "@common-origin/design-system";
-import { toggleFavorite, isFavorite } from "@/lib/storage";
-import { track } from "@/lib/analytics";
 import { explainReasons } from "@/lib/explainer";
 import type { NutritionInfo } from "@/lib/types/recipe";
-import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
+import MealMenu from "./MealMenu";
 
 // Convert title to sentence case while preserving proper nouns
-function toSentenceCase(str: string): string {
+export function toSentenceCase(str: string): string {
   if (!str) return str;
   
   // Words that should remain capitalized (cuisine names, regions, proper nouns)
@@ -54,16 +51,10 @@ export type MealCardProps = {
   /** One line on why the AI chose this meal for this household this week (#94). */
   explanation?: string;
   nutrition?: NutritionInfo;
-  /** In the plan's ⋮ menu, "Use a saved recipe" for this night; in SwapDrawer, picking the card. */
+  /** In the ⋮ menu, "Use a saved recipe"; in SwapDrawer, picking the card. */
   onSwapClick?: () => void;
   onDeleteClick?: () => void;
-  /** "Change this": puts the night in the plan's edit input (#38). */
-  onChangeClick?: () => void;
   disableLink?: boolean; // When true, card won't be a link (used in SwapDrawer)
-  /** 'row' fits the plan's Monday–Sunday list (#38): no fixed height, chips and nutrition on one line. */
-  variant?: 'card' | 'row';
-  dragHandleRef?: (node: HTMLElement | null) => void;
-  dragListeners?: SyntheticListenerMap;
 };
 
 const CardLink = styled(Link)`
@@ -76,7 +67,7 @@ const CardLink = styled(Link)`
   }
 `;
 
-const CardWrapper = styled(Box)<{ $clickable?: boolean }>`
+const CardWrapper = styled(Box)`
   text-decoration: none;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -98,83 +89,26 @@ const StyledMealCardTitle = styled.h3`
   color: ${tokens.semantic.color.text.default}
 `;
 
-const MenuWrapper = styled.div`
-  position: relative;
-  flex-shrink: 0;
+// Tucks the ⋮ button into the card's corner
+const MenuCorner = styled.div`
   margin-top: -8px;
   margin-right: -8px;
 `;
 
-const CardOuter = styled.div`
-  position: relative;
-  height: 100%;
-`;
-
-const DragHandle = styled.div`
-  position: absolute;
-  bottom: ${tokens.semantic.spacing.layout.sm};
-  right: ${tokens.semantic.spacing.layout.sm};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  cursor: grab;
-  transition: opacity 0.2s;
-  touch-action: none;
-`;
-
-export default function MealCard({ 
+/** A recipe as a card, for the recipe library and the swap drawer. The plan's nights use PlanMeal (#160). */
+export default function MealCard({
   recipeId,
   title,
   chef,
-  timeMins, 
+  timeMins,
   conflicts = [],
   reasons = [],
   explanation,
   nutrition,
   onSwapClick,
   onDeleteClick,
-  onChangeClick,
   disableLink = false,
-  variant = 'card',
-  dragHandleRef,
-  dragListeners,
 }: MealCardProps) {
-  const [favorited, setFavorited] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setFavorited(isFavorite(recipeId));
-  }, [recipeId]);
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: globalThis.MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-    if (menuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [menuOpen]);
-
-  const handleFavoriteClick = (e?: MouseEvent<HTMLButtonElement>) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    const newFavorited = !favorited;
-    toggleFavorite(recipeId);
-    setFavorited(newFavorited);
-    
-    // Track analytics
-    track(newFavorited ? "favorite_added" : "favorite_removed", { recipeId });
-  };
-
   const handleCardClick = () => {
     if (disableLink && onSwapClick) {
       onSwapClick();
@@ -182,98 +116,22 @@ export default function MealCard({
   };
 
   // Get human-readable chip text from reasons
-  const explainedReasons = explainReasons(reasons, title, 3);
-  const chipLabels = explainedReasons.map(chip => chip.text);
+  const chipLabels = explainReasons(reasons, title, 3).map((chip) => chip.text);
 
   const cardContent = (
     <div onClick={disableLink ? handleCardClick : undefined}>
-      <CardWrapper 
-        bg="default"
-        borderRadius="lg"
-        p={variant === 'row' ? "md" : "lg"}
-        border="subtle"
-        minHeight={variant === 'row' ? undefined : "300px"}
-        $clickable={disableLink && !!onSwapClick}
-      >
+      <CardWrapper bg="default" borderRadius="lg" p="lg" border="subtle" minHeight="300px">
         <Stack direction="column" gap="md">
-          {/* Top section - Title and Menu */}
           <Stack direction="row" gap="md" alignItems="flex-start">
-            {variant === 'row' ? (
-              // Rows use the design system's type scale directly (#38).
-              <Box style={{ flex: 1 }}>
-                <Typography variant="h5" as="h3">{toSentenceCase(title)}</Typography>
-              </Box>
-            ) : (
-              <StyledMealCardTitle style={{ flex: 1 }}>{toSentenceCase(title)}</StyledMealCardTitle>
-            )}
-            {/* Kebab menu - stopPropagation prevents menu clicks from triggering card link */}
-            {onChangeClick && (
-              // Visible, not in the ⋮ menu: changing a night is the main edit (#38).
-              <div onClick={(e: MouseEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); }}>
-                <Button variant="secondary" size="small" onClick={onChangeClick} aria-label={`Change ${title}`}>
-                  Change
-                </Button>
-              </div>
-            )}
-            <MenuWrapper ref={menuRef} onClick={(e: MouseEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); }}>
-              <IconButton
-                variant="naked"
-                iconName="kebab"
-                size="medium"
-                onClick={() => setMenuOpen(!menuOpen)}
-                aria-label="Recipe options"
+            <StyledMealCardTitle style={{ flex: 1 }}>{toSentenceCase(title)}</StyledMealCardTitle>
+            <MenuCorner>
+              <MealMenu
+                recipeId={recipeId}
+                title={title}
+                onSwapClick={disableLink ? undefined : onSwapClick}
+                onDeleteClick={onDeleteClick}
               />
-              {menuOpen && (
-                <Box
-                  border="default"
-                  borderRadius="lg"
-                  bg="default"
-                  p="none"
-                  style={{
-                    position: 'absolute',
-                    overflow: 'hidden',
-                    right: 0,
-                    top: '100%',
-                    marginTop: 4,
-                    zIndex: 10,
-                    minWidth: 220,
-                    boxShadow: tokens.semantic.elevation.floating,
-                  }}
-                >
-                  <List dividers spacing="compact">
-                    {onSwapClick && !disableLink && (
-                      <ListItem
-                        primary="Use a saved recipe"
-                        interactive
-                        onClick={() => {
-                          onSwapClick();
-                          setMenuOpen(false);
-                        }}
-                      />
-                    )}
-                    <ListItem
-                      primary={favorited ? 'Remove from favourites' : 'Favourite this recipe'}
-                      interactive
-                      onClick={() => {
-                        handleFavoriteClick();
-                        setMenuOpen(false);
-                      }}
-                    />
-                    {onDeleteClick && (
-                      <ListItem
-                        primary="Remove from plan"
-                        interactive
-                        destructive
-                        onClick={() => {
-                          onDeleteClick();
-                          setMenuOpen(false);
-                        }}
-                      />
-                    )}
-                  </List>
-                </Box>
-              )}
-            </MenuWrapper>
+            </MenuCorner>
           </Stack>
 
           {explanation && (
@@ -282,94 +140,43 @@ export default function MealCard({
             </Typography>
           )}
 
- {variant === 'card' && (
-            // Spacer to push buttons to bottom
-            <div style={{ flex: 1 }} />
-          )}
-          
-          {/* In a row, keep the chips clear of the drag handle in the bottom-right corner */}
-          <Box pr={variant === 'row' && dragHandleRef ? '2xl' : undefined}>
-            <Stack direction="column" gap="sm">
-              <Stack direction="row" gap="sm" alignItems="center" wrap={variant === 'row'}>
-                {chef && <Tag variant="interactive" border={false}>{chef}</Tag>}
-                <Chip variant="default">{timeMins} mins</Chip>
-                {chipLabels.length > 0 && (
-                  <ChipGroup labels={chipLabels} variant="default" />
-                )}
-                {variant === 'row' && nutrition && (
-                  <Typography variant="small" color="subdued">
-                    {nutrition.calories} cal · {nutrition.protein}g protein
-                  </Typography>
-                )}
-              </Stack>
-              {/* Nutrition summary (if available) */}
-              {variant === 'card' && nutrition && (
-                <Stack direction="row" gap="md">
-                  <Typography variant="small" color="subdued">
-                    {nutrition.calories} cal
-                  </Typography>
-                  <Typography variant="small" color="subdued">
-                    {nutrition.protein}g protein
-                  </Typography>
-                </Stack>
-              )}
+          {/* Spacer to push the chips to the bottom */}
+          <div style={{ flex: 1 }} />
+
+          <Stack direction="column" gap="sm">
+            <Stack direction="row" gap="sm" alignItems="center">
+              {chef && <Tag variant="interactive" border={false}>{chef}</Tag>}
+              <Chip variant="default">{timeMins} mins</Chip>
+              {chipLabels.length > 0 && <ChipGroup labels={chipLabels} variant="default" />}
             </Stack>
-            {/* Conflicts section (optional) */}
-            {conflicts.length > 0 && (
-              <Stack direction="column" gap="xs">
-                <Typography variant="small">
-                  Conflicts:
+            {nutrition && (
+              <Stack direction="row" gap="md">
+                <Typography variant="small" color="subdued">
+                  {nutrition.calories} cal
                 </Typography>
-                {conflicts.map((conflict, index) => (
-                  <Typography key={index} variant="small">
-                    • {conflict}
-                  </Typography>
-                ))}
+                <Typography variant="small" color="subdued">
+                  {nutrition.protein}g protein
+                </Typography>
               </Stack>
             )}
+          </Stack>
 
-          </Box>
-
+          {conflicts.length > 0 && (
+            <Stack direction="column" gap="xs">
+              <Typography variant="small">Conflicts:</Typography>
+              {conflicts.map((conflict, index) => (
+                <Typography key={index} variant="small">
+                  • {conflict}
+                </Typography>
+              ))}
+            </Stack>
+          )}
         </Stack>
       </CardWrapper>
     </div>
   );
 
-  const dragHandle = dragHandleRef ? (
-    <DragHandle
-      ref={dragHandleRef}
-      {...(dragListeners as React.HTMLAttributes<HTMLDivElement>)}
-    >
-      <IconButton
-        variant="naked"
-        iconName="move"
-        size="small"
-        aria-label="Drag to reorder meal"
-        style={{ pointerEvents: 'none' }}
-      />
-    </DragHandle>
-  ) : null;
+  if (disableLink) return cardContent;
 
-  // Return wrapped in link or unwrapped
-  // Drag handle is placed outside the link to prevent drag from triggering navigation
-  if (disableLink) {
-    return (
-      <CardOuter>
-        {cardContent}
-        {dragHandle}
-      </CardOuter>
-    );
-  }
-
-  return (
-    <CardOuter>
-      <CardLink href={`/recipe/${recipeId}`}>
-        {cardContent}
-      </CardLink>
-      {dragHandle}
-    </CardOuter>
-  );
+  return <CardLink href={`/recipe/${recipeId}`}>{cardContent}</CardLink>;
 }
-
-// Memoize to prevent unnecessary re-renders
-export const MemoizedMealCard = memo(MealCard);

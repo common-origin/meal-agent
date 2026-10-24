@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 
 vi.mock('@/lib/storage', () => ({ isFavorite: () => false, toggleFavorite: vi.fn() }));
 vi.mock('@/lib/analytics', () => ({ track: vi.fn() }));
@@ -45,7 +45,7 @@ describe('WeekPlanList layout (#38)', () => {
     render(<WeekPlanList meals={meals} onGenerateClick={() => {}} onAddSavedRecipeClick={() => {}} />);
     const labels = screen.getAllByText(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)$/).map((el) => el.textContent);
     expect(labels).toEqual(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']);
-    expect(screen.getAllByText('No meal planned')).toHaveLength(5);
+    expect(screen.getAllByText('Nothing planned')).toHaveLength(5);
     expect(screen.getAllByRole('button', { name: 'Generate' })).toHaveLength(5);
   });
 
@@ -100,5 +100,82 @@ describe('WeekPlanList proposals from a typed edit (#38)', () => {
     render(<WeekPlanList meals={[null, null, meal('Roast chicken'), null, null, null, null]} onChangeClick={onChangeClick} />);
     fireEvent.click(screen.getByRole('button', { name: 'Change Roast chicken' }));
     expect(onChangeClick).toHaveBeenCalledWith(2);
+  });
+});
+
+describe('WeekPlanList day cards (#160)', () => {
+  const DATES = ['26 Oct', '27 Oct', '28 Oct', '29 Oct', '30 Oct', '31 Oct', '1 Nov'];
+
+  it('shows each night\'s date and flags a cook over 60 minutes', () => {
+    const meals = [null, { ...meal('Tortilla'), timeMins: 35 }, null, { ...meal('Carnitas'), timeMins: 85 }, null, null, null];
+    render(<WeekPlanList meals={meals} dates={DATES} />);
+    expect(screen.getByRole('article', { name: 'Tuesday 27 Oct' })).toBeInTheDocument();
+    expect(screen.getByText('1 Nov')).toBeInTheDocument();
+    expect(screen.getByText('35 min')).toBeInTheDocument();
+    expect(screen.getByText('85 min · long cook')).toBeInTheDocument();
+  });
+
+  it('hides a tag every meal shares and keeps one only some have', () => {
+    const meals = [
+      { ...meal('Tortilla'), reasons: ['kid-friendly'] },
+      { ...meal('Stir-fry'), reasons: ['kid-friendly'] },
+      { ...meal('Carnitas'), reasons: ['kid-friendly', 'bulk cook'] },
+      null, null, null, null,
+    ];
+    render(<WeekPlanList meals={meals} />);
+    expect(screen.queryByText('Kid-friendly')).toBeNull();
+    expect(screen.getByText('Bulk cook')).toBeInTheDocument();
+  });
+
+  it('shows the drag grip only when meals can be reordered', () => {
+    const meals = [meal('Pumpkin soup'), null, null, null, null, null, null];
+    const { rerender } = render(<WeekPlanList meals={meals} />);
+    expect(screen.queryByRole('button', { name: 'Reorder Monday' })).toBeNull();
+    rerender(<WeekPlanList meals={meals} onReorder={() => {}} />);
+    expect(screen.getByRole('button', { name: 'Reorder Monday' })).toBeInTheDocument();
+  });
+
+  it('"Move to another night…" swaps with the night picked', () => {
+    const onMoveNight = vi.fn();
+    const meals = [meal('Pumpkin soup'), null, null, meal('Roast chicken'), null, null, null];
+    render(<WeekPlanList meals={meals} onMoveNight={onMoveNight} />);
+    fireEvent.click(screen.getByRole('button', { name: 'More options for Pumpkin soup' }));
+    fireEvent.click(screen.getByText('Move to another night…'));
+    const sheet = screen.getByRole('dialog');
+    expect(within(sheet).queryByText(/^Monday/)).toBeNull();
+    expect(within(sheet).getByText('Friday (nothing planned)')).toBeInTheDocument();
+    fireEvent.click(within(sheet).getByText('Thursday: swap with Roast chicken'));
+    expect(onMoveNight).toHaveBeenCalledWith(0, 3);
+  });
+
+  it('offers "Fill empty nights" only with two or more empty nights', () => {
+    const onFill = vi.fn();
+    const full = Array.from({ length: 7 }, (_, i) => meal(`Meal ${i}`));
+    const { rerender } = render(<WeekPlanList meals={[...full.slice(0, 6), null]} onFillEmptyClick={onFill} />);
+    expect(screen.queryByRole('button', { name: 'Fill empty nights' })).toBeNull();
+
+    rerender(<WeekPlanList meals={[...full.slice(0, 4), null, null, null]} onFillEmptyClick={onFill} />);
+    expect(screen.getByText('3 nights still empty')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Fill empty nights' }));
+    expect(onFill).toHaveBeenCalled();
+
+    // No plan yet is a week to compose, not nights to fill
+    rerender(<WeekPlanList meals={[]} onFillEmptyClick={onFill} />);
+    expect(screen.queryByRole('button', { name: 'Fill empty nights' })).toBeNull();
+
+    // Nights already generating don't count as empty
+    rerender(<WeekPlanList meals={[...full.slice(0, 4), null, null, null]} generatingDays={[4, 5]} onFillEmptyClick={onFill} />);
+    expect(screen.queryByRole('button', { name: 'Fill empty nights' })).toBeNull();
+  });
+
+  it('closes the move sheet for good when moving is switched off', () => {
+    const meals = [meal('Pumpkin soup'), null, null, null, null, null, null];
+    const { rerender } = render(<WeekPlanList meals={meals} onMoveNight={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'More options for Pumpkin soup' }));
+    fireEvent.click(screen.getByText('Move to another night…'));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    rerender(<WeekPlanList meals={meals} />);
+    rerender(<WeekPlanList meals={meals} onMoveNight={() => {}} />);
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

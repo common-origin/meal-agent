@@ -1,14 +1,20 @@
-import { AILabel, Alert, Button, Stack, Box, Typography } from "@common-origin/design-system";
+import { useMemo, useState } from "react";
+import { AILabel, ActionSheet, Alert, Button, Stack, Box, Typography } from "@common-origin/design-system";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { MemoizedMealCard, type MealCardProps } from "./MealCard";
+import { toSentenceCase, type MealCardProps } from "./MealCard";
 import type { ProposedNight } from "@/lib/planEdit";
+import { explainReasons } from "@/lib/explainer";
+import { distinctTags } from "@/lib/dayCard";
 import SortableDay from "./SortableDay";
 import LoadingSkeleton from "./LoadingSkeleton";
-import DayRow from "./DayRow";
+import DayCard from "./DayCard";
+import PlanMeal from "./PlanMeal";
 
 export type WeekPlanListProps = {
   meals: (MealCardProps | null)[];
+  /** Monday to Sunday as "27 Oct", shown under each day (#160). */
+  dates?: string[];
   onSwapClick?: (dayIndex: number) => void;
   onGenerateClick?: (dayIndex: number) => void;
   onAddSavedRecipeClick?: (dayIndex: number) => void;
@@ -20,7 +26,12 @@ export type WeekPlanListProps = {
   onDeleteClick?: (dayIndex: number) => void;
   /** Skeletons for every night, for the initial load only. */
   isGeneratingPlan?: boolean;
+  /** Drag a meal to another position; the nights between shift along. */
   onReorder?: (oldIndex: number, newIndex: number) => void;
+  /** "Move to another night…": swaps two nights' meals (#160). */
+  onMoveNight?: (fromIndex: number, toIndex: number) => void;
+  /** "Fill empty nights": shown when two or more nights are empty (#160). */
+  onFillEmptyClick?: () => void;
   /** Nights a typed edit proposes to change, shown in place until accepted or discarded (#38). */
   proposals?: Record<number, ProposedNight>;
   /** Retry one proposed night whose generation failed. */
@@ -32,11 +43,16 @@ export type WeekPlanListProps = {
 };
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-const ROW_SKELETON_HEIGHT = "120px";
+// About a meal's title and details line
+const ROW_SKELETON_HEIGHT = "64px";
 
-/** The week as a Monday–Sunday list (#38), one row per night. */
+/** A meal's reason tags, as its card would label them. */
+const tagsOf = (meal: MealCardProps) => explainReasons(meal.reasons ?? [], meal.title, 3).map((chip) => chip.text);
+
+/** The week as a Monday–Sunday list (#38, #160), one card per night. */
 export default function WeekPlanList({
   meals,
+  dates = [],
   onSwapClick,
   onGenerateClick,
   onAddSavedRecipeClick,
@@ -46,6 +62,8 @@ export default function WeekPlanList({
   onDeleteClick,
   isGeneratingPlan,
   onReorder,
+  onMoveNight,
+  onFillEmptyClick,
   proposals = {},
   onRetryProposal,
   onKeepNight,
@@ -68,6 +86,17 @@ export default function WeekPlanList({
     })
   );
 
+  // The night whose "Move to another night…" sheet is open
+  const [moveFrom, setMoveFrom] = useState<number | null>(null);
+  // Moving was switched off (e.g. generation started): close the sheet for good, not just hide it
+  if (!onMoveNight && moveFrom !== null) setMoveFrom(null);
+
+  // Tags the whole week shares don't tell meals apart, so they're hidden (#160)
+  const tagsByNight = useMemo(
+    () => distinctTags(DAYS.map((_, i) => (meals[i] ? tagsOf(meals[i]) : null))),
+    [meals]
+  );
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -83,87 +112,140 @@ export default function WeekPlanList({
     return (
       <Box mt="xl">
         <Stack direction="column" gap="md">
-          {DAYS.map((day) => (
-            <DayRow key={day} day={day}>
+          {DAYS.map((day, index) => (
+            <DayCard key={day} day={day} date={dates[index]}>
               <LoadingSkeleton ariaLabel={`Loading recipe for ${day}`} height={ROW_SKELETON_HEIGHT} />
-            </DayRow>
+            </DayCard>
           ))}
         </Stack>
       </Box>
     );
   }
 
+  // No plan yet (meals is []) is a week to compose, not seven nights to fill
+  const emptyNights =
+    meals.length === 0 ? 0 : DAYS.filter((_, i) => !meals[i] && !generatingDays.includes(i) && !proposals[i]).length;
+  const moving = moveFrom !== null ? meals[moveFrom] : null;
+
   return (
     <Box mt="xl">
-      {/* A stable id keeps dnd-kit's generated aria-describedby the same on server and client. */}
-      <DndContext id="week-plan-list" sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={DAYS} strategy={verticalListSortingStrategy}>
-          <Stack direction="column" gap="md">
-            {DAYS.map((day, index) => {
-              // Each night shows its own skeleton until its own request resolves (#95)
-              if (generatingDays.includes(index)) {
-                return (
-                  <DayRow key={day} day={day}>
-                    <LoadingSkeleton ariaLabel={`Generating AI recipe for ${day}`} height={ROW_SKELETON_HEIGHT} />
-                  </DayRow>
-                );
-              }
+      <Stack direction="column" gap="md">
+        {onFillEmptyClick && emptyNights >= 2 && (
+          <Stack direction="row" gap="md" alignItems="center" justifyContent="space-between" wrap>
+            <Typography variant="small" color="subdued">
+              {emptyNights} nights still empty
+            </Typography>
+            <Button variant="secondary" size="medium" iconName="add" onClick={onFillEmptyClick}>
+              Fill empty nights
+            </Button>
+          </Stack>
+        )}
 
-              // A typed edit proposes something else for this night (#38)
-              const proposal = proposals[index];
-              if (proposal) {
-                return (
-                  <DayRow key={day} day={day}>
+        {/* A stable id keeps dnd-kit's generated aria-describedby the same on server and client. */}
+        <DndContext id="week-plan-list" sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={DAYS} strategy={verticalListSortingStrategy}>
+            <Stack direction="column" gap="md">
+              {DAYS.map((day, index) => {
+                const date = dates[index];
+
+                // Each night shows its own skeleton until its own request resolves (#95)
+                if (generatingDays.includes(index)) {
+                  return (
+                    <DayCard key={day} day={day} date={date}>
+                      <LoadingSkeleton ariaLabel={`Generating AI recipe for ${day}`} height={ROW_SKELETON_HEIGHT} />
+                    </DayCard>
+                  );
+                }
+
+                // A typed edit proposes something else for this night (#38)
+                const proposal = proposals[index];
+                if (proposal) {
+                  return (
                     <ProposedNightView
+                      key={day}
                       proposal={proposal}
                       current={meals[index] ?? null}
                       day={day}
+                      date={date}
                       onRetry={onRetryProposal ? () => onRetryProposal(index) : undefined}
                       onKeep={onKeepNight ? () => onKeepNight(index) : undefined}
                     />
-                  </DayRow>
-                );
-              }
+                  );
+                }
 
-              // A night whose generation failed: the error, and a retry for just this night
-              const error = dayErrors[index];
-              if (error && !meals[index]) {
-                return (
-                  <DayRow key={day} day={day}>
-                    <Box borderRadius="lg" p="md" bg="surface" border="subtle">
-                      <Stack direction="row" gap="md" alignItems="center" justifyContent="space-between" wrap>
-                        <Alert variant="error" inline>
-                          {error}
-                        </Alert>
-                        {onRetryDay && (
-                          <Button variant="primary" size="small" onClick={() => onRetryDay(index)}>
+                // A night whose generation failed: the error, and a retry for just this night
+                const error = dayErrors[index];
+                if (error && !meals[index]) {
+                  return (
+                    <DayCard
+                      key={day}
+                      day={day}
+                      date={date}
+                      layout="stacked"
+                      tone="empty"
+                      actions={
+                        onRetryDay && (
+                          <Button variant="secondary" size="medium" onClick={() => onRetryDay(index)}>
                             Retry this day
                           </Button>
-                        )}
-                      </Stack>
-                    </Box>
-                  </DayRow>
-                );
-              }
+                        )
+                      }
+                    >
+                      <Alert variant="error" inline>
+                        {error}
+                      </Alert>
+                    </DayCard>
+                  );
+                }
 
-              return (
-                <SortableDay
-                  key={day}
-                  id={day}
-                  day={day}
-                  index={index}
-                  meal={meals[index] ?? null}
-                  onSwapClick={onSwapClick}
-                  onDeleteClick={onDeleteClick}
-                  onGenerateClick={onGenerateClick}
-                  onAddSavedRecipeClick={onAddSavedRecipeClick}
-                  onChangeClick={onChangeClick}
-                />
-              );
-            })}
-          </Stack>
-        </SortableContext>
-      </DndContext>
+                return (
+                  <SortableDay
+                    key={day}
+                    id={day}
+                    day={day}
+                    date={date}
+                    index={index}
+                    meal={meals[index] ?? null}
+                    tags={tagsByNight[index] ?? []}
+                    canReorder={Boolean(onReorder)}
+                    onSwapClick={onSwapClick}
+                    onDeleteClick={onDeleteClick}
+                    onGenerateClick={onGenerateClick}
+                    onAddSavedRecipeClick={onAddSavedRecipeClick}
+                    onChangeClick={onChangeClick}
+                    onMoveClick={onMoveNight ? setMoveFrom : undefined}
+                  />
+                );
+              })}
+            </Stack>
+          </SortableContext>
+        </DndContext>
+      </Stack>
+
+      <ActionSheet
+        isOpen={moveFrom !== null && moving !== null && Boolean(onMoveNight)}
+        onClose={() => setMoveFrom(null)}
+        title={moveFrom !== null ? `Move ${DAYS[moveFrom]}'s dinner` : undefined}
+        description={moving ? toSentenceCase(moving.title) : undefined}
+        actions={
+          moveFrom === null
+            ? []
+            : DAYS.flatMap((day, to) =>
+                to === moveFrom
+                  ? []
+                  : [
+                      {
+                        id: day,
+                        label: meals[to] ? `${day}: swap with ${toSentenceCase(meals[to]!.title)}` : `${day} (nothing planned)`,
+                        onSelect: () => {
+                          onMoveNight?.(moveFrom, to);
+                          setMoveFrom(null);
+                        },
+                      },
+                    ]
+              )
+        }
+      />
     </Box>
   );
 }
@@ -173,12 +255,14 @@ function ProposedNightView({
   proposal,
   current,
   day,
+  date,
   onRetry,
   onKeep,
 }: {
   proposal: ProposedNight;
   current: MealCardProps | null;
   day: string;
+  date?: string;
   onRetry?: () => void;
   onKeep?: () => void;
 }) {
@@ -187,53 +271,47 @@ function ProposedNightView({
     <Typography as="s" variant="small" color="subdued">
       {current.title}
     </Typography>
-  ) : null;
-
-  if (proposal.kind === "remove") {
-    return (
-      <Box borderRadius="lg" p="md" bg="subtle" border="interactive">
-        <Stack direction="row" gap="md" alignItems="center" justifyContent="space-between" wrap>
-          <Stack direction="column" gap="xs">
-            {replaces}
-            <Typography variant="label">No dinner this night</Typography>
-          </Stack>
-          <AILabel kind="removal" />
-        </Stack>
-      </Box>
-    );
-  }
+  ) : (
+    <Typography variant="small" color="subdued">New dinner</Typography>
+  );
 
   return (
-    <Box borderRadius="lg" p="sm" bg="subtle" border="interactive">
+    <DayCard day={day} date={date} tone="proposal" actions={<AILabel kind={proposal.kind === "remove" ? "removal" : "suggested"} />}>
       <Stack direction="column" gap="sm">
-        <Stack direction="row" gap="sm" alignItems="center" justifyContent="space-between" wrap>
-          {replaces ?? <Typography variant="small" color="subdued">New dinner</Typography>}
-          <AILabel kind="suggested" />
-        </Stack>
-        {proposal.status === "loading" && (
-          <LoadingSkeleton ariaLabel={`Finding something new for ${day}`} height={ROW_SKELETON_HEIGHT} />
-        )}
-        {proposal.status === "ready" && <MemoizedMealCard {...proposal.meal} variant="row" disableLink />}
-        {proposal.status === "failed" && (
-          <Stack direction="row" gap="md" alignItems="center" justifyContent="space-between" wrap>
-            <Alert variant="error" inline>
-              {proposal.error}
-            </Alert>
-            <Stack direction="row" gap="sm">
-              {onKeep && (
-                <Button variant="naked" size="small" onClick={onKeep}>
-                  Keep as is
-                </Button>
-              )}
-              {onRetry && (
-                <Button variant="secondary" size="small" onClick={onRetry}>
-                  Try again
-                </Button>
-              )}
-            </Stack>
-          </Stack>
+        {proposal.kind === "remove" ? (
+          <>
+            {current && replaces}
+            <Typography variant="label">No dinner this night</Typography>
+          </>
+        ) : (
+          <>
+            {replaces}
+            {proposal.status === "loading" && (
+              <LoadingSkeleton ariaLabel={`Finding something new for ${day}`} height={ROW_SKELETON_HEIGHT} />
+            )}
+            {proposal.status === "ready" && <PlanMeal {...proposal.meal} tags={tagsOf(proposal.meal)} disableLink />}
+            {proposal.status === "failed" && (
+              <Stack direction="row" gap="md" alignItems="center" justifyContent="space-between" wrap>
+                <Alert variant="error" inline>
+                  {proposal.error}
+                </Alert>
+                <Stack direction="row" gap="sm">
+                  {onKeep && (
+                    <Button variant="naked" size="medium" onClick={onKeep}>
+                      Keep as is
+                    </Button>
+                  )}
+                  {onRetry && (
+                    <Button variant="secondary" size="medium" onClick={onRetry}>
+                      Try again
+                    </Button>
+                  )}
+                </Stack>
+              </Stack>
+            )}
+          </>
         )}
       </Stack>
-    </Box>
+    </DayCard>
   );
 }
