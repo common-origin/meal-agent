@@ -12,9 +12,14 @@ type LoginFormProps = {
   redirectTo: string | null;
   /** An error code from auth/callback/route.ts. */
   errorCode: string | null;
+  /**
+   * The prerendered stand-in before hydration: shown, but disabled, so a
+   * native submit can't reload the page without the URL's values.
+   */
+  pending?: boolean;
 };
 
-function LoginForm({ redirectTo, errorCode }: LoginFormProps) {
+function LoginForm({ redirectTo, errorCode, pending = false }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -161,7 +166,7 @@ function LoginForm({ redirectTo, errorCode }: LoginFormProps) {
 
           <Button
             onClick={handleGoogleSignIn}
-            disabled={loading}
+            disabled={loading || pending}
             style={{ width: '100%' }}
           >
             {loading ? 'Signing in...' : 'Continue with Google'}
@@ -181,13 +186,13 @@ function LoginForm({ redirectTo, errorCode }: LoginFormProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                disabled={loading}
+                disabled={loading || pending}
                 required
               />
               <Button
                 type="submit"
                 variant="secondary"
-                disabled={loading}
+                disabled={loading || pending}
                 style={{ width: '100%' }}
               >
                 {loading ? 'Sending link...' : 'Send magic link'}
@@ -201,7 +206,7 @@ function LoginForm({ redirectTo, errorCode }: LoginFormProps) {
               <Button
                 variant="naked"
                 onClick={() => router.push(signupHref)}
-                disabled={loading}
+                disabled={loading || pending}
               >
                 Sign up
               </Button>
@@ -224,7 +229,7 @@ export default function LoginPage() {
   // so the fallback is the form itself without the URL's values, not
   // nothing: the page arrives with its content and styles.
   return (
-    <Suspense fallback={<LoginForm redirectTo={null} errorCode={null} />}>
+    <Suspense fallback={<LoginForm redirectTo={null} errorCode={null} pending />}>
       <LoginFormFromUrl />
     </Suspense>
   );

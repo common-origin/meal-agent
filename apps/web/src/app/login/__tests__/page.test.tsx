@@ -3,9 +3,14 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const push = vi.fn();
 let params = new URLSearchParams();
+// As in a static prerender, where reading the URL suspends to the fallback
+let suspendSearchParams = false;
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push }),
-  useSearchParams: () => params,
+  useSearchParams: () => {
+    if (suspendSearchParams) throw new Promise(() => {});
+    return params;
+  },
 }));
 
 const signInWithOAuth = vi.fn<(options: unknown) => Promise<{ error: null }>>(async () => ({ error: null }));
@@ -21,6 +26,7 @@ describe('/login and /signup read the URL after the form renders (#164)', () => 
     push.mockReset();
     signInWithOAuth.mockClear();
     params = new URLSearchParams();
+    suspendSearchParams = false;
   });
 
   it('shows the callback error and keeps redirectTo through sign-in and the switch to sign-up', async () => {
@@ -52,5 +58,15 @@ describe('/login and /signup read the URL after the form renders (#164)', () => 
     render(<SignupPage />);
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(push).toHaveBeenCalledWith('/login?redirectTo=%2Fplan');
+  });
+
+  it('ships the prerendered stand-in disabled, so it can\'t be submitted before hydration', async () => {
+    const { renderToString } = await import('react-dom/server');
+    suspendSearchParams = true;
+    const html = renderToString(<LoginPage />);
+    expect(html).toContain('Welcome back');
+    const submit = html.match(/<button[^>]*type="submit"[^>]*>/)?.[0] ?? '';
+    expect(submit).toContain('disabled');
+    expect(renderToString(<SignupPage />).match(/<button[^>]*type="submit"[^>]*>/)?.[0]).toContain('disabled');
   });
 });
