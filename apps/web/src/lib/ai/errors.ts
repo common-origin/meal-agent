@@ -16,6 +16,8 @@ export const AI_ERRORS = {
   rate_limited: { status: 429, message: "You've hit the limit for now. Try again in a few minutes." },
   daily_cap: { status: 429, message: "You've reached today's AI limit. It resets tomorrow." },
   provider_busy: { status: 503, message: 'The AI service is busy right now. Please try again in a minute.' },
+  // The AI account's credits or billing (#171): retrying won't help until the owner tops it up.
+  ai_unavailable: { status: 503, message: "AI features aren't available right now. Please try again later." },
   timeout: { status: 504, message: 'That took too long. Please try again.' },
   invalid_output: { status: 502, message: "The AI returned something we couldn't read. Please try again." },
   invalid_request: { status: 400, message: 'Something was wrong with that request.' },
@@ -64,6 +66,8 @@ export function toAiErrorCode(error: unknown): AiErrorCode {
     case 'rate_limited':
     case 'unavailable':
       return 'provider_busy';
+    case 'billing':
+      return 'ai_unavailable';
     default:
       return 'unknown';
   }
@@ -74,6 +78,8 @@ export function aiFailureResponse(error: unknown, route: string): NextResponse<A
   const code = toAiErrorCode(error);
   if (code === 'timeout') console.warn(`${route}: AI call hit its deadline, returning 504`);
   else if (code === 'invalid_output') console.warn(`${route}: AI output failed schema validation twice, returning 502`);
+  // Named plainly so the owner can find it in the logs: only topping up the AI account fixes it.
+  else if (code === 'ai_unavailable') console.error(`${route}: the AI provider refused for billing (credits depleted?). Top up the Gemini project in AI Studio.`, error);
   else console.error(`${route}: request failed (${code})`, error);
   return aiErrorResponse(code);
 }

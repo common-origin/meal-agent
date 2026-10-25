@@ -49,9 +49,9 @@ function noObjectError(finishReason = 'stop') {
   });
 }
 
-function apiError(statusCode: number) {
+function apiError(statusCode: number, message = `HTTP ${statusCode}`) {
   return new APICallError({
-    message: `HTTP ${statusCode}`,
+    message,
     url: 'https://generativelanguage.googleapis.com',
     requestBodyValues: {},
     statusCode,
@@ -283,6 +283,11 @@ describe('runAiTask error mapping', () => {
     ['a 503 after retries', retryError(apiError(503)), 'unavailable', 503, 'error', 'http_503'],
     ['a 500', apiError(500), 'unavailable', 500, 'error', 'http_500'],
     ['a 400', apiError(400), 'error', 400, 'error', 'http_400'],
+    // Gemini's prepaid credits running out (#171)
+    ['a 402', apiError(402), 'billing', 402, 'error', 'http_402'],
+    ['credits depleted under another status', apiError(429, 'Your prepayment credits are depleted.'), 'billing', 429, 'error', 'http_429'],
+    // Gemini's ordinary quota 429 mentions billing too; it's still a rate limit
+    ['a quota 429 that mentions billing', apiError(429, 'You exceeded your current quota, please check your plan and billing details.'), 'rate_limited', 429, 'rate_limited', 'http_429'],
     ['a non-HTTP failure', new TypeError('fetch failed'), 'error', undefined, 'error', 'TypeError'],
   ])('maps %s', async (_label, thrown, code, httpStatus, status, errorCode) => {
     mocks.generateText.mockRejectedValue(thrown);

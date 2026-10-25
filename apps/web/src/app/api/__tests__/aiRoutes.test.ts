@@ -534,6 +534,20 @@ describe('one error contract (#96)', () => {
     });
   });
 
+  it("maps the provider refusing for billing (Gemini's 402, credits depleted) to 503 ai_unavailable (#171)", async () => {
+    signIn();
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mocks.generateRecipes.mockRejectedValue(new AiTaskError('billing', 'Your prepayment credits are depleted.', 402));
+    const res = await routes[0].call();
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({
+      error: "AI features aren't available right now. Please try again later.",
+      code: 'ai_unavailable',
+    });
+    // The owner can find the cause in the logs
+    expect(String(logged.mock.calls[0][0])).toMatch(/billing/);
+  });
+
   it('generate-recipes returns 422 blocked with generation copy', async () => {
     signIn();
     mocks.generateRecipes.mockResolvedValue({ blocked: true, rawFinishReason: 'SAFETY' });

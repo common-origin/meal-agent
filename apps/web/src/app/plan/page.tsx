@@ -21,7 +21,7 @@ import { getRecentRecipeIds } from "@/lib/recencyTracker";
 import { buildTasteSignals, type TasteSignals } from "@/lib/tasteSignals";
 import { itemsToUseSoon, mergeScan, type PantryState } from "@/lib/pantryItems";
 import { buildDaySlot, buildWeekSlate, newSlateSeed, type DaySlot } from "@/lib/planSlate";
-import { generateDay, type DayRequest } from "@/lib/client/generateDay";
+import { generateDay, weekFailure, type DayRequest } from "@/lib/client/generateDay";
 import { confirmPlan } from "@/lib/client/confirmPlan";
 import { acceptPreview, changeCount, dropNight, isPreviewPending, proposeEdits, resolveNight, retryNight, type EditInstruction, type PlanEditPreview } from "@/lib/planEdit";
 import type { FamilySettings } from "@/lib/types/settings";
@@ -116,6 +116,8 @@ export default function PlanPage() {
   const slotByRecipeRef = useRef(new Map<string, DaySlot>());
   // A failed day's slot, by day, so "Retry this day" asks for the same thing.
   const failedSlotsRef = useRef<Record<number, DaySlot>>({});
+  // Each failed day's message, as runDay last set it: read synchronously when a whole week fails (#171).
+  const dayErrorTextRef = useRef<Record<number, string>>({});
   // The settings (e.g. the wizard's cuisines for this week) the current plan was generated with.
   const planSettingsRef = useRef<FamilySettings | null>(null);
   // Saves run one at a time, each writing the latest plan, so an earlier
@@ -401,8 +403,9 @@ export default function PlanPage() {
       cuisines: wizardData.cuisines.length > 0 ? wizardData.cuisines : familySettings.cuisines,
       preferredChef: wizardData.preferredChef || familySettings.preferredChef,
     };
-    const ok = await generateWeek(weeklySettings, wizardData.pantryItems, wizardData.useSoonItems);
-    if (!ok) setShowWizard(true);
+    // Stays on the plan even if nothing generated: its alert says why, and the
+    // nights offer Generate (going back to the wizard hid the alert, #171).
+    await generateWeek(weeklySettings, wizardData.pantryItems, wizardData.useSoonItems);
   };
 
   const handleScanPantryImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -513,11 +516,15 @@ export default function PlanPage() {
       return next;
     });
     delete failedSlotsRef.current[index];
+    delete dayErrorTextRef.current[index];
     try {
       const result = await generateDay({ ...context, slot });
       if (!result.ok) {
         failedSlotsRef.current[index] = slot;
-        if (!result.redirected) setDayErrors((errors) => ({ ...errors, [index]: result.error }));
+        if (!result.redirected) {
+          dayErrorTextRef.current[index] = result.error;
+          setDayErrors((errors) => ({ ...errors, [index]: result.error }));
+        }
         return null;
       }
       slotByRecipeRef.current.set(result.recipe.id, slot);
@@ -571,6 +578,7 @@ export default function PlanPage() {
     commitPlan(Array(7).fill(null));
     slotByRecipeRef.current.clear();
     failedSlotsRef.current = {};
+    dayErrorTextRef.current = {};
     setDayErrors({});
     setGeneratingDays([0, 1, 2, 3, 4, 5, 6]);
 
@@ -608,8 +616,11 @@ export default function PlanPage() {
       });
 
       if (newIds.length === 0) {
-        setGenerationError("We couldn't generate your plan. Please try again.");
-        setAriaLiveMessage("We couldn't generate your plan. Please try again.");
+        // One alert on the plan, not seven copies of the same reason (#171)
+        const failure = weekFailure(slate.flatMap((slot) => dayErrorTextRef.current[slot.index] ?? []));
+        if (failure.foldNightErrors) setDayErrors({});
+        setGenerationError(failure.message);
+        setAriaLiveMessage(failure.message);
         return false;
       }
 

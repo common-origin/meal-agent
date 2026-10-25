@@ -26,7 +26,8 @@ export const AI_MAX_RETRIES = 2;
 /** Fresh attempts after output that fails the schema, before giving up. */
 export const AI_INVALID_OUTPUT_RETRIES = 1;
 
-export type AiTaskErrorCode = 'timeout' | 'rate_limited' | 'unavailable' | 'invalid_output' | 'error';
+/** `billing`: the provider refused for the account's credit or billing (e.g. Gemini's 402), not the request (#171). */
+export type AiTaskErrorCode = 'timeout' | 'rate_limited' | 'unavailable' | 'billing' | 'invalid_output' | 'error';
 
 /** A failed AI call, classified. `cause` is the original SDK error. */
 export class AiTaskError extends Error {
@@ -158,6 +159,7 @@ function tokenUsage(usage: LanguageModelUsage): TokenUsage {
 }
 
 const RATE_LIMITED = 429;
+const PAYMENT_REQUIRED = 402;
 const UNAVAILABLE = new Set([500, 502, 503, 504]);
 
 function classifyError(
@@ -179,6 +181,11 @@ function classifyError(
   const httpStatus = APICallError.isInstance(last) ? last.statusCode : undefined;
   const message = last instanceof Error ? last.message : String(last);
 
+  // The account can't pay for calls: no retry or other request will succeed until it's topped up (#171).
+  // Matched on 402 or Gemini's credits wording, not on "billing" (its ordinary 429 quota message says that too).
+  if (httpStatus === PAYMENT_REQUIRED || /prepayment credits are depleted/i.test(message)) {
+    return { error: new AiTaskError('billing', message, httpStatus, { cause: error }), status: 'error', errorCode: `http_${httpStatus ?? 402}` };
+  }
   if (httpStatus === RATE_LIMITED) {
     return { error: new AiTaskError('rate_limited', message, httpStatus, { cause: error }), status: 'rate_limited', errorCode: 'http_429' };
   }
