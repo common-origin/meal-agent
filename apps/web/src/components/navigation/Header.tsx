@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Stack, Typography, Button, Box } from "@common-origin/design-system";
+import { Stack, Typography, Button, Box, tokens } from "@common-origin/design-system";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
@@ -84,7 +84,7 @@ export default function Header() {
               <Button
                 variant="naked"
                 size="medium"
-                style={pathname === href ? { fontWeight: 600, backgroundColor: 'rgba(0,0,0,0.05)' } : undefined}
+                style={pathname === href ? { fontWeight: 600, backgroundColor: tokens.semantic.color.fill.muted } : undefined}
               >
                 {label}
               </Button>

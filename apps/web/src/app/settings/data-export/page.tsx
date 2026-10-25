@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Box, Stack, Typography, Button, Alert } from '@common-origin/design-system';
+import { Box, Stack, Typography, Button, Alert, tokens } from '@common-origin/design-system';
 import * as LocalStorage from '@/lib/storage';
 import { loadPantryPreferences } from '@/lib/pantryPreferences';
 
@@ -86,7 +86,7 @@ export default function DataExportPage() {
           bg="subtle"
           p="xl"
           borderRadius="md"
-          style={{ border: '1px solid #e0e0e0' }}
+          style={{ border: tokens.semantic.border.default }}
         >
           <Stack direction="column" gap="lg">
             <Stack direction="column" gap="sm">
@@ -107,7 +107,7 @@ export default function DataExportPage() {
           bg="subtle"
           p="xl"
           borderRadius="md"
-          style={{ border: '1px solid #fdd' }}
+          style={{ border: `1px solid ${tokens.semantic.color.border.danger}` }}
         >
           <Stack direction="column" gap="lg">
             <Stack direction="column" gap="sm">
@@ -128,7 +128,7 @@ export default function DataExportPage() {
           bg="subtle"
           p="xl"
           borderRadius="md"
-          style={{ border: '1px solid #e7f3ff' }}
+          style={{ border: `1px solid ${tokens.semantic.color.border.accent}` }}
         >
           <Stack direction="column" gap="md">
             <Typography variant="h3">About Your Data</Typography>

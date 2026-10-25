@@ -323,10 +323,9 @@ export default function RecipesPage() {
           <>
             {recipes.length > 0 && (
               <Button
-                variant="secondary"
+                variant="danger"
                 size="large"
                 onClick={handleClearAllRecipes}
-                style={{ color: '#d32f2f' }}
               >
                 Clear All
               </Button>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Alert, Box, Button, Checkbox, Chip, Container, Divider, Dropdown, NumberInput, Slider, Stack, TextField, Typography } from "@common-origin/design-system";
+import { Alert, Box, Button, Checkbox, Chip, Container, Divider, Dropdown, NumberInput, Slider, Stack, TextField, Typography, tokens } from "@common-origin/design-system";
 import Main from "@/components/app/Main";import {
   getFamilySettings,
   saveFamilySettings,
@@ -180,7 +180,7 @@ export default function SettingsPage() {
 							</Stack>
 						</Alert>
 					)}						{/* Household Section */}
-						<Box border="default" borderRadius="lg" p="lg" bg="default">
+						<Box border="default" borderRadius="lg" p="lg" bg="subtle">
 							<Stack direction="column" gap="md">
 								<Typography variant="h3">Household</Typography>
 								<Box maxWidth="420px">
@@ -247,7 +247,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Dietary requirements */}
-						<Box border="default" borderRadius="lg" p="lg" bg="default">
+						<Box border="default" borderRadius="lg" p="lg" bg="subtle">
 							<Stack direction="column" gap="lg">
 								<Stack direction="column" gap="sm">
 									<Typography variant="h3">Dietary requirements</Typography>
@@ -314,7 +314,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Cooking Profile */}
-						<Box border="default" borderRadius="lg" p="lg" bg="default">
+						<Box border="default" borderRadius="lg" p="lg" bg="subtle">
 							<Stack direction="column" gap="2xl">
 								<Stack direction="column" gap="md">
 									<Typography variant="h3">Cooking profile</Typography>
@@ -398,7 +398,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Location & Seasonality */}
-						<Box border="default" borderRadius="lg" p="lg" bg="default">
+						<Box border="default" borderRadius="lg" p="lg" bg="subtle">
 							<Stack direction="column" gap="2xl">
 								<Stack direction="column" gap="md">
 									<Typography variant="h3">Location & seasonality</Typography>
@@ -461,7 +461,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Budget & Time */}
-						<Box border="default" borderRadius="lg" p="lg" bg="default">
+						<Box border="default" borderRadius="lg" p="lg" bg="subtle">
 							<Stack direction="column" gap="md">
 								<Typography variant="h3">Budget & time</Typography>
 								
@@ -528,7 +528,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Batch Cooking */}
-						<Box border="default" borderRadius="lg" p="lg" bg="default">
+						<Box border="default" borderRadius="lg" p="lg" bg="subtle">
 							<Stack direction="column" gap="md">
 								<Typography variant="h3">Batch cooking</Typography>
 								
@@ -587,7 +587,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Pantry Preference */}
-						<Box border="default" borderRadius="lg" p="lg" bg="default">
+						<Box border="default" borderRadius="lg" p="lg" bg="subtle">
 							<Box maxWidth="500px">
 								<Stack direction="column" gap="2xl">
 									<Stack direction="column" gap="md">
@@ -615,7 +615,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Weekly Planning Reminder */}
-						<Box border="default" borderRadius="lg" p="lg" bg="default">
+						<Box border="default" borderRadius="lg" p="lg" bg="subtle">
 							<Box maxWidth="500px">
 								<Stack direction="column" gap="2xl">
 									<Stack direction="column" gap="md">
@@ -650,7 +650,7 @@ export default function SettingsPage() {
 											}))}
 											style={{
 												padding: '8px 12px',
-												border: '1px solid #ccc',
+												border: `1px solid ${tokens.semantic.color.border.input}`,
 												borderRadius: '4px',
 												fontSize: '14px',
 											}}
@@ -662,7 +662,7 @@ export default function SettingsPage() {
 
 
 						{/* Recipe Sharing */}
-						<Box border="default" borderRadius="lg" p="lg" bg="default">
+						<Box border="default" borderRadius="lg" p="lg" bg="subtle">
 							<Box maxWidth="600px">
 								<Stack direction="column" gap="2xl">
 									<Stack direction="column" gap="md">
@@ -737,7 +737,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Calendar Sync */}
-						<Box border="default" borderRadius="lg" p="lg" bg="default">
+						<Box border="default" borderRadius="lg" p="lg" bg="subtle">
 							<Stack direction="column" gap="md">
 								<Typography variant="h3">Calendar Sync</Typography>
 								<Typography color="subdued">

@@ -43,10 +43,10 @@ const stepNumberStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  backgroundColor: tokens.semantic.color.background.emphasis,
+  backgroundColor: tokens.semantic.color.fill.emphasis,
   font: tokens.semantic.typography.overline,
   borderRadius: '999px',
-  color: 'white',
+  color: tokens.semantic.color.text.inverse,
   fontWeight: 600,
   fontSize: '14px',
 };
@@ -244,7 +244,7 @@ export default function RecipePage({ params }: RecipePageProps) {
               <Box
                 border="default"
                 borderRadius="lg"
-                bg="default"
+                bg="subtle"
                 p="none"
                 style={{
                   position: 'absolute',
@@ -319,7 +319,7 @@ export default function RecipePage({ params }: RecipePageProps) {
 
         {/* Nutrition */}
         {recipe.nutrition && (
-          <Box border="subtle" borderRadius="lg" p="lg" bg="default">
+          <Box border="subtle" borderRadius="lg" p="lg" bg="subtle">
             <Stack direction="column" gap="md">
               <ResponsiveGrid cols={2} colsMd={4} gap="2">
                 <Stack direction="column" gap="none">
@@ -344,7 +344,7 @@ export default function RecipePage({ params }: RecipePageProps) {
         )}
 
         {/* Ingredients */}
-        <Box border="default" borderRadius="lg" p="lg" bg="default">
+        <Box border="default" borderRadius="lg" p="lg" bg="subtle">
           <Stack direction="column" gap="md">
             <Typography variant="h2">Ingredients</Typography>
             
@@ -366,7 +366,7 @@ export default function RecipePage({ params }: RecipePageProps) {
 
         {/* Instructions */}
         {recipe.instructions && recipe.instructions.length > 0 ? (
-          <Box border="default" borderRadius="lg" p="lg" bg="default">
+          <Box border="default" borderRadius="lg" p="lg" bg="subtle">
             <Stack direction="column" gap="md">
               <Typography variant="h2">Instructions</Typography>
               
@@ -391,7 +391,7 @@ export default function RecipePage({ params }: RecipePageProps) {
             </Stack>
           </Box>
         ) : (
-          <Box border="default" borderRadius="md" p="lg" bg="surface">
+          <Box border="default" borderRadius="md" p="lg" bg="subtle">
             <Stack direction="column" gap="md">
               <Typography variant="h2">Preparation</Typography>
               <Typography variant="body">
@@ -405,7 +405,7 @@ export default function RecipePage({ params }: RecipePageProps) {
         )}
 
         {/* Rating */}
-        <Box border="subtle" borderRadius="lg" p="lg" bg="default">
+        <Box border="subtle" borderRadius="lg" p="lg" bg="subtle">
           <Stack direction="column" gap="md" alignItems="flex-start">
             <Typography variant="h3">Rate this recipe</Typography>
             <StarRating rating={rating} onChange={handleRatingChange} size="large" />
@@ -500,7 +500,7 @@ export default function RecipePage({ params }: RecipePageProps) {
         </Modal>
 
         {/* Source Attribution */}
-        <Box border="default" borderRadius="md" p="md" bg="default">
+        <Box border="default" borderRadius="md" p="md" bg="subtle">
           <Stack direction="column" gap="sm">
             <Typography variant="h4">Source</Typography>
             <Typography variant="small">

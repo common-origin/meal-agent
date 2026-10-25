@@ -49,20 +49,20 @@ const PHONE_GRID: Record<DayCardLayout, ReturnType<typeof css>> = {
 
 const TONE: Record<DayCardTone, ReturnType<typeof css>> = {
   filled: css`
-    background: ${color.background.default};
+    background: ${tokens.semantic.surface.raised};
     border: ${tokens.semantic.border.default};
     &:hover {
-      border-color: ${color.border.strong};
+      border-color: ${color.border["input-hover"]};
     }
   `,
   // An open slot on the page, so secondary buttons (surface grey) still stand out
   empty: css`
-    background: ${color.background.transparent};
+    background: ${color.fill.none};
     border: ${tokens.semantic.border.width.thick} dashed ${color.border.default};
   `,
   proposal: css`
-    background: ${color.background.subtle};
-    border: ${tokens.semantic.border.width.thin} solid ${color.border.interactive};
+    background: ${tokens.semantic.surface.raised};
+    border: ${tokens.semantic.border.width.thin} solid ${color.border.accent};
   `,
 };
 
@@ -123,7 +123,7 @@ const Day = styled.p`
 
 const DateText = styled.span`
   font: ${tokens.semantic.typography.small};
-  color: ${color.text.subdued};
+  color: ${color.text.muted};
 
   ${phone} {
     &::before {

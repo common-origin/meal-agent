@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
-import { Box, Divider, Stack } from "@common-origin/design-system";
+import { Box, Divider, Stack, tokens } from "@common-origin/design-system";
 
 export interface ButtonGroupProps {
   left?: ReactNode;
@@ -22,7 +22,7 @@ export default function ButtonGroup({
           bottom: 0,
           left: 0,
           right: 0,
-          backgroundColor: "white",
+          backgroundColor: tokens.semantic.surface.base,
           zIndex: 10,
         }),
       }}

@@ -164,7 +164,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
           /* Instructions Screen */
           <Stack direction="column" gap="lg">
             {/* Instructions */}
-            <Box bg="subtle" borderRadius="md" p="md">
+            <Box bg="surface" borderRadius="md" p="md">
               <Stack direction="column" gap="sm">
                 <Typography variant="subtitle">How it works:</Typography>
                 <Typography variant="body">
@@ -280,7 +280,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
             </Box>
 
             {/* Instructions */}
-            <Box bg="subtle" borderRadius="md" p="md">
+            <Box bg="surface" borderRadius="md" p="md">
               <Stack direction="column" gap="xs">
                 <Typography variant="subtitle">
                   <strong>Next steps:</strong>

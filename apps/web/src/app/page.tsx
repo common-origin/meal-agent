@@ -31,7 +31,6 @@ export default function HomePage() {
         justifyContent: "center",
         padding: "24px",
         paddingBottom: "64px",
-        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
       }}
     >
       <Stack direction="column" gap="2xl">
@@ -40,10 +39,8 @@ export default function HomePage() {
           bg="subtle"
           borderRadius="lg"
           p="7xl"
-          style={{
-            textAlign: "center",
-            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-          }}
+          shadow="raised"
+          style={{ textAlign: "center" }}
         >
           <Stack direction="column" gap="lg">
             <Typography variant="h1">Meal Agent</Typography>

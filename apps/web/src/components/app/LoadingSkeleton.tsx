@@ -16,9 +16,9 @@ const shimmer = keyframes`
 const SkeletonBox = styled(Box)<{ $height: string }>`
   background: linear-gradient(
     to right,
-    ${tokens.semantic.color.background.default} 0%,
-    ${tokens.semantic.color.background.disabled} 50%,
-    ${tokens.semantic.color.background.default} 100%
+    ${tokens.semantic.surface.raised} 0%,
+    ${tokens.semantic.color.fill.disabled} 50%,
+    ${tokens.semantic.surface.raised} 100%
   );
   background-size: 800px 104px;
   animation: ${shimmer} 1.5s linear infinite;
