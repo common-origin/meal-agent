@@ -383,19 +383,19 @@ export default function ShoppingListPage() {
               colsMd={4} 
               gap="2"
             >
-              <Box bg="emphasis" borderRadius="lg" p="md">
+              <Box bg="color.fill.emphasis" borderRadius="lg" p="md">
                 <Typography variant="subtitle" color="inverse">Items to buy</Typography>
                 <Typography variant="h2" color="inverse">{totalItems}</Typography>
               </Box>
-              <Box bg="emphasis" borderRadius="lg" p="md">
+              <Box bg="color.fill.emphasis" borderRadius="lg" p="md">
                 <Typography variant="subtitle" color="inverse">Already have</Typography>
                 <Typography variant="h2" color="inverse">{alreadyHave.length}</Typography>
               </Box>
-              <Box bg="emphasis" borderRadius="lg" p="md">
+              <Box bg="color.fill.emphasis" borderRadius="lg" p="md">
                 <Typography variant="subtitle" color="inverse">Categories</Typography>
                 <Typography variant="h2" color="inverse">{categories.length}</Typography>
               </Box>
-              <Box bg="emphasis" borderRadius="lg" p="md">
+              <Box bg="color.fill.emphasis" borderRadius="lg" p="md">
                 <Typography variant="subtitle" color="inverse">Estimated total</Typography>
                 <Typography variant="h2" color="inverse">
                   ${needToBuy.reduce((sum, item) => {
@@ -419,7 +419,7 @@ export default function ShoppingListPage() {
 
             {/* Weekly Nutrition Summary */}
             {weeklyNutrition && weeklyNutrition.mealsWithNutrition > 0 && (
-              <Box border="subtle" borderRadius="lg" p="lg" bg="subtle">
+              <Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
                 <Stack direction="column" gap="md">
                   <Stack direction="row" justifyContent="space-between" alignItems="center">
                     <Typography variant="h3">Weekly nutrition summary</Typography>
@@ -428,28 +428,28 @@ export default function ShoppingListPage() {
                     </Typography>
                   </Stack>
                   <ResponsiveGrid cols={2} colsMd={4} gap="2">
-                    <Box bg="surface" borderRadius="md" p="md">
+                    <Box bg="color.fill.muted" borderRadius="md" p="md">
                       <Stack direction="column" gap="xs">
                         <Typography variant="small" color="subdued">Total calories</Typography>
                         <Typography variant="h3">{Math.round(weeklyNutrition.totalCalories).toLocaleString()}</Typography>
                         <Typography variant="small" color="subdued">kcal</Typography>
                       </Stack>
                     </Box>
-                    <Box bg="surface" borderRadius="md" p="md">
+                    <Box bg="color.fill.muted" borderRadius="md" p="md">
                       <Stack direction="column" gap="xs">
                         <Typography variant="small" color="subdued">Total protein</Typography>
                         <Typography variant="h3">{Math.round(weeklyNutrition.totalProtein)}</Typography>
                         <Typography variant="small" color="subdued">grams</Typography>
                       </Stack>
                     </Box>
-                    <Box bg="surface" borderRadius="md" p="md">
+                    <Box bg="color.fill.muted" borderRadius="md" p="md">
                       <Stack direction="column" gap="xs">
                         <Typography variant="small" color="subdued">Total carbs</Typography>
                         <Typography variant="h3">{Math.round(weeklyNutrition.totalCarbs)}</Typography>
                         <Typography variant="small" color="subdued">grams</Typography>
                       </Stack>
                     </Box>
-                    <Box bg="surface" borderRadius="md" p="md">
+                    <Box bg="color.fill.muted" borderRadius="md" p="md">
                       <Stack direction="column" gap="xs">
                         <Typography variant="small" color="subdued">Total fat</Typography>
                         <Typography variant="h3">{Math.round(weeklyNutrition.totalFat)}</Typography>
@@ -463,10 +463,10 @@ export default function ShoppingListPage() {
 
             {/* Items to Buy - Grouped by Category */}
             <Box 
-              border="subtle"
+              border="default"
               borderRadius="lg"
               p="lg"
-              bg="subtle"
+              bg="surface.raised"
             >
               <Stack direction="column" gap="lg">
                 {categories.map((category, categoryIndex) => {
@@ -480,7 +480,7 @@ export default function ShoppingListPage() {
                       <Box px="lg">
                         <Stack direction="row" alignItems="center" gap="sm">
                           <Typography variant="h4">{category}</Typography>
-                          <Chip variant="dark" size="small">{items.length}</Chip>
+                          <Chip>{items.length}</Chip>
                         </Stack>
                       </Box>
                       
@@ -548,7 +548,7 @@ export default function ShoppingListPage() {
                             }
                             badge={
                               <Stack direction="row" gap="xs" alignItems="center">
-                                <Chip variant="light" size="small">
+                                <Chip>
                                   {item.totalQty.toFixed(1)} {item.unit}
                                 </Chip>
                                 <Button
@@ -590,15 +590,15 @@ export default function ShoppingListPage() {
             {/* Already Have Section */}
             {alreadyHave.length > 0 && (
               <Box 
-                border="subtle"
+                border="default"
                 borderRadius="lg"
                 p="lg"
-                bg="subtle"
+                bg="surface.raised"
               >
                 <Stack direction="column" gap="md">
                   <Stack direction="row" justifyContent="space-between" alignItems="center">
                     <Typography variant="h3">Already in your pantry</Typography>
-                    <Chip variant="light">{alreadyHave.length} items</Chip>
+                    <Chip>{alreadyHave.length} items</Chip>
                   </Stack>
                   
                   <Typography variant="small" color="subdued">
@@ -612,7 +612,7 @@ export default function ShoppingListPage() {
                         primary={item.name}
                         badge={
                           <Stack direction="row" gap="xs" alignItems="center">
-                            <Chip variant="light" size="small">
+                            <Chip>
                               {item.totalQty.toFixed(1)} {item.unit}
                             </Chip>
                             <Button

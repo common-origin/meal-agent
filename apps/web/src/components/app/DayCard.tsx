@@ -25,7 +25,7 @@ export type DayCardProps = {
 };
 
 const color = tokens.semantic.color;
-const space = tokens.semantic.spacing.layout;
+const space = tokens.semantic.space;
 const sm = tokens.base.breakpoint.sm;
 const phone = `@media (max-width: calc(${sm} - 0.02px))`;
 const fromSm = `@media (min-width: ${sm})`;
@@ -70,10 +70,10 @@ const Frame = styled.article<{ $layout: DayCardLayout; $tone: DayCardTone }>`
   /* Positioned, so a meal title's link can stretch over the whole card */
   position: relative;
   display: grid;
-  column-gap: ${space.md};
-  row-gap: ${space.sm};
-  padding: ${space.md} ${space.sm} ${space.lg} ${space.lg};
-  border-radius: ${tokens.semantic.border.radius.lg};
+  column-gap: ${space[300]};
+  row-gap: ${space[200]};
+  padding: ${space[300]} ${space[200]} ${space[400]} ${space[400]};
+  border-radius: ${tokens.semantic.radius.lg};
   ${({ $tone }) => TONE[$tone]}
 
   ${phone} {
@@ -90,7 +90,7 @@ const Frame = styled.article<{ $layout: DayCardLayout; $tone: DayCardTone }>`
     grid-template-areas: "lead day body actions";
     /* The day and the body's first line share a baseline */
     align-items: baseline;
-    padding: ${space.lg} ${space.lg} ${space.lg} ${space.xs};
+    padding: ${space[400]} ${space[400]} ${space[400]} ${space[100]};
   }
 `;
 
@@ -140,7 +140,7 @@ const Body = styled.div`
   min-width: 0;
   ${phone} {
     /* The card's right padding is tight for the ⋮ button; text keeps the full gutter */
-    padding-right: ${space.sm};
+    padding-right: ${space[200]};
   }
 `;
 
@@ -148,7 +148,7 @@ const Actions = styled.div<{ $layout: DayCardLayout }>`
   grid-area: actions;
   display: flex;
   align-items: center;
-  gap: ${space.xs};
+  gap: ${space[100]};
   /* Above a stretched title link */
   position: relative;
   z-index: 1;
@@ -162,7 +162,7 @@ const Actions = styled.div<{ $layout: DayCardLayout }>`
       $layout !== "meal" &&
       css`
         flex-wrap: wrap;
-        padding-right: ${space.sm};
+        padding-right: ${space[200]};
         & > * {
           flex: 1 1 0;
         }

@@ -164,7 +164,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
           /* Instructions Screen */
           <Stack direction="column" gap="lg">
             {/* Instructions */}
-            <Box bg="surface" borderRadius="md" p="md">
+            <Box bg="color.fill.muted" borderRadius="md" p="md">
               <Stack direction="column" gap="sm">
                 <Typography variant="subtitle">How it works:</Typography>
                 <Typography variant="body">
@@ -179,7 +179,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
                 {shoppingItems.map((item, index) => (
                   <Box
                     key={index}
-                    bg="surface"
+                    bg="color.fill.muted"
                     borderRadius="sm"
                     p="sm"
                   >
@@ -191,7 +191,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
                         </Typography>
                       </Stack>
                       {estimateIngredientCost(item.ingredient.normalizedName, item.ingredient.totalQty, item.ingredient.unit).mapped && (
-                        <Chip variant="dark" size="small">Mapped</Chip>
+                        <Chip>Mapped</Chip>
                       )}
                     </Stack>
                   </Box>
@@ -237,7 +237,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
                 </Typography>
               </Stack>
               <Box
-                bg="surface"
+                bg="color.fill.muted"
                 borderRadius="sm"
                 style={{ height: '8px', overflow: 'hidden' }}
               >
@@ -253,12 +253,12 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
             </Stack>
 
             {/* Current Item */}
-            <Box bg="subtle" borderRadius="md" p="lg" border="default">
+            <Box bg="surface.raised" borderRadius="md" p="lg" border="default">
               <Stack direction="column" gap="md">
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Tag variant="interactive" border>Current Item</Tag>
+                  <Tag variant="default" border>Current Item</Tag>
                   {isLastItem && (
-                    <Chip variant="dark">Last one!</Chip>
+                    <Chip>Last one!</Chip>
                   )}
                 </Stack>
                 
@@ -280,7 +280,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
             </Box>
 
             {/* Instructions */}
-            <Box bg="surface" borderRadius="md" p="md">
+            <Box bg="color.fill.muted" borderRadius="md" p="md">
               <Stack direction="column" gap="xs">
                 <Typography variant="subtitle">
                   <strong>Next steps:</strong>
@@ -306,7 +306,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
                     .map((item, index) => (
                       <Box
                         key={index}
-                        bg="subtle"
+                        bg="surface.raised"
                         borderRadius="sm"
                         p="sm"
                       >

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AILabel, ActionSheet, Alert, Button, Stack, Box, Typography } from "@common-origin/design-system";
+import { InlineAlert, AILabel, ActionSheet, Button, Stack, Box, Typography } from "@common-origin/design-system";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { toSentenceCase, type MealCardProps } from "./MealCard";
@@ -191,9 +191,9 @@ export default function WeekPlanList({
                         )
                       }
                     >
-                      <Alert variant="error" inline>
+                      <InlineAlert variant="error">
                         {error}
-                      </Alert>
+                      </InlineAlert>
                     </DayCard>
                   );
                 }
@@ -292,9 +292,9 @@ function ProposedNightView({
             {proposal.status === "ready" && <PlanMeal {...proposal.meal} tags={tagsOf(proposal.meal)} disableLink />}
             {proposal.status === "failed" && (
               <Stack direction="row" gap="md" alignItems="center" justifyContent="space-between" wrap>
-                <Alert variant="error" inline>
+                <InlineAlert variant="error">
                   {proposal.error}
-                </Alert>
+                </InlineAlert>
                 <Stack direction="row" gap="sm">
                   {onKeep && (
                     <Button variant="naked" size="medium" onClick={onKeep}>

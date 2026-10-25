@@ -17,7 +17,7 @@ export default function LeftoverCard({
 }: LeftoverCardProps) {
   return (
     <Box 
-      bg="subtle"
+      bg="surface.raised"
       borderRadius="md"
       p="md"
       border="default"
@@ -39,7 +39,7 @@ export default function LeftoverCard({
               </Typography>
             </div>
             <div aria-label="This is a bulk cook meal">
-              <ChipGroup labels={["Bulk Cook"]} variant="default" />
+              <ChipGroup labels={["Bulk Cook"]} />
             </div>
           </Stack>
           

@@ -930,7 +930,7 @@ export default function PlanPage() {
             <Stack direction="column" gap="xs">
               <Typography variant="h1">Week of {weekLabel}</Typography>
               {/* Title plus a subdued line, composed from Typography in a Stack as the design system
-                  documents (PageTitle is deprecated). `small`, not `caption`: caption is uppercase. */}
+                  documents (PageTitle was removed in 3.0). `small`, not `caption`: caption is uppercase. */}
               {summary.dinners > 0 && (
                 <Typography variant="small" color="subdued">
                   {formatPlanSummary(summary)}

@@ -54,7 +54,7 @@ export default function LoadingSkeleton({
         <SkeletonBox 
           key={index}
           $height={height}
-          border="subtle"
+          border="default"
           p="lg"
           mb={count > 1 ? "md" : undefined}
         />

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { Stack, Typography, Button, Box, Divider, Alert } from "@common-origin/design-system";
+import { InlineAlert, Stack, Typography, Button, Box, Divider } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import { track } from "@/lib/analytics";
 
@@ -23,7 +23,7 @@ export default function AboutPage() {
         </Stack>
 
         {/* What is it? */}
-        <Box border="subtle" borderRadius="lg" p="xl" bg="subtle">
+        <Box border="default" borderRadius="lg" p="xl" bg="surface.raised">
           <Stack direction="column" gap="lg">
             <Typography variant="h2">What is Meal Agent?</Typography>
             <Typography variant="body">
@@ -39,7 +39,7 @@ export default function AboutPage() {
         </Box>
 
         {/* Key Features */}
-        <Box border="subtle" borderRadius="lg" p="xl" bg="subtle">
+        <Box border="default" borderRadius="lg" p="xl" bg="surface.raised">
           <Stack direction="column" gap="lg">
             <Typography variant="h2">Key Features</Typography>
             
@@ -111,7 +111,7 @@ export default function AboutPage() {
         </Box>
 
         {/* How to Use */}
-        <Box border="subtle" borderRadius="lg" p="xl" bg="subtle">
+        <Box border="default" borderRadius="lg" p="xl" bg="surface.raised">
           <Stack direction="column" gap="lg">
             <Typography variant="h2">How to Use</Typography>
             
@@ -164,15 +164,15 @@ export default function AboutPage() {
         </Box>
 
         {/* POC Status & Future Extensions */}
-        <Box border="subtle" borderRadius="lg" p="xl" bg="subtle">
+        <Box border="default" borderRadius="lg" p="xl" bg="surface.raised">
           <Stack direction="column" gap="lg">
             <Typography variant="h2">Proof of Concept Status</Typography>
             
-            <Alert variant="info" inline>
+            <InlineAlert variant="info">
               This is a proof-of-concept demonstrating the potential of AI-powered meal planning. 
               Several features use hardcoded data or simplified implementations that could be 
               significantly enhanced with production APIs and services.
-            </Alert>
+            </InlineAlert>
 
             <Stack direction="column" gap="md">
               <Box>
@@ -271,7 +271,7 @@ export default function AboutPage() {
         </Box>
 
         {/* Technical Details */}
-        <Box border="subtle" borderRadius="lg" p="xl" bg="subtle">
+        <Box border="default" borderRadius="lg" p="xl" bg="surface.raised">
           <Stack direction="column" gap="lg">
             <Typography variant="h2">Technical Details</Typography>
             
@@ -334,7 +334,7 @@ export default function AboutPage() {
         </Box>
 
         {/* Call to Action */}
-        <Box border="subtle" borderRadius="lg" p="xl" bg="emphasis">
+        <Box border="default" borderRadius="lg" p="xl" bg="color.fill.emphasis">
           <Stack direction="column" gap="lg" alignItems="center">
             <Typography variant="h2" color="inverse">Ready to get started?</Typography>
             <Typography variant="body" color="inverse">

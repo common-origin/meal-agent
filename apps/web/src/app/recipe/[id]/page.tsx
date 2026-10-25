@@ -244,7 +244,7 @@ export default function RecipePage({ params }: RecipePageProps) {
               <Box
                 border="default"
                 borderRadius="lg"
-                bg="subtle"
+                bg="surface.raised"
                 p="none"
                 style={{
                   position: 'absolute',
@@ -312,14 +312,13 @@ export default function RecipePage({ params }: RecipePageProps) {
           {recipe.tags && recipe.tags.length > 0 && (
             <ChipGroup 
               labels={formatTagsForDisplay([...new Set(recipe.tags)]).slice(0, 8)} 
-              variant="dark" 
             />
           )}
         </Stack>
 
         {/* Nutrition */}
         {recipe.nutrition && (
-          <Box border="subtle" borderRadius="lg" p="lg" bg="subtle">
+          <Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
             <Stack direction="column" gap="md">
               <ResponsiveGrid cols={2} colsMd={4} gap="2">
                 <Stack direction="column" gap="none">
@@ -344,7 +343,7 @@ export default function RecipePage({ params }: RecipePageProps) {
         )}
 
         {/* Ingredients */}
-        <Box border="default" borderRadius="lg" p="lg" bg="subtle">
+        <Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
           <Stack direction="column" gap="md">
             <Typography variant="h2">Ingredients</Typography>
             
@@ -366,7 +365,7 @@ export default function RecipePage({ params }: RecipePageProps) {
 
         {/* Instructions */}
         {recipe.instructions && recipe.instructions.length > 0 ? (
-          <Box border="default" borderRadius="lg" p="lg" bg="subtle">
+          <Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
             <Stack direction="column" gap="md">
               <Typography variant="h2">Instructions</Typography>
               
@@ -391,7 +390,7 @@ export default function RecipePage({ params }: RecipePageProps) {
             </Stack>
           </Box>
         ) : (
-          <Box border="default" borderRadius="md" p="lg" bg="subtle">
+          <Box border="default" borderRadius="md" p="lg" bg="surface.raised">
             <Stack direction="column" gap="md">
               <Typography variant="h2">Preparation</Typography>
               <Typography variant="body">
@@ -405,7 +404,7 @@ export default function RecipePage({ params }: RecipePageProps) {
         )}
 
         {/* Rating */}
-        <Box border="subtle" borderRadius="lg" p="lg" bg="subtle">
+        <Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
           <Stack direction="column" gap="md" alignItems="flex-start">
             <Typography variant="h3">Rate this recipe</Typography>
             <StarRating rating={rating} onChange={handleRatingChange} size="large" />
@@ -500,7 +499,7 @@ export default function RecipePage({ params }: RecipePageProps) {
         </Modal>
 
         {/* Source Attribution */}
-        <Box border="default" borderRadius="md" p="md" bg="subtle">
+        <Box border="default" borderRadius="md" p="md" bg="surface.raised">
           <Stack direction="column" gap="sm">
             <Typography variant="h4">Source</Typography>
             <Typography variant="small">
@@ -516,7 +515,7 @@ export default function RecipePage({ params }: RecipePageProps) {
                         href={recipe.source.url} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        style={{ color: tokens.semantic.color.text.interactive, textDecoration: 'underline' }}
+                        style={{ color: tokens.semantic.color.text.accent, textDecoration: 'underline' }}
                       >
                         View original
                       </a>

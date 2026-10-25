@@ -79,7 +79,7 @@ export default function ColesApiTestPage() {
 
         {/* Stats Cards */}
         <ResponsiveGrid cols={1} colsSm={2} gapX="4" gapY="4">
-          <Box bg="surface" p="md" style={{ borderRadius: '8px' }}>
+          <Box bg="color.fill.muted" p="md" style={{ borderRadius: '8px' }}>
             <Typography variant="h2">Rate Limit</Typography>
             <Stack direction="column" gap="sm">
               <Typography variant="body">
@@ -101,7 +101,7 @@ export default function ColesApiTestPage() {
                 }}
               >
                 <Box 
-                  bg={rateLimitStats.used > 900 ? 'error' : 'success'}
+                  bg={rateLimitStats.used > 900 ? 'color.fill.danger' : 'color.fill.success'}
                   style={{ 
                     height: '100%', 
                     width: `${(rateLimitStats.used / rateLimitStats.limit) * 100}%`,
@@ -112,7 +112,7 @@ export default function ColesApiTestPage() {
             </Stack>
           </Box>
 
-          <Box bg="surface" p="md" style={{ borderRadius: '8px' }}>
+          <Box bg="color.fill.muted" p="md" style={{ borderRadius: '8px' }}>
             <Stack direction="column" gap="md">
               <Typography variant="h2">Cache Stats</Typography>
               <Stack direction="column" gap="sm">
@@ -180,7 +180,7 @@ export default function ColesApiTestPage() {
                     const pricePerUnit = calculatePricePerUnit(price, product.size);
                     
                     return (
-                      <Box key={index} bg="surface" p="md" style={{ borderRadius: '8px', border: '1px solid #e0e0e0' }}>
+                      <Box key={index} bg="color.fill.muted" p="md" style={{ borderRadius: '8px', border: '1px solid #e0e0e0' }}>
                         <Stack direction="column" gap="sm">
                           <Typography variant="h4">{product.productName}</Typography>
                           <Typography variant="body" color="subdued">

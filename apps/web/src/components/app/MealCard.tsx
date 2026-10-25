@@ -63,7 +63,7 @@ const CardLink = styled(Link)`
   border-radius: ${tokens.base.border.radius[4]};
   &:focus {
     outline: ${tokens.component.iconButton.focus.outline};
-    outline-offset: ${tokens.component.iconButton.focus.outlineOffset};
+    outline-offset: ${tokens.semantic.border.focusOffset};
   }
 `;
 
@@ -120,7 +120,7 @@ export default function MealCard({
 
   const cardContent = (
     <div onClick={disableLink ? handleCardClick : undefined}>
-      <CardWrapper bg="subtle" borderRadius="lg" p="lg" border="subtle" minHeight="300px">
+      <CardWrapper bg="surface.raised" borderRadius="lg" p="lg" border="default" minHeight="300px">
         <Stack direction="column" gap="md">
           <Stack direction="row" gap="md" alignItems="flex-start">
             <StyledMealCardTitle style={{ flex: 1 }}>{toSentenceCase(title)}</StyledMealCardTitle>
@@ -145,9 +145,9 @@ export default function MealCard({
 
           <Stack direction="column" gap="sm">
             <Stack direction="row" gap="sm" alignItems="center">
-              {chef && <Tag variant="interactive" border={false}>{chef}</Tag>}
-              <Chip variant="default">{timeMins} mins</Chip>
-              {chipLabels.length > 0 && <ChipGroup labels={chipLabels} variant="default" />}
+              {chef && <Tag variant="default" border={false}>{chef}</Tag>}
+              <Chip>{timeMins} mins</Chip>
+              {chipLabels.length > 0 && <ChipGroup labels={chipLabels} />}
             </Stack>
             {nutrition && (
               <Stack direction="row" gap="md">

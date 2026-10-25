@@ -163,7 +163,7 @@ export default function BudgetSummary({ weekPlan, budget, dayNames }: BudgetSumm
   return (
     <Stack direction="column" gap="md">
       {/* Main Budget Bar */}
-      <Box bg="subtle" borderRadius="md" border="default" p="lg">
+      <Box bg="surface.raised" borderRadius="md" border="default" p="lg">
         <Stack direction="column" gap="md">
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="h3">Weekly budget</Typography>
@@ -172,7 +172,7 @@ export default function BudgetSummary({ weekPlan, budget, dayNames }: BudgetSumm
                 ${(apiEnhancedCost || budget.current).toFixed(2)} / ${budget.total.toFixed(2)}
               </Typography>
               {apiEnhancedCost && apiEnhancedCost !== budget.current && (
-                <Chip size="small" variant="emphasis">Live pricing</Chip>
+                <Chip>Live pricing</Chip>
               )}
             </Stack>
           </Stack>
@@ -224,14 +224,14 @@ export default function BudgetSummary({ weekPlan, budget, dayNames }: BudgetSumm
       
       {/* Detailed Breakdown */}
       {showDetails && (
-        <Box bg="subtle" borderRadius="md" p="lg" border="default">
+        <Box bg="surface.raised" borderRadius="md" p="lg" border="default">
           <Stack direction="column" gap="md">
             <Box style={{ marginBottom: '8px' }}>
               <Typography variant="h4">Daily cost breakdown</Typography>
             </Box>
             
             {loadingApiPrices && (
-              <Box bg="surface" borderRadius="sm" p="md">
+              <Box bg="color.fill.muted" borderRadius="sm" p="md">
                 <Typography variant="small">Loading live prices from Coles API...</Typography>
               </Box>
             )}
@@ -252,13 +252,13 @@ export default function BudgetSummary({ weekPlan, budget, dayNames }: BudgetSumm
                     <Stack direction="row" gap="sm" alignItems="center">
                       <Typography variant="subtitle">{dayCost.day}</Typography>
                       {dayCost.livePrice && (
-                        <Chip size="small">Live</Chip>
+                        <Chip>Live</Chip>
                       )}
                       {!dayCost.livePrice && dayCost.priceSource === 'static' && dayCost.cost > 0 && (
-                        <Chip size="small">Static</Chip>
+                        <Chip>Static</Chip>
                       )}
                       {dayCost.priceSource === 'category' && (
-                        <Chip size="small">Estimated</Chip>
+                        <Chip>Estimated</Chip>
                       )}
                     </Stack>
                     <Typography variant="small" color="subdued">
@@ -274,7 +274,7 @@ export default function BudgetSummary({ weekPlan, budget, dayNames }: BudgetSumm
             
             {/* Price Source Summary */}
             {(livePriceCount > 0 || staticPriceCount > 0 || estimatedPriceCount > 0) && (
-              <Box bg="surface" borderRadius="sm" p="md" style={{ marginTop: '8px' }}>
+              <Box bg="color.fill.muted" borderRadius="sm" p="md" style={{ marginTop: '8px' }}>
                 <Stack direction="column" gap="xs">
                   <Typography variant="small">Price sources:</Typography>
                   <Box style={{ display: 'flex', flexDirection: 'row', gap: '12px', flexWrap: 'wrap' }}>

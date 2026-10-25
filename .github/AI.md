@@ -147,7 +147,7 @@ credits or billing, becomes 503 `ai_unavailable` (#171); anything
 unrecognised becomes 500 `unknown`). The guards in `lib/api/guard.ts` use the same
 table. On the client, `apiErrorMessage()` in `lib/api/client.ts` shows
 `data.error` or a generic message, never raw response text, and
-`/recipes/add` shows errors and notices in inline `Alert`s rather than
+`/recipes/add` shows errors and notices in `InlineAlert`s rather than
 `alert()`.
 
 Every AI response is structured output (#84): the caller passes a schema

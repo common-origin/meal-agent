@@ -40,7 +40,7 @@ export default function PlanDetailsSheet({ isOpen, onClose, weekPlan, summary, d
           dayNames={dayNames}
         />
 
-        <Box border="subtle" borderRadius="lg" p="lg">
+        <Box border="default" borderRadius="lg" p="lg">
           <Stack direction="column" gap="md">
             <Typography variant="h3">Average nutrition per serve</Typography>
             {nutrition ? (
