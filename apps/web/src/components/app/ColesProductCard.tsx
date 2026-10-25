@@ -30,7 +30,7 @@ export default function ColesProductCard({
       borderRadius="sm" 
       p="md"
       style={{ 
-        border: isRecommended ? `2px solid ${tokens.semantic.color.border.success}` : tokens.semantic.border.default,
+        border: isRecommended ? `2px solid ${tokens.semantic.color.border.accent}` : tokens.semantic.border.default,
         position: 'relative'
       }}
     >

@@ -19,7 +19,16 @@ const ALLOWED: Record<string, string> = {
   'lib/client/resizeImage.ts': "'#fff'",
 };
 
-const COLOUR = /(?<![\w&/])#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b|rgba?\(|\b(?:color|background(?:Color)?|border(?:Color)?)\s*:\s*['"]?(?:white|black)\b/;
+const NAMED = 'white|black|red|green|blue|gr[ae]y|orange|yellow|purple|pink|brown|navy|silver';
+const COLOUR = new RegExp(
+  [
+    // Hex, including digit-only greys like #333 and #000000
+    String.raw`(?<![\w&/])#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b`,
+    String.raw`\b(?:rgba?|hsla?)\(`,
+    // A named colour as a colour property's value, in CSS or a style object
+    String.raw`\b(?:color|background(?:-color|Color)?|border(?:-\w+)?(?:Color)?|outline(?:Color)?|fill|stroke)\s*[:=]\s*[\x60'"]?[^;,}]*\b(?:${NAMED})\b`,
+  ].join('|')
+);
 const DEPRECATED = /color\.background\.|text\.subdued|icon\.subdued|color\.border\.(?:strong|interactive)\b/;
 
 function sourceFiles(dir: string): string[] {
@@ -32,11 +41,11 @@ function sourceFiles(dir: string): string[] {
   });
 }
 
-/** Lines of code, without comments or issue references like (#169). */
+/** Lines of code, without comments (which is where issue references like (#169) live). */
 function codeLines(file: string): { line: number; text: string }[] {
   const source = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, (block) => block.replace(/[^\n]/g, ' '));
   return source.split('\n').flatMap((text, i) => {
-    const code = text.replace(/\/\/.*$/, '').replace(/#\d+\b/g, '');
+    const code = text.replace(/(^|[^:])\/\/.*$/, '$1');
     return code.trim() ? [{ line: i + 1, text: code }] : [];
   });
 }

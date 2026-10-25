@@ -107,7 +107,7 @@ export default function DataExportPage() {
           bg="subtle"
           p="xl"
           borderRadius="md"
-          style={{ border: `1px solid ${tokens.semantic.color.border.danger}` }}
+          style={{ border: tokens.semantic.border.default }}
         >
           <Stack direction="column" gap="lg">
             <Stack direction="column" gap="sm">
@@ -128,7 +128,7 @@ export default function DataExportPage() {
           bg="subtle"
           p="xl"
           borderRadius="md"
-          style={{ border: `1px solid ${tokens.semantic.color.border.accent}` }}
+          style={{ border: tokens.semantic.border.default }}
         >
           <Stack direction="column" gap="md">
             <Typography variant="h3">About Your Data</Typography>
