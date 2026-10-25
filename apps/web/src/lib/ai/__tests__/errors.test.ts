@@ -9,6 +9,7 @@ describe('AI error contract (#96)', () => {
     ['rate_limited', 429, "You've hit the limit for now. Try again in a few minutes."],
     ['daily_cap', 429, "You've reached today's AI limit. It resets tomorrow."],
     ['provider_busy', 503, 'The AI service is busy right now. Please try again in a minute.'],
+    ['ai_unavailable', 503, "Recipe generation isn't available right now. Please try again later."],
     ['timeout', 504, 'That took too long. Please try again.'],
     ['invalid_output', 502, "The AI returned something we couldn't read. Please try again."],
     ['invalid_request', 400, 'Something was wrong with that request.'],
@@ -34,6 +35,7 @@ describe('AI error contract (#96)', () => {
     ['invalid_output', 'invalid_output'],
     ['rate_limited', 'provider_busy'],
     ['unavailable', 'provider_busy'],
+    ['billing', 'ai_unavailable'],
     ['error', 'unknown'],
   ] as [AiTaskErrorCode, string][])('maps AiTaskError %s to %s', (taskCode, code) => {
     expect(toAiErrorCode(new AiTaskError(taskCode, 'raw SDK message', 404))).toBe(code);

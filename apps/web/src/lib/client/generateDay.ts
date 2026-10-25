@@ -58,3 +58,19 @@ export async function generateDay(request: DayRequest, fetchImpl: typeof fetch =
   }
   return { ok: true, recipe, explanation: data.explanations?.[recipe.id] };
 }
+
+/** The page-level message when no night of a fresh week could be generated (#171). */
+export const WEEK_FAILED_MESSAGE = "We couldn't generate your plan. Please try again.";
+
+/**
+ * How to report a week where every night failed: one alert. When every night
+ * failed for the same reason (e.g. the AI account is out of credits), that
+ * reason is the alert and the nights don't repeat it; otherwise the nights keep
+ * their own errors under a general alert.
+ */
+export function weekFailure(nightErrors: string[]): { message: string; foldNightErrors: boolean } {
+  const reasons = new Set(nightErrors);
+  return reasons.size === 1
+    ? { message: nightErrors[0], foldNightErrors: true }
+    : { message: WEEK_FAILED_MESSAGE, foldNightErrors: false };
+}
