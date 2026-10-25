@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { WEEK_FAILED_MESSAGE, weekFailure } from '../client/generateDay';
 
-const CREDITS = "Recipe generation isn't available right now. Please try again later.";
+const CREDITS = "AI features aren't available right now. Please try again later.";
 
 describe('weekFailure (#171)', () => {
   it('reports one shared reason once, folding the nights into it', () => {

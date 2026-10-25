@@ -193,7 +193,7 @@ few minutes.
 [Usage, cost and the daily cap](#usage-cost-and-the-daily-cap)); it resets
 at midnight UTC.
 
-**"Recipe generation isn't available right now"** — the provider refused
+**"AI features aren't available right now"** — the provider refused
 for billing: Gemini returns 402 "Your prepayment credits are depleted". No
 retry helps; top up the project's prepaid credits in AI Studio
 (https://ai.studio/projects). The server logs say "refused for billing", and

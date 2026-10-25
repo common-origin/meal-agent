@@ -17,7 +17,7 @@ export const AI_ERRORS = {
   daily_cap: { status: 429, message: "You've reached today's AI limit. It resets tomorrow." },
   provider_busy: { status: 503, message: 'The AI service is busy right now. Please try again in a minute.' },
   // The AI account's credits or billing (#171): retrying won't help until the owner tops it up.
-  ai_unavailable: { status: 503, message: "Recipe generation isn't available right now. Please try again later." },
+  ai_unavailable: { status: 503, message: "AI features aren't available right now. Please try again later." },
   timeout: { status: 504, message: 'That took too long. Please try again.' },
   invalid_output: { status: 502, message: "The AI returned something we couldn't read. Please try again." },
   invalid_request: { status: 400, message: 'Something was wrong with that request.' },

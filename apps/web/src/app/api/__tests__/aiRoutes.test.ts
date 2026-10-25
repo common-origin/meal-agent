@@ -541,7 +541,7 @@ describe('one error contract (#96)', () => {
     const res = await routes[0].call();
     expect(res.status).toBe(503);
     expect(await res.json()).toEqual({
-      error: "Recipe generation isn't available right now. Please try again later.",
+      error: "AI features aren't available right now. Please try again later.",
       code: 'ai_unavailable',
     });
     // The owner can find the cause in the logs
