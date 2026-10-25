@@ -7,7 +7,8 @@ import Main from "@/components/app/Main";
 import ColesShoppingModal from "@/components/app/ColesShoppingModal";
 import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from "@/lib/shoppingListAggregator";
 import { generateShoppingListCSV, downloadCSV } from "@/lib/csv";
-import { loadHousehold, getDefaultHousehold, STORAGE_KEYS } from "@/lib/storage";
+import { loadHousehold, getDefaultHousehold } from "@/lib/storage";
+import { clearShoppingComplete, isShoppingComplete as isWeekShoppingComplete, markShoppingComplete } from "@/lib/shoppingCompletion";
 import { loadCurrentWeekPlan, savePantryItems, loadPantryItems, hydrateRecencyFromSupabase, syncRecencyToSupabase } from "@/lib/hybridStorage";
 import { composeWeek } from "@/lib/compose";
 import { nextWeekMondayISO } from "@/lib/schedule";
@@ -223,9 +224,7 @@ export default function ShoppingListPage() {
     track('page_view', { page: '/shopping-list' });
     
     // Check if shopping is already complete for this week
-    const nextWeekISO = nextWeekMondayISO();
-    const completionKey = `${STORAGE_KEYS.SHOPPING_COMPLETE_PREFIX}${nextWeekISO}`;
-    const isComplete = localStorage.getItem(completionKey) === 'true';
+    const isComplete = isWeekShoppingComplete(nextWeekMondayISO());
     setIsShoppingComplete(isComplete);
     
     // Generate shopping list on mount (only if not complete)
@@ -284,14 +283,21 @@ export default function ShoppingListPage() {
   const handleShoppingComplete = () => {
     // Mark shopping as complete for this week
     const nextWeekISO = nextWeekMondayISO();
-    const completionKey = `${STORAGE_KEYS.SHOPPING_COMPLETE_PREFIX}${nextWeekISO}`;
-    localStorage.setItem(completionKey, 'true');
+    markShoppingComplete(nextWeekISO);
     setIsShoppingComplete(true);
     
     track('shopping_completed', { 
       itemCount: aggregatedItems.length,
       weekStart: nextWeekISO 
     });
+  };
+
+  /** Reopens this week's list from the completed screen (#173). */
+  const handleShowListAgain = async () => {
+    clearShoppingComplete(nextWeekMondayISO());
+    setIsShoppingComplete(false);
+    setLoading(true);
+    await generateShoppingList();
   };
 
   if (loading) {
@@ -310,13 +316,19 @@ export default function ShoppingListPage() {
           <Stack direction="column" gap="lg">
             <Typography variant="h1">Shopping list</Typography>
             <Alert variant="success" title="Shopping completed">
-              Your shopping has been marked as complete. The list will be available again when you plan your next week.
+              Your shopping has been marked as complete. The list will show again when you confirm your next plan.
             </Alert>
-            <Link href="/plan">
-              <Button variant="primary" size="large">
-                View your meal plan
+            <Stack direction="row" gap="sm" wrap>
+              <Link href="/plan">
+                <Button variant="primary" size="large">
+                  View your meal plan
+                </Button>
+              </Link>
+              {/* Never a dead end: reopen this week's list (#173) */}
+              <Button variant="secondary" size="large" onClick={handleShowListAgain}>
+                Show the shopping list
               </Button>
-            </Link>
+            </Stack>
           </Stack>
         </Container>
       </Main>
