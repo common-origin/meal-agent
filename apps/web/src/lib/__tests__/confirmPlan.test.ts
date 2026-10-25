@@ -5,6 +5,7 @@ const deps = (pendingSaves: Promise<unknown> = Promise.resolve()) => ({
   pendingSaves,
   markConfirmed: vi.fn(),
   track: vi.fn(),
+  clearShoppingComplete: vi.fn(),
   navigate: vi.fn(),
 });
 
@@ -15,6 +16,13 @@ describe('confirmPlan (#38)', () => {
     expect(d.markConfirmed).toHaveBeenCalledWith(['a', 'b']);
     expect(d.track).toHaveBeenCalledWith({ finalCost: 118, dayCount: 2 });
     expect(d.navigate).toHaveBeenCalledWith('/shopping-list');
+  });
+
+  it("clears the week's 'shopping complete' flag before opening the list, so the list shows (#173)", async () => {
+    const d = deps();
+    await confirmPlan(['a'], 20, d);
+    expect(d.clearShoppingComplete).toHaveBeenCalledTimes(1);
+    expect(d.clearShoppingComplete.mock.invocationCallOrder[0]).toBeLessThan(d.navigate.mock.invocationCallOrder[0]);
   });
 
   it('waits for a plan save still in flight before confirming or navigating', async () => {
@@ -39,6 +47,7 @@ describe('confirmPlan (#38)', () => {
     const d = deps();
     await expect(confirmPlan([], 0, d)).resolves.toBe(false);
     expect(d.markConfirmed).not.toHaveBeenCalled();
+    expect(d.clearShoppingComplete).not.toHaveBeenCalled();
     expect(d.navigate).not.toHaveBeenCalled();
   });
 });

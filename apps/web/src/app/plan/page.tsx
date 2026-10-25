@@ -23,6 +23,7 @@ import { itemsToUseSoon, mergeScan, type PantryState } from "@/lib/pantryItems";
 import { buildDaySlot, buildWeekSlate, newSlateSeed, type DaySlot } from "@/lib/planSlate";
 import { generateDay, weekFailure, type DayRequest } from "@/lib/client/generateDay";
 import { confirmPlan } from "@/lib/client/confirmPlan";
+import { clearShoppingComplete } from "@/lib/shoppingCompletion";
 import { acceptPreview, changeCount, dropNight, isPreviewPending, proposeEdits, resolveNight, retryNight, type EditInstruction, type PlanEditPreview } from "@/lib/planEdit";
 import type { FamilySettings } from "@/lib/types/settings";
 import { RecipeLibrary } from "@/lib/library";
@@ -899,6 +900,7 @@ export default function PlanPage() {
         pendingSaves: saveChainRef.current,
         markConfirmed: (ids) => RecipeLibrary.markRecipesAsConfirmed(ids),
         track: (meta) => track('plan_confirmed', meta),
+        clearShoppingComplete: () => clearShoppingComplete(nextWeekMondayISO()),
         navigate: (path) => router.push(path),
       }
     );
