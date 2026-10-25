@@ -45,9 +45,9 @@ export default function ApiQuotaWarning() {
   const daysUntilReset = getDaysUntilReset();
 
   // Color scheme based on status
-  const bgColor = quotaStatus.status === 'exceeded' ? 'error' : 
-                  quotaStatus.status === 'critical' ? 'error' : 
-                  'warning';
+  const bgColor = quotaStatus.status === 'exceeded' ? 'color.fill.danger' : 
+                  quotaStatus.status === 'critical' ? 'color.fill.danger' : 
+                  'color.fill.warning';
   
   const iconColor = quotaStatus.status === 'exceeded' ? 'error' : 
                     quotaStatus.status === 'critical' ? 'error' : 

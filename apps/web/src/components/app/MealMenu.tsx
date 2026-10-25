@@ -76,7 +76,7 @@ export default function MealMenu({ recipeId, title, onSwapClick, onMoveClick, on
         <Box
           border="default"
           borderRadius="lg"
-          bg="subtle"
+          bg="surface.raised"
           p="none"
           style={{
             position: "absolute",

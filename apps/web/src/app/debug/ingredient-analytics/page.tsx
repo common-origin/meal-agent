@@ -98,25 +98,25 @@ export default function IngredientAnalyticsPage() {
         <Stack direction="column" gap="md">
           <Typography variant="h2">Summary</Typography>
           <ResponsiveGrid cols={1} colsSm={2} colsLg={4} gapX="4" gapY="4">
-            <Box bg="surface" p="lg" borderRadius="lg" border="subtle">
+            <Box bg="color.fill.muted" p="lg" borderRadius="lg" border="default">
               <Stack direction="column" gap="xs">
                 <Typography variant="caption" color="subdued">Tracked Recipes</Typography>
                 <Typography variant="h2">{analytics.totalTrackedRecipes}</Typography>
               </Stack>
             </Box>
-            <Box bg="surface" p="lg" borderRadius="lg" border="subtle">
+            <Box bg="color.fill.muted" p="lg" borderRadius="lg" border="default">
               <Stack direction="column" gap="xs">
                 <Typography variant="caption" color="subdued">Total Ingredients</Typography>
                 <Typography variant="h2">{analytics.totalIngredients}</Typography>
               </Stack>
             </Box>
-            <Box bg="success-subtle" border="success" p="lg" borderRadius="lg">
+            <Box bg="color.fill.success-muted" border="success" p="lg" borderRadius="lg">
               <Stack direction="column" gap="xs">
                 <Typography variant="caption" color="subdued">Mapped (Have Prices)</Typography>
                 <Typography variant="h2">{analytics.mappedIngredients} ({coveragePercent}%)</Typography>
               </Stack>
             </Box>
-            <Box bg="warning-subtle" border="warning" p="lg" borderRadius="lg">
+            <Box bg="color.fill.warning-muted" border="warning" p="lg" borderRadius="lg">
               <Stack direction="column" gap="xs">
                 <Typography variant="caption" color="subdued">Unmapped (Need Prices)</Typography>
                 <Typography variant="h2">{analytics.unmappedIngredients} ({unmappedPercent}%)</Typography>
@@ -158,7 +158,7 @@ export default function IngredientAnalyticsPage() {
                 </Button>
               </Stack>
               <Box 
-                bg="surface" 
+                bg="color.fill.muted" 
                 p="lg" 
                 borderRadius="lg"
                 style={{ 
@@ -180,7 +180,7 @@ export default function IngredientAnalyticsPage() {
             <Divider size="small" />
             <Stack direction="column" gap="md">
               <Typography variant="h2">Top 10 Unmapped Ingredients</Typography>
-              <Box bg="surface" p="lg" borderRadius="lg" border="subtle">
+              <Box bg="color.fill.muted" p="lg" borderRadius="lg" border="default">
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid var(--color-border)' }}>
@@ -214,7 +214,7 @@ export default function IngredientAnalyticsPage() {
             <Divider size="small" />
             <Stack direction="column" gap="md">
               <Typography variant="h2">Top 10 Most Used Ingredients</Typography>
-              <Box bg="surface" p="lg" borderRadius="lg" border="subtle">
+              <Box bg="color.fill.muted" p="lg" borderRadius="lg" border="default">
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid var(--color-border)' }}>

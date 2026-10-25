@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Stack, Typography, IconButton, Box, TextField, Sheet, Button, BooleanChip, Alert } from "@common-origin/design-system";
+import { InlineAlert, Stack, Typography, IconButton, Box, TextField, Sheet, Button, FilterChip } from "@common-origin/design-system";
 import { addItem, isUseSoon, removeItem, toggleUseSoon, type PantryState } from "@/lib/pantryItems";
 
 interface PantrySheetProps {
@@ -66,7 +66,7 @@ export default function PantrySheet({
         </Typography>
 
         {/* Scan Photo Section */}
-        <Box border="default" borderRadius="lg" p="md" bg="subtle">
+        <Box border="default" borderRadius="lg" p="md" bg="surface.raised">
           <Stack direction="column" gap="md">
             <Typography variant="h3">Scan your fridge or pantry</Typography>
             <Typography variant="small">
@@ -92,15 +92,15 @@ export default function PantrySheet({
             </Button>
 
             {scanError && (
-              <Alert variant="error" inline>
+              <InlineAlert variant="error">
                 {scanError}
-              </Alert>
+              </InlineAlert>
             )}
           </Stack>
         </Box>
 
         {/* Manual Entry Section */}
-        <Box border="default" borderRadius="lg" p="md" bg="subtle">
+        <Box border="default" borderRadius="lg" p="md" bg="surface.raised">
           <Stack direction="column" gap="md">
             <Typography variant="h3">Add manually</Typography>
             
@@ -146,7 +146,7 @@ export default function PantrySheet({
                   <Box
                     key={idx}
                     p="sm"
-                    bg="surface"
+                    bg="color.fill.muted"
                     borderRadius="sm"
                   >
                     <Stack
@@ -156,14 +156,13 @@ export default function PantrySheet({
                     >
                       <Typography variant="body">• {item}</Typography>
                       <Stack direction="row" gap="sm" alignItems="center">
-                        <BooleanChip
-                          size="small"
+                        <FilterChip
                           selected={isUseSoon(pantry, item)}
                           onClick={() => onUpdatePantry(toggleUseSoon(pantry, item))}
                           aria-label={`Use ${item} soon`}
                         >
                           Use soon
-                        </BooleanChip>
+                        </FilterChip>
                         <Button
                           variant="secondary"
                           size="small"

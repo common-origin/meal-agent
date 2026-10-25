@@ -36,7 +36,7 @@ export default function HomePage() {
       <Stack direction="column" gap="2xl">
         <Box
           maxWidth="600px"
-          bg="subtle"
+          bg="surface.raised"
           borderRadius="lg"
           p="7xl"
           shadow="raised"
@@ -62,12 +62,12 @@ export default function HomePage() {
         </Box>
         <div style={{ maxWidth: "600px", margin: "0 auto", textAlign: "center" }} >
           <ResponsiveGrid cols={1} colsSm={3}>
-            <Box borderRight="strong" p="lg">
+            <Box borderRight="input-hover" p="lg">
               <Typography variant="body" color="subdued">
                 AI-powered meal plans tailored to your family
               </Typography>
             </Box>
-            <Box borderRight="strong" p="lg">
+            <Box borderRight="input-hover" p="lg">
               <Typography variant="body" color="subdued">
                 Auto-calculated shopping lists with exact quantities
               </Typography>

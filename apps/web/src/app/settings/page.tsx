@@ -180,7 +180,7 @@ export default function SettingsPage() {
 							</Stack>
 						</Alert>
 					)}						{/* Household Section */}
-						<Box border="default" borderRadius="lg" p="lg" bg="subtle">
+						<Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
 							<Stack direction="column" gap="md">
 								<Typography variant="h3">Household</Typography>
 								<Box maxWidth="420px">
@@ -238,7 +238,7 @@ export default function SettingsPage() {
 											</Box>
 										</Stack>
 
-										<Chip variant="emphasis">
+										<Chip>
 											Total servings: <strong>{settings.totalServings}</strong>
 										</Chip>
 									</Stack>
@@ -247,7 +247,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Dietary requirements */}
-						<Box border="default" borderRadius="lg" p="lg" bg="subtle">
+						<Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
 							<Stack direction="column" gap="lg">
 								<Stack direction="column" gap="sm">
 									<Typography variant="h3">Dietary requirements</Typography>
@@ -314,7 +314,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Cooking Profile */}
-						<Box border="default" borderRadius="lg" p="lg" bg="subtle">
+						<Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
 							<Stack direction="column" gap="2xl">
 								<Stack direction="column" gap="md">
 									<Typography variant="h3">Cooking profile</Typography>
@@ -398,7 +398,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Location & Seasonality */}
-						<Box border="default" borderRadius="lg" p="lg" bg="subtle">
+						<Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
 							<Stack direction="column" gap="2xl">
 								<Stack direction="column" gap="md">
 									<Typography variant="h3">Location & seasonality</Typography>
@@ -461,7 +461,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Budget & Time */}
-						<Box border="default" borderRadius="lg" p="lg" bg="subtle">
+						<Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
 							<Stack direction="column" gap="md">
 								<Typography variant="h3">Budget & time</Typography>
 								
@@ -528,7 +528,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Batch Cooking */}
-						<Box border="default" borderRadius="lg" p="lg" bg="subtle">
+						<Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
 							<Stack direction="column" gap="md">
 								<Typography variant="h3">Batch cooking</Typography>
 								
@@ -587,7 +587,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Pantry Preference */}
-						<Box border="default" borderRadius="lg" p="lg" bg="subtle">
+						<Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
 							<Box maxWidth="500px">
 								<Stack direction="column" gap="2xl">
 									<Stack direction="column" gap="md">
@@ -615,7 +615,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Weekly Planning Reminder */}
-						<Box border="default" borderRadius="lg" p="lg" bg="subtle">
+						<Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
 							<Box maxWidth="500px">
 								<Stack direction="column" gap="2xl">
 									<Stack direction="column" gap="md">
@@ -662,7 +662,7 @@ export default function SettingsPage() {
 
 
 						{/* Recipe Sharing */}
-						<Box border="default" borderRadius="lg" p="lg" bg="subtle">
+						<Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
 							<Box maxWidth="600px">
 								<Stack direction="column" gap="2xl">
 									<Stack direction="column" gap="md">
@@ -680,7 +680,7 @@ export default function SettingsPage() {
 													border="default"
 													borderRadius="md"
 													p="md"
-													bg="surface"
+													bg="color.fill.muted"
 												>
 													<Stack direction="row" gap="md" justifyContent="space-between" alignItems="center">
 														<Stack direction="column" gap="xs">
@@ -737,7 +737,7 @@ export default function SettingsPage() {
 						</Box>
 
 						{/* Calendar Sync */}
-						<Box border="default" borderRadius="lg" p="lg" bg="subtle">
+						<Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
 							<Stack direction="column" gap="md">
 								<Typography variant="h3">Calendar Sync</Typography>
 								<Typography color="subdued">

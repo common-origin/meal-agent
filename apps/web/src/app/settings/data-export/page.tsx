@@ -83,7 +83,7 @@ export default function DataExportPage() {
         )}
 
         <Box
-          bg="subtle"
+          bg="surface.raised"
           p="xl"
           borderRadius="md"
           style={{ border: tokens.semantic.border.default }}
@@ -104,7 +104,7 @@ export default function DataExportPage() {
         </Box>
 
         <Box
-          bg="subtle"
+          bg="surface.raised"
           p="xl"
           borderRadius="md"
           style={{ border: tokens.semantic.border.default }}
@@ -125,7 +125,7 @@ export default function DataExportPage() {
         </Box>
 
         <Box
-          bg="subtle"
+          bg="surface.raised"
           p="xl"
           borderRadius="md"
           style={{ border: tokens.semantic.border.default }}

@@ -13,13 +13,13 @@ interface PriceSourceBadgeProps {
 export default function PriceSourceBadge({ source, livePrice }: PriceSourceBadgeProps) {
   if (source === 'api' && livePrice) {
     return (
-      <Tag variant="success">Live price</Tag>
+      <Tag variant="emphasis">Live price</Tag>
     );
   }
   
   if (source === 'static') {
     return (
-      <Tag variant="interactive" border={false}>Static price</Tag>
+      <Tag variant="default" border={false}>Static price</Tag>
     );
   }
   

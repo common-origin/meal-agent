@@ -64,7 +64,7 @@ export default function Header() {
       as="header"
       borderBottom="default"
       p="lg"
-      bg="default"
+      bg="surface.base"
       style={{
         position: "sticky",
         top: 0,

@@ -26,7 +26,7 @@ export default function ColesProductCard({
   
   return (
     <Box 
-      bg="surface" 
+      bg="color.fill.muted" 
       borderRadius="sm" 
       p="md"
       style={{ 
@@ -36,7 +36,7 @@ export default function ColesProductCard({
     >
       {isRecommended && (
         <Box style={{ position: 'absolute', top: 8, right: 8 }}>
-          <Chip size="small">Best Match</Chip>
+          <Chip>Best Match</Chip>
         </Box>
       )}
       

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, BooleanChip, Divider, Stack, Typography, Button, Box, TextField, List, ListItem, IconButton, Chip, tokens } from "@common-origin/design-system";
+import { Alert, InlineAlert, FilterChip, Divider, Stack, Typography, Button, Box, TextField, List, ListItem, IconButton, Chip, tokens } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import { CUISINE_OPTIONS, MAX_SETTING_TEXT_LENGTH } from "@/lib/types/settings";
@@ -130,7 +130,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
               <Stack key={step} direction="row" gap="sm" alignItems="center">
                 <Box
                   p="sm"
-                  bg={step === currentStep ? 'emphasis' : step < currentStep ? 'success' : 'subtle'}
+                  bg={step === currentStep ? 'color.fill.emphasis' : step < currentStep ? 'color.fill.success' : 'surface.raised'}
                   borderRadius="circle"
                   style={{
                     width: '32px',
@@ -155,7 +155,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
 
         {/* Step 1: Pantry Stocktake */}
         {currentStep === 1 && (
-          <Box border="default" borderRadius="lg" p="xl" pb="9xl" bg="subtle">
+          <Box border="default" borderRadius="lg" p="xl" pb="9xl" bg="surface.raised">
             <Stack direction="column" gap="lg">
               <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Typography variant="h2">Step 1: Pantry stocktake</Typography>
@@ -231,7 +231,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
                   <Divider size="small"/>
                   <Stack direction="column" gap="lg">
                     <Typography variant="subtitle">Items in your pantry ({pantryItems.length})</Typography>
-                    <Box p="none" border="default" bg="subtle">
+                    <Box p="none" border="default" bg="surface.raised">
                       <List dividers spacing="comfortable">
                         {pantryItems.map((item, idx) => (
                           <ListItem
@@ -239,14 +239,13 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
                             primary={item}
                             badge={
                               <Stack direction="row" gap="sm" alignItems="center">
-                                <BooleanChip
-                                  size="small"
+                                <FilterChip
                                   selected={isUseSoon(pantry, item)}
                                   onClick={() => setPantry((current) => toggleUseSoon(current, item))}
                                   aria-label={`Use ${item} soon`}
                                 >
                                   Use soon
-                                </BooleanChip>
+                                </FilterChip>
                                 <IconButton
                                   variant="naked"
                                   iconName="trash"
@@ -265,9 +264,9 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
               )}
 
               {pantryItems.length === 0 && (
-                <Alert variant="info" inline>
+                <InlineAlert variant="info">
                   No items added yet. Add ingredients above or skip this step if you don&apos;t want to specify pantry items this week.
-                </Alert>
+                </InlineAlert>
               )}
             </Stack>
           </Box>
@@ -275,7 +274,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
 
         {/* Step 2: Cuisine Selection */}
         {currentStep === 2 && (
-          <Box border="default" borderRadius="lg" p="xl" pb="9xl" bg="subtle">
+          <Box border="default" borderRadius="lg" p="xl" pb="9xl" bg="surface.raised">
             <Stack direction="column" gap="lg">
               <Typography variant="h2">Step 2: Cuisine preferences</Typography>
               <Typography variant="body">
@@ -323,15 +322,15 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
               </div>
 
               {selectedCuisines.length === 0 && (
-                <Alert variant="warning" inline>
+                <InlineAlert variant="warning">
                   Please select at least one cuisine to continue
-                </Alert>
+                </InlineAlert>
               )}
 
               {selectedCuisines.length > 0 && (
-                <Alert variant="success" inline>
+                <InlineAlert variant="success">
                   {selectedCuisines.length} cuisine{selectedCuisines.length > 1 ? 's' : ''} selected
-                </Alert>
+                </InlineAlert>
               )}
 
               <Divider size="small"/>
@@ -354,24 +353,24 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
 
         {/* Step 3: Ready to Generate */}
         {currentStep === 3 && (
-          <Box border="default" borderRadius="lg" p="xl" pb="9xl" bg="subtle">
+          <Box border="default" borderRadius="lg" p="xl" pb="9xl" bg="surface.raised">
             <Stack direction="column" gap="lg">
               <Typography variant="h2">Step 3: Generate your meal plan</Typography>
               <Typography variant="body">
                 Great! We&apos;re ready to create your personalized weekly meal plan based on your preferences.
               </Typography>
 
-              <Box p="lg" bg="subtle" borderRadius="md" border="default">
+              <Box p="lg" bg="surface.raised" borderRadius="md" border="default">
                 <Stack direction="column" gap="sm">
                   <Typography variant="h3">
                     Your weekly plan summary:
                   </Typography>
                   <Stack direction="row" gap="md">
-                    <Chip variant="emphasis">{pantryItems.length}</Chip>
+                    <Chip>{pantryItems.length}</Chip>
                     <Typography> pantry items to use</Typography>
                   </Stack>
                   <Stack direction="row" gap="md">
-                    <Chip variant="emphasis">{selectedCuisines.length}</Chip>
+                    <Chip>{selectedCuisines.length}</Chip>
                     <Typography> cuisine{selectedCuisines.length > 1 ? 's' : ''}: {selectedCuisines.join(', ')}</Typography>
                   </Stack>
                 </Stack>

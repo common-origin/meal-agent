@@ -38,7 +38,7 @@ const Grip = styled.button`
   height: 2.5rem;
   padding: 0;
   border: 0;
-  border-radius: ${tokens.semantic.border.radius.sm};
+  border-radius: ${tokens.semantic.radius.sm};
   background: transparent;
   color: ${tokens.semantic.color.text.muted};
   cursor: grab;

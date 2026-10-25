@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Alert, Stack, Typography, Button, Box, TextField, NumberInput, Dropdown, List, ListItem, IconButton } from "@common-origin/design-system";
+import { InlineAlert, Stack, Typography, Button, Box, TextField, NumberInput, Dropdown, List, ListItem, IconButton } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import { tokens } from "@common-origin/design-system/tokens";
@@ -358,7 +358,7 @@ export default function AddRecipePage() {
           {!imagePreview && <FormMessages error={error} notice={notice} />}
 
           {!imagePreview ? (
-            <Box border="default" borderRadius="md" p="xl" bg="subtle">
+            <Box border="default" borderRadius="md" p="xl" bg="surface.raised">
               <Stack direction="column" gap="md" alignItems="center">
                 <Typography variant="h3">Choose an image</Typography>
                 <input
@@ -370,7 +370,7 @@ export default function AddRecipePage() {
             </Box>
           ) : (
             <Stack direction="column" gap="md">
-              <Box border="default" borderRadius="md" p="md" bg="subtle">
+              <Box border="default" borderRadius="md" p="md" bg="surface.raised">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
                   src={imagePreview} 
@@ -442,7 +442,7 @@ export default function AddRecipePage() {
         <Stack direction="column" gap="xl">
           <Typography variant="h1">Import from URL</Typography>
 
-          <Box border="default" borderRadius="md" p="lg" bg="subtle">
+          <Box border="default" borderRadius="md" p="lg" bg="surface.raised">
             <Stack direction="column" gap="md">
               <TextField
                 label="Recipe URL"
@@ -554,14 +554,14 @@ function FormMessages({ error, notice }: { error: string | null; notice: string 
     <div ref={ref}>
       <Stack direction="column" gap="sm">
         {error && (
-          <Alert variant="error" inline>
+          <InlineAlert variant="error">
             {error}
-          </Alert>
+          </InlineAlert>
         )}
         {notice && (
-          <Alert variant="info" inline>
+          <InlineAlert variant="info">
             {notice}
-          </Alert>
+          </InlineAlert>
         )}
       </Stack>
     </div>
@@ -637,7 +637,7 @@ function RecipeForm({
   return (
     <Stack direction="column" gap="lg">
       {/* Basic Info */}
-      <Box border="subtle" borderRadius="lg" p="lg" bg="subtle">
+      <Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
         <Stack direction="column" gap="md">
           <Typography variant="h3">Recipe details</Typography>
           
@@ -683,7 +683,7 @@ function RecipeForm({
       </Box>
 
       {/* Ingredients */}
-      <Box border="subtle" borderRadius="lg" p="lg" bg="subtle">
+      <Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
         <Stack direction="column" gap="md">
           <Typography variant="h3">Ingredients</Typography>
           
@@ -743,7 +743,7 @@ function RecipeForm({
       </Box>
 
       {/* Instructions */}
-      <Box border="subtle" borderRadius="lg" p="lg" bg="subtle">
+      <Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
         <Stack direction="column" gap="md">
           <Typography variant="h3">Instructions</Typography>
           

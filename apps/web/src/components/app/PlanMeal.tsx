@@ -19,7 +19,7 @@ const TitleLink = styled(Link)`
     content: "";
     position: absolute;
     inset: 0;
-    border-radius: ${tokens.semantic.border.radius.lg};
+    border-radius: ${tokens.semantic.radius.lg};
   }
   &:focus-visible {
     outline: none;

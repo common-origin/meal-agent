@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Alert, Box, EmptyState, Stack, Typography, IconButton, Sheet, SearchField, Dropdown } from "@common-origin/design-system";
+import { InlineAlert, Box, EmptyState, Stack, Typography, IconButton, Sheet, SearchField, Dropdown } from "@common-origin/design-system";
 import { type Recipe } from "@/lib/types/recipe";
 import { RecipeLibrary } from "@/lib/library";
 import { getFavorites } from "@/lib/storage";
@@ -142,9 +142,9 @@ export default function SwapDrawer({
         </Stack>
           
         {currentRecipe && (
-          <Alert variant="info" inline>
+          <InlineAlert variant="info">
             Current meal: {currentRecipe.title}
-          </Alert>
+          </InlineAlert>
         )}
 
         {/* Saved recipes */}

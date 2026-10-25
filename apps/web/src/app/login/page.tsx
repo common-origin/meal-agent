@@ -109,7 +109,7 @@ function LoginForm({ redirectTo, errorCode, pending = false }: LoginFormProps) {
           padding: '24px',
         }}
       >
-        <Box bg="subtle" border="default" borderRadius="lg" p="xl" style={{ maxWidth: '400px', width: '100%' }}>
+        <Box bg="surface.raised" border="default" borderRadius="lg" p="xl" style={{ maxWidth: '400px', width: '100%' }}>
           <Stack direction="column" gap="lg">
             <Typography variant="h2">Check your email</Typography>
             <Typography color="subdued">
@@ -144,7 +144,7 @@ function LoginForm({ redirectTo, errorCode, pending = false }: LoginFormProps) {
         padding: '24px',
       }}
     >
-      <Box bg="subtle" border="default" borderRadius="lg" p="xl" style={{ maxWidth: '400px', width: '100%' }}>
+      <Box bg="surface.raised" border="default" borderRadius="lg" p="xl" style={{ maxWidth: '400px', width: '100%' }}>
         <Stack direction="column" gap="lg">
           <Stack direction="column" gap="sm">
             <Typography variant="h2">Welcome back</Typography>
@@ -155,8 +155,8 @@ function LoginForm({ redirectTo, errorCode, pending = false }: LoginFormProps) {
 
           {error && (
             <Box
-              bg="error-subtle"
-              border="error"
+              bg="color.fill.danger-muted"
+              border="danger"
               borderRadius="sm"
               p="md"
             >
