@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, BooleanChip, Divider, Stack, Typography, Button, Box, TextField, List, ListItem, IconButton, Chip } from "@common-origin/design-system";
+import { Alert, BooleanChip, Divider, Stack, Typography, Button, Box, TextField, List, ListItem, IconButton, Chip, tokens } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import { CUISINE_OPTIONS, MAX_SETTING_TEXT_LENGTH } from "@/lib/types/settings";
@@ -155,7 +155,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
 
         {/* Step 1: Pantry Stocktake */}
         {currentStep === 1 && (
-          <Box border="default" borderRadius="lg" p="xl" pb="9xl" bg="default">
+          <Box border="default" borderRadius="lg" p="xl" pb="9xl" bg="subtle">
             <Stack direction="column" gap="lg">
               <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Typography variant="h2">Step 1: Pantry stocktake</Typography>
@@ -275,7 +275,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
 
         {/* Step 2: Cuisine Selection */}
         {currentStep === 2 && (
-          <Box border="default" borderRadius="lg" p="xl" pb="9xl" bg="default">
+          <Box border="default" borderRadius="lg" p="xl" pb="9xl" bg="subtle">
             <Stack direction="column" gap="lg">
               <Typography variant="h2">Step 2: Cuisine preferences</Typography>
               <Typography variant="body">
@@ -296,9 +296,10 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
                     onClick={() => toggleCuisine(cuisine.id)}
                     style={{
                       padding: '16px',
-                      border: '1px solid #ccc',
+                      // Selected: the design system's selected fill and edge (decision 0016)
+                      border: `1px solid ${selectedCuisines.includes(cuisine.id) ? tokens.semantic.color.border.accent : tokens.semantic.color.border.input}`,
                       borderRadius: '8px',
-                      backgroundColor: selectedCuisines.includes(cuisine.id) ? '#007bff' : '#fff',
+                      backgroundColor: selectedCuisines.includes(cuisine.id) ? tokens.semantic.color.fill['accent-muted'] : tokens.semantic.surface.raised,
                       cursor: 'pointer',
                       transition: 'all 0.2s',
                     }}
@@ -311,7 +312,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
                         style={{ 
                           fontWeight: selectedCuisines.includes(cuisine.id) ? 600 : 400,
                           fontSize: '14px',
-                          color: selectedCuisines.includes(cuisine.id) ? '#fff' : 'inherit'
+                          color: selectedCuisines.includes(cuisine.id) ? tokens.semantic.color.text.accent : 'inherit'
                         }}
                       >
                         {cuisine.label}
@@ -353,7 +354,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
 
         {/* Step 3: Ready to Generate */}
         {currentStep === 3 && (
-          <Box border="default" borderRadius="lg" p="xl" pb="9xl" bg="default">
+          <Box border="default" borderRadius="lg" p="xl" pb="9xl" bg="subtle">
             <Stack direction="column" gap="lg">
               <Typography variant="h2">Step 3: Generate your meal plan</Typography>
               <Typography variant="body">

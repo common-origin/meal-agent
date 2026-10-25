@@ -3,7 +3,7 @@
  * Displays a Coles product with details and add to cart action
  */
 
-import { Box, Button, Stack, Typography, Chip } from "@common-origin/design-system";
+import { Box, Button, Stack, Typography, Chip, tokens } from "@common-origin/design-system";
 import type { ColesApiProduct } from "@/lib/colesApi";
 
 interface ColesProductCardProps {
@@ -30,7 +30,7 @@ export default function ColesProductCard({
       borderRadius="sm" 
       p="md"
       style={{ 
-        border: isRecommended ? '2px solid #10b981' : '1px solid #e5e7eb',
+        border: isRecommended ? `2px solid ${tokens.semantic.color.border.accent}` : tokens.semantic.border.default,
         position: 'relative'
       }}
     >

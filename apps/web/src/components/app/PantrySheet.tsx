@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Stack, Typography, IconButton, Box, TextField, Sheet, Button, BooleanChip } from "@common-origin/design-system";
+import { Stack, Typography, IconButton, Box, TextField, Sheet, Button, BooleanChip, Alert } from "@common-origin/design-system";
 import { addItem, isUseSoon, removeItem, toggleUseSoon, type PantryState } from "@/lib/pantryItems";
 
 interface PantrySheetProps {
@@ -92,16 +92,9 @@ export default function PantrySheet({
             </Button>
 
             {scanError && (
-              <div style={{
-                padding: "12px",
-                backgroundColor: "#f8d7da",
-                border: "1px solid #dc3545",
-                borderRadius: "8px"
-              }}>
-                <Typography variant="small">
-                  ❌ {scanError}
-                </Typography>
-              </div>
+              <Alert variant="error" inline>
+                {scanError}
+              </Alert>
             )}
           </Stack>
         </Box>
@@ -153,7 +146,7 @@ export default function PantrySheet({
                   <Box
                     key={idx}
                     p="sm"
-                    bg="subtle"
+                    bg="surface"
                     borderRadius="sm"
                   >
                     <Stack

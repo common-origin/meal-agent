@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+// The design system's CSS variables (--co-*), before the app's globals that use them
+import "@common-origin/design-system/tokens.css";
 import "./globals.css";
 import Providers from "./providers";
 import Header from "@/components/navigation/Header";

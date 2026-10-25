@@ -63,7 +63,7 @@ export default function StarRating({ rating, onChange, readonly = false, size = 
               height: iconSize,
               color: isFilled 
                 ? tokens.semantic.color.icon.warning 
-                : tokens.semantic.color.icon.subdued
+                : tokens.semantic.color.icon.muted
             }}
           >
             <svg 
@@ -92,7 +92,7 @@ export default function StarRating({ rating, onChange, readonly = false, size = 
         <span 
           style={{ 
             fontSize: size === 'small' ? '12px' : size === 'large' ? '18px' : '14px',
-            color: tokens.semantic.color.text.subdued,
+            color: tokens.semantic.color.text.muted,
             marginLeft: '4px'
           }}
         >

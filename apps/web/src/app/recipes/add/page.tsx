@@ -298,10 +298,10 @@ export default function AddRecipePage() {
             <button
               onClick={() => changeMode('image')}
               style={{
-                border: '1px solid #ddd',
+                border: `1px solid ${tokens.semantic.color.border.input}`,
                 borderRadius: '8px',
                 padding: '24px',
-                backgroundColor: 'white',
+                backgroundColor: tokens.semantic.surface.raised,
                 cursor: 'pointer',
                 textAlign: 'left',
               }}
@@ -315,10 +315,10 @@ export default function AddRecipePage() {
             <button
               onClick={() => changeMode('url')}
               style={{
-                border: '1px solid #ddd',
+                border: `1px solid ${tokens.semantic.color.border.input}`,
                 borderRadius: '8px',
                 padding: '24px',
-                backgroundColor: 'white',
+                backgroundColor: tokens.semantic.surface.raised,
                 cursor: 'pointer',
                 textAlign: 'left',
               }}
@@ -332,10 +332,10 @@ export default function AddRecipePage() {
             <button
               onClick={() => changeMode('manual')}
               style={{
-                border: '1px solid #ddd',
+                border: `1px solid ${tokens.semantic.color.border.input}`,
                 borderRadius: '8px',
                 padding: '24px',
-                backgroundColor: 'white',
+                backgroundColor: tokens.semantic.surface.raised,
                 cursor: 'pointer',
                 textAlign: 'left',
               }}
@@ -358,7 +358,7 @@ export default function AddRecipePage() {
           {!imagePreview && <FormMessages error={error} notice={notice} />}
 
           {!imagePreview ? (
-            <Box border="default" borderRadius="md" p="xl" bg="surface">
+            <Box border="default" borderRadius="md" p="xl" bg="subtle">
               <Stack direction="column" gap="md" alignItems="center">
                 <Typography variant="h3">Choose an image</Typography>
                 <input
@@ -370,7 +370,7 @@ export default function AddRecipePage() {
             </Box>
           ) : (
             <Stack direction="column" gap="md">
-              <Box border="default" borderRadius="md" p="md" bg="surface">
+              <Box border="default" borderRadius="md" p="md" bg="subtle">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
                   src={imagePreview} 
@@ -442,7 +442,7 @@ export default function AddRecipePage() {
         <Stack direction="column" gap="xl">
           <Typography variant="h1">Import from URL</Typography>
 
-          <Box border="default" borderRadius="md" p="lg" bg="surface">
+          <Box border="default" borderRadius="md" p="lg" bg="subtle">
             <Stack direction="column" gap="md">
               <TextField
                 label="Recipe URL"
@@ -637,7 +637,7 @@ function RecipeForm({
   return (
     <Stack direction="column" gap="lg">
       {/* Basic Info */}
-      <Box border="subtle" borderRadius="lg" p="lg" bg="default">
+      <Box border="subtle" borderRadius="lg" p="lg" bg="subtle">
         <Stack direction="column" gap="md">
           <Typography variant="h3">Recipe details</Typography>
           
@@ -683,7 +683,7 @@ function RecipeForm({
       </Box>
 
       {/* Ingredients */}
-      <Box border="subtle" borderRadius="lg" p="lg" bg="default">
+      <Box border="subtle" borderRadius="lg" p="lg" bg="subtle">
         <Stack direction="column" gap="md">
           <Typography variant="h3">Ingredients</Typography>
           
@@ -743,7 +743,7 @@ function RecipeForm({
       </Box>
 
       {/* Instructions */}
-      <Box border="subtle" borderRadius="lg" p="lg" bg="default">
+      <Box border="subtle" borderRadius="lg" p="lg" bg="subtle">
         <Stack direction="column" gap="md">
           <Typography variant="h3">Instructions</Typography>
           
@@ -762,7 +762,7 @@ function RecipeForm({
                   width: '100%',
                   padding: '8px 12px',
                   borderRadius: '4px',
-                  border: '1px solid #ddd',
+                  border: `1px solid ${tokens.semantic.color.border.input}`,
                   fontSize: '14px',
                   fontFamily: 'inherit',
                   resize: 'vertical',
@@ -786,10 +786,10 @@ function RecipeForm({
                       display: 'flex', 
                       alignItems: 'center', 
                       justifyContent: 'center',
-                      backgroundColor: tokens.semantic.color.background.emphasis,
+                      backgroundColor: tokens.semantic.color.fill.emphasis,
                       font: tokens.semantic.typography.overline,
                       borderRadius: '999px',
-                      color: 'white',
+                      color: tokens.semantic.color.text.inverse,
                       fontSize: '12px',
                       fontWeight: 600,
                     }}>

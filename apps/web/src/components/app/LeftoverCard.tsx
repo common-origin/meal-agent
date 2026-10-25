@@ -17,7 +17,7 @@ export default function LeftoverCard({
 }: LeftoverCardProps) {
   return (
     <Box 
-      bg="default"
+      bg="subtle"
       borderRadius="md"
       p="md"
       border="default"
@@ -27,7 +27,6 @@ export default function LeftoverCard({
         aria-label={`Leftovers from ${originalDay}'s ${originalRecipeTitle} - no cooking needed today`}
         style={{
           opacity: 0.85,
-          background: "linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%)",
           borderRadius: "8px",
           padding: "16px"
         }}

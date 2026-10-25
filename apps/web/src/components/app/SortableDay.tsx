@@ -40,7 +40,7 @@ const Grip = styled.button`
   border: 0;
   border-radius: ${tokens.semantic.border.radius.sm};
   background: transparent;
-  color: ${tokens.semantic.color.text.subdued};
+  color: ${tokens.semantic.color.text.muted};
   cursor: grab;
   touch-action: none;
   &:hover {

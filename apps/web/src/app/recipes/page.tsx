@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Stack, Typography, Box, Button, TextField, Dropdown, ResponsiveGrid, EmptyState } from "@common-origin/design-system";
+import { Stack, Typography, Box, Button, TextField, Dropdown, ResponsiveGrid, EmptyState, tokens } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import { RecipeLibrary } from "@/lib/library";
@@ -326,7 +326,8 @@ export default function RecipesPage() {
                 variant="secondary"
                 size="large"
                 onClick={handleClearAllRecipes}
-                style={{ color: '#d32f2f' }}
+                // Destructive but not the page's main action: secondary, with danger text
+                style={{ color: tokens.semantic.color.text.danger }}
               >
                 Clear All
               </Button>

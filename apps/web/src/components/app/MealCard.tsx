@@ -77,7 +77,7 @@ const CardWrapper = styled(Box)`
   flex-direction: column;
 
   &:hover {
-    border-color: ${tokens.semantic.color.border.strong};
+    border-color: ${tokens.semantic.color.border["input-hover"]};
   }
 `;
 
@@ -120,7 +120,7 @@ export default function MealCard({
 
   const cardContent = (
     <div onClick={disableLink ? handleCardClick : undefined}>
-      <CardWrapper bg="default" borderRadius="lg" p="lg" border="subtle" minHeight="300px">
+      <CardWrapper bg="subtle" borderRadius="lg" p="lg" border="subtle" minHeight="300px">
         <Stack direction="column" gap="md">
           <Stack direction="row" gap="md" alignItems="flex-start">
             <StyledMealCardTitle style={{ flex: 1 }}>{toSentenceCase(title)}</StyledMealCardTitle>

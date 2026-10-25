@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useMemo } from "react";
-import { Box, Stack, Typography, ProgressBar, Chip, Button } from "@common-origin/design-system";
+import { Box, Stack, Typography, ProgressBar, Chip, Button, tokens } from "@common-origin/design-system";
 import { RecipeLibrary } from "@/lib/library";
 import { estimateIngredientCostWithAPI } from "@/lib/colesMapping";
 import { planCostLabel, planPricedFraction } from "@/lib/recipeCost";
@@ -231,7 +231,7 @@ export default function BudgetSummary({ weekPlan, budget, dayNames }: BudgetSumm
             </Box>
             
             {loadingApiPrices && (
-              <Box bg="subtle" borderRadius="sm" p="md">
+              <Box bg="surface" borderRadius="sm" p="md">
                 <Typography variant="small">Loading live prices from Coles API...</Typography>
               </Box>
             )}
@@ -242,7 +242,7 @@ export default function BudgetSummary({ weekPlan, budget, dayNames }: BudgetSumm
                   key={index}
                   style={{ 
                     padding: '8px 0',
-                    borderBottom: index < dailyCosts.length - 1 ? '1px solid #e5e7eb' : 'none',
+                    borderBottom: index < dailyCosts.length - 1 ? tokens.semantic.border.default : 'none',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center'
@@ -274,7 +274,7 @@ export default function BudgetSummary({ weekPlan, budget, dayNames }: BudgetSumm
             
             {/* Price Source Summary */}
             {(livePriceCount > 0 || staticPriceCount > 0 || estimatedPriceCount > 0) && (
-              <Box bg="default" borderRadius="sm" p="md" style={{ marginTop: '8px' }}>
+              <Box bg="surface" borderRadius="sm" p="md" style={{ marginTop: '8px' }}>
                 <Stack direction="column" gap="xs">
                   <Typography variant="small">Price sources:</Typography>
                   <Box style={{ display: 'flex', flexDirection: 'row', gap: '12px', flexWrap: 'wrap' }}>

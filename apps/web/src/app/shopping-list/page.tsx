@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Alert, Box, Button, Chip, Container, Icon, IconButton, List, ListItem, ResponsiveGrid, Stack, Typography } from "@common-origin/design-system";
+import { Alert, Box, Button, Chip, Container, Icon, IconButton, List, ListItem, ResponsiveGrid, Stack, Typography, Divider } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ColesShoppingModal from "@/components/app/ColesShoppingModal";
 import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from "@/lib/shoppingListAggregator";
@@ -407,7 +407,7 @@ export default function ShoppingListPage() {
 
             {/* Weekly Nutrition Summary */}
             {weeklyNutrition && weeklyNutrition.mealsWithNutrition > 0 && (
-              <Box border="subtle" borderRadius="lg" p="lg" bg="default">
+              <Box border="subtle" borderRadius="lg" p="lg" bg="subtle">
                 <Stack direction="column" gap="md">
                   <Stack direction="row" justifyContent="space-between" alignItems="center">
                     <Typography variant="h3">Weekly nutrition summary</Typography>
@@ -416,28 +416,28 @@ export default function ShoppingListPage() {
                     </Typography>
                   </Stack>
                   <ResponsiveGrid cols={2} colsMd={4} gap="2">
-                    <Box bg="subtle" borderRadius="md" p="md">
+                    <Box bg="surface" borderRadius="md" p="md">
                       <Stack direction="column" gap="xs">
                         <Typography variant="small" color="subdued">Total calories</Typography>
                         <Typography variant="h3">{Math.round(weeklyNutrition.totalCalories).toLocaleString()}</Typography>
                         <Typography variant="small" color="subdued">kcal</Typography>
                       </Stack>
                     </Box>
-                    <Box bg="subtle" borderRadius="md" p="md">
+                    <Box bg="surface" borderRadius="md" p="md">
                       <Stack direction="column" gap="xs">
                         <Typography variant="small" color="subdued">Total protein</Typography>
                         <Typography variant="h3">{Math.round(weeklyNutrition.totalProtein)}</Typography>
                         <Typography variant="small" color="subdued">grams</Typography>
                       </Stack>
                     </Box>
-                    <Box bg="subtle" borderRadius="md" p="md">
+                    <Box bg="surface" borderRadius="md" p="md">
                       <Stack direction="column" gap="xs">
                         <Typography variant="small" color="subdued">Total carbs</Typography>
                         <Typography variant="h3">{Math.round(weeklyNutrition.totalCarbs)}</Typography>
                         <Typography variant="small" color="subdued">grams</Typography>
                       </Stack>
                     </Box>
-                    <Box bg="subtle" borderRadius="md" p="md">
+                    <Box bg="surface" borderRadius="md" p="md">
                       <Stack direction="column" gap="xs">
                         <Typography variant="small" color="subdued">Total fat</Typography>
                         <Typography variant="h3">{Math.round(weeklyNutrition.totalFat)}</Typography>
@@ -454,7 +454,7 @@ export default function ShoppingListPage() {
               border="subtle"
               borderRadius="lg"
               p="lg"
-              bg="default"
+              bg="subtle"
             >
               <Stack direction="column" gap="lg">
                 {categories.map((category, categoryIndex) => {
@@ -463,7 +463,7 @@ export default function ShoppingListPage() {
                   return (
                     <Stack key={category} direction="column" gap="md">
                       {categoryIndex > 0 && (
-                        <Box style={{ height: '1px', backgroundColor: '#e5e7eb' }} />
+                        <Divider />
                       )}
                       <Box px="lg">
                         <Stack direction="row" alignItems="center" gap="sm">
@@ -581,7 +581,7 @@ export default function ShoppingListPage() {
                 border="subtle"
                 borderRadius="lg"
                 p="lg"
-                bg="default"
+                bg="subtle"
               >
                 <Stack direction="column" gap="md">
                   <Stack direction="row" justifyContent="space-between" alignItems="center">

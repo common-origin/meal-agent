@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Box, Button, Stack, TextField, Typography } from '@common-origin/design-system';
+import { Box, Button, Stack, TextField, Typography, tokens } from '@common-origin/design-system';
 import { createClient } from '@/lib/supabase/client';
 import { getSiteUrl, isSafeRedirectPath } from '@/lib/utils/url';
 import { getAuthErrorMessage } from '@/lib/auth/authErrorMessages';
@@ -94,7 +94,7 @@ function SignupForm({ redirectTo, pending = false }: SignupFormProps) {
           padding: '24px',
         }}
       >
-        <Box bg="surface" border="default" borderRadius="lg" p="xl" style={{ maxWidth: '400px', width: '100%' }}>
+        <Box bg="subtle" border="default" borderRadius="lg" p="xl" style={{ maxWidth: '400px', width: '100%' }}>
           <Stack direction="column" gap="lg">
             <Typography variant="h2">Check your email</Typography>
             <Typography color="subdued">
@@ -129,7 +129,7 @@ function SignupForm({ redirectTo, pending = false }: SignupFormProps) {
         padding: '24px',
       }}
     >
-      <Box bg="surface" border="default" borderRadius="lg" p="xl" style={{ maxWidth: '400px', width: '100%' }}>
+      <Box bg="subtle" border="default" borderRadius="lg" p="xl" style={{ maxWidth: '400px', width: '100%' }}>
         <Stack direction="column" gap="lg">
           <Stack direction="column" gap="sm">
             <Typography variant="h2">Get started</Typography>
@@ -158,9 +158,9 @@ function SignupForm({ redirectTo, pending = false }: SignupFormProps) {
           </Button>
 
           <Box style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '8px' }}>
-            <Box style={{ flex: 1, height: '1px', backgroundColor: '#e0e0e0' }} />
+            <Box style={{ flex: 1, height: '1px', backgroundColor: tokens.semantic.color.border.default }} />
             <Typography color="subdued">or</Typography>
-            <Box style={{ flex: 1, height: '1px', backgroundColor: '#e0e0e0' }} />
+            <Box style={{ flex: 1, height: '1px', backgroundColor: tokens.semantic.color.border.default }} />
           </Box>
 
           <form onSubmit={handleMagicLinkSignUp}>
