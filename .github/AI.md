@@ -142,8 +142,9 @@ Every AI route fails with one contract (#96): `{ error, code }`, where
 server-side; there is no `details` field. The codes, statuses and copy live
 in one table, `AI_ERRORS` in `apps/web/src/lib/ai/errors.ts`. Routes catch
 with `aiFailureResponse(error, route)`, which maps an `AiTaskError` (the
-provider's 429 or 5xx becomes 503 `provider_busy`; anything unrecognised
-becomes 500 `unknown`). The guards in `lib/api/guard.ts` use the same
+provider's 429 or 5xx becomes 503 `provider_busy`; a 402, the account's
+credits or billing, becomes 503 `ai_unavailable` (#171); anything
+unrecognised becomes 500 `unknown`). The guards in `lib/api/guard.ts` use the same
 table. On the client, `apiErrorMessage()` in `lib/api/client.ts` shows
 `data.error` or a generic message, never raw response text, and
 `/recipes/add` shows errors and notices in inline `Alert`s rather than
@@ -191,6 +192,12 @@ few minutes.
 **"You've reached today's AI limit"** — the daily cap (see
 [Usage, cost and the daily cap](#usage-cost-and-the-daily-cap)); it resets
 at midnight UTC.
+
+**"Recipe generation isn't available right now"** — the provider refused
+for billing: Gemini returns 402 "Your prepayment credits are depleted". No
+retry helps; top up the project's prepaid credits in AI Studio
+(https://ai.studio/projects). The server logs say "refused for billing", and
+`ai_usage` rows show `error_code = http_402` (#171).
 
 **"That took too long. Please try again."** — the AI call hit its
 deadline (see above). Usually transient; if it keeps happening, the model
