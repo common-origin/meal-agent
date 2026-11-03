@@ -31,6 +31,8 @@ describe('resolveIngredient (#183)', () => {
     ['Tinned crushed tomatoes', 'canned tomato'],
     ['Organic diced tomatoes', 'canned tomato'],
     ['400g can diced tomatoes', 'canned tomato'],
+    ['Canned whole tomatoes', 'canned tomato'],
+    ['Fresh diced tomatoes', 'tomato'],
   ])('%s → %s', (name, key) => {
     expect(ingredientKey(name)).toBe(key);
   });
@@ -88,6 +90,9 @@ describe('ingredient quantities', () => {
     expect(parseUnit('x 400g tins')).toEqual({ unit: 'g', multiplier: 400 });
     expect(parseUnit('Tablespoons')).toEqual({ unit: 'tbsp', multiplier: 1 });
     expect(parseUnit('')).toEqual({ unit: '', multiplier: 1 });
+    expect(parseUnit('x 0.5kg packs')).toEqual({ unit: 'kg', multiplier: 0.5 });
+    expect(parseUnit('x 1.5l bottles')).toEqual({ unit: 'l', multiplier: 1.5 });
+    expect(parseUnit('tbsp.')).toEqual({ unit: 'tbsp', multiplier: 1 });
   });
 
   it('converts recipe units with per-ingredient conversions', () => {
@@ -95,6 +100,20 @@ describe('ingredient quantities', () => {
     expect(toBaseQuantity(garlic, 2, 'cloves')).toEqual({ measure: 'count', amount: 2 });
     expect(toBaseQuantity(tomatoes, 1, 'can')).toEqual({ measure: 'mass', amount: 400 });
     expect(toBaseQuantity(tomatoes, 2, 'x 400g tins')).toEqual({ measure: 'mass', amount: 800 });
+  });
+
+  it('scales an ingredient’s own conversions to other metric and spoon units', () => {
+    // Recipes store cups as ml (prompts/recipeFormat.ts), and kg alongside g.
+    expect(toBaseQuantity(getCatalogueEntry('parmesan'), 125, 'ml')).toEqual({ measure: 'mass', amount: 50 });
+    expect(toBaseQuantity(getCatalogueEntry('coriander'), 62.5, 'ml')).toEqual({ measure: 'count', amount: 0.25 });
+    expect(toBaseQuantity(getCatalogueEntry('potato'), 1, 'kg')).toEqual({ measure: 'count', amount: 5 });
+  });
+
+  it('counts what the name says for a bare number', () => {
+    const bulbs = resolveIngredient('Garlic bulbs');
+    expect(bulbs?.impliedUnit).toBe('bulb');
+    expect(toBaseQuantity(bulbs?.entry, 2, 'unit', bulbs?.impliedUnit)).toEqual({ measure: 'count', amount: 20 });
+    expect(pricingForIngredient('Garlic bulbs', 2, 'unit')).toEqual({ key: 'garlic', qty: 100, unit: 'g' });
   });
 
   it('returns null when a unit has no conversion', () => {
@@ -108,9 +127,9 @@ describe('ingredient quantities', () => {
   });
 
   it('rounds up to whole packs', () => {
-    expect(buyQuantity(garlic, 'count', 11)).toEqual({ qty: 2, unit: 'bulbs', label: '2 bulbs' });
-    expect(buyQuantity(tomatoes, 'mass', 800)).toEqual({ qty: 2, unit: '× 400 g cans', label: '2 × 400 g cans' });
-    expect(buyQuantity(getCatalogueEntry('lime'), 'count', 1.5)).toEqual({ qty: 2, unit: '', label: '2' });
+    expect(buyQuantity(garlic, 'count', 11)).toEqual({ qty: 2, unit: 'bulbs', label: '2 bulbs', packSize: 10 });
+    expect(buyQuantity(tomatoes, 'mass', 800)).toEqual({ qty: 2, unit: '× 400 g cans', label: '2 × 400 g cans', packSize: 400 });
+    expect(buyQuantity(getCatalogueEntry('lime'), 'count', 1.5)).toEqual({ qty: 2, unit: '', label: '2', packSize: 1 });
     expect(buyQuantity(getCatalogueEntry('beef mince'), 'mass', 500)).toBeNull();
   });
 

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RecipeLibrary } from '../library';
-import { aggregateShoppingList, type AggregatedIngredient } from '../shoppingListAggregator';
+import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from '../shoppingListAggregator';
 import type { PlanWeek, Recipe } from '../types/recipe';
 
 vi.mock('../analytics', () => ({ track: vi.fn() }));
@@ -82,11 +82,12 @@ describe('aggregateShoppingList (#183)', () => {
     expect(items['onion'].buyLabel).toBe('4');
   });
 
-  it('prices in units the Coles pack sizes understand', () => {
+  it('prices what the list says to buy, in units the Coles pack sizes understand', () => {
     recipes = week;
     const items = byKey(aggregate(Object.keys(week)));
 
-    expect(items['garlic']).toMatchObject({ priceQty: 50, priceUnit: 'g' });
+    expect(items['garlic']).toMatchObject({ priceQty: 50, priceUnit: 'g' }); // 1 bulb
+    expect(items['canned tomato']).toMatchObject({ priceQty: 1600, priceUnit: 'g' }); // 4 cans
     expect(items['chicken thigh']).toMatchObject({ priceQty: 1200, priceUnit: 'g' });
     expect(items['soy sauce']).toMatchObject({ priceQty: 30, priceUnit: 'ml' });
   });
@@ -103,6 +104,29 @@ describe('aggregateShoppingList (#183)', () => {
     expect(rest).toHaveLength(0);
     expect(saffron.quantityLabel).toBe('1 g + 3 pinch');
     expect(saffron.extraQuantities).toEqual([{ qty: 3, unit: 'pinch' }]);
+  });
+
+  it('shows extras beside the buy quantity and in the CSV export', () => {
+    recipes = {
+      a: recipe('a', [['Garlic', 3, 'clove']]),
+      b: recipe('b', [['Garlic', 1, 'knob']]),
+    };
+    const [garlic] = aggregate(['a', 'b']);
+    expect(garlic.shoppingLabel).toBe('1 bulb + 1 knob');
+    expect(toLegacyFormat([garlic])[0]).toMatchObject({ quantity: 1, unit: 'bulb', notes: '+ 1 knob' });
+  });
+
+  it('counts a bare number of garlic bulbs as bulbs', () => {
+    recipes = { a: recipe('a', [['Garlic bulbs', 2, 'unit']]) };
+    expect(aggregate(['a'])[0].buyLabel).toBe('2 bulbs');
+  });
+
+  it('merges recipe cups stored as ml with other units', () => {
+    recipes = {
+      a: recipe('a', [['Fresh coriander', 1, 'bunch']]),
+      b: recipe('b', [['Coriander leaves', 62.5, 'ml']]),
+    };
+    expect(aggregate(['a', 'b'])[0].buyLabel).toBe('2 bunches');
   });
 
   it('keeps a "bunch" a bunch', () => {
@@ -127,5 +151,11 @@ describe('aggregateShoppingList (#183)', () => {
     recipes = { a: recipe('a', [['Limes', 2, '']]) };
     const [lime] = aggregate(['a'], { userPantryItems: [{ name: 'lime', qty: 3, unit: '' }] });
     expect(lime.isPantryStaple).toBe(true);
+  });
+
+  it('matches the week’s pantry exactly, so brown onions don’t cover red or spring onions', () => {
+    recipes = { a: recipe('a', [['Red onion', 1, ''], ['Spring onions', 2, '']]) };
+    const items = aggregate(['a'], { userPantryItems: [{ name: 'brown onion', qty: 3, unit: '' }] });
+    expect(items.every(item => !item.isPantryStaple)).toBe(true);
   });
 });

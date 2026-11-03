@@ -7,6 +7,7 @@ type LegacyIngredient = {
   quantity: number;
   unit: string;
   category: string;
+  notes?: string;
 };
 
 export function groupIngredientsByCategory(ingredients: LegacyIngredient[]): Record<string, LegacyIngredient[]> {
@@ -21,7 +22,7 @@ export function groupIngredientsByCategory(ingredients: LegacyIngredient[]): Rec
 }
 
 export function generateShoppingListCSV(ingredients: LegacyIngredient[]): string {
-  const headers = ["Category", "Qty", "Unit", "Item"];
+  const headers = ["Category", "Qty", "Unit", "Item", "Notes"];
   const groupedIngredients = groupIngredientsByCategory(ingredients);
   
   const rows: string[] = [headers.join(",")];
@@ -37,7 +38,8 @@ export function generateShoppingListCSV(ingredients: LegacyIngredient[]): string
         `"${category}"`,
         ingredient.quantity.toString(),
         `"${ingredient.unit}"`,
-        `"${ingredient.name}"`
+        `"${ingredient.name}"`,
+        `"${ingredient.notes ?? ''}"`
       ];
       rows.push(row.join(","));
     }

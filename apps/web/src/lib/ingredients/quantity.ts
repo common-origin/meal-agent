@@ -33,7 +33,8 @@ const ITEM_UNITS = new Set(['piece', 'fillet', 'slice']);
  * holds: "x 400g tins" is 400 g per tin.
  */
 export function parseUnit(raw: string | undefined): { unit: string; multiplier: number } {
-  const text = (raw ?? '').toLowerCase().replace(/\./g, '').trim();
+  // Drop abbreviation dots ("tbsp.") but keep decimal points ("0.5kg").
+  const text = (raw ?? '').toLowerCase().replace(/\.(?!\d)/g, '').trim();
   const sized = text.match(/(\d+(?:\.\d+)?)\s*(kg|g|ml|l)\b/);
   if (sized) return { unit: sized[2], multiplier: parseFloat(sized[1]) };
   return { unit: UNIT_SYNONYMS[text] ?? text, multiplier: 1 };
@@ -50,17 +51,38 @@ export interface BaseQuantity {
 }
 
 /**
+ * An ingredient's own conversion for a metric or spoon unit it doesn't list
+ * directly, scaled from one it does in the same family: kg from its g
+ * conversion, ml from its cup conversion.
+ */
+function scaledEntryFactor(entry: CatalogueEntry | undefined, unit: string): number | undefined {
+  const family = measureOfUnit(unit);
+  if (!entry?.units || !family || family === 'count') return undefined;
+  const known = Object.keys(entry.units).find(u => u in GENERIC_UNITS[family]);
+  if (!known) return undefined;
+  return entry.units[known] * GENERIC_UNITS[family][unit] / GENERIC_UNITS[family][known];
+}
+
+/**
  * Convert a recipe quantity into the ingredient's measure, or null when it
  * can't be (e.g. "1 sprig" of something with no sprig conversion). Without a
- * catalogue entry, the measure follows the unit.
+ * catalogue entry, the measure follows the unit. `impliedUnit` is what a bare
+ * number counts when the name says so ("2 garlic bulbs").
  */
-export function toBaseQuantity(entry: CatalogueEntry | undefined, qty: number, rawUnit: string | undefined): BaseQuantity | null {
+export function toBaseQuantity(
+  entry: CatalogueEntry | undefined,
+  qty: number,
+  rawUnit: string | undefined,
+  impliedUnit?: string,
+): BaseQuantity | null {
   if (!Number.isFinite(qty)) return null;
-  const { unit, multiplier } = parseUnit(rawUnit);
+  const parsed = parseUnit(rawUnit);
+  const unit = parsed.unit === '' && impliedUnit ? impliedUnit : parsed.unit;
+  const { multiplier } = parsed;
   const measure = entry?.measure ?? measureOfUnit(ITEM_UNITS.has(unit) ? '' : unit);
   if (!measure) return null;
 
-  const factorFor = (u: string) => entry?.units?.[u] ?? GENERIC_UNITS[measure][u];
+  const factorFor = (u: string) => entry?.units?.[u] ?? GENERIC_UNITS[measure][u] ?? scaledEntryFactor(entry, u);
   const factor = factorFor(unit) ?? (ITEM_UNITS.has(unit) ? factorFor('') : undefined);
   if (factor === undefined) return null;
   return { measure, amount: qty * multiplier * factor };
@@ -96,13 +118,17 @@ export function displayQuantity(measure: Measure, amount: number, countNoun?: st
  * Plain items ("1.5 onions") round up to whole items. Null when the
  * ingredient is just bought by weight or volume.
  */
-export function buyQuantity(entry: CatalogueEntry | undefined, measure: Measure, amount: number): { qty: number; unit: string; label: string } | null {
+export function buyQuantity(
+  entry: CatalogueEntry | undefined,
+  measure: Measure,
+  amount: number,
+): { qty: number; unit: string; label: string; packSize: number } | null {
   const buy = entry?.buy ?? (measure === 'count' && !entry?.countNoun ? { size: 1, one: '', many: '' } : undefined);
   if (!buy || amount <= 0) return null;
   // Tolerance so 2.0000001 packs from float maths doesn't round up to 3.
   const qty = Math.max(1, Math.ceil(amount / buy.size - 1e-6));
   const noun = qty === 1 ? buy.one : buy.many;
-  return { qty, unit: noun, label: noun ? `${qty} ${noun}` : String(qty) };
+  return { qty, unit: noun, label: noun ? `${qty} ${noun}` : String(qty), packSize: buy.size };
 }
 
 /**
@@ -125,7 +151,7 @@ export function pricingQuantity(entry: CatalogueEntry | undefined, measure: Meas
 export function pricingForIngredient(name: string, qty: number, unit: string): { key: string; qty: number; unit: string } {
   const resolved = resolveIngredient(name);
   const key = resolved?.key ?? '';
-  const base = toBaseQuantity(resolved?.entry, qty, unit);
+  const base = toBaseQuantity(resolved?.entry, qty, unit, resolved?.impliedUnit);
   if (!base) return { key, qty, unit };
   return { key, ...pricingQuantity(resolved?.entry, base.measure, base.amount) };
 }

@@ -21,6 +21,8 @@ export interface CatalogueEntry {
   generated?: boolean;
   /** Other names that mean this ingredient: lowercase, singular, no prep words. */
   aliases?: string[];
+  /** Aliases that name what a bare number counts: "2 garlic bulbs" is 2 bulbs, not 2 cloves. */
+  aliasUnits?: Record<string, string>;
   /** Shopping-list category; derived from the name when omitted. */
   category?: string;
   measure: Measure;
@@ -40,6 +42,7 @@ const HAND_WRITTEN: CatalogueEntry[] = [
   // Produce
   {
     key: 'garlic', name: 'Garlic', aliases: ['garlic clove', 'garlic bulb', 'garlic head'],
+    aliasUnits: { 'garlic bulb': 'bulb', 'garlic head': 'head' },
     category: 'Fresh Produce', measure: 'count', countNoun: 'clove',
     units: { '': 1, clove: 1, bulb: 10, head: 10, tsp: 1, tbsp: 3, g: 0.2 },
     buy: { size: 10, one: 'bulb', many: 'bulbs' },

@@ -530,11 +530,11 @@ export default function ShoppingListPage() {
                             primary={item.name}
                             secondary={
                               <Stack direction="row" gap="sm" alignItems="center">
-                                {((item.buyLabel && item.buyLabel !== item.quantityLabel) || hasMultipleRecipes) && (
+                                {((item.shoppingLabel !== item.quantityLabel) || hasMultipleRecipes) && (
                                   <Typography variant="small" color="subdued">
                                     {[
-                                      item.buyLabel && item.buyLabel !== item.quantityLabel ? item.quantityLabel : '',
-                                      hasMultipleRecipes ? `${item.buyLabel && item.buyLabel !== item.quantityLabel ? 'across ' : ''}${item.sourceRecipes.length} recipes` : '',
+                                      item.shoppingLabel !== item.quantityLabel ? item.quantityLabel : '',
+                                      hasMultipleRecipes ? `${item.shoppingLabel !== item.quantityLabel ? 'across ' : ''}${item.sourceRecipes.length} recipes` : '',
                                     ].filter(Boolean).join(' ')}
                                   </Typography>
                                 )}
@@ -554,7 +554,7 @@ export default function ShoppingListPage() {
                             badge={
                               <Stack direction="row" gap="xs" alignItems="center">
                                 <Chip>
-                                  {item.buyLabel ?? item.quantityLabel}
+                                  {item.shoppingLabel}
                                 </Chip>
                                 <Button
                                   size="small"
@@ -618,7 +618,7 @@ export default function ShoppingListPage() {
                         badge={
                           <Stack direction="row" gap="xs" alignItems="center">
                             <Chip>
-                              {item.buyLabel ?? item.quantityLabel}
+                              {item.shoppingLabel}
                             </Chip>
                             <Button
                               size="small"

@@ -11,6 +11,8 @@ export interface ResolvedIngredient {
   key: string;
   displayName: string;
   entry?: CatalogueEntry;
+  /** What a bare number counts, when the matched name says so ("garlic bulb" → "bulb"). */
+  impliedUnit?: string;
 }
 
 /** Prep and quality words that don't change what you buy. Matched as whole words at either end. */
@@ -71,9 +73,17 @@ export function singularise(name: string): string {
   });
 }
 
-function lookup(name: string): CatalogueEntry | undefined {
-  return CATALOGUE_NAME_INDEX.get(name) ?? CATALOGUE_NAME_INDEX.get(singularise(name));
+function lookup(name: string): { entry: CatalogueEntry; matched: string } | undefined {
+  for (const candidate of [name, singularise(name)]) {
+    const entry = CATALOGUE_NAME_INDEX.get(candidate);
+    if (entry) return { entry, matched: candidate };
+  }
+  return undefined;
 }
+
+const CANNED_WORD = /\b(?:canned|tinned|can|tin)\b/;
+const FRESH_WORD = /\bfresh\b/;
+const isCanned = (entry: CatalogueEntry) => entry.category === 'Canned & Packaged';
 
 function capitalise(name: string): string {
   return name.charAt(0).toUpperCase() + name.slice(1);
@@ -92,9 +102,20 @@ export function resolveIngredient(rawName: string): ResolvedIngredient | null {
 
   const steps = [cleaned, ...strippingSteps(cleaned)];
   const stripped = steps[steps.length - 1];
+  // An explicit "canned"/"fresh" decides the form, whatever order the other words are in:
+  // "canned whole tomatoes" is tinned, "fresh diced tomatoes" is fresh.
+  const canned = CANNED_WORD.test(cleaned);
+  const fresh = !canned && FRESH_WORD.test(cleaned);
   for (const step of steps) {
-    const entry = lookup(step);
-    if (entry) return { key: entry.key, displayName: entry.generated ? capitalise(stripped) : entry.name, entry };
+    const match = (canned ? lookup(`canned ${step}`) : undefined) ?? lookup(step);
+    if (!match || (fresh && isCanned(match.entry))) continue;
+    const { entry, matched } = match;
+    return {
+      key: entry.key,
+      displayName: entry.generated ? capitalise(stripped) : entry.name,
+      entry,
+      impliedUnit: entry.aliasUnits?.[matched],
+    };
   }
 
   return { key: singularise(stripped), displayName: capitalise(stripped) };

@@ -187,7 +187,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
                       <Stack direction="column" gap="xs">
                         <Typography variant="body">{item.ingredient.name}</Typography>
                         <Typography variant="small" color="subdued">
-                          {item.ingredient.buyLabel ?? item.ingredient.quantityLabel}
+                          {item.ingredient.shoppingLabel}
                         </Typography>
                       </Stack>
                       {estimateIngredientCost(item.ingredient.normalizedName, item.ingredient.priceQty, item.ingredient.priceUnit).mapped && (
@@ -265,7 +265,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
                 <Stack direction="column" gap="sm">
                   <Typography variant="h2">{currentItem.ingredient.name}</Typography>
                   <Typography variant="body" color="subdued">
-                    Quantity: {currentItem.ingredient.buyLabel ?? currentItem.ingredient.quantityLabel}
+                    Quantity: {currentItem.ingredient.shoppingLabel}
                   </Typography>
                 </Stack>
 

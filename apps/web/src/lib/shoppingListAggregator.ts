@@ -23,6 +23,10 @@ export interface AggregatedIngredient {
   buyUnit?: string;
   /** What to buy as text: "1 bulb", "2 × 400 g cans", "3". */
   buyLabel?: string;
+  /** Unconverted recipe quantities as text ("1 pinch"), shown beside the buy quantity. */
+  extrasLabel?: string;
+  /** What the shopper needs, in full: the buy quantity plus any extras, or the recipe total. */
+  shoppingLabel: string;
   /** Quantity to pass to estimateIngredientCost, in units Coles pack sizes understand. */
   priceQty: number;
   priceUnit: string;
@@ -80,13 +84,6 @@ function categorizeIngredient(name: string): string {
 
 
 
-/**
- * Check if ingredient is in user's pantry inventory
- */
-function isInUserPantry(key: string, pantryKeys: string[]): boolean {
-  return pantryKeys.some(pantryKey => key === pantryKey || key.includes(pantryKey));
-}
-
 interface LineBuilder {
   key: string;
   name: string;
@@ -104,6 +101,7 @@ function formatExtras(extras: Map<string, number>): string {
 
 function finishLine(line: LineBuilder): AggregatedIngredient {
   const extraQuantities = Array.from(line.extras, ([unit, qty]) => ({ qty: Math.round(qty * 10) / 10, unit }));
+  const extrasLabel = line.extras.size > 0 ? formatExtras(line.extras) : undefined;
   const base = {
     name: line.name,
     normalizedName: line.key,
@@ -121,6 +119,7 @@ function finishLine(line: LineBuilder): AggregatedIngredient {
       totalQty: first?.qty ?? 0,
       unit: first?.unit ?? '',
       quantityLabel: formatExtras(line.extras),
+      shoppingLabel: formatExtras(line.extras),
       extraQuantities: extraQuantities.slice(1),
       priceQty: first?.qty ?? 0,
       priceUnit: first?.unit ?? '',
@@ -130,12 +129,16 @@ function finishLine(line: LineBuilder): AggregatedIngredient {
   const display = displayQuantity(line.measure, line.amount, line.entry?.countNoun);
   const total = formatBaseQuantity(line.measure, line.amount, line.entry?.countNoun);
   const buy = buyQuantity(line.entry, line.measure, line.amount);
-  const price = pricingQuantity(line.entry, line.measure, line.amount);
+  // Price what the list tells you to buy (two 400 ml cans), not the recipe total (540 ml).
+  const price = pricingQuantity(line.entry, line.measure, buy ? buy.qty * buy.packSize : line.amount);
+  const quantityLabel = extrasLabel ? `${total} + ${extrasLabel}` : total;
   return {
     ...base,
     totalQty: Math.round(display.qty * 10) / 10,
     unit: display.unit,
-    quantityLabel: line.extras.size > 0 ? `${total} + ${formatExtras(line.extras)}` : total,
+    quantityLabel,
+    shoppingLabel: buy ? (extrasLabel ? `${buy.label} + ${extrasLabel}` : buy.label) : quantityLabel,
+    extrasLabel,
     buyQty: buy?.qty,
     buyUnit: buy?.unit,
     buyLabel: buy?.label,
@@ -158,7 +161,8 @@ export function aggregateShoppingList(
   const lines = new Map<string, LineBuilder>();
   // Preferences saved before #183 may hold old-style names ("onions"), so compare by resolved key.
   const pantryPreferenceKeys = new Set(Array.from(loadPantryPreferences(), name => ingredientKey(name) || name));
-  const userPantryKeys = (options.userPantryItems ?? []).map(item => ingredientKey(item.name)).filter(Boolean);
+  // Both sides are canonical keys, so compare exactly: a pantry onion isn't a red onion.
+  const userPantryKeys = new Set((options.userPantryItems ?? []).map(item => ingredientKey(item.name)).filter(Boolean));
 
   for (const day of plan.days) {
     const recipe = RecipeLibrary.getById(day.recipeId);
@@ -189,7 +193,7 @@ export function aggregateShoppingList(
       }
 
       const qty = ingredient.qty * scaleFactor;
-      const base = toBaseQuantity(line.entry, qty, ingredient.unit);
+      const base = toBaseQuantity(line.entry, qty, ingredient.unit, resolved.impliedUnit);
       if (base && (!line.measure || line.measure === base.measure)) {
         line.measure = base.measure;
         line.amount += base.amount;
@@ -200,7 +204,7 @@ export function aggregateShoppingList(
       }
 
       line.sourceRecipes.push({ recipeId: recipe.id, recipeTitle: recipe.title, qty, unit: ingredient.unit || '' });
-      if (isInUserPantry(resolved.key, userPantryKeys) || pantryPreferenceKeys.has(resolved.key)) {
+      if (userPantryKeys.has(resolved.key) || pantryPreferenceKeys.has(resolved.key)) {
         line.isPantryStaple = true;
       }
     }
@@ -239,11 +243,14 @@ export function toLegacyFormat(aggregated: AggregatedIngredient[]): Array<{
   quantity: number;
   unit: string;
   category: string;
+  notes?: string;
 }> {
   return aggregated.map(item => ({
     name: item.name,
     quantity: item.buyQty ?? item.totalQty,
     unit: item.buyQty !== undefined ? item.buyUnit ?? '' : item.unit,
+    // Quantities that didn't convert ("+ 1 pinch"), so the export lists everything the page does.
+    notes: item.extrasLabel ? `+ ${item.extrasLabel}` : undefined,
     category: item.category
   }));
 }
