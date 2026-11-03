@@ -27,6 +27,8 @@ export type SortableDayProps = {
   onMoveClick?: (index: number) => void;
   /** Whether the grip can drag (it can't while the plan is busy). */
   canReorder?: boolean;
+  /** The meal is replacing this night's loading skeleton, so it fades in (#177). */
+  fadeIn?: boolean;
 };
 
 // A real button, so keyboard sorting starts from it (dnd-kit's attributes and listeners)
@@ -66,6 +68,7 @@ export default function SortableDay({
   onChangeClick,
   onMoveClick,
   canReorder = false,
+  fadeIn = false,
 }: SortableDayProps) {
   const {
     attributes,
@@ -149,7 +152,7 @@ export default function SortableDay({
           </>
         }
       >
-        <PlanMeal {...meal} tags={tags} />
+        <PlanMeal {...meal} tags={tags} fadeIn={fadeIn} />
       </DayCard>
     </div>
   );

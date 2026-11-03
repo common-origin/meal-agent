@@ -30,7 +30,7 @@ a {
   text-decoration: none;
 }
 
-/* Visually hidden but read by screen readers (used by LoadingSkeleton). */
+/* Visually hidden but read by screen readers. */
 .sr-only {
   position: absolute;
   width: 1px;
