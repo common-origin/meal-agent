@@ -7,6 +7,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Box, Stack, Typography, ProgressBar, Chip, Button, tokens } from "@common-origin/design-system";
 import { RecipeLibrary } from "@/lib/library";
 import { estimateIngredientCostWithAPI } from "@/lib/colesMapping";
+import { pricingForIngredient } from "@/lib/ingredients/quantity";
 import { planCostLabel, planPricedFraction } from "@/lib/recipeCost";
 import type { Recipe } from "@/lib/types/recipe";
 import type { MealCardProps } from "./MealCard";
@@ -114,11 +115,8 @@ export default function BudgetSummary({ weekPlan, budget, dayNames }: BudgetSumm
         
         for (const ingredient of recipe.ingredients) {
           try {
-            const result = await estimateIngredientCostWithAPI(
-              ingredient.name,
-              ingredient.qty,
-              ingredient.unit
-            );
+            const priced = pricingForIngredient(ingredient.name, ingredient.qty, ingredient.unit);
+            const result = await estimateIngredientCostWithAPI(priced.key, priced.qty, priced.unit);
             recipeCost += result.estimatedCost;
             
             if (result.priceSource === 'api' && result.livePrice) {

@@ -13,7 +13,7 @@
  */
 
 import { RecipeLibrary } from './library';
-import { normalizeIngredientName } from './shoppingListAggregator';
+import { ingredientKey } from './ingredients/resolve';
 import { COLES_INGREDIENT_MAPPINGS } from './colesMapping';
 
 const INGREDIENT_FREQUENCY_KEY = 'meal-agent:ingredient-frequency:v1';
@@ -103,7 +103,7 @@ export function trackIngredientUsage(recipeIds: string[]): void {
     recipe.ingredients.forEach(ingredient => {
       if (!ingredient || !ingredient.name) return;
       
-      const normalized = normalizeIngredientName(ingredient.name);
+      const normalized = ingredientKey(ingredient.name);
       if (!normalized) return;
       
       const existing = frequencyMap.get(normalized);

@@ -5,7 +5,7 @@
 
 import type { Recipe } from './types/recipe';
 import { estimateIngredientCost } from './colesMapping';
-import { normalizeIngredientName } from './shoppingListAggregator';
+import { pricingForIngredient } from './ingredients/quantity';
 
 const DEFAULT_SERVES = 4;
 
@@ -20,7 +20,8 @@ export function estimateRecipeCost(recipe: Pick<Recipe, 'ingredients' | 'serves'
   let total = 0;
   let priced = 0;
   for (const ingredient of recipe.ingredients) {
-    const estimate = estimateIngredientCost(normalizeIngredientName(ingredient.name), ingredient.qty, ingredient.unit);
+    const pricing = pricingForIngredient(ingredient.name, ingredient.qty, ingredient.unit);
+    const estimate = estimateIngredientCost(pricing.key, pricing.qty, pricing.unit);
     total += estimate.estimatedCost;
     if (estimate.mapped) priced += 1;
   }

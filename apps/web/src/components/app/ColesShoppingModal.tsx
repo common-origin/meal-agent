@@ -30,7 +30,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
     items
       .filter(item => !item.isPantryStaple) // Exclude pantry staples
       .map(item => {
-        const colesInfo = estimateIngredientCost(item.normalizedName, item.totalQty, item.unit);
+        const colesInfo = estimateIngredientCost(item.normalizedName, item.priceQty, item.priceUnit);
         const searchTerm = colesInfo.product?.name || item.name;
         
         return {
@@ -49,7 +49,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
     const newItems = items
       .filter(item => !item.isPantryStaple) // Exclude pantry staples
       .map(item => {
-        const colesInfo = estimateIngredientCost(item.normalizedName, item.totalQty, item.unit);
+        const colesInfo = estimateIngredientCost(item.normalizedName, item.priceQty, item.priceUnit);
         const searchTerm = colesInfo.product?.name || item.name;
         
         return {
@@ -187,10 +187,10 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
                       <Stack direction="column" gap="xs">
                         <Typography variant="body">{item.ingredient.name}</Typography>
                         <Typography variant="small" color="subdued">
-                          {item.ingredient.totalQty} {item.ingredient.unit}
+                          {item.ingredient.buyLabel ?? item.ingredient.quantityLabel}
                         </Typography>
                       </Stack>
-                      {estimateIngredientCost(item.ingredient.normalizedName, item.ingredient.totalQty, item.ingredient.unit).mapped && (
+                      {estimateIngredientCost(item.ingredient.normalizedName, item.ingredient.priceQty, item.ingredient.priceUnit).mapped && (
                         <Chip>Mapped</Chip>
                       )}
                     </Stack>
@@ -265,7 +265,7 @@ export default function ColesShoppingModal({ isOpen, onClose, items, onShoppingC
                 <Stack direction="column" gap="sm">
                   <Typography variant="h2">{currentItem.ingredient.name}</Typography>
                   <Typography variant="body" color="subdued">
-                    Quantity: {currentItem.ingredient.totalQty} {currentItem.ingredient.unit}
+                    Quantity: {currentItem.ingredient.buyLabel ?? currentItem.ingredient.quantityLabel}
                   </Typography>
                 </Stack>
 

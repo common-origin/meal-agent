@@ -128,8 +128,12 @@ feed URL for display in Settings
   chips), and `schedule.ts` (week-start date math — despite the name, this
   is *not* a scheduling/cron layer; see
   [Known limitations](#known-limitations))
-- **Shopping & pricing**: `shoppingListAggregator.ts` (unit normalization,
-  dedup, pantry-staple detection) feeds `colesMapping.ts` (a large,
+- **Shopping & pricing**: `lib/ingredients/` resolves recipe ingredient
+  text to one canonical key per thing you'd buy (`catalogue.ts`, keyed to
+  match `colesMapping.ts`; `resolve.ts`) and converts quantities into that
+  ingredient's measure and whole packs (`quantity.ts`), #183.
+  `shoppingListAggregator.ts` uses it to build one line per ingredient
+  (with pantry-staple detection), and it feeds `colesMapping.ts` (a large,
   hand-maintained SKU/price mapping — check the file directly for current
   size rather than trusting a specific count here) and
   `ingredientPricing.ts` (category-based fallback pricing when nothing
@@ -162,8 +166,9 @@ Of the four modules that used to bypass all of the above and read/write
   so pantry staples sync for authenticated users. `pantryPreferences.ts`
   itself remains the local cache primitive underneath, still imported
   directly by `app/settings/data-export/page.tsx` (an explicit "export a
-  local backup" feature, not a sync gap) and by `shoppingListAggregator.ts`'s
-  synchronous `isInPantryPreferences` check.
+  local backup" feature, not a sync gap) and by `shoppingListAggregator.ts`,
+  which reads it synchronously via `loadPantryPreferences` and matches
+  entries by resolved ingredient key.
 - `recencyTracker.ts` — now syncs cross-device (#46) via
   `hybridStorage.ts`'s `hydrateRecencyFromSupabase`/`syncRecencyToSupabase`,
   called around `compose.ts`'s `composeWeek()` rather than threaded through
