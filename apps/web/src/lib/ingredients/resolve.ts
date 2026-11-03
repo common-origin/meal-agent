@@ -20,7 +20,7 @@ const DESCRIPTORS = [
   'halved', 'quartered', 'cubed', 'trimmed', 'deseeded', 'julienned', 'mashed', 'softened', 'melted',
   'raw', 'cooked', 'ripe', 'large', 'medium', 'small', 'whole', 'mild', 'organic', 'free range',
   'boneless', 'skinless', 'lean', 'plain', 'greek', 'full cream', 'low fat', 'reduced fat',
-  'extra virgin', 'unsalted', 'salted', 'canned', 'tinned', 'frozen',
+  'extra virgin', 'unsalted', 'salted', 'canned', 'tinned', 'frozen', 'can', 'tin',
 ];
 // Longest first, so "free range" is tried before shorter overlaps.
 const DESCRIPTOR_PATTERN = DESCRIPTORS.slice().sort((a, b) => b.length - a.length).join('|');
@@ -40,15 +40,20 @@ function clean(name: string): string {
     .trim();
 }
 
-/** Strip every leading and trailing descriptor, not just the first. */
-function stripDescriptors(name: string): string {
+/**
+ * The name after each descriptor is stripped in turn, ending with none left:
+ * "tinned crushed tomatoes" → "crushed tomatoes" → "tomatoes".
+ */
+function strippingSteps(name: string): string[] {
+  const steps: string[] = [];
   let current = name;
-  let previous = '';
-  while (current !== previous) {
-    previous = current;
-    current = current.replace(LEADING_DESCRIPTOR, '').replace(TRAILING_DESCRIPTOR, '').trim();
+  for (;;) {
+    const next = current.replace(LEADING_DESCRIPTOR, '').trim();
+    const stripped = next !== current ? next : current.replace(TRAILING_DESCRIPTOR, '').trim();
+    if (stripped === current || !stripped) return steps;
+    steps.push(stripped);
+    current = stripped;
   }
-  return current;
 }
 
 /** Plurals the suffix rules below get wrong. */
@@ -76,17 +81,21 @@ function capitalise(name: string): string {
 
 /**
  * Resolve a recipe ingredient name to its canonical ingredient. Aliases are
- * matched before descriptors are stripped, so "diced tomatoes" finds tinned
- * tomatoes rather than collapsing to fresh "tomato".
+ * tried before and after each descriptor is stripped, so "tinned crushed
+ * tomatoes" finds tinned tomatoes at "crushed tomatoes" rather than
+ * collapsing to fresh "tomato".
  */
 export function resolveIngredient(rawName: string): ResolvedIngredient | null {
   if (!rawName || typeof rawName !== 'string') return null;
   const cleaned = clean(rawName);
   if (!cleaned) return null;
 
-  const stripped = stripDescriptors(cleaned) || cleaned;
-  const entry = lookup(cleaned) ?? lookup(stripped);
-  if (entry) return { key: entry.key, displayName: entry.generated ? capitalise(stripped) : entry.name, entry };
+  const steps = [cleaned, ...strippingSteps(cleaned)];
+  const stripped = steps[steps.length - 1];
+  for (const step of steps) {
+    const entry = lookup(step);
+    if (entry) return { key: entry.key, displayName: entry.generated ? capitalise(stripped) : entry.name, entry };
+  }
 
   return { key: singularise(stripped), displayName: capitalise(stripped) };
 }

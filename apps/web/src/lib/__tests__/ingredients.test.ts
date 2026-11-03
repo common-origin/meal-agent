@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { resolveIngredient, ingredientKey, singularise } from '../ingredients/resolve';
 import { getCatalogueEntry } from '../ingredients/catalogue';
-import { buyQuantity, parseUnit, pricingForIngredient, toBaseQuantity } from '../ingredients/quantity';
+import { buyQuantity, formatBaseQuantity, parseUnit, pricingForIngredient, toBaseQuantity } from '../ingredients/quantity';
 import { COLES_INGREDIENT_MAPPINGS } from '../colesMapping';
 
 describe('resolveIngredient (#183)', () => {
@@ -28,6 +28,9 @@ describe('resolveIngredient (#183)', () => {
     ['Coarsely chopped flat-leaf parsley', 'parsley'],
     ['Finely grated zest of 1 lemon', 'lemon'],
     ['Sun-dried tomatoes', 'sun-dried tomato'],
+    ['Tinned crushed tomatoes', 'canned tomato'],
+    ['Organic diced tomatoes', 'canned tomato'],
+    ['400g can diced tomatoes', 'canned tomato'],
   ])('%s → %s', (name, key) => {
     expect(ingredientKey(name)).toBe(key);
   });
@@ -70,6 +73,13 @@ describe('singularise', () => {
   });
 });
 
+describe('formatBaseQuantity', () => {
+  it('picks singular or plural from the number shown', () => {
+    expect(formatBaseQuantity('count', 1.04, 'clove')).toBe('1 clove');
+    expect(formatBaseQuantity('count', 2, 'bunch')).toBe('2 bunches');
+  });
+});
+
 describe('ingredient quantities', () => {
   const garlic = getCatalogueEntry('garlic');
   const tomatoes = getCatalogueEntry('canned tomato');
@@ -98,15 +108,16 @@ describe('ingredient quantities', () => {
   });
 
   it('rounds up to whole packs', () => {
-    expect(buyQuantity(garlic, 'count', 11)).toEqual({ qty: 2, label: '2 bulbs' });
-    expect(buyQuantity(tomatoes, 'mass', 800)).toEqual({ qty: 2, label: '2 × 400 g cans' });
-    expect(buyQuantity(getCatalogueEntry('lime'), 'count', 1.5)).toEqual({ qty: 2, label: '2' });
+    expect(buyQuantity(garlic, 'count', 11)).toEqual({ qty: 2, unit: 'bulbs', label: '2 bulbs' });
+    expect(buyQuantity(tomatoes, 'mass', 800)).toEqual({ qty: 2, unit: '× 400 g cans', label: '2 × 400 g cans' });
+    expect(buyQuantity(getCatalogueEntry('lime'), 'count', 1.5)).toEqual({ qty: 2, unit: '', label: '2' });
     expect(buyQuantity(getCatalogueEntry('beef mince'), 'mass', 500)).toBeNull();
   });
 
   it('prices counted items by weight where the weight is known', () => {
     expect(pricingForIngredient('Garlic cloves', 4, 'clove')).toEqual({ key: 'garlic', qty: 20, unit: 'g' });
     expect(pricingForIngredient('Chicken thighs', 2, 'kg')).toEqual({ key: 'chicken thigh', qty: 2000, unit: 'g' });
+    expect(pricingForIngredient('Spring onions', 3, '')).toEqual({ key: 'spring onion', qty: 45, unit: 'g' });
     expect(pricingForIngredient('Saffron', 1, 'pinch')).toEqual({ key: 'saffron', qty: 1, unit: 'pinch' });
   });
 });

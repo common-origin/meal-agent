@@ -8,9 +8,8 @@ import { buyQuantity, displayQuantity, formatBaseQuantity, pricingQuantity, toBa
 
 export interface AggregatedIngredient {
   name: string;
-  /** Canonical ingredient key (#183): used for pantry preferences and pricing. Same as ingredientKey. */
+  /** Canonical ingredient key (#183): used for pantry preferences and pricing. */
   normalizedName: string;
-  ingredientKey: string;
   /** Recipe total in display units (kg/g, L/ml, or a count). */
   totalQty: number;
   unit: string;
@@ -20,6 +19,8 @@ export interface AggregatedIngredient {
   extraQuantities: Array<{ qty: number; unit: string }>;
   /** Packs to buy, when the ingredient is sold in packs or as whole items. */
   buyQty?: number;
+  /** What one pack is: "bulb", "× 400 g cans"; '' for whole items. */
+  buyUnit?: string;
   /** What to buy as text: "1 bulb", "2 × 400 g cans", "3". */
   buyLabel?: string;
   /** Quantity to pass to estimateIngredientCost, in units Coles pack sizes understand. */
@@ -82,15 +83,8 @@ function categorizeIngredient(name: string): string {
 /**
  * Check if ingredient is in user's pantry inventory
  */
-function isInUserPantry(name: string, userPantryItems?: Array<{ name: string; qty: number; unit: string }>): boolean {
-  if (!userPantryItems || userPantryItems.length === 0) return false;
-  
-  const normalized = ingredientKey(name);
-  return userPantryItems.some(pantryItem => {
-    const pantryNormalized = ingredientKey(pantryItem.name);
-    if (!pantryNormalized) return false;
-    return pantryNormalized === normalized || normalized.includes(pantryNormalized);
-  });
+function isInUserPantry(key: string, pantryKeys: string[]): boolean {
+  return pantryKeys.some(pantryKey => key === pantryKey || key.includes(pantryKey));
 }
 
 interface LineBuilder {
@@ -113,7 +107,6 @@ function finishLine(line: LineBuilder): AggregatedIngredient {
   const base = {
     name: line.name,
     normalizedName: line.key,
-    ingredientKey: line.key,
     category: line.entry?.category ?? categorizeIngredient(line.name),
     sourceRecipes: line.sourceRecipes,
     isPantryStaple: line.isPantryStaple,
@@ -144,6 +137,7 @@ function finishLine(line: LineBuilder): AggregatedIngredient {
     unit: display.unit,
     quantityLabel: line.extras.size > 0 ? `${total} + ${formatExtras(line.extras)}` : total,
     buyQty: buy?.qty,
+    buyUnit: buy?.unit,
     buyLabel: buy?.label,
     priceQty: price.qty,
     priceUnit: price.unit,
@@ -164,6 +158,7 @@ export function aggregateShoppingList(
   const lines = new Map<string, LineBuilder>();
   // Preferences saved before #183 may hold old-style names ("onions"), so compare by resolved key.
   const pantryPreferenceKeys = new Set(Array.from(loadPantryPreferences(), name => ingredientKey(name) || name));
+  const userPantryKeys = (options.userPantryItems ?? []).map(item => ingredientKey(item.name)).filter(Boolean);
 
   for (const day of plan.days) {
     const recipe = RecipeLibrary.getById(day.recipeId);
@@ -205,7 +200,7 @@ export function aggregateShoppingList(
       }
 
       line.sourceRecipes.push({ recipeId: recipe.id, recipeTitle: recipe.title, qty, unit: ingredient.unit || '' });
-      if (isInUserPantry(ingredient.name, options.userPantryItems) || pantryPreferenceKeys.has(resolved.key)) {
+      if (isInUserPantry(resolved.key, userPantryKeys) || pantryPreferenceKeys.has(resolved.key)) {
         line.isPantryStaple = true;
       }
     }
@@ -248,7 +243,7 @@ export function toLegacyFormat(aggregated: AggregatedIngredient[]): Array<{
   return aggregated.map(item => ({
     name: item.name,
     quantity: item.buyQty ?? item.totalQty,
-    unit: item.buyQty !== undefined ? item.buyLabel?.replace(/^\S+\s*/, '') ?? '' : item.unit,
+    unit: item.buyQty !== undefined ? item.buyUnit ?? '' : item.unit,
     category: item.category
   }));
 }

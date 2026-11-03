@@ -55,7 +55,7 @@ const HAND_WRITTEN: CatalogueEntry[] = [
   {
     key: 'spring onion', name: 'Spring onions', aliases: ['green onion', 'scallion'],
     category: 'Fresh Produce', measure: 'count', countNoun: 'stalk',
-    units: { '': 1, stalk: 1, bunch: 6, cup: 6 },
+    units: { '': 1, stalk: 1, bunch: 6, cup: 6, g: 1 / 15 },
     buy: { size: 6, one: 'bunch', many: 'bunches' },
   },
   {

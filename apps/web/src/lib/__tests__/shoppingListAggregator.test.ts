@@ -24,7 +24,7 @@ function aggregate(ids: string[], options?: Parameters<typeof aggregateShoppingL
 }
 
 function byKey(list: AggregatedIngredient[]): Record<string, AggregatedIngredient> {
-  return Object.fromEntries(list.map(item => [item.ingredientKey, item]));
+  return Object.fromEntries(list.map(item => [item.normalizedName, item]));
 }
 
 beforeEach(() => {

@@ -79,8 +79,9 @@ function plural(noun: string): string {
 export function formatBaseQuantity(measure: Measure, amount: number, countNoun?: string): string {
   if (measure === 'mass') return amount >= 1000 ? `${formatNumber(amount / 1000)} kg` : `${formatNumber(amount)} g`;
   if (measure === 'volume') return amount >= 1000 ? `${formatNumber(amount / 1000)} L` : `${formatNumber(amount)} ml`;
-  if (!countNoun) return formatNumber(amount);
-  return `${formatNumber(amount)} ${amount === 1 ? countNoun : plural(countNoun)}`;
+  const shown = formatNumber(amount);
+  if (!countNoun) return shown;
+  return `${shown} ${shown === '1' ? countNoun : plural(countNoun)}`;
 }
 
 /** Display quantity and unit, with mass and volume scaled to kg and L. */
@@ -95,13 +96,13 @@ export function displayQuantity(measure: Measure, amount: number, countNoun?: st
  * Plain items ("1.5 onions") round up to whole items. Null when the
  * ingredient is just bought by weight or volume.
  */
-export function buyQuantity(entry: CatalogueEntry | undefined, measure: Measure, amount: number): { qty: number; label: string } | null {
+export function buyQuantity(entry: CatalogueEntry | undefined, measure: Measure, amount: number): { qty: number; unit: string; label: string } | null {
   const buy = entry?.buy ?? (measure === 'count' && !entry?.countNoun ? { size: 1, one: '', many: '' } : undefined);
   if (!buy || amount <= 0) return null;
   // Tolerance so 2.0000001 packs from float maths doesn't round up to 3.
   const qty = Math.max(1, Math.ceil(amount / buy.size - 1e-6));
   const noun = qty === 1 ? buy.one : buy.many;
-  return { qty, label: noun ? `${qty} ${noun}` : String(qty) };
+  return { qty, unit: noun, label: noun ? `${qty} ${noun}` : String(qty) };
 }
 
 /**

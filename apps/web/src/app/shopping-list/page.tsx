@@ -6,6 +6,7 @@ import { Alert, Box, Button, Chip, Container, Icon, IconButton, List, ListItem, 
 import Main from "@/components/app/Main";
 import ColesShoppingModal from "@/components/app/ColesShoppingModal";
 import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from "@/lib/shoppingListAggregator";
+import { ingredientKey } from "@/lib/ingredients/resolve";
 import { generateShoppingListCSV, downloadCSV } from "@/lib/csv";
 import { loadHousehold, getDefaultHousehold } from "@/lib/storage";
 import { clearShoppingComplete, isShoppingComplete as isWeekShoppingComplete, markShoppingComplete } from "@/lib/shoppingCompletion";
@@ -47,7 +48,8 @@ export default function ShoppingListPage() {
       .then(current => {
         const updated = addItem
           ? Array.from(new Set([...current, normalizedName]))
-          : current.filter(name => name !== normalizedName);
+          // Also drop names saved before #183 that resolve to the same ingredient ("onions").
+          : current.filter(name => name !== normalizedName && ingredientKey(name) !== normalizedName);
         return savePantryItems(updated);
       })
       .catch(err => console.error('Failed to update pantry preference:', err));
@@ -528,11 +530,11 @@ export default function ShoppingListPage() {
                             primary={item.name}
                             secondary={
                               <Stack direction="row" gap="sm" alignItems="center">
-                                {(item.buyLabel || hasMultipleRecipes) && (
+                                {((item.buyLabel && item.buyLabel !== item.quantityLabel) || hasMultipleRecipes) && (
                                   <Typography variant="small" color="subdued">
                                     {[
-                                      item.buyLabel ? item.quantityLabel : '',
-                                      hasMultipleRecipes ? `${item.buyLabel ? 'across ' : ''}${item.sourceRecipes.length} recipes` : '',
+                                      item.buyLabel && item.buyLabel !== item.quantityLabel ? item.quantityLabel : '',
+                                      hasMultipleRecipes ? `${item.buyLabel && item.buyLabel !== item.quantityLabel ? 'across ' : ''}${item.sourceRecipes.length} recipes` : '',
                                     ].filter(Boolean).join(' ')}
                                   </Typography>
                                 )}
