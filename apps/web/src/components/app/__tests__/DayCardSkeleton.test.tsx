@@ -41,16 +41,58 @@ describe('day card loading state (#177)', () => {
 
   it('turns the pulse and the fade-in off under reduced motion', () => {
     const skeleton = render(<MealSkeleton label="Loading" />).container;
-    const planMeal = render(<PlanMeal {...meal('Pumpkin soup')} tags={[]} disableLink />).container;
+    const planMeal = render(<PlanMeal {...meal('Pumpkin soup')} tags={[]} disableLink fadeIn />).container;
     const css = [...document.querySelectorAll('style')].map((style) => style.textContent).join('\n');
     const reducedMotionOff = (element: Element) =>
       [...element.classList].some((cls) =>
         new RegExp(String.raw`@media \(prefers-reduced-motion: ?reduce\)\{[^@]*\.${cls}\{animation: ?none`).test(css)
       );
     // A skeleton bar (pulses) and the meal's wrapper (fades in)
-    const bar = skeleton.querySelector('[role=status] span')!;
+    const bar = [...skeleton.querySelectorAll('[role=status] span')].find((span) => !span.classList.contains('sr-only'))!;
     const fade = planMeal.firstElementChild!;
     expect(reducedMotionOff(bar)).toBe(true);
     expect(reducedMotionOff(fade)).toBe(true);
+  });
+
+  it('announces its label from inside the live region, not just as a name', () => {
+    render(<WeekPlanList meals={Array(7).fill(null)} generatingDays={[0]} />);
+    expect(screen.getByRole('status', { name: 'Generating AI recipe for Monday' })).toHaveTextContent('Generating AI recipe for Monday');
+  });
+});
+
+describe('meal handover (#177)', () => {
+  const fades = () => document.querySelectorAll('[data-fade-in]').length;
+
+  it('fades a meal in when it replaces its skeleton, and only then', () => {
+    const { rerender } = render(<WeekPlanList meals={Array(7).fill(null)} generatingDays={[0, 1]} />);
+    // Monday resolves; Tuesday is still generating
+    rerender(<WeekPlanList meals={[meal('Pumpkin soup'), null, null, null, null, null, null]} generatingDays={[1]} />);
+    expect(fades()).toBe(1);
+    // Tuesday resolves: it fades; Monday, already shown, doesn't fade again
+    rerender(<WeekPlanList meals={[meal('Pumpkin soup'), meal('Beef polenta'), null, null, null, null, null]} generatingDays={[]} />);
+    expect(fades()).toBe(2);
+    expect(screen.getByText('Beef polenta').closest('[data-fade-in]')).not.toBeNull();
+  });
+
+  it('fades after the first load, but not on a plan shown without loading', () => {
+    const { rerender, unmount } = render(<WeekPlanList meals={[]} isGeneratingPlan />);
+    rerender(<WeekPlanList meals={[meal('Pumpkin soup'), null, null, null, null, null, null]} />);
+    expect(fades()).toBe(1);
+    unmount();
+    render(<WeekPlanList meals={[meal('Pumpkin soup'), null, null, null, null, null, null]} />);
+    expect(fades()).toBe(0);
+  });
+
+  it("doesn't fade a proposal's meal again when it's accepted", () => {
+    const fish = meal('Fish tacos');
+    const { rerender } = render(
+      <WeekPlanList meals={[meal('Pumpkin soup'), null, null, null, null, null, null]} proposals={{ 0: { kind: 'replace', status: 'loading', token: 1 } }} />
+    );
+    // The proposal arrives: it replaces its skeleton, so it fades
+    rerender(<WeekPlanList meals={[meal('Pumpkin soup'), null, null, null, null, null, null]} proposals={{ 0: { kind: 'replace', status: 'ready', meal: fish } }} />);
+    expect(screen.getByText('Fish tacos').closest('[data-fade-in]')).not.toBeNull();
+    // Accepted: the same meal moves into the plan's card without fading again
+    rerender(<WeekPlanList meals={[fish, null, null, null, null, null, null]} />);
+    expect(screen.getByText('Fish tacos').closest('[data-fade-in]')).toBeNull();
   });
 });

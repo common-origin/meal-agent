@@ -254,6 +254,8 @@ const KebabMark = styled(Bone)`
 export function MealSkeleton({ label }: { label: string }) {
   return (
     <div role="status" aria-busy="true" aria-label={label} data-testid="meal-skeleton">
+      {/* What the live region announces: its label alone isn't read out */}
+      <span className="sr-only">{label}</span>
       <Stack direction="column" gap="sm">
         <Typography variant="h5" as="div">
           <Bone $width="60%" />
