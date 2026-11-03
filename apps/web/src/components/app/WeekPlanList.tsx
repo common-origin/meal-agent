@@ -7,8 +7,7 @@ import type { ProposedNight } from "@/lib/planEdit";
 import { explainReasons } from "@/lib/explainer";
 import { distinctTags } from "@/lib/dayCard";
 import SortableDay from "./SortableDay";
-import LoadingSkeleton from "./LoadingSkeleton";
-import DayCard from "./DayCard";
+import DayCard, { MealActionsSkeleton, MealSkeleton } from "./DayCard";
 import PlanMeal from "./PlanMeal";
 
 export type WeekPlanListProps = {
@@ -43,8 +42,6 @@ export type WeekPlanListProps = {
 };
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-// About a meal's title and details line
-const ROW_SKELETON_HEIGHT = "64px";
 
 /** A meal's reason tags, as its card would label them. */
 const tagsOf = (meal: MealCardProps) => explainReasons(meal.reasons ?? [], meal.title, 3).map((chip) => chip.text);
@@ -113,8 +110,8 @@ export default function WeekPlanList({
       <Box mt="xl">
         <Stack direction="column" gap="md">
           {DAYS.map((day, index) => (
-            <DayCard key={day} day={day} date={dates[index]}>
-              <LoadingSkeleton ariaLabel={`Loading recipe for ${day}`} height={ROW_SKELETON_HEIGHT} />
+            <DayCard key={day} day={day} date={dates[index]} actions={<MealActionsSkeleton withChange={Boolean(onChangeClick)} />}>
+              <MealSkeleton label={`Loading recipe for ${day}`} />
             </DayCard>
           ))}
         </Stack>
@@ -151,8 +148,8 @@ export default function WeekPlanList({
                 // Each night shows its own skeleton until its own request resolves (#95)
                 if (generatingDays.includes(index)) {
                   return (
-                    <DayCard key={day} day={day} date={date}>
-                      <LoadingSkeleton ariaLabel={`Generating AI recipe for ${day}`} height={ROW_SKELETON_HEIGHT} />
+                    <DayCard key={day} day={day} date={date} actions={<MealActionsSkeleton withChange={Boolean(onChangeClick)} />}>
+                      <MealSkeleton label={`Generating AI recipe for ${day}`} />
                     </DayCard>
                   );
                 }
@@ -287,7 +284,7 @@ function ProposedNightView({
           <>
             {replaces}
             {proposal.status === "loading" && (
-              <LoadingSkeleton ariaLabel={`Finding something new for ${day}`} height={ROW_SKELETON_HEIGHT} />
+              <MealSkeleton label={`Finding something new for ${day}`} />
             )}
             {proposal.status === "ready" && <PlanMeal {...proposal.meal} tags={tagsOf(proposal.meal)} disableLink />}
             {proposal.status === "failed" && (

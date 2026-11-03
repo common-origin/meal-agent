@@ -1,7 +1,7 @@
 "use client";
 
-import styled, { css } from "styled-components";
-import { tokens } from "@common-origin/design-system";
+import styled, { css, keyframes } from "styled-components";
+import { Stack, Typography, tokens } from "@common-origin/design-system";
 import type { ReactNode } from "react";
 
 /**
@@ -192,3 +192,89 @@ export default function DayCard({ day, date, layout = "meal", tone = "filled", l
     </Frame>
   );
 }
+
+// Loading (#177): a skeleton that mirrors PlanMeal inside the same frame, so
+// a night keeps its height, its day and its actions while it loads.
+
+const pulse = keyframes`
+  from { opacity: 1; }
+  to { opacity: 0.5; }
+`;
+
+const reducedMotion = "@media (prefers-reduced-motion: reduce)";
+
+/** A grey bar in place of text or a control. */
+const Bone = styled.span<{ $width: string }>`
+  display: inline-block;
+  vertical-align: middle;
+  width: ${({ $width }) => $width};
+  max-width: 100%;
+  height: 0.75em;
+  border-radius: ${tokens.semantic.radius.sm};
+  background: ${color.fill.muted};
+  animation: ${pulse} 1s ${tokens.semantic.motion.easing.standard} infinite alternate;
+  ${reducedMotion} {
+    animation: none;
+  }
+`;
+
+/** A secondary Button's footprint (the "Change" button): 40px tall, 44px on phones like the real one. */
+const ButtonBone = styled(Bone)`
+  display: block;
+  height: 2.5rem;
+  ${phone} {
+    height: 44px;
+  }
+`;
+
+/** A naked IconButton (⋮): no fill, just a thin mark where its icon will be. */
+const IconButtonBone = styled.span`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  ${phone} {
+    width: 44px;
+    height: 44px;
+  }
+`;
+
+/** The ⋮ icon's footprint: a thin, rounded upright. */
+const KebabMark = styled(Bone)`
+  height: 1rem;
+  border-radius: ${tokens.semantic.radius.full};
+`;
+
+/**
+ * A loading meal: bars on the title's and the details line's own type (h5 and
+ * label), so each line has PlanMeal's height and a text baseline the day aligns
+ * with. Announced as a status with `label`.
+ */
+export function MealSkeleton({ label }: { label: string }) {
+  return (
+    <div role="status" aria-busy="true" aria-label={label} data-testid="meal-skeleton">
+      <Stack direction="column" gap="sm">
+        <Typography variant="h5" as="div">
+          <Bone $width="60%" />
+        </Typography>
+        <Typography variant="label" as="div">
+          <Bone $width="40%" />
+        </Typography>
+      </Stack>
+    </div>
+  );
+}
+
+/** Placeholders where a loaded meal's Change and ⋮ will be. */
+export function MealActionsSkeleton({ withChange }: { withChange: boolean }) {
+  return (
+    <>
+      {withChange && <ButtonBone $width="5rem" aria-hidden="true" data-testid="action-placeholder" />}
+      <IconButtonBone aria-hidden="true" data-testid="action-placeholder">
+        <KebabMark $width="0.25rem" />
+      </IconButtonBone>
+    </>
+  );
+}
+
