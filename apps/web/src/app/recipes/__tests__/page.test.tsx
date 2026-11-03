@@ -10,12 +10,17 @@ const LIBRARY = recipe('lib-stew-1', 'Beef stew', 'taste.com.au', 'Jamie Oliver'
 const mocks = vi.hoisted(() => ({
   removeCustomRecipe: vi.fn(async () => true),
   clearCustomRecipes: vi.fn(() => true),
+  cleared: false,
 }));
 vi.mock('@/lib/library', () => ({
   RecipeLibrary: {
-    getCustomRecipes: () => [OWN, LIBRARY],
+    // After "Clear all", only the favourited library recipe is left
+    getCustomRecipes: () => (mocks.cleared ? [LIBRARY] : [OWN, LIBRARY]),
     removeCustomRecipe: mocks.removeCustomRecipe,
-    clearCustomRecipes: mocks.clearCustomRecipes,
+    clearCustomRecipes: () => {
+      mocks.cleared = true;
+      return mocks.clearCustomRecipes();
+    },
     getConfirmedRecipeIds: () => [],
   },
 }));
@@ -35,6 +40,7 @@ const openMenu = (title: string) => fireEvent.click(screen.getByRole('button', {
 describe('/recipes delete (#179)', () => {
   beforeEach(() => {
     mocks.removeCustomRecipe.mockClear();
+    mocks.cleared = false;
     // Stand-ins, so a stray confirm()/alert() call is caught (the test DOM has neither)
     vi.stubGlobal('confirm', vi.fn(() => true));
     vi.stubGlobal('alert', vi.fn());
@@ -76,14 +82,41 @@ describe('/recipes delete (#179)', () => {
     expect(screen.getByRole('link', { name: 'Pumpkin soup' })).toBeInTheDocument();
   });
 
-  it('"Clear all" confirms in a dialog too', async () => {
+  it('"Clear all" confirms in a dialog, deletes only what you added, and says so', async () => {
     render(<RecipesPage />);
     fireEvent.click(screen.getByRole('button', { name: 'Clear all' }));
     const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText(/Favourites and saved AI recipes stay/)).toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Delete all' }));
     expect(mocks.clearCustomRecipes).toHaveBeenCalled();
-    expect(await screen.findByText('Deleted all your recipes.')).toBeInTheDocument();
+    expect(await screen.findByText('Deleted the recipes you added.')).toBeInTheDocument();
+    // The favourited library recipe survives and stays on screen
+    expect(screen.getByRole('link', { name: 'Beef stew' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Pumpkin soup' })).toBeNull();
     expect(globalThis.confirm).not.toHaveBeenCalled();
+  });
+
+  it('keeps the dialog wording while it closes', async () => {
+    render(<RecipesPage />);
+    openMenu('Pumpkin soup');
+    fireEvent.click(screen.getByText('Delete recipe'));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    // Still rendered while it animates out: same title, not the library wording
+    expect(dialog.isConnected).toBe(true);
+    expect(within(dialog).queryByText('Remove from My recipes?')).toBeNull();
+    expect(within(dialog).getByText('Delete this recipe?')).toBeInTheDocument();
+  });
+
+  it('deletes once even if the confirm button is pressed twice', async () => {
+    render(<RecipesPage />);
+    openMenu('Pumpkin soup');
+    fireEvent.click(screen.getByText('Delete recipe'));
+    const confirmButton = within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete recipe' });
+    fireEvent.click(confirmButton);
+    fireEvent.click(confirmButton);
+    await screen.findByText('Deleted "Pumpkin soup".');
+    expect(mocks.removeCustomRecipe).toHaveBeenCalledTimes(1);
   });
 });
 

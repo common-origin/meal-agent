@@ -28,7 +28,7 @@ import { acceptPreview, changeCount, dropNight, isPreviewPending, proposeEdits, 
 import type { FamilySettings } from "@/lib/types/settings";
 import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
-import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
+import { recipeSourceLabel } from "@/lib/recipeDisplay";
 import { weekDateLabels } from "@/lib/dayCard";
 import { trackIngredientUsage } from "@/lib/ingredientAnalytics";
 import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
@@ -67,6 +67,12 @@ function toAiMeal(recipe: Recipe, explanation?: string): MealCardProps {
 }
 
 const PROTEIN_TAGS = ['chicken', 'beef', 'pork', 'lamb', 'fish', 'seafood'];
+
+/** The source on a plan card: the recipe cards' label (#181), less "AI generated", which the plan doesn't show. */
+function planSourceLabel(recipe: Recipe): string {
+  const label = recipeSourceLabel(recipe);
+  return label && label !== "AI generated" ? label : "";
+}
 
 /** A recipe's main protein from its tags, for days generated before this session (#95). */
 function proteinOf(recipe: Recipe | undefined): string | null {
@@ -215,8 +221,7 @@ export default function PlanPage() {
         const reasons = mealReasons(recipe, household.favorites);
         
         // Get chef/source display name (hide "AI Generated" on Plan page)
-        const chefDisplay = getRecipeSourceDisplay(recipe);
-        const displayChef = chefDisplay === "AI Generated" ? "" : chefDisplay;
+        const displayChef = planSourceLabel(recipe);
         
         return {
           recipeId: recipe.id,
@@ -289,8 +294,7 @@ export default function PlanPage() {
     const reasons = mealReasons(recipe, household.favorites);
     
     // Get chef/source display name (hide "AI Generated" on Plan page)
-    const chefName = getRecipeSourceDisplay(recipe);
-    const displayChef = chefName === "AI Generated" ? "" : chefName;
+    const displayChef = planSourceLabel(recipe);
     
     const newMeal: MealCardProps = {
       recipeId: recipe.id,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Stack, Typography, Box, Button, TextField, Dropdown, ResponsiveGrid, EmptyState, InlineAlert, Modal, tokens } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
@@ -67,8 +67,12 @@ export default function RecipesPage() {
   const [sortBy, setSortBy] = useState<SortOption>("date-desc");
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  // The recipe waiting for confirmation in the delete Modal, and "Clear all" (#179)
+  // The delete Modal (#179). The recipe stays set while the Modal animates closed,
+  // so its wording doesn't change on the way out; `deleteOpen` opens and closes it.
   const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  // One delete at a time: a second press while one runs does nothing
+  const deletingRef = useRef(false);
   const [confirmingClearAll, setConfirmingClearAll] = useState(false);
   // What the last delete did, shown on the page rather than in a browser dialog
   const [notice, setNotice] = useState<{ variant: "success" | "error"; text: string } | null>(null);
@@ -149,9 +153,9 @@ export default function RecipesPage() {
       // Clear from localStorage
       RecipeLibrary.clearCustomRecipes();
       
-      // Update UI
-      setRecipes([]);
-      setNotice({ variant: "success", text: "Deleted all your recipes." });
+      // Only the recipes you added are cleared; favourites and saved AI recipes stay (#179)
+      setRecipes(RecipeLibrary.getCustomRecipes());
+      setNotice({ variant: "success", text: "Deleted the recipes you added." });
       
       track('page_view', { page: 'saved_recipes_cleared' });
     } catch (error) {
@@ -161,7 +165,9 @@ export default function RecipesPage() {
   };
 
   const handleDeleteRecipe = async (recipeId: string, recipeTitle: string) => {
-    setPendingDelete(null);
+    if (deletingRef.current) return;
+    deletingRef.current = true;
+    setDeleteOpen(false);
     try {
       // Check if it's a user-added recipe (custom-* or ai-*)
       const isUserAdded = recipeId.startsWith('custom-') || recipeId.startsWith('ai-');
@@ -195,6 +201,8 @@ export default function RecipesPage() {
     } catch (error) {
       console.error("Failed to delete recipe:", error);
       setNotice({ variant: "error", text: `We couldn't delete "${recipeTitle}". Please try again.` });
+    } finally {
+      deletingRef.current = false;
     }
   };
 
@@ -327,7 +335,10 @@ export default function RecipesPage() {
                   nutrition={recipe.nutrition}
                   reasons={reasons}
                   deleteLabel={deleteLabelFor(recipe.id)}
-                  onDeleteClick={() => setPendingDelete({ id: recipe.id, title: recipe.title })}
+                  onDeleteClick={() => {
+                    setPendingDelete({ id: recipe.id, title: recipe.title });
+                    setDeleteOpen(true);
+                  }}
                 />
               );
             })}
@@ -363,12 +374,12 @@ export default function RecipesPage() {
 
       {/* Confirmations (#179): what each action really does, in the design system's Modal */}
       <Modal
-        isOpen={pendingDelete !== null}
-        onClose={() => setPendingDelete(null)}
+        isOpen={deleteOpen && pendingDelete !== null}
+        onClose={() => setDeleteOpen(false)}
         title={pendingDelete && isOwnRecipe(pendingDelete.id) ? "Delete this recipe?" : "Remove from My recipes?"}
         size="small"
         actions={[
-          { label: "Cancel", onClick: () => setPendingDelete(null), variant: "secondary" },
+          { label: "Cancel", onClick: () => setDeleteOpen(false), variant: "secondary" },
           {
             label: pendingDelete ? deleteLabelFor(pendingDelete.id) : "Delete recipe",
             onClick: () => pendingDelete && handleDeleteRecipe(pendingDelete.id, pendingDelete.title),
@@ -386,14 +397,16 @@ export default function RecipesPage() {
       <Modal
         isOpen={confirmingClearAll}
         onClose={() => setConfirmingClearAll(false)}
-        title="Delete all your recipes?"
+        title="Delete the recipes you've added?"
         size="small"
         actions={[
           { label: "Cancel", onClick: () => setConfirmingClearAll(false), variant: "secondary" },
           { label: "Delete all", onClick: handleClearAllRecipes, variant: "danger" },
         ]}
       >
-        <Typography>Every recipe you&apos;ve added will be deleted. This can&apos;t be undone.</Typography>
+        <Typography>
+          Every recipe you&apos;ve added will be deleted. Favourites and saved AI recipes stay. This can&apos;t be undone.
+        </Typography>
       </Modal>
     </Main>
   );
