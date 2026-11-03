@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { InlineAlert, AILabel, ActionSheet, Button, Stack, Box, Typography } from "@common-origin/design-system";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { toSentenceCase, type MealCardProps } from "./MealCard";
+import type { MealCardProps } from "./MealCard";
 import type { ProposedNight } from "@/lib/planEdit";
 import { explainReasons } from "@/lib/explainer";
 import { distinctTags } from "@/lib/dayCard";
@@ -246,7 +246,7 @@ export default function WeekPlanList({
         isOpen={moveFrom !== null && moving !== null && Boolean(onMoveNight)}
         onClose={() => setMoveFrom(null)}
         title={moveFrom !== null ? `Move ${DAYS[moveFrom]}'s dinner` : undefined}
-        description={moving ? toSentenceCase(moving.title) : undefined}
+        description={moving ? moving.title : undefined}
         actions={
           moveFrom === null
             ? []
@@ -256,7 +256,7 @@ export default function WeekPlanList({
                   : [
                       {
                         id: day,
-                        label: meals[to] ? `${day}: swap with ${toSentenceCase(meals[to]!.title)}` : `${day} (nothing planned)`,
+                        label: meals[to] ? `${day}: swap with ${meals[to]!.title}` : `${day} (nothing planned)`,
                         onSelect: () => {
                           onMoveNight?.(moveFrom, to);
                           setMoveFrom(null);

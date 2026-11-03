@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Stack, Typography, Box, Button, TextField, Dropdown, ResponsiveGrid, EmptyState, tokens } from "@common-origin/design-system";
+import { Stack, Typography, Box, Button, TextField, Dropdown, ResponsiveGrid, EmptyState, InlineAlert, Modal, tokens } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import { RecipeLibrary } from "@/lib/library";
@@ -10,10 +10,14 @@ import { getFavorites, toggleFavorite } from "@/lib/storage";
 import { Storage } from "@/lib/storage";
 import { type Recipe } from "@/lib/types/recipe";
 import { track } from "@/lib/analytics";
-import MealCard from "@/components/app/MealCard";
-import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
+import MealCard, { MealCardSkeleton } from "@/components/app/MealCard";
+import { recipeSourceLabel } from "@/lib/recipeDisplay";
 
 type FilterOption = "all" | "favorites" | "ai-generated" | "manual";
+
+/** Recipes you added or saved from AI are deleted for good; a library recipe only leaves My Recipes (#179). */
+const isOwnRecipe = (recipeId: string) => recipeId.startsWith("custom-") || recipeId.startsWith("ai-");
+const deleteLabelFor = (recipeId: string) => (isOwnRecipe(recipeId) ? "Delete recipe" : "Remove from My recipes");
 type SortOption = "date-desc" | "date-asc" | "title-asc" | "title-desc";
 
 /**
@@ -63,6 +67,15 @@ export default function RecipesPage() {
   const [sortBy, setSortBy] = useState<SortOption>("date-desc");
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  // The delete Modal (#179). The recipe stays set while the Modal animates closed,
+  // so its wording doesn't change on the way out; `deleteOpen` opens and closes it.
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  // One delete at a time: a second press while one runs does nothing
+  const deletingRef = useRef(false);
+  const [confirmingClearAll, setConfirmingClearAll] = useState(false);
+  // What the last delete did, shown on the page rather than in a browser dialog
+  const [notice, setNotice] = useState<{ variant: "success" | "error"; text: string } | null>(null);
 
   // Load recipes on mount
   useEffect(() => {
@@ -135,30 +148,26 @@ export default function RecipesPage() {
   };
 
   const handleClearAllRecipes = async () => {
-    if (!confirm("Are you sure you want to delete ALL saved recipes? This action cannot be undone.")) {
-      return;
-    }
-
+    setConfirmingClearAll(false);
     try {
       // Clear from localStorage
       RecipeLibrary.clearCustomRecipes();
       
-      // Update UI
-      setRecipes([]);
-      alert("All recipes have been cleared!");
+      // Only the recipes you added are cleared; favourites and saved AI recipes stay (#179)
+      setRecipes(RecipeLibrary.getCustomRecipes());
+      setNotice({ variant: "success", text: "Deleted the recipes you added." });
       
       track('page_view', { page: 'saved_recipes_cleared' });
     } catch (error) {
       console.error("Failed to clear recipes:", error);
-      alert("Failed to clear recipes. Check console for details.");
+      setNotice({ variant: "error", text: "We couldn't delete your recipes. Please try again." });
     }
   };
 
   const handleDeleteRecipe = async (recipeId: string, recipeTitle: string) => {
-    if (!confirm(`Remove "${recipeTitle}" from My Recipes?`)) {
-      return;
-    }
-
+    if (deletingRef.current) return;
+    deletingRef.current = true;
+    setDeleteOpen(false);
     try {
       // Check if it's a user-added recipe (custom-* or ai-*)
       const isUserAdded = recipeId.startsWith('custom-') || recipeId.startsWith('ai-');
@@ -168,9 +177,9 @@ export default function RecipesPage() {
         const success = await RecipeLibrary.removeCustomRecipe(recipeId);
         if (success) {
           setRecipes(prev => prev.filter(r => r.id !== recipeId));
-          alert(`Recipe "${recipeTitle}" has been deleted`);
+          setNotice({ variant: "success", text: `Deleted "${recipeTitle}".` });
         } else {
-          alert('Failed to delete recipe.');
+          setNotice({ variant: "error", text: `We couldn't delete "${recipeTitle}". Please try again.` });
         }
       } else {
         // For built-in recipes, just unfavorite and remove from confirmed list
@@ -187,11 +196,13 @@ export default function RecipesPage() {
         
         // Update local state
         setRecipes(prev => prev.filter(r => r.id !== recipeId));
-        alert(`Recipe "${recipeTitle}" has been removed from My Recipes`);
+        setNotice({ variant: "success", text: `Removed "${recipeTitle}" from My recipes.` });
       }
     } catch (error) {
       console.error("Failed to delete recipe:", error);
-      alert("Failed to delete recipe. Check console for details.");
+      setNotice({ variant: "error", text: `We couldn't delete "${recipeTitle}". Please try again.` });
+    } finally {
+      deletingRef.current = false;
     }
   };
 
@@ -211,9 +222,20 @@ export default function RecipesPage() {
 
   if (loading) {
     return (
-      <main style={{ padding: 24, maxWidth: '1400px', margin: '0 auto' }}>
-        <Typography variant="h1">Loading recipes...</Typography>
-      </main>
+      <Main maxWidth="1400px">
+        <Stack direction="column" gap="xl">
+          <Typography variant="h1">My saved recipes</Typography>
+          {/* Skeleton cards mirroring the recipe card (#181); the status names what's loading */}
+          <div role="status" aria-busy="true" aria-label="Loading your recipes">
+            <span className="sr-only">Loading your recipes</span>
+            <ResponsiveGrid cols={1} colsSm={2} colsMd={3} colsLg={4} gapX="4" gapY="4">
+              {Array.from({ length: 8 }, (_, i) => (
+                <MealCardSkeleton key={i} />
+              ))}
+            </ResponsiveGrid>
+          </div>
+        </Stack>
+      </Main>
     );
   }
 
@@ -227,6 +249,8 @@ export default function RecipesPage() {
             {filteredRecipes.length} of {recipes.length} recipes
           </Typography>
         </Stack>
+
+        {notice && <InlineAlert variant={notice.variant}>{notice.text}</InlineAlert>}
 
         {/* Search and Filters */}
         <Stack direction="row" gap="md" alignItems="flex-end">
@@ -293,11 +317,9 @@ export default function RecipesPage() {
             colsMd={3} 
             colsLg={4}
             gapX="4"
-            gapY="6"
+            gapY="4"
           >
             {filteredRecipes.map((recipe) => {
-              // Get chef/source display name
-              const chef = getRecipeSourceDisplay(recipe);
               
               // Generate proper reason codes for the chips
               const reasons = generateReasonCodes(recipe, favorites.includes(recipe.id));
@@ -307,10 +329,16 @@ export default function RecipesPage() {
                   key={recipe.id}
                   recipeId={recipe.id}
                   title={recipe.title}
-                  chef={chef}
-                  timeMins={recipe.timeMins || 30}
+                  chef={recipeSourceLabel(recipe) ?? ""}
+                  // No time when it's unknown, rather than an invented one (#181)
+                  timeMins={recipe.timeMins ?? 0}
+                  nutrition={recipe.nutrition}
                   reasons={reasons}
-                  onDeleteClick={() => handleDeleteRecipe(recipe.id, recipe.title)}
+                  deleteLabel={deleteLabelFor(recipe.id)}
+                  onDeleteClick={() => {
+                    setPendingDelete({ id: recipe.id, title: recipe.title });
+                    setDeleteOpen(true);
+                  }}
                 />
               );
             })}
@@ -325,11 +353,11 @@ export default function RecipesPage() {
               <Button
                 variant="secondary"
                 size="large"
-                onClick={handleClearAllRecipes}
+                onClick={() => setConfirmingClearAll(true)}
                 // Destructive but not the page's main action: secondary, with danger text
                 style={{ color: tokens.semantic.color.text.danger }}
               >
-                Clear All
+                Clear all
               </Button>
             )}
             <Button
@@ -343,6 +371,43 @@ export default function RecipesPage() {
           </>
         }
       />
+
+      {/* Confirmations (#179): what each action really does, in the design system's Modal */}
+      <Modal
+        isOpen={deleteOpen && pendingDelete !== null}
+        onClose={() => setDeleteOpen(false)}
+        title={pendingDelete && isOwnRecipe(pendingDelete.id) ? "Delete this recipe?" : "Remove from My recipes?"}
+        size="small"
+        actions={[
+          { label: "Cancel", onClick: () => setDeleteOpen(false), variant: "secondary" },
+          {
+            label: pendingDelete ? deleteLabelFor(pendingDelete.id) : "Delete recipe",
+            onClick: () => pendingDelete && handleDeleteRecipe(pendingDelete.id, pendingDelete.title),
+            variant: "danger",
+          },
+        ]}
+      >
+        <Typography>
+          {pendingDelete && isOwnRecipe(pendingDelete.id)
+            ? `"${pendingDelete.title}" will be deleted. This can't be undone.`
+            : `"${pendingDelete?.title ?? ""}" will be removed from My recipes. It stays in the recipe library.`}
+        </Typography>
+      </Modal>
+
+      <Modal
+        isOpen={confirmingClearAll}
+        onClose={() => setConfirmingClearAll(false)}
+        title="Delete the recipes you've added?"
+        size="small"
+        actions={[
+          { label: "Cancel", onClick: () => setConfirmingClearAll(false), variant: "secondary" },
+          { label: "Delete all", onClick: handleClearAllRecipes, variant: "danger" },
+        ]}
+      >
+        <Typography>
+          Every recipe you&apos;ve added will be deleted. Favourites and saved AI recipes stay. This can&apos;t be undone.
+        </Typography>
+      </Modal>
     </Main>
   );
 }

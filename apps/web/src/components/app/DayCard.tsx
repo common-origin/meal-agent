@@ -1,8 +1,9 @@
 "use client";
 
-import styled, { css, keyframes } from "styled-components";
+import styled, { css } from "styled-components";
 import { Stack, Typography, tokens } from "@common-origin/design-system";
 import type { ReactNode } from "react";
+import { Bone, KebabMark } from "./skeleton";
 
 /**
  * - `meal`: a filled or proposed night. On phones, the day and the actions share the top line.
@@ -196,28 +197,6 @@ export default function DayCard({ day, date, layout = "meal", tone = "filled", l
 // Loading (#177): a skeleton that mirrors PlanMeal inside the same frame, so
 // a night keeps its height, its day and its actions while it loads.
 
-const pulse = keyframes`
-  from { opacity: 1; }
-  to { opacity: 0.5; }
-`;
-
-const reducedMotion = "@media (prefers-reduced-motion: reduce)";
-
-/** A grey bar in place of text or a control. */
-const Bone = styled.span<{ $width: string }>`
-  display: inline-block;
-  vertical-align: middle;
-  width: ${({ $width }) => $width};
-  max-width: 100%;
-  height: 0.75em;
-  border-radius: ${tokens.semantic.radius.sm};
-  background: ${color.fill.muted};
-  animation: ${pulse} 1s ${tokens.semantic.motion.easing.standard} infinite alternate;
-  ${reducedMotion} {
-    animation: none;
-  }
-`;
-
 /** A secondary Button's footprint (the "Change" button): 40px tall, 44px on phones like the real one. */
 const ButtonBone = styled(Bone)`
   display: block;
@@ -238,12 +217,6 @@ const IconButtonBone = styled.span`
     width: 44px;
     height: 44px;
   }
-`;
-
-/** The ⋮ icon's footprint: a thin, rounded upright. */
-const KebabMark = styled(Bone)`
-  height: 1rem;
-  border-radius: ${tokens.semantic.radius.full};
 `;
 
 /**
