@@ -5,7 +5,7 @@ import { InlineAlert, Box, EmptyState, Stack, Typography, IconButton, Sheet, Sea
 import { type Recipe } from "@/lib/types/recipe";
 import { RecipeLibrary } from "@/lib/library";
 import { getFavorites } from "@/lib/storage";
-import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
+import { recipeSourceLabel } from "@/lib/recipeDisplay";
 import MealCard from "./MealCard";
 
 /**
@@ -189,15 +189,15 @@ export default function SwapDrawer({
                 <Stack direction="column" gap="md">
                   {filteredSavedRecipes.map((recipe) => {
                     const reasons = generateReasonCodes(recipe, favorites.includes(recipe.id));
-                    const chef = getRecipeSourceDisplay(recipe);
                     
                     return (
                       <MealCard
                         key={recipe.id}
                         recipeId={recipe.id}
                         title={recipe.title}
-                        chef={chef}
-                        timeMins={recipe.timeMins || 0}
+                        chef={recipeSourceLabel(recipe) ?? ""}
+                        timeMins={recipe.timeMins ?? 0}
+                        nutrition={recipe.nutrition}
                         reasons={reasons}
                         onSwapClick={() => handleSelectSwap(recipe)}
                         disableLink={true}

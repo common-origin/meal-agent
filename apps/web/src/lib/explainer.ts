@@ -38,7 +38,7 @@ const REASON_CHIP_MAP: Record<string, ReasonChip> = {
   
   // Value & Strategy
   "favorite": {
-    text: "Your favorite",
+    text: "Your favourite",
     variant: "success"
   },
   "best value": {

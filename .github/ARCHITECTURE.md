@@ -68,7 +68,7 @@ Key components: `WeekPlanList` (the Monday–Sunday list; each night is a
 display rules from `lib/dayCard.ts`), `PlanDetailsSheet` (budget and nutrition behind the
 header's summary line, from `lib/planSummary.ts`), `SwapDrawer`,
 `WeeklyPlanWizard` (planning); `PantrySheet`
-(pantry photo scanning); `MealCard`, `LeftoverCard`; `ColesShoppingModal`,
+(pantry photo scanning); `MealCard` (recipe cards on `/recipes` and in `SwapDrawer`; shares `MealDetails`, the details line, with `PlanMeal`), `LeftoverCard`; `ColesShoppingModal`,
 `ColesProductCard`, `BudgetBar`, `BudgetSummary`, `PriceSourceBadge`,
 `ReportPriceModal` (shopping/pricing).
 

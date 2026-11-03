@@ -15,6 +15,8 @@ export type MealMenuProps = {
   /** "Move to another night…": the non-drag way to reorder (#160). */
   onMoveClick?: () => void;
   onDeleteClick?: () => void;
+  /** The destructive item's label: what it really does where the menu is used (#179). */
+  deleteLabel?: string;
 };
 
 const MenuWrapper = styled.div`
@@ -23,7 +25,7 @@ const MenuWrapper = styled.div`
 `;
 
 /** A meal's ⋮ menu: swap, move, favourite and remove. */
-export default function MealMenu({ recipeId, title, onSwapClick, onMoveClick, onDeleteClick }: MealMenuProps) {
+export default function MealMenu({ recipeId, title, onSwapClick, onMoveClick, onDeleteClick, deleteLabel = "Remove from plan" }: MealMenuProps) {
   const [favorited, setFavorited] = useState(false);
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -98,7 +100,7 @@ export default function MealMenu({ recipeId, title, onSwapClick, onMoveClick, on
               onClick={choose(handleFavorite)}
             />
             {onDeleteClick && (
-              <ListItem primary="Remove from plan" interactive destructive onClick={choose(onDeleteClick)} />
+              <ListItem primary={deleteLabel} interactive destructive onClick={choose(onDeleteClick)} />
             )}
           </List>
         </Box>
