@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Meal Agent for Coles: options</title>
+  <link rel="stylesheet" href="panel.css">
+</head>
+<body class="options">
+  <h1>Meal Agent for Coles</h1>
+  <p>Copy the extension token from Settings in Meal Agent, under “Coles extension”.</p>
+  <label>App URL <input id="appUrl" type="url" placeholder="https://meal-agent.vercel.app"></label>
+  <label>Extension token <input id="token" type="password" autocomplete="off"></label>
+  <button id="save" class="primary">Save</button>
+  <p id="status" role="status"></p>
+  <script type="module" src="options.js"></script>
+</body>
+</html>

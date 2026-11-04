@@ -185,9 +185,63 @@ export type Database = {
           },
         ]
       }
+      household_products: {
+        Row: {
+          created_at: string
+          household_id: string
+          id: string
+          ingredient_key: string
+          last_price: number | null
+          name: string
+          pack_size: number | null
+          pack_unit: string | null
+          product_id: string
+          times_bought: number
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          household_id: string
+          id?: string
+          ingredient_key: string
+          last_price?: number | null
+          name: string
+          pack_size?: number | null
+          pack_unit?: string | null
+          product_id: string
+          times_bought?: number
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          household_id?: string
+          id?: string
+          ingredient_key?: string
+          last_price?: number | null
+          name?: string
+          pack_size?: number | null
+          pack_unit?: string | null
+          product_id?: string
+          times_bought?: number
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_products_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       households: {
         Row: {
           created_at: string
+          extension_token: string
           ics_token: string
           id: string
           name: string
@@ -195,6 +249,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          extension_token?: string
           ics_token?: string
           id?: string
           name: string
@@ -202,6 +257,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          extension_token?: string
           ics_token?: string
           id?: string
           name?: string

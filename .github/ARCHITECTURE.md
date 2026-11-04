@@ -17,7 +17,8 @@ was chosen, estimates cost against real Coles product prices, and produces
 a shopping list. Supabase provides authentication and PostgreSQL storage
 for signed-in households; anonymous use falls back to localStorage.
 
-- **Next.js 16 / React 19 / TypeScript**, pnpm monorepo (`apps/web`)
+- **Next.js 16 / React 19 / TypeScript**, pnpm monorepo (`apps/web`, plus
+  `apps/coles-extension`, the Chrome side panel for filling a Coles trolley)
 - **Supabase**: Postgres with Row-Level Security, Google OAuth + Magic Link
   auth
 - **Google Gemini**: recipe generation, pantry/recipe photo scanning, URL
@@ -68,8 +69,8 @@ Key components: `WeekPlanList` (the Monday–Sunday list; each night is a
 display rules from `lib/dayCard.ts`), `PlanDetailsSheet` (budget and nutrition behind the
 header's summary line, from `lib/planSummary.ts`), `SwapDrawer`,
 `WeeklyPlanWizard` (planning); `PantrySheet`
-(pantry photo scanning); `MealCard` (recipe cards on `/recipes` and in `SwapDrawer`; shares `MealDetails`, the details line, with `PlanMeal`), `LeftoverCard`; `ColesShoppingModal`,
-`ColesProductCard`, `BudgetBar`, `BudgetSummary`, `PriceSourceBadge`,
+(pantry photo scanning); `MealCard` (recipe cards on `/recipes` and in `SwapDrawer`; shares `MealDetails`, the details line, with `PlanMeal`), `LeftoverCard`; `ColesExtensionSettings`
+(the extension token on `/settings`), `BudgetBar`, `BudgetSummary`, `PriceSourceBadge`,
 `ReportPriceModal` (shopping/pricing).
 
 UI is built on `@common-origin/design-system` — check
@@ -108,6 +109,14 @@ in `AI.md`). `share-recipe-email` uses the same rate limiter.
 
 **Pricing/shopping**: `coles-search` (product lookup), `ingredient-analytics`
 (client-side analytics metadata)
+
+**Coles extension** (#184, see [Coles extension](#coles-extension) below):
+`coles/list` — `PUT` with a session saves the approved list ("Shop at
+Coles" on `/shopping-list`), `GET` with the extension token returns the
+latest list with each line's remembered product and pack count;
+`coles/products` — `POST` with the extension token remembers the product
+the user added for a line; `household/extension-token` — session-authenticated,
+`GET` returns the token for Settings and `POST` replaces it
 
 **Calendar export**: `plan/ics/[token]` — unauthenticated ICS feed of a
 household's current-and-future meal plan, gated by a secret token rather
@@ -216,7 +225,8 @@ household's owner and default settings are created automatically on
 signup):
 
 - **`households`** — `id`, `name`, `ics_token` (migration 006 — a secret
-  separate from `id`, used only to authorize the unauthenticated ICS feed)
+  separate from `id`, used only to authorize the unauthenticated ICS feed),
+  `extension_token` (migration 011 — the same idea, for the Coles extension)
 - **`household_members`** — links `auth.users` to `households`, with an
   `owner`/`member` role
 - **`family_settings`** — meal-planning preferences; `full_settings` is a
@@ -231,7 +241,13 @@ signup):
   week_start)`), `meals` is a JSONB object keyed by lowercase day name
   (`monday`..`sunday`); each day is `{ recipeId, servings?, reason? }`,
   where `reason` is the AI's "why this meal" line for that week (#94)
-- **`shopping_lists`**, **`pantry_preferences`**
+- **`shopping_lists`** — one row per household per week; `items` is the
+  approved list sent from `/shopping-list` for the Coles extension
+  (`lib/coles/extensionList.ts`, #184)
+- **`household_products`** (migration 011) — the Coles product a household
+  buys for each ingredient key, `UNIQUE(household_id, ingredient_key)`,
+  learned from what the user adds to their trolley
+- **`pantry_preferences`**
 - **`api_usage`** (001) — an early AI-cost table that nothing writes to;
   superseded by `ai_usage`
 - **`recipe_history`** (migration 007) — one row per recipe used in a
@@ -261,6 +277,32 @@ the Supabase service-role client (bypasses RLS) since an external poller
 can't hold a session; access is authorized by `households.ics_token`
 instead.
 
+
+## Coles extension
+
+`apps/coles-extension` is a Manifest V3 Chrome extension, loaded unpacked
+from its `dist/` (see its README). Its side panel sits beside the user's
+coles.com.au tab:
+
+1. "Shop at Coles" on `/shopping-list` saves the list to `shopping_lists`
+   and opens coles.com.au.
+2. The panel loads the latest list from `GET /api/coles/list`, authorized
+   by `households.extension_token` rather than a session. Lines with a
+   remembered product (`household_products`) come pre-ticked with a pack
+   count (`packsFor` in `lib/coles/extensionList.ts`).
+3. "Add ticked to trolley" calls Coles's own trolley endpoint
+   (`PATCH /api/bff/trolley/store/{storeId}`) from the page, with the
+   user's cookies and the API headers the background worker copied from
+   the site's own requests. Anything that fails falls back to clicking the
+   product page's Add button.
+4. "Find" on a line without a product searches Coles in the same tab; the
+   content script sees the user click a product's Add button, and the
+   background worker posts that product to
+   `POST /api/coles/products`, so next week that line is pre-ticked.
+
+The extension never checks out: the user reviews the trolley and pays on
+coles.com.au.
+
 ## CI/CD and deployment
 
 GitHub Actions (`ci.yml`) runs lint, typecheck, tests, and build on every
@@ -289,11 +331,11 @@ signal now, but it was never actually gating what reached production.
   refreshes the ICS feed on its own. Tracked in issue #4.
 - **Coles pricing is a third-party workaround, not an official
   integration.** See [Logic](#logic-appswebsrclib) above and issue #36.
-- **No path from a shopping list to an actual order or delivery.** The
-  product's real goal is planning through to delivery at a chosen time
-  (see `PRODUCT.md`), and today the flow stops at a list. Same root cause
-  as the pricing limitation — no public Coles API. Issue #36 has the
-  researched options.
+- **The path to an order stops at a filled trolley.** The Coles extension
+  fills the trolley, but checkout, the delivery slot and Click & Collect
+  are done by the user on coles.com.au. The extension relies on Coles's
+  private trolley API and page markup, either of which can change without
+  notice; issue #36 tracks the wider options.
 - **Gaps in test coverage for Supabase storage and most API routes.**
   `pnpm test` passes in full (fixed in issue #5), and covers the local
   `storage.ts` layer, the AI routes, and `share-recipe-email`'s auth and
