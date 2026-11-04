@@ -61,9 +61,10 @@ called this pure — caught by review, corrected here.)
 → "⚡ Quick (≤40 mins)"), so the UI can show *why* a meal was chosen, not
 just what was chosen.
 
-**Shopping list**: `shoppingListAggregator.ts` normalizes ingredient names
-and units, sums quantities across the week's recipes, flags pantry
-staples, then `colesMapping.ts` attaches pricing where a mapping exists
+**Shopping list**: `shoppingListAggregator.ts` resolves each ingredient
+to a canonical key with `lib/ingredients/` (#183), sums quantities across
+the week's recipes into one line per ingredient with a buy quantity
+("1 bulb", "2 × 400 g cans"), flags pantry staples, then `colesMapping.ts` attaches pricing where a mapping exists
 (it's a large, hand-maintained file that's grown well past its original
 size — check it directly rather than trusting a specific count anywhere
 in prose, including here).
@@ -97,8 +98,10 @@ via `/recipes/add`, or photo scanning.
    `addCustomRecipes`, `addTempAIRecipes`, `syncSupabaseRecipes`, etc.) —
    older docs in this repo have named methods that don't exist
    (`addRecipe`, `deleteRecipe`), so verify against the file, not prose
-4. **`apps/web/src/lib/shoppingListAggregator.ts`** — ingredient
-   normalization and dedup
+4. **`apps/web/src/lib/shoppingListAggregator.ts`** and
+   **`apps/web/src/lib/ingredients/`** — ingredient resolution, unit
+   conversion and dedup. New aliases and conversions go in
+   `ingredients/catalogue.ts`
 
 ## Known issues & gotchas
 

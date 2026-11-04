@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { estimateRecipeCost, planPricedFraction, planCostLabel, ROUGH_ESTIMATE_THRESHOLD } from '../recipeCost';
 import { estimateIngredientCost } from '../colesMapping';
+import { pricingForIngredient } from '../ingredients/quantity';
 import type { Ingredient } from '../types/recipe';
 
 const chicken: Ingredient = { name: 'chicken thigh', qty: 800, unit: 'g' };
@@ -9,9 +10,11 @@ const unmapped: Ingredient = { name: 'dragonfruit essence', qty: 1, unit: 'tsp' 
 
 describe('estimateRecipeCost (#89)', () => {
   it('sums the same per-ingredient Coles estimates the shopping list uses', () => {
-    const expected =
-      estimateIngredientCost('chicken thigh', 800, 'g').estimatedCost +
-      estimateIngredientCost('garlic', 4, 'unit').estimatedCost;
+    const priceOf = ({ name, qty, unit }: Ingredient) => {
+      const pricing = pricingForIngredient(name, qty, unit);
+      return estimateIngredientCost(pricing.key, pricing.qty, pricing.unit).estimatedCost;
+    };
+    const expected = priceOf(chicken) + priceOf(garlic);
     const cost = estimateRecipeCost({ ingredients: [chicken, garlic], serves: 4 });
     expect(cost.total).toBeCloseTo(expected, 2);
     expect(cost.perServe).toBeCloseTo(expected / 4, 2);

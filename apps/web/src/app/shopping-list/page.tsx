@@ -6,6 +6,7 @@ import { Alert, Box, Button, Chip, Container, Icon, IconButton, List, ListItem, 
 import Main from "@/components/app/Main";
 import ColesShoppingModal from "@/components/app/ColesShoppingModal";
 import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from "@/lib/shoppingListAggregator";
+import { ingredientKey } from "@/lib/ingredients/resolve";
 import { generateShoppingListCSV, downloadCSV } from "@/lib/csv";
 import { loadHousehold, getDefaultHousehold } from "@/lib/storage";
 import { clearShoppingComplete, isShoppingComplete as isWeekShoppingComplete, markShoppingComplete } from "@/lib/shoppingCompletion";
@@ -47,7 +48,8 @@ export default function ShoppingListPage() {
       .then(current => {
         const updated = addItem
           ? Array.from(new Set([...current, normalizedName]))
-          : current.filter(name => name !== normalizedName);
+          // Also drop names saved before #183 that resolve to the same ingredient ("onions").
+          : current.filter(name => name !== normalizedName && ingredientKey(name) !== normalizedName);
         return savePantryItems(updated);
       })
       .catch(err => console.error('Failed to update pantry preference:', err));
@@ -60,7 +62,7 @@ export default function ShoppingListPage() {
     // Load prices for each item (cached results will be instant)
     for (const item of items) {
       try {
-        const result = await estimateIngredientCostWithAPI(item.normalizedName, item.totalQty, item.unit);
+        const result = await estimateIngredientCostWithAPI(item.normalizedName, item.priceQty, item.priceUnit);
         priceMap.set(item.normalizedName, {
           cost: result.estimatedCost,
           source: result.priceSource,
@@ -198,13 +200,13 @@ export default function ShoppingListPage() {
     if (reusedItems.length > 0) {
       // Estimate savings from reuse (rough calculation)
       const potentialWaste = reusedItems.reduce((sum, item) => {
-        const colesInfo = estimateIngredientCost(item.normalizedName, item.totalQty, item.unit);
+        const colesInfo = estimateIngredientCost(item.normalizedName, item.priceQty, item.priceUnit);
         // If we bought separately, might waste ~30% per pack
         return sum + (colesInfo.mapped ? colesInfo.estimatedCost * 0.3 * (item.sourceRecipes.length - 1) : 0);
       }, 0);
       
       const totalCost = items.reduce((sum, item) => {
-        const colesInfo = estimateIngredientCost(item.normalizedName, item.totalQty, item.unit);
+        const colesInfo = estimateIngredientCost(item.normalizedName, item.priceQty, item.priceUnit);
         return sum + (colesInfo.mapped ? colesInfo.estimatedCost : 0);
       }, 0);
       
@@ -399,7 +401,7 @@ export default function ShoppingListPage() {
                 <Typography variant="subtitle" color="inverse">Estimated total</Typography>
                 <Typography variant="h2" color="inverse">
                   ${needToBuy.reduce((sum, item) => {
-                    const priceInfo = estimateIngredientCost(item.normalizedName, item.totalQty, item.unit);
+                    const priceInfo = estimateIngredientCost(item.normalizedName, item.priceQty, item.priceUnit);
                     // Debug logging to find the issue
                     if (priceInfo.estimatedCost > 100) {
                       console.log('⚠️ High price detected:', {
@@ -492,7 +494,7 @@ export default function ShoppingListPage() {
                         
                         // Get price estimate - use API price if available, otherwise static
                         const apiPrice = apiPrices.get(item.normalizedName);
-                        const staticPriceInfo = estimateIngredientCost(item.normalizedName, item.totalQty, item.unit);
+                        const staticPriceInfo = estimateIngredientCost(item.normalizedName, item.priceQty, item.priceUnit);
                         
                         const priceInfo = apiPrice ? {
                           estimatedCost: apiPrice.cost,
@@ -528,9 +530,12 @@ export default function ShoppingListPage() {
                             primary={item.name}
                             secondary={
                               <Stack direction="row" gap="sm" alignItems="center">
-                                {hasMultipleRecipes && (
+                                {((item.shoppingLabel !== item.quantityLabel) || hasMultipleRecipes) && (
                                   <Typography variant="small" color="subdued">
-                                    {item.sourceRecipes.length} recipes
+                                    {[
+                                      item.shoppingLabel !== item.quantityLabel ? item.quantityLabel : '',
+                                      hasMultipleRecipes ? `${item.shoppingLabel !== item.quantityLabel ? 'across ' : ''}${item.sourceRecipes.length} recipes` : '',
+                                    ].filter(Boolean).join(' ')}
                                   </Typography>
                                 )}
                                 {priceDisplay && (
@@ -549,7 +554,7 @@ export default function ShoppingListPage() {
                             badge={
                               <Stack direction="row" gap="xs" alignItems="center">
                                 <Chip>
-                                  {item.totalQty.toFixed(1)} {item.unit}
+                                  {item.shoppingLabel}
                                 </Chip>
                                 <Button
                                   size="small"
@@ -572,7 +577,7 @@ export default function ShoppingListPage() {
                                 </Typography>
                                 {item.sourceRecipes.map((recipe, idx) => (
                                   <Typography key={idx} variant="small">
-                                    • {recipe.recipeTitle}: {recipe.qty.toFixed(1)} {item.unit}
+                                    • {recipe.recipeTitle}: {Math.round(recipe.qty * 10) / 10} {recipe.unit}
                                   </Typography>
                                 ))}
                               </Stack>
@@ -613,7 +618,7 @@ export default function ShoppingListPage() {
                         badge={
                           <Stack direction="row" gap="xs" alignItems="center">
                             <Chip>
-                              {item.totalQty.toFixed(1)} {item.unit}
+                              {item.shoppingLabel}
                             </Chip>
                             <Button
                               size="small"

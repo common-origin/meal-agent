@@ -1,44 +1,41 @@
 import { type PlanWeek } from "./types/recipe";
 import { RecipeLibrary } from "./library";
 import { track, type IngredientReusedMeta } from "./analytics";
-import { normalizeToBaseUnit, formatForDisplay } from "./unitConversion";
-import { isInPantryPreferences } from "./pantryPreferences";
+import { loadPantryPreferences } from "./pantryPreferences";
+import type { CatalogueEntry, Measure } from "./ingredients/catalogue";
+import { ingredientKey, resolveIngredient } from "./ingredients/resolve";
+import { buyQuantity, displayQuantity, formatBaseQuantity, pricingQuantity, toBaseQuantity } from "./ingredients/quantity";
 
 export interface AggregatedIngredient {
   name: string;
-  normalizedName: string; // For deduplication
+  /** Canonical ingredient key (#183): used for pantry preferences and pricing. */
+  normalizedName: string;
+  /** Recipe total in display units (kg/g, L/ml, or a count). */
   totalQty: number;
   unit: string;
+  /** Recipe total as text, including any unconvertible extras: "6 cloves", "1.2 kg + 1 pinch". */
+  quantityLabel: string;
+  /** Recipe quantities that couldn't be converted into this ingredient's measure. */
+  extraQuantities: Array<{ qty: number; unit: string }>;
+  /** Packs to buy, when the ingredient is sold in packs or as whole items. */
+  buyQty?: number;
+  /** What one pack is: "bulb", "× 400 g cans"; '' for whole items. */
+  buyUnit?: string;
+  /** What to buy as text: "1 bulb", "2 × 400 g cans", "3". */
+  buyLabel?: string;
+  /** Unconverted recipe quantities as text ("1 pinch"), shown beside the buy quantity. */
+  extrasLabel?: string;
+  /** What the shopper needs, in full: the buy quantity plus any extras, or the recipe total. */
+  shoppingLabel: string;
+  /** Quantity to pass to estimateIngredientCost, in units Coles pack sizes understand. */
+  priceQty: number;
+  priceUnit: string;
   category: string;
-  sourceRecipes: Array<{ recipeId: string; recipeTitle: string; qty: number }>;
+  sourceRecipes: Array<{ recipeId: string; recipeTitle: string; qty: number; unit: string }>;
   isPantryStaple?: boolean;
 }
 
 
-
-/**
- * Normalize ingredient name for deduplication
- * Removes common variations and standardizes format
- */
-export function normalizeIngredientName(name: string): string {
-  // Handle missing or invalid name
-  if (!name || typeof name !== 'string') {
-    return '';
-  }
-  
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/\s+or\s+.*$/g, '') // Remove "or" alternatives (e.g., "ghee or oil" -> "ghee")
-    .replace(/\s+and\/or\s+.*$/g, '') // Remove "and/or" alternatives
-    .replace(/^(fresh|dried|ground|chopped|sliced|diced|minced|grated|crushed|shredded|raw|cooked)\s+/g, '') // Remove prep descriptors
-    .replace(/^(plain|greek|whole|full cream|low fat|reduced fat|extra virgin|unsalted|salted|canned|frozen)\s+/g, '') // Remove quality descriptors
-    .replace(/\s+(plain|greek|whole|full cream|low fat|reduced fat|extra virgin|unsalted|salted|canned|frozen)$/g, '') // Remove trailing descriptors
-    .replace(/\s+\(.*?\)/g, '') // Remove parenthetical notes
-    .replace(/,.*$/g, '') // Remove anything after comma
-    .replace(/\s+/g, ' ') // Normalize whitespace
-    .trim();
-}
 
 /**
  * Categorize ingredient based on name
@@ -87,22 +84,75 @@ function categorizeIngredient(name: string): string {
 
 
 
-/**
- * Check if ingredient is in user's pantry inventory
- */
-function isInUserPantry(name: string, userPantryItems?: Array<{ name: string; qty: number; unit: string }>): boolean {
-  if (!userPantryItems || userPantryItems.length === 0) return false;
-  
-  const normalized = normalizeIngredientName(name);
-  return userPantryItems.some(pantryItem => {
-    const pantryNormalized = normalizeIngredientName(pantryItem.name);
-    return pantryNormalized === normalized || normalized.includes(pantryNormalized);
-  });
+interface LineBuilder {
+  key: string;
+  name: string;
+  entry?: CatalogueEntry;
+  measure?: Measure;
+  amount: number;
+  extras: Map<string, number>;
+  sourceRecipes: AggregatedIngredient['sourceRecipes'];
+  isPantryStaple: boolean;
+}
+
+function formatExtras(extras: Map<string, number>): string {
+  return Array.from(extras, ([unit, qty]) => `${Math.round(qty * 10) / 10}${unit ? ` ${unit}` : ''}`).join(' + ');
+}
+
+function finishLine(line: LineBuilder): AggregatedIngredient {
+  const extraQuantities = Array.from(line.extras, ([unit, qty]) => ({ qty: Math.round(qty * 10) / 10, unit }));
+  const extrasLabel = line.extras.size > 0 ? formatExtras(line.extras) : undefined;
+  const base = {
+    name: line.name,
+    normalizedName: line.key,
+    category: line.entry?.category ?? categorizeIngredient(line.name),
+    sourceRecipes: line.sourceRecipes,
+    isPantryStaple: line.isPantryStaple,
+    extraQuantities,
+  };
+
+  if (!line.measure) {
+    // Nothing converted: show the recipes' own quantities as they were written.
+    const [first, ...rest] = extraQuantities;
+    return {
+      ...base,
+      totalQty: first?.qty ?? 0,
+      unit: first?.unit ?? '',
+      quantityLabel: formatExtras(line.extras),
+      shoppingLabel: formatExtras(line.extras),
+      // The first quantity is the line's own; the rest go in the CSV's notes.
+      extrasLabel: rest.length > 0 ? formatExtras(new Map(rest.map(({ unit, qty }) => [unit, qty]))) : undefined,
+      extraQuantities: rest,
+      priceQty: first?.qty ?? 0,
+      priceUnit: first?.unit ?? '',
+    };
+  }
+
+  const display = displayQuantity(line.measure, line.amount, line.entry?.countNoun);
+  const total = formatBaseQuantity(line.measure, line.amount, line.entry?.countNoun);
+  const buy = buyQuantity(line.entry, line.measure, line.amount);
+  // Price what the list tells you to buy (two 400 ml cans), not the recipe total (540 ml).
+  const price = pricingQuantity(line.entry, line.measure, buy ? buy.qty * buy.packSize : line.amount);
+  const quantityLabel = extrasLabel ? `${total} + ${extrasLabel}` : total;
+  return {
+    ...base,
+    totalQty: Math.round(display.qty * 10) / 10,
+    unit: display.unit,
+    quantityLabel,
+    shoppingLabel: buy ? (extrasLabel ? `${buy.label} + ${extrasLabel}` : buy.label) : quantityLabel,
+    extrasLabel,
+    buyQty: buy?.qty,
+    buyUnit: buy?.unit,
+    buyLabel: buy?.label,
+    priceQty: price.qty,
+    priceUnit: price.unit,
+  };
 }
 
 /**
- * Aggregate ingredients from a meal plan into a shopping list
- * with deduplication, unit conversion, and source tracking
+ * Aggregate ingredients from a meal plan into a shopping list: one line per
+ * canonical ingredient (#183), with every quantity converted into that
+ * ingredient's measure and rounded up to what you'd buy.
  */
 export function aggregateShoppingList(
   plan: PlanWeek,
@@ -110,97 +160,60 @@ export function aggregateShoppingList(
     userPantryItems?: Array<{ name: string; qty: number; unit: string }>;
   } = {}
 ): AggregatedIngredient[] {
-  const ingredientMap = new Map<string, AggregatedIngredient>();
-  
-  // Process each day's recipe
+  const lines = new Map<string, LineBuilder>();
+  // Preferences saved before #183 may hold old-style names ("onions"), so compare by resolved key.
+  const pantryPreferenceKeys = new Set(Array.from(loadPantryPreferences(), name => ingredientKey(name) || name));
+  // Both sides are canonical keys, so compare exactly: a pantry onion isn't a red onion.
+  const userPantryKeys = new Set((options.userPantryItems ?? []).map(item => ingredientKey(item.name)).filter(Boolean));
+
   for (const day of plan.days) {
     const recipe = RecipeLibrary.getById(day.recipeId);
     if (!recipe) continue;
-    
+
     // Skip leftover days (they don't add new ingredients)
     if (day.notes?.includes('Leftovers')) continue;
-    
+
     const scaleFactor = day.scaledServings / (recipe.serves || 4);
-    
+
     for (const ingredient of recipe.ingredients) {
-      // Skip ingredients with missing data
       if (!ingredient || !ingredient.name) continue;
-      
-      const normalizedName = normalizeIngredientName(ingredient.name);
-      
-      // Skip empty normalized names
-      if (!normalizedName) continue;
-      
-      // Check if ingredient is in user's pantry or marked as pantry preference
-      const inUserPantry = isInUserPantry(ingredient.name, options.userPantryItems);
-      const isUserPantryPref = isInPantryPreferences(normalizedName);
-      const isPantryItem = inUserPantry || isUserPantryPref;
-      
-      // Convert to base unit for aggregation (handle missing unit)
-      const converted = normalizeToBaseUnit(
-        ingredient.qty * scaleFactor, 
-        ingredient.unit || ''
-      );
-      const convertedQty = converted.quantity;
-      const convertedUnit = converted.unit;
-      
-      // Check if already exists
-      const existing = ingredientMap.get(normalizedName);
-      
-      if (existing && existing.unit === convertedUnit) {
-        // Same ingredient, same unit - aggregate
-        existing.totalQty += convertedQty;
-        existing.sourceRecipes.push({
-          recipeId: recipe.id,
-          recipeTitle: recipe.title,
-          qty: ingredient.qty * scaleFactor
-        });
-      } else if (existing && existing.unit !== convertedUnit) {
-        // Same ingredient, different unit - can't easily aggregate
-        // Create a separate entry with modified name
-        const key = `${normalizedName}_${convertedUnit}`;
-        ingredientMap.set(key, {
-          name: ingredient.name,
-          normalizedName,
-          totalQty: convertedQty,
-          unit: convertedUnit,
-          category: categorizeIngredient(ingredient.name),
-          sourceRecipes: [{
-            recipeId: recipe.id,
-            recipeTitle: recipe.title,
-            qty: ingredient.qty * scaleFactor
-          }],
-          isPantryStaple: isPantryItem
-        });
+      const resolved = resolveIngredient(ingredient.name);
+      if (!resolved) continue;
+
+      let line = lines.get(resolved.key);
+      if (!line) {
+        line = {
+          key: resolved.key,
+          name: resolved.displayName,
+          entry: resolved.entry,
+          amount: 0,
+          extras: new Map(),
+          sourceRecipes: [],
+          isPantryStaple: false,
+        };
+        lines.set(resolved.key, line);
+      }
+
+      const qty = ingredient.qty * scaleFactor;
+      const base = toBaseQuantity(line.entry, qty, ingredient.unit, resolved.impliedUnit);
+      if (base && (!line.measure || line.measure === base.measure)) {
+        line.measure = base.measure;
+        line.amount += base.amount;
       } else {
-        // New ingredient
-        ingredientMap.set(normalizedName, {
-          name: ingredient.name,
-          normalizedName,
-          totalQty: convertedQty,
-          unit: convertedUnit,
-          category: categorizeIngredient(ingredient.name),
-          sourceRecipes: [{
-            recipeId: recipe.id,
-            recipeTitle: recipe.title,
-            qty: ingredient.qty * scaleFactor
-          }],
-          isPantryStaple: isPantryItem
-        });
+        // Can't be converted into this line's measure: keep it on the same line as a note.
+        const unit = (ingredient.unit || '').trim().toLowerCase();
+        line.extras.set(unit, (line.extras.get(unit) ?? 0) + qty);
+      }
+
+      line.sourceRecipes.push({ recipeId: recipe.id, recipeTitle: recipe.title, qty, unit: ingredient.unit || '' });
+      if (userPantryKeys.has(resolved.key) || pantryPreferenceKeys.has(resolved.key)) {
+        line.isPantryStaple = true;
       }
     }
   }
-  
-  // Convert to array and format quantities for display
-  const aggregated = Array.from(ingredientMap.values()).map(item => {
-    const formatted = formatForDisplay(item.totalQty, item.unit);
-    return {
-      ...item,
-      totalQty: Math.round(formatted.quantity * 10) / 10, // Round to 1 decimal
-      unit: formatted.unit
-    };
-  });
-  
+
+  const aggregated = Array.from(lines.values(), finishLine);
+
   // Track ingredient reuse analytics
   aggregated.forEach(item => {
     if (item.sourceRecipes.length >= 2) {
@@ -214,7 +227,7 @@ export function aggregateShoppingList(
       track('ingredient_reused', reuseMeta);
     }
   });
-  
+
   // Sort by category, then name
   return aggregated.sort((a, b) => {
     if (a.category !== b.category) {
@@ -232,11 +245,14 @@ export function toLegacyFormat(aggregated: AggregatedIngredient[]): Array<{
   quantity: number;
   unit: string;
   category: string;
+  notes?: string;
 }> {
   return aggregated.map(item => ({
     name: item.name,
-    quantity: item.totalQty,
-    unit: item.unit,
+    quantity: item.buyQty ?? item.totalQty,
+    unit: item.buyQty !== undefined ? item.buyUnit ?? '' : item.unit,
+    // Quantities that didn't convert ("+ 1 pinch"), so the export lists everything the page does.
+    notes: item.extrasLabel ? `+ ${item.extrasLabel}` : undefined,
     category: item.category
   }));
 }
