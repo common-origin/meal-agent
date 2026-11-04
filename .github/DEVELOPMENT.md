@@ -35,6 +35,8 @@ meal-agent/
 │   ├── proxy.ts                # Auth gate — see ARCHITECTURE.md
 │   └── lib/                    # Business logic — compose.ts, library.ts,
 │                                  scoring.ts, storage layers, etc.
+├── apps/coles-extension/       # Chrome side panel for filling a Coles
+│                                  trolley (#184) — see its README
 └── pnpm-workspace.yaml         # Monorepo config
 ```
 

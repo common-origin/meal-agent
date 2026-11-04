@@ -1,0 +1,37 @@
+:root {
+  --bg: #ffffff; --text: #1a1a1a; --muted: #666666; --line: #e5e5e5;
+  --accent: #e01a22; --ok: #1f7a3a; --error: #b3261e; --finding: #fff6d6;
+  font: 14px/1.4 system-ui, -apple-system, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1c1c1e; --text: #f2f2f2; --muted: #a0a0a0; --line: #333333; --finding: #3a3320; --ok: #5cc27a; --error: #ff8a80; }
+}
+body { margin: 0; background: var(--bg); color: var(--text); display: flex; flex-direction: column; min-height: 100vh; }
+body.options { padding: 16px; max-width: 480px; gap: 12px; }
+header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px 0; }
+h1 { font-size: 18px; margin: 0; }
+h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 16px 16px 4px; }
+#status { margin: 8px 16px; color: var(--muted); }
+#status[data-tone="error"] { color: var(--error); }
+#status[data-tone="ok"] { color: var(--ok); }
+main { flex: 1; overflow-y: auto; }
+.line { display: flex; gap: 10px; align-items: flex-start; padding: 8px 16px; border-bottom: 1px solid var(--line); }
+.line.finding { background: var(--finding); }
+.line.added .name { text-decoration: line-through; color: var(--muted); }
+.line input { margin-top: 3px; }
+.text { flex: 1; min-width: 0; }
+.name { font-weight: 600; display: flex; justify-content: space-between; gap: 8px; }
+.qty { font-weight: 400; color: var(--muted); white-space: nowrap; }
+.detail { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; }
+.state { font-size: 12px; margin-top: 2px; }
+.line.added .state { color: var(--ok); }
+.line.failed .state { color: var(--error); }
+button { font: inherit; cursor: pointer; }
+button:disabled { cursor: default; opacity: .5; }
+button.link { background: none; border: 0; color: var(--accent); padding: 0; }
+button.primary { width: 100%; padding: 10px; border: 0; border-radius: 6px; background: var(--accent); color: #ffffff; font-weight: 600; }
+footer { position: sticky; bottom: 0; background: var(--bg); border-top: 1px solid var(--line); padding: 12px 16px; }
+.hint { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+label { display: flex; flex-direction: column; gap: 4px; }
+input[type="url"], input[type="password"] { padding: 8px; font: inherit; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); }

@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Meal Agent for Coles",
+  "version": "0.1.0",
+  "description": "Fill your Coles trolley from this week's Meal Agent shopping list, in a side panel.",
+  "permissions": ["sidePanel", "storage", "webRequest", "tabs"],
+  "host_permissions": [
+    "https://www.coles.com.au/*",
+    "https://meal-agent.vercel.app/*",
+    "http://localhost:3000/*"
+  ],
+  "optional_host_permissions": ["https://*/*", "http://localhost/*"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "side_panel": { "default_path": "sidepanel.html" },
+  "options_page": "options.html",
+  "action": { "default_title": "Meal Agent shopping list" },
+  "content_scripts": [
+    {
+      "matches": ["https://www.coles.com.au/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

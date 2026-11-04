@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Meal Agent shopping list</title>
+  <link rel="stylesheet" href="panel.css">
+</head>
+<body>
+  <header>
+    <h1>This week’s list</h1>
+    <div class="actions">
+      <button id="reload" class="link">Reload</button>
+      <button id="options" class="link">Options</button>
+    </div>
+  </header>
+  <p id="status" role="status"></p>
+  <main id="list"></main>
+  <footer>
+    <button id="add" class="primary" disabled>Add ticked to trolley</button>
+    <p class="hint">Nothing goes in your trolley until you click this. Review the trolley, choose a slot and check out on coles.com.au.</p>
+  </footer>
+  <script type="module" src="sidepanel.js"></script>
+</body>
+</html>

@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Alert, Box, Button, Chip, Container, Icon, IconButton, List, ListItem, ResponsiveGrid, Stack, Typography, Divider } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
-import ColesShoppingModal from "@/components/app/ColesShoppingModal";
 import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from "@/lib/shoppingListAggregator";
+import { toColesListItems } from "@/lib/coles/extensionList";
 import { ingredientKey } from "@/lib/ingredients/resolve";
 import { generateShoppingListCSV, downloadCSV } from "@/lib/csv";
 import { loadHousehold, getDefaultHousehold } from "@/lib/storage";
@@ -32,7 +32,8 @@ type WeeklyNutrition = {
 export default function ShoppingListPage() {
   const [aggregatedItems, setAggregatedItems] = useState<AggregatedIngredient[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showColesModal, setShowColesModal] = useState(false);
+  const [colesStatus, setColesStatus] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
+  const [sendingToColes, setSendingToColes] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [apiPrices, setApiPrices] = useState<Map<string, { cost: number; source: 'api' | 'static' | 'category'; livePrice?: boolean }>>(new Map());
   const [isShoppingComplete, setIsShoppingComplete] = useState(false);
@@ -250,8 +251,34 @@ export default function ShoppingListPage() {
     downloadCSV(csvContent, "coles-shopping-list.csv");
   };
 
-  const handleShopAtColes = () => {
-    setShowColesModal(true);
+  /**
+   * Saves this list for the Coles side-panel extension (#184) and opens
+   * coles.com.au, where the extension's panel fills the trolley from it.
+   */
+  const handleShopAtColes = async () => {
+    // Opened before the await so the browser treats it as part of the click; closed again if sending fails.
+    const colesTab = window.open('https://www.coles.com.au', '_blank');
+    if (colesTab) colesTab.opener = null;
+    setSendingToColes(true);
+    try {
+      const res = await fetch('/api/coles/list', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ weekStart: nextWeekMondayISO(), items: toColesListItems(aggregatedItems) }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error ?? 'Could not send the list to Coles.');
+      track('coles_list_sent', { itemCount: body.count ?? 0 });
+      setColesStatus({
+        tone: 'success',
+        text: `Sent ${body.count} items. On coles.com.au, click the Meal Agent extension icon to open your list beside the site.`,
+      });
+    } catch (error) {
+      colesTab?.close();
+      setColesStatus({ tone: 'error', text: error instanceof Error ? error.message : 'Could not send the list to Coles.' });
+    } finally {
+      setSendingToColes(false);
+    }
   };
 
   const handleMarkAsPantry = (item: AggregatedIngredient) => {
@@ -365,11 +392,17 @@ export default function ShoppingListPage() {
                 <Button variant="secondary" size="large" onClick={handleExportCSV}>
                   Export CSV
                 </Button>
-                <Button variant="primary" size="large" onClick={handleShopAtColes}>
+                <Button variant="primary" size="large" onClick={handleShopAtColes} disabled={sendingToColes}>
                   Shop at Coles
                 </Button>
               </Stack>
             </Stack>
+
+            {colesStatus && (
+              <Alert variant={colesStatus.tone} title={colesStatus.tone === 'success' ? 'List sent to Coles' : 'Not sent'}>
+                {colesStatus.text}
+              </Alert>
+            )}
             
             {/* API Quota Warning */}
             <ApiQuotaWarning />
@@ -636,17 +669,16 @@ export default function ShoppingListPage() {
                 </Stack>
               </Box>
             )}
+
+            {/* Once the trolley is checked out on coles.com.au */}
+            <Stack direction="row" justifyContent="flex-end">
+              <Button variant="secondary" size="large" onClick={handleShoppingComplete}>
+                Mark shopping done
+              </Button>
+            </Stack>
           </Stack>
         </Container>
       </Main>
-      
-      {/* Coles Shopping Modal */}
-      <ColesShoppingModal
-        isOpen={showColesModal}
-        onClose={() => setShowColesModal(false)}
-        items={needToBuy}
-        onShoppingComplete={handleShoppingComplete}
-      />
     </>
   );
 }

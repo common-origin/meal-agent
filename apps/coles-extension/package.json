@@ -1,0 +1,14 @@
+{
+  "name": "coles-extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrome side panel that fills a Coles trolley from the Meal Agent shopping list (#184). Loaded unpacked from dist/.",
+  "scripts": {
+    "build": "rm -rf dist && tsc -p . && cp static/* dist/",
+    "typecheck": "tsc -p . --noEmit"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.3.7",
+    "typescript": "^5.9.3"
+  }
+}

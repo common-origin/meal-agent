@@ -84,7 +84,15 @@
    - Verify success: Should see "Success. No rows returned"
    - This adds the `ai_usage` table: one row per AI call (tokens, estimated cost, latency, outcome), used for the per-user daily AI cap. It doesn't depend on `009`; the two can run in either order. The app tolerates the table being missing: usage just isn't recorded and the daily cap isn't enforced
 
-12. **Verify Tables Created:**
+12. **Run Coles Extension Migration (Step 11):**
+   - Click "New Query"
+   - Copy entire contents of `supabase/migrations/011_coles_extension.sql`
+   - Paste into SQL Editor
+   - Click "Run" or press Cmd+Enter
+   - Verify success: Should see "Success. No rows returned"
+   - This adds `households.extension_token` and the `household_products` table for the Coles side-panel extension (#184). Until it's run, the extension's token can't be loaded in Settings
+
+13. **Verify Tables Created:**
    ```sql
    SELECT table_name 
    FROM information_schema.tables 

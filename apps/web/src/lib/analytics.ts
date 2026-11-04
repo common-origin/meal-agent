@@ -20,6 +20,7 @@ export type AnalyticsEventType =
   
   // Shopping List
   | 'export_csv'
+  | 'coles_list_sent'
   | 'ingredient_reused'
   | 'cost_optimized'
   | 'shopping_completed'
