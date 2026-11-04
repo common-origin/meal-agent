@@ -134,6 +134,16 @@ describe('aggregateShoppingList (#183)', () => {
     expect(aggregate(['a'])[0].buyLabel).toBe('1 bunch');
   });
 
+  it('keeps every unconvertible quantity in the CSV export', () => {
+    recipes = {
+      a: recipe('a', [['Thyme', 1, 'sprig']]),
+      b: recipe('b', [['Thyme', 1, 'handful']]),
+    };
+    const [thyme] = aggregate(['a', 'b']);
+    expect(thyme.quantityLabel).toBe('1 sprig + 1 handful');
+    expect(toLegacyFormat([thyme])[0]).toMatchObject({ quantity: 1, unit: 'sprig', notes: '+ 1 handful' });
+  });
+
   it('shows unconvertible quantities as written when nothing converts', () => {
     recipes = { a: recipe('a', [['Saffron threads', 1, 'pinch']]) };
     const [saffron] = aggregate(['a']);

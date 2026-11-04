@@ -113,14 +113,16 @@ function finishLine(line: LineBuilder): AggregatedIngredient {
 
   if (!line.measure) {
     // Nothing converted: show the recipes' own quantities as they were written.
-    const [first] = extraQuantities;
+    const [first, ...rest] = extraQuantities;
     return {
       ...base,
       totalQty: first?.qty ?? 0,
       unit: first?.unit ?? '',
       quantityLabel: formatExtras(line.extras),
       shoppingLabel: formatExtras(line.extras),
-      extraQuantities: extraQuantities.slice(1),
+      // The first quantity is the line's own; the rest go in the CSV's notes.
+      extrasLabel: rest.length > 0 ? formatExtras(new Map(rest.map(({ unit, qty }) => [unit, qty]))) : undefined,
+      extraQuantities: rest,
       priceQty: first?.qty ?? 0,
       priceUnit: first?.unit ?? '',
     };
