@@ -55,8 +55,8 @@ Add (DevTools → Network → `trolley/store`) against `content.ts`.
 
 - `src/background.ts` copies the headers and remembers products you add while
   finding one for an item.
-- `src/content.ts` runs on coles.com.au: it calls the trolley API, reads
-  product details, and does the click fallback.
+- `src/content.ts` runs on coles.com.au: it calls the trolley API, does the
+  click fallback, and reports your own clicks on a product's Add button.
 - `src/sidepanel.ts` is the list.
 - `src/options.ts` is the token setup.
 

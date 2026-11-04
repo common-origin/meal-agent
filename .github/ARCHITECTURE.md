@@ -296,7 +296,8 @@ coles.com.au tab:
    the site's own requests. Anything that fails falls back to clicking the
    product page's Add button.
 4. "Find" on a line without a product searches Coles in the same tab; the
-   background worker sees the user's next trolley add and posts it to
+   content script sees the user click a product's Add button, and the
+   background worker posts that product to
    `POST /api/coles/products`, so next week that line is pre-ticked.
 
 The extension never checks out: the user reviews the trolley and pays on
