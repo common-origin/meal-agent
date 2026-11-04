@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  packSizeOf,
   packsFor,
   parseColesList,
   parsePackSize,
@@ -57,6 +58,18 @@ describe('parsePackSize', () => {
 
   it('is null when the name has no size', () => {
     expect(parsePackSize('Coles Coriander Bunch')).toBeNull();
+  });
+});
+
+describe('packSizeOf', () => {
+  it('falls back to the URL when the name has no size', () => {
+    expect(packSizeOf('Coles Beef Mince', 'https://www.coles.com.au/product/coles-beef-mince-3-star-500g-1234567')).toEqual({ size: 500, unit: 'g' });
+    expect(packSizeOf('Coles Diced Tomatoes', 'https://www.coles.com.au/product/coles-diced-tomatoes-4-x-400g-7654321')).toEqual({ size: 1600, unit: 'g' });
+  });
+
+  it('prefers the name, and is null with neither', () => {
+    expect(packSizeOf('Coles Milk 2L', 'https://www.coles.com.au/product/coles-milk-1l-111')).toEqual({ size: 2000, unit: 'ml' });
+    expect(packSizeOf('Coles Coriander', null)).toBeNull();
   });
 });
 

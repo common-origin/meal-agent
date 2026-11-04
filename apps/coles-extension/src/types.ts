@@ -64,15 +64,21 @@ export interface ProductInfo {
   price: number | null;
 }
 
+export interface UserAddedProduct extends ProductInfo {
+  productId: string;
+}
+
 /** Messages to the content script. */
 export type ContentMessage =
   | { type: 'addToTrolley'; session: ColesSession; adds: TrolleyAdd[] }
-  | { type: 'productInfo'; productId: string }
   | { type: 'clickAdd'; packs: number };
+
+/** Messages from the content script to the background worker. */
+export type BackgroundMessage = { type: 'userAdded'; product: UserAddedProduct };
 
 /** Messages from the background worker to the side panel. */
 export type PanelMessage =
-  | { type: 'remembered'; key: string; product: ProductInfo & { productId: string } }
+  | { type: 'remembered'; key: string; product: UserAddedProduct }
   | { type: 'rememberFailed'; key: string; error: string };
 
 export const DEFAULT_APP_URL = 'https://meal-agent.vercel.app';

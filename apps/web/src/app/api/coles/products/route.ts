@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { householdForExtension } from '@/lib/coles/extensionAuth';
-import { parsePackSize, parseProductAdd } from '@/lib/coles/extensionList';
+import { packSizeOf, parseProductAdd } from '@/lib/coles/extensionList';
 
 export const runtime = 'nodejs';
 
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     .eq('ingredient_key', add.ingredientKey)
     .maybeSingle();
 
-  const pack = parsePackSize(add.name);
+  const pack = packSizeOf(add.name, add.url);
   const { error } = await supabase
     .from('household_products')
     .upsert(

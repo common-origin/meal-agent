@@ -106,6 +106,16 @@ export function parsePackSize(name: string): { size: number; unit: 'g' | 'ml' } 
   return { size: parseFloat(match[2]) * unit.factor * count, unit: unit.base };
 }
 
+/**
+ * A remembered product's pack size, from its name or, since Add buttons
+ * often name the product without its size, from its URL's slug:
+ * "/product/coles-beef-mince-500g-1234567" → 500 g.
+ */
+export function packSizeOf(name: string, url: string | null): { size: number; unit: 'g' | 'ml' } | null {
+  const slug = url?.match(/\/product\/([^?#]*)-\d+(?:[?#]|$)/)?.[1]?.replace(/-/g, ' ');
+  return parsePackSize(name) ?? (slug ? parsePackSize(slug) : null);
+}
+
 /** The stockcode at the end of a Coles product URL: "/product/coles-bananas-approx.-170g-409499" → "409499". */
 export function productIdFromUrl(url: string): string | null {
   return url.match(/\/product\/[^?#]*-(\d+)(?:[?#]|$)/)?.[1] ?? null;
