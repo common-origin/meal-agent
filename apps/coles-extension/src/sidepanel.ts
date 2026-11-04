@@ -94,9 +94,11 @@ function updateAddButton(): void {
   const ticked = [...lines.values()].filter(l => l.ticked && l.item.product && l.state !== 'added').length;
   addButton.textContent = ticked ? `Add ${ticked} ticked to trolley` : 'Add ticked to trolley';
   addButton.disabled = busy || ticked === 0;
+  $<HTMLButtonElement>('reload').disabled = busy;
 }
 
 async function loadList(): Promise<void> {
+  if (busy) return;
   const { appUrl, token } = await loadSettings();
   if (!token) {
     setStatus('Add your extension token in Options first.', 'error');
@@ -109,8 +111,11 @@ async function loadList(): Promise<void> {
     setStatus(body.error ?? `Could not load the list (HTTP ${res.status}).`, 'error');
     return;
   }
+  // An add started while this was loading owns the lines; don't swap them out from under it.
+  if (busy) return;
+  // What was added only carries over within the same week's list.
+  const previous = body.weekStart === weekStart ? new Map(lines) : new Map<string, Line>();
   weekStart = body.weekStart;
-  const previous = new Map(lines);
   lines.clear();
   const active = await loadActiveItem();
   for (const item of body.items) {
@@ -162,7 +167,7 @@ async function addByClicking(tabId: number, line: Line): Promise<void> {
   const loaded = waitForLoad(tabId);
   await chrome.tabs.update(tabId, { url });
   await loaded;
-  const message: ContentMessage = { type: 'clickAdd', packs: line.item.packs };
+  const message: ContentMessage = { type: 'clickAdd', packs: line.item.packs, productId: line.item.product!.productId, session: await loadColesSession() };
   const result = await chrome.tabs.sendMessage(tabId, message).catch(() => ({ ok: false, error: 'Page not ready' })) as { ok: boolean; error?: string };
   line.state = result.ok ? 'added' : 'failed';
   line.note = result.ok ? undefined : `Couldn’t add: ${result.error ?? 'unknown error'}`;
@@ -240,7 +245,7 @@ chrome.runtime.onMessage.addListener((message: PanelMessage) => {
     setStatus(`Remembered ${message.product.name} for ${line.item.name}.`, 'ok');
   } else {
     line.state = 'failed';
-    line.note = `Added, but not remembered: ${message.error}`;
+    line.note = message.added ? `Added, but not remembered: ${message.error}` : `${message.error}. Try Add again on the page.`;
   }
   render();
 });

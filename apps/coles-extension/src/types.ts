@@ -71,7 +71,7 @@ export interface UserAddedProduct extends ProductInfo {
 /** Messages to the content script. */
 export type ContentMessage =
   | { type: 'addToTrolley'; session: ColesSession; adds: TrolleyAdd[] }
-  | { type: 'clickAdd'; packs: number };
+  | { type: 'clickAdd'; packs: number; productId: string; session: ColesSession | null };
 
 /** Messages from the content script to the background worker. */
 export type BackgroundMessage = { type: 'userAdded'; product: UserAddedProduct };
@@ -79,7 +79,8 @@ export type BackgroundMessage = { type: 'userAdded'; product: UserAddedProduct }
 /** Messages from the background worker to the side panel. */
 export type PanelMessage =
   | { type: 'remembered'; key: string; product: UserAddedProduct }
-  | { type: 'rememberFailed'; key: string; error: string };
+  /** added: whether the product reached the trolley (only remembering it failed). */
+  | { type: 'rememberFailed'; key: string; error: string; added: boolean };
 
 export const DEFAULT_APP_URL = 'https://meal-agent.vercel.app';
 export const COLES_ORIGIN = 'https://www.coles.com.au';

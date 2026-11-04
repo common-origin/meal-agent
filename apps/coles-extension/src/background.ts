@@ -6,7 +6,8 @@
  *    panel can call the trolley endpoint the same way the site does.
  *    Cookies are left to the browser.
  * 2. When the user clicks a product's Add button while finding one for a
- *    list line, remember that product for the line in the app.
+ *    list line, and Coles then accepts the trolley change, remember that
+ *    product for the line in the app.
  */
 
 import { loadActiveItem, loadColesSession, loadSettings, saveColesSession, setActiveItem } from './storage.js';
@@ -65,15 +66,50 @@ async function rememberAdd(product: UserAddedProduct): Promise<void> {
     if (!res.ok) throw new Error(((await res.json().catch(() => ({}))) as { error?: string }).error ?? `HTTP ${res.status}`);
     tellPanel({ type: 'remembered', key: active.key, product });
   } catch (error) {
-    tellPanel({ type: 'rememberFailed', key: active.key, error: error instanceof Error ? error.message : String(error) });
+    tellPanel({ type: 'rememberFailed', key: active.key, error: error instanceof Error ? error.message : String(error), added: true });
   }
 }
+
+/** A user's Add click, waiting for the site's trolley request to succeed. */
+let pendingAdd: { product: UserAddedProduct; tabId: number; expires: number } | null = null;
+const PENDING_MS = 15000;
 
 // content.ts reports the user's own clicks on a product's Add button. Other
 // trolley changes (+/−, the trolley drawer) aren't new choices, so they're ignored.
 chrome.runtime.onMessage.addListener((message: BackgroundMessage, sender) => {
-  if (message.type === 'userAdded' && sender.tab?.url?.startsWith(COLES_ORIGIN)) {
-    rememberAdd(message.product).catch(console.error);
+  if (message.type === 'userAdded' && sender.tab?.id !== undefined && sender.tab.url?.startsWith(COLES_ORIGIN)) {
+    pendingAdd = { product: message.product, tabId: sender.tab.id, expires: Date.now() + PENDING_MS };
   }
   return false;
 });
+
+/** The pending click this trolley request answers, if any; clears it. */
+function takePendingAdd(details: { tabId: number; method: string; url: string }): UserAddedProduct | null {
+  if (!pendingAdd || details.tabId !== pendingAdd.tabId || details.method === 'GET' || !/\/trolley\//.test(details.url)) return null;
+  const { product, expires } = pendingAdd;
+  pendingAdd = null;
+  return Date.now() <= expires ? product : null;
+}
+
+// The site's own trolley change after the click: only a successful one means it's in the trolley.
+chrome.webRequest.onCompleted.addListener(details => {
+  const product = takePendingAdd(details);
+  if (!product) return undefined;
+  if (details.statusCode < 300) {
+    rememberAdd(product).catch(console.error);
+  } else {
+    loadActiveItem().then(active => {
+      if (active) tellPanel({ type: 'rememberFailed', key: active.key, error: `Coles didn’t add it (HTTP ${details.statusCode})`, added: false });
+    }).catch(console.error);
+  }
+  return undefined;
+}, { urls: API_URLS });
+
+chrome.webRequest.onErrorOccurred.addListener(details => {
+  const product = takePendingAdd(details);
+  if (!product) return undefined;
+  loadActiveItem().then(active => {
+    if (active) tellPanel({ type: 'rememberFailed', key: active.key, error: `Coles didn’t add it (${details.error})`, added: false });
+  }).catch(console.error);
+  return undefined;
+}, { urls: API_URLS });

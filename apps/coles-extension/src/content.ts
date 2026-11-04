@@ -14,7 +14,7 @@ interface ContentSession { headers: Record<string, string>; storeId: string }
 interface ContentAdd { productId: string; packs: number }
 type IncomingMessage =
   | { type: 'addToTrolley'; session: ContentSession; adds: ContentAdd[] }
-  | { type: 'clickAdd'; packs: number };
+  | { type: 'clickAdd'; packs: number; productId: string; session: ContentSession | null };
 
 const OWN_REQUEST = { 'x-meal-agent-extension': '1' };
 
@@ -37,32 +37,43 @@ function quantitiesIn(json: unknown, into = new Map<string, number>()): Map<stri
   return into;
 }
 
+function sessionHeaders(session: ContentSession): Record<string, string> {
+  return { ...session.headers, ...OWN_REQUEST, 'Content-Type': 'application/json' };
+}
+
+/** The trolley's quantities by productId, or an Error. */
+async function readTrolley(session: ContentSession): Promise<Map<string, number> | Error> {
+  return fetch(trolleyUrl(session.storeId), { headers: sessionHeaders(session), credentials: 'include' })
+    .then(res => (res.ok ? res.json() as Promise<unknown> : Promise.reject(new Error(`HTTP ${res.status}`))))
+    .then(json => quantitiesIn(json), (error: Error) => error);
+}
+
 async function addToTrolley(session: ContentSession, adds: ContentAdd[]) {
-  const headers = { ...session.headers, ...OWN_REQUEST, 'Content-Type': 'application/json' };
   // quantity is the line's total, so without the current trolley a PATCH could lower what's there.
   // Fail everything instead and let the panel fall back to clicking.
-  const trolley = await fetch(trolleyUrl(session.storeId), { headers, credentials: 'include' })
-    .then(res => (res.ok ? res.json() as Promise<unknown> : Promise.reject(new Error(`HTTP ${res.status}`))))
-    .catch((error: Error) => error);
-  if (trolley instanceof Error) {
-    return adds.map(add => ({ productId: add.productId, ok: false, error: `Couldn’t read the trolley (${trolley.message})` }));
+  const current = await readTrolley(session);
+  if (current instanceof Error) {
+    return adds.map(add => ({ productId: add.productId, ok: false, error: `Couldn’t read the trolley (${current.message})` }));
   }
-  const current = quantitiesIn(trolley);
+
+  // Two lines can share a remembered product; one PATCH carries their combined packs.
+  const packsById = new Map<string, number>();
+  for (const add of adds) packsById.set(add.productId, (packsById.get(add.productId) ?? 0) + add.packs);
 
   const results = [];
-  for (const add of adds) {
+  for (const [productId, packs] of packsById) {
     // quantity is the line's total, not an increment (spike on #184).
-    const quantity = (current.get(add.productId) ?? 0) + add.packs;
+    const quantity = (current.get(productId) ?? 0) + packs;
     try {
       const res = await fetch(trolleyUrl(session.storeId), {
         method: 'PATCH',
-        headers,
+        headers: sessionHeaders(session),
         credentials: 'include',
-        body: JSON.stringify({ items: [{ actions: [{ productId: add.productId, quantity }] }] }),
+        body: JSON.stringify({ items: [{ actions: [{ productId, quantity }] }] }),
       });
-      results.push(res.ok ? { productId: add.productId, ok: true } : { productId: add.productId, ok: false, error: `HTTP ${res.status}` });
+      results.push(res.ok ? { productId, ok: true } : { productId, ok: false, error: `HTTP ${res.status}` });
     } catch (error) {
-      results.push({ productId: add.productId, ok: false, error: error instanceof Error ? error.message : String(error) });
+      results.push({ productId, ok: false, error: error instanceof Error ? error.message : String(error) });
     }
   }
   return results;
@@ -124,19 +135,37 @@ async function waitFor<T extends Element>(selector: string, root: ParentNode = d
 }
 
 /**
+ * Waits until the trolley holds at least `target` of the product, so success
+ * means Coles accepted the clicks and moving to the next page won't cut a
+ * request short. Without a session to read the trolley, it can't confirm.
+ */
+async function trolleyReaches(session: ContentSession | null, productId: string, target: number, timeoutMs = 10000): Promise<boolean | null> {
+  if (!session?.storeId) return null;
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const current = await readTrolley(session);
+    if (!(current instanceof Error) && (current.get(productId) ?? 0) >= target) return true;
+    await wait(700);
+  }
+  return false;
+}
+
+/**
  * Fallback: click the product page's own buttons. The page's product is the
  * one whose Add button names the page heading; recommendation tiles further
- * down have Add buttons too.
+ * down have Add buttons too, so never fall back to one of those.
  */
-async function clickAdd(packs: number) {
+async function clickAdd(packs: number, productId: string, session: ContentSession | null) {
   await waitFor('main button[data-testid="add-to-cart-button"]');
   const heading = document.querySelector('h1')?.textContent?.trim().toLowerCase() ?? '';
-  const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('main button[data-testid="add-to-cart-button"]'));
-  const add = buttons.find(b => {
+  const add = Array.from(document.querySelectorAll<HTMLButtonElement>('main button[data-testid="add-to-cart-button"]')).find(b => {
     const label = b.getAttribute('aria-label')?.replace(/^Add to trolley:\s*/i, '').toLowerCase();
     return !!label && heading.startsWith(label);
-  }) ?? buttons[0];
-  if (!add) return { ok: false, error: 'No Add button on this page (already in the trolley?)' };
+  });
+  if (!add) return { ok: false, error: 'No Add button for this product (already in the trolley?). Check it there.' };
+
+  const before = session ? await readTrolley(session) : null;
+  const target = (before instanceof Map ? before.get(productId) ?? 0 : 0) + packs;
   // The + button replaces Add in the same spot, so look for it there.
   const controls = add.parentElement?.parentElement ?? document;
   add.click();
@@ -146,6 +175,9 @@ async function clickAdd(packs: number) {
     await wait(600);
     plus.click();
   }
+  const confirmed = await trolleyReaches(before instanceof Map ? session : null, productId, target);
+  if (confirmed === false) return { ok: false, error: 'Coles didn’t confirm the quantity. Check the trolley.' };
+  if (confirmed === null) await wait(1500); // Can't read the trolley; give the last request time to finish.
   return { ok: true };
 }
 
@@ -155,7 +187,7 @@ chrome.runtime.onMessage.addListener((message: IncomingMessage, _sender, sendRes
     return true;
   }
   if (message.type === 'clickAdd') {
-    clickAdd(message.packs).then(sendResponse);
+    clickAdd(message.packs, message.productId, message.session).then(sendResponse);
     return true;
   }
   return false;

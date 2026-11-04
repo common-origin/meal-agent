@@ -6,7 +6,7 @@ import { Box, Button, Stack, Typography } from "@common-origin/design-system";
 async function fetchToken(rotate: boolean): Promise<string> {
   const res = await fetch('/api/household/extension-token', { method: rotate ? 'POST' : 'GET' }).catch(() => null);
   const body = await res?.json().catch(() => ({}));
-  if (!res?.ok || !body?.token) throw new Error(body?.error ?? 'Could not load the extension token.');
+  if (!res?.ok || !body?.token) throw new Error(body?.error ?? (rotate ? 'Could not replace the token.' : 'Could not load the extension token.'));
   return body.token;
 }
 
@@ -61,7 +61,12 @@ export default function ColesExtensionSettings() {
             </Button>
           </Stack>
         ) : (
-          <Typography color="subdued">{error ?? 'Loading your extension token…'}</Typography>
+          !error && <Typography color="subdued">Loading your extension token…</Typography>
+        )}
+        {error && (
+          <Typography color="error">
+            {token ? `${error} The token above is still the current one.` : error}
+          </Typography>
         )}
       </Stack>
     </Box>
