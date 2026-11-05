@@ -3,6 +3,10 @@
  * Remembered products come pre-ticked; nothing is added until the user
  * clicks "Add ticked to trolley". A line with no product opens a Coles search
  * in the same tab, and whatever the user adds there is remembered for it.
+ *
+ * On opening, it also imports any new past Coles orders (#185), which fills
+ * product memory with what the household buys, and asks the user to check
+ * the matches AI suggested.
  */
 
 import { loadActiveItem, loadColesSession, loadSettings, setActiveItem } from './storage.js';
@@ -11,9 +15,16 @@ import {
   type ContentMessage,
   type ExtensionListItem,
   type ExtensionListResponse,
+  type ImportResponse,
+  type MatchSuggestion,
   type PanelMessage,
+  type PurchasesResponse,
+  type ReadOrdersResult,
   type TrolleyResult,
 } from './types.js';
+
+/** How far back past orders are imported (the app keeps the same). */
+const HISTORY_MONTHS = 12;
 
 type LineState = 'idle' | 'finding' | 'adding' | 'added' | 'failed';
 
@@ -32,6 +43,9 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 const listEl = $('list');
 const statusEl = $('status');
 const addButton = $<HTMLButtonElement>('add');
+const matchesEl = $('matches');
+const matchListEl = $('match-list');
+const importStatusEl = $('import-status');
 
 function setStatus(text: string, tone: 'info' | 'error' | 'ok' = 'info'): void {
   statusEl.textContent = text;
@@ -238,6 +252,98 @@ function showError(error: unknown): void {
   render();
 }
 
+async function appFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  const { appUrl, token } = await loadSettings();
+  return fetch(`${appUrl}${path}`, {
+    ...init,
+    cache: 'no-store',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+  });
+}
+
+function showSuggestions(suggestions: MatchSuggestion[]): void {
+  matchListEl.replaceChildren(...suggestions.map(suggestion => {
+    const row = el('div', { className: 'match' },
+      el('div', { className: 'text' },
+        el('div', { textContent: `${suggestion.ingredientName}?` }),
+        el('div', { className: 'product', textContent: suggestion.productName }),
+      ),
+    );
+    const answer = (accept: boolean) => {
+      row.querySelectorAll('button').forEach(button => { button.disabled = true; });
+      confirmMatch(suggestion, accept)
+        .then(remembered => {
+          row.remove();
+          matchesEl.hidden = matchListEl.childElementCount === 0;
+          if (remembered > 0) return loadList();
+          return undefined;
+        })
+        .catch(error => {
+          row.querySelectorAll('button').forEach(button => { button.disabled = false; });
+          importStatusEl.textContent = `Couldn’t save that: ${error instanceof Error ? error.message : String(error)}`;
+        });
+    };
+    const yes = el('button', { className: 'link', textContent: 'Yes' });
+    const no = el('button', { className: 'link', textContent: 'No' });
+    yes.addEventListener('click', () => answer(true));
+    no.addEventListener('click', () => answer(false));
+    row.append(yes, no);
+    return row;
+  }));
+  matchesEl.hidden = suggestions.length === 0;
+}
+
+async function confirmMatch(suggestion: MatchSuggestion, accept: boolean): Promise<number> {
+  const res = await appFetch('/api/coles/purchases/confirm', {
+    method: 'POST',
+    body: JSON.stringify({ productId: suggestion.productId, key: suggestion.key, accept }),
+  });
+  const body = await res.json().catch(() => ({})) as { remembered?: number; error?: string };
+  if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
+  return body.remembered ?? 0;
+}
+
+/**
+ * Imports past Coles orders the app hasn't seen (#185). Needs the Coles tab
+ * and the headers its API calls carry, so on a first open before browsing
+ * Coles it only shows the waiting suggestions and tries again next time.
+ */
+async function importOrders(): Promise<void> {
+  const { token } = await loadSettings();
+  if (!token) return;
+  const res = await appFetch('/api/coles/purchases');
+  if (!res.ok) return;
+  const known = await res.json() as PurchasesResponse;
+  showSuggestions(known.suggestions);
+
+  const [session, tab] = await Promise.all([loadColesSession(), colesTab()]);
+  if (!session || !tab?.id) return;
+  const since = new Date();
+  since.setMonth(since.getMonth() - HISTORY_MONTHS);
+  importStatusEl.textContent = 'Checking your past Coles orders…';
+  const message: ContentMessage = { type: 'readOrders', session, since: since.toISOString(), skip: known.importedOrderIds };
+  const read = await chrome.tabs.sendMessage(tab.id, message).catch(() => null) as ReadOrdersResult | null;
+  if (!read || 'error' in read) {
+    importStatusEl.textContent = read ? `Couldn’t read past orders (${read.error}). Will try again next time.` : '';
+    return;
+  }
+
+  // Posted even with no new orders, so lines AI hasn't looked at yet get another go.
+  const imported = await appFetch('/api/coles/purchases', { method: 'POST', body: JSON.stringify({ orders: read.orders }) });
+  const result = await imported.json().catch(() => ({})) as Partial<ImportResponse> & { error?: string };
+  if (!imported.ok) {
+    importStatusEl.textContent = `Couldn’t save past orders: ${result.error ?? `HTTP ${imported.status}`}`;
+    return;
+  }
+  showSuggestions(result.suggestions ?? []);
+  const parts = [
+    result.imported ? `Imported ${result.imported} past order${result.imported === 1 ? '' : 's'}` : '',
+    result.remembered ? `${result.remembered} product${result.remembered === 1 ? '' : 's'} remembered` : '',
+  ].filter(Boolean);
+  importStatusEl.textContent = parts.length ? `${parts.join('; ')}.` : '';
+  if (result.remembered) await loadList();
+}
+
 chrome.runtime.onMessage.addListener((message: PanelMessage) => {
   const line = lines.get(message.key);
   if (!line) return;
@@ -258,7 +364,8 @@ chrome.runtime.onMessage.addListener((message: PanelMessage) => {
 });
 
 addButton.addEventListener('click', () => { addTicked().catch(showError); });
-$('reload').addEventListener('click', () => { loadList().catch(showError); });
+// Reload also imports, so orders are picked up once a Coles page has been browsed.
+$('reload').addEventListener('click', () => { loadList().then(() => importOrders()).catch(showError); });
 $('options').addEventListener('click', () => { chrome.runtime.openOptionsPage().catch(showError); });
 
-loadList().catch(showError);
+loadList().then(() => importOrders()).catch(showError);

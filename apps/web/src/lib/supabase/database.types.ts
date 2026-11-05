@@ -196,6 +196,7 @@ export type Database = {
           pack_size: number | null
           pack_unit: string | null
           product_id: string
+          source: string
           times_bought: number
           updated_at: string
           url: string | null
@@ -210,6 +211,7 @@ export type Database = {
           pack_size?: number | null
           pack_unit?: string | null
           product_id: string
+          source?: string
           times_bought?: number
           updated_at?: string
           url?: string | null
@@ -224,6 +226,7 @@ export type Database = {
           pack_size?: number | null
           pack_unit?: string | null
           product_id?: string
+          source?: string
           times_bought?: number
           updated_at?: string
           url?: string | null
@@ -327,6 +330,68 @@ export type Database = {
             foreignKeyName: "pantry_preferences_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: true
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_history: {
+        Row: {
+          brand: string | null
+          created_at: string
+          household_id: string
+          id: string
+          ingredient_key: string | null
+          match_status: string
+          name: string
+          order_id: string
+          ordered_at: string
+          product_id: string
+          quantity: number
+          size: string | null
+          suggested_key: string | null
+          total_price: number | null
+          unit_price: number | null
+        }
+        Insert: {
+          brand?: string | null
+          created_at?: string
+          household_id: string
+          id?: string
+          ingredient_key?: string | null
+          match_status?: string
+          name: string
+          order_id: string
+          ordered_at: string
+          product_id: string
+          quantity: number
+          size?: string | null
+          suggested_key?: string | null
+          total_price?: number | null
+          unit_price?: number | null
+        }
+        Update: {
+          brand?: string | null
+          created_at?: string
+          household_id?: string
+          id?: string
+          ingredient_key?: string | null
+          match_status?: string
+          name?: string
+          order_id?: string
+          ordered_at?: string
+          product_id?: string
+          quantity?: number
+          size?: string | null
+          suggested_key?: string | null
+          total_price?: number | null
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_history_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
             referencedRelation: "households"
             referencedColumns: ["id"]
           },

@@ -26,6 +26,8 @@ export const AI_TASKS = {
   recipeFromUrl: { model: 'gemini-3.5-flash-lite', thinkingLevel: 'minimal', deadlineMs: 30_000, maxOutputTokens: 8_000 },
   // Reads a typed instruction into per-night edits (#38); the nights themselves go through `generation`.
   planEdit: { model: 'gemini-3.5-flash-lite', thinkingLevel: 'minimal', deadlineMs: 15_000, maxOutputTokens: 1_000 },
+  // Suggests which ingredient each past Coles order line is (#185); the user confirms each one.
+  orderMatch: { model: 'gemini-3.5-flash-lite', thinkingLevel: 'minimal', deadlineMs: 30_000, maxOutputTokens: 6_000 },
 } as const satisfies Record<string, AiTaskConfig>;
 
 export type AiTask = keyof typeof AI_TASKS;

@@ -51,6 +51,17 @@ section. The results show as a preview in the list; the household accepts
 or discards it, and can undo the last accepted edit (logic in
 `lib/planEdit.ts`).
 
+**Matching Coles order history (#185).** When the Coles extension imports
+past orders, `POST /api/coles/purchases` sends the products the ingredient
+catalogue's names couldn't match (at most 150 per import) to task
+`orderMatch` (prompts in `lib/prompts/orderMatch.ts`) with the catalogue's
+keys. It returns a key or null per product; keys not in the catalogue are
+dropped. Suggestions are only saved to product memory once the user
+confirms them in the extension. The route has no session: it takes the
+household's extension token, and counts the call against the household
+owner's rate limit and daily cap. When AI fails or is over a limit, the
+import still saves the orders and leaves those products for the next one.
+
 The request goes to `POST /api/generate-recipes`. Its request type
 (`RecipeGenerationRequest`) is defined in
 `apps/web/src/lib/prompts/recipeGeneration.ts`, not in
@@ -100,7 +111,10 @@ a signed-in user (401, `code: "unauthenticated"`) and applies a per-user
 sliding-window limit (429, `code: "rate_limited"`): 40 per 10 minutes for
 `generate-recipes` (a week is 7 parallel requests, and each typed edit
 regenerates its nights), 30 for `edit-plan`, 20 for
-`extract-recipe-from-url`, and 10 for each of the two image routes. The limits are set in `apps/web/src/lib/api/rateLimit.ts`.
+`extract-recipe-from-url`, and 10 for each of the two image routes. The
+Coles order import (`coles/purchases`, #185) is the exception: it uses the
+extension token, counts against the household owner, and allows 10 AI calls
+per 10 minutes. The limits are set in `apps/web/src/lib/api/rateLimit.ts`.
 They are in-memory, so each server instance counts separately; they're burst
 control, not a daily cap (that's #85). JSON request bodies
 (`generate-recipes`, `extract-recipe-from-url`, `edit-plan`) are validated with the Zod

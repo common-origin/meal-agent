@@ -98,12 +98,14 @@ as of #83:
 | `pantryScan` | `scan-pantry-image` | `gemini-3.5-flash-lite` | minimal | 30 s | 2,000 |
 | `recipeFromUrl` | `extract-recipe-from-url` | `gemini-3.5-flash-lite` | minimal | 30 s | 8,000 |
 | `planEdit` | `edit-plan` | `gemini-3.5-flash-lite` | minimal | 15 s | 1,000 |
+| `orderMatch` | `coles/purchases` | `gemini-3.5-flash-lite` | minimal | 30 s | 6,000 |
 
 If this table and `models.ts` ever disagree, `models.ts` is right. There's
 no fallback model.
 
 These routes aren't covered by `proxy.ts`'s matcher, so each one checks the
-session itself, then applies a per-user rate limit and validates the body
+session itself (except `coles/purchases`, which takes the extension token
+and counts AI use against the household owner), then applies a per-user rate limit and validates the body
 (`lib/api/guard.ts`, `lib/api/rateLimit.ts`, `lib/api/schemas.ts`; details
 in `AI.md`). `share-recipe-email` uses the same rate limiter.
 
@@ -115,7 +117,11 @@ in `AI.md`). `share-recipe-email` uses the same rate limiter.
 Coles" on `/shopping-list`), `GET` with the extension token returns the
 latest list with each line's remembered product and pack count;
 `coles/products` — `POST` with the extension token remembers the product
-the user added for a line; `household/extension-token` — session-authenticated,
+the user added for a line; `coles/purchases` (#185) — with the extension
+token, `GET` returns the order ids already imported and the AI match
+suggestions waiting for the user, `POST` imports past orders
+(`lib/coles/purchases.ts`); `coles/purchases/confirm` — `POST` records the
+user's yes or no to a suggestion; `household/extension-token` — session-authenticated,
 `GET` returns the token for Settings and `POST` replaces it
 
 **Calendar export**: `plan/ics/[token]` — unauthenticated ICS feed of a
@@ -246,7 +252,11 @@ signup):
   (`lib/coles/extensionList.ts`, #184)
 - **`household_products`** (migration 011) — the Coles product a household
   buys for each ingredient key, `UNIQUE(household_id, ingredient_key)`,
-  learned from what the user adds to their trolley
+  learned from what the user adds to their trolley; `source` (migration
+  012) says whether the user chose it or an order-history import picked it
+- **`purchase_history`** (migration 012) — one row per product per past
+  Coles online order, with the price paid and the matched ingredient key
+  (`match_status` says how it was matched); kept for 12 months (#185)
 - **`pantry_preferences`**
 - **`api_usage`** (001) — an early AI-cost table that nothing writes to;
   superseded by `ai_usage`
@@ -299,6 +309,14 @@ coles.com.au tab:
    content script sees the user click a product's Add button, and the
    background worker posts that product to
    `POST /api/coles/products`, so next week that line is pre-ticked.
+5. On opening (and on Reload), the panel imports any past Coles online
+   orders from the last 12 months it hasn't seen
+   (`GET /api/bff/orders`, then each order's items), and posts them to
+   `POST /api/coles/purchases`. Lines are matched to ingredient keys by
+   catalogue name (`catalogueKeyFor` in `lib/coles/orderHistory.ts`); the
+   rest go to the `orderMatch` AI task, whose suggestions the user
+   confirms in the panel. Each matched key's most-bought product becomes
+   its remembered product, unless the user chose one with Find/Change.
 
 The extension never checks out: the user reviews the trolley and pays on
 coles.com.au.
