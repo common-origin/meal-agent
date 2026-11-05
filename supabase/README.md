@@ -92,7 +92,15 @@
    - Verify success: Should see "Success. No rows returned"
    - This adds `households.extension_token` and the `household_products` table for the Coles side-panel extension (#184). Until it's run, the extension's token can't be loaded in Settings
 
-13. **Verify Tables Created:**
+13. **Run Coles Order History Migration (Step 12):**
+   - Click "New Query"
+   - Copy entire contents of `supabase/migrations/012_coles_purchase_history.sql`
+   - Paste into SQL Editor
+   - Click "Run" or press Cmd+Enter
+   - Verify success: Should see "Success. No rows returned"
+   - This adds the `purchase_history` table and `household_products.source` for importing Coles order history (#185). Run it after `011`. Until it's run, the extension can't import past orders, and remembering a product with Find fails
+
+14. **Verify Tables Created:**
    ```sql
    SELECT table_name 
    FROM information_schema.tables 
@@ -105,14 +113,16 @@
    - api_usage
    - family_settings
    - household_members
+   - household_products
    - households
    - meal_plans
    - pantry_preferences
+   - purchase_history
    - recipe_history
    - recipes
    - shopping_lists
 
-13. **Verify RLS Enabled:**
+15. **Verify RLS Enabled:**
    ```sql
    SELECT tablename, rowsecurity 
    FROM pg_tables 
@@ -134,6 +144,8 @@
 - **api_usage** - Original AI cost table from 001; nothing writes to it (superseded by `ai_usage`)
 - **ai_usage** - One row per AI call: task, model, tokens, estimated cost, latency, outcome; backs the daily AI cap (#85)
 - **recipe_history** - Recipes used per composed week, for cross-device repeat-avoidance
+- **household_products** - The Coles product a household buys for each ingredient, for the Coles extension (#184)
+- **purchase_history** - Past Coles online order lines with the price paid, kept 12 months (#185)
 
 ### Automatic Behaviors:
 - **New User Signup** → Auto-creates household, adds user as owner, creates default settings

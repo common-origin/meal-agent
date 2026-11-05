@@ -5,6 +5,7 @@
  * - addToTrolley: calls Coles's trolley endpoint from the page, with the
  *   user's cookies and the headers the background worker copied.
  * - clickAdd: the fallback, clicking the product page's own Add and + buttons.
+ * - readOrders: reads past online orders and their items (#185).
  *
  * It also tells the background worker when the user clicks a product's Add
  * button, so a product found for a list line can be remembered.
@@ -14,7 +15,8 @@ interface ContentSession { headers: Record<string, string>; storeId: string }
 interface ContentAdd { productId: string; packs: number }
 type IncomingMessage =
   | { type: 'addToTrolley'; session: ContentSession; adds: ContentAdd[] }
-  | { type: 'clickAdd'; packs: number; productId: string; session: ContentSession | null };
+  | { type: 'clickAdd'; packs: number; productId: string; session: ContentSession | null }
+  | { type: 'readOrders'; session: ContentSession; since: string; skip: string[] };
 
 const OWN_REQUEST = { 'x-meal-agent-extension': '1' };
 
@@ -122,6 +124,61 @@ document.addEventListener('click', event => {
   if (product) chrome.runtime.sendMessage({ type: 'userAdded', product }).catch(() => undefined);
 }, true);
 
+/** Most orders read in one go; the rest are picked up next time. */
+const MAX_ORDERS_PER_READ = 30;
+
+interface ColesOrderSummary { orderId?: unknown; orderStatus?: unknown; orderPlacementTime?: unknown }
+interface ColesOrderItem { id?: unknown; name?: unknown; brand?: unknown; size?: unknown; orderItem?: { quantity?: unknown; unitPrice?: unknown; itemTotalPrice?: unknown } }
+
+const num = (value: unknown): number | null => (typeof value === 'number' && Number.isFinite(value) ? value : null);
+const str = (value: unknown): string | null => (typeof value === 'string' && value ? value : null);
+
+async function getJson(url: string, headers: Record<string, string>): Promise<unknown> {
+  const res = await fetch(url, { headers, credentials: 'include' });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+/**
+ * Past completed online orders since `since`, with their items, as the
+ * site's own order pages load them. Orders whose items can't be read are
+ * left out, so they're tried again next time.
+ */
+async function readOrders(session: ContentSession, since: string, skip: string[]) {
+  const headers = sessionHeaders(session);
+  try {
+    const list = await getJson('/api/bff/orders?status=past&pageNumber=1&pageSize=50', headers) as { orders?: ColesOrderSummary[] };
+    const skipped = new Set(skip);
+    const wanted = (list.orders ?? [])
+      .map(order => ({ orderId: str(order.orderId) ?? String(order.orderId ?? ''), status: str(order.orderStatus), placed: str(order.orderPlacementTime) }))
+      .filter(order => /^\d+$/.test(order.orderId) && order.status === 'Completed' && order.placed && Date.parse(order.placed) >= Date.parse(since) && !skipped.has(order.orderId))
+      .slice(0, MAX_ORDERS_PER_READ);
+
+    const orders = [];
+    for (const order of wanted) {
+      // Version 2 is what the order page asks for: items with their order line (quantity, prices).
+      const detail = await getJson(`/api/bff/orders/${order.orderId}/items`, { ...headers, 'x-api-version': '2' })
+        .catch(() => null) as { items?: ColesOrderItem[] } | null;
+      if (!detail?.items) continue;
+      const lines = detail.items
+        .map(item => ({
+          productId: item.id === undefined || item.id === null ? '' : String(item.id),
+          name: str(item.name) ?? '',
+          brand: str(item.brand),
+          size: str(item.size),
+          quantity: num(item.orderItem?.quantity) ?? 0,
+          unitPrice: num(item.orderItem?.unitPrice),
+          totalPrice: num(item.orderItem?.itemTotalPrice),
+        }))
+        .filter(line => /^\d+$/.test(line.productId) && line.name && line.quantity > 0);
+      orders.push({ orderId: order.orderId, orderedAt: order.placed as string, lines });
+    }
+    return { orders };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function waitFor<T extends Element>(selector: string, root: ParentNode = document, timeoutMs = 8000): Promise<T | null> {
@@ -202,6 +259,10 @@ async function clickAdd(packs: number, productId: string, session: ContentSessio
 chrome.runtime.onMessage.addListener((message: IncomingMessage, _sender, sendResponse) => {
   if (message.type === 'addToTrolley') {
     addToTrolley(message.session, message.adds).then(sendResponse);
+    return true;
+  }
+  if (message.type === 'readOrders') {
+    readOrders(message.session, message.since, message.skip).then(sendResponse);
     return true;
   }
   if (message.type === 'clickAdd') {

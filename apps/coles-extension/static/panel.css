@@ -35,3 +35,10 @@ footer { position: sticky; bottom: 0; background: var(--bg); border-top: 1px sol
 .hint { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
 label { display: flex; flex-direction: column; gap: 4px; }
 input[type="url"], input[type="password"] { padding: 8px; font: inherit; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); }
+
+#matches { border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+#matches .hint, #import-status { margin: 0 16px 8px; }
+#import-status:empty { display: none; }
+.match { display: flex; gap: 8px; align-items: baseline; padding: 6px 16px; }
+.match .text { flex: 1; }
+.match .product { color: var(--muted); font-size: 13px; }

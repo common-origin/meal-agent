@@ -38,6 +38,7 @@ import { POST as extractFromImagePOST, maxDuration as extractFromImageMaxDuratio
 import { POST as extractFromUrlPOST, maxDuration as extractFromUrlMaxDuration } from '../extract-recipe-from-url/route';
 import { POST as shareRecipeEmailPOST } from '../share-recipe-email/route';
 import { POST as editPlanPOST, maxDuration as editPlanMaxDuration } from '../edit-plan/route';
+import { maxDuration as colesPurchasesMaxDuration } from '../coles/purchases/route';
 import { SafeFetchError, SAFE_FETCH_TIMEOUT_MS } from '@/lib/api/safeFetch';
 import { AI_TASKS } from '@/lib/ai/models';
 import { AiTaskError } from '@/lib/ai/run';
@@ -754,6 +755,7 @@ describe('AI deadlines', () => {
     // The page fetch runs before the AI call, so both budgets count.
     ['extract-recipe-from-url', extractFromUrlMaxDuration, AI_TASKS.recipeFromUrl.deadlineMs + SAFE_FETCH_TIMEOUT_MS],
     ['edit-plan', editPlanMaxDuration, AI_TASKS.planEdit.deadlineMs],
+    ['coles/purchases', colesPurchasesMaxDuration, AI_TASKS.orderMatch.deadlineMs],
   ])('%s maxDuration (%ss) leaves room after its deadline', (_route, maxDurationS, deadlineMs) => {
     expect(maxDurationS * 1000).toBeGreaterThanOrEqual(deadlineMs + 10_000);
   });

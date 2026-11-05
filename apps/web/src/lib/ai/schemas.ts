@@ -120,3 +120,12 @@ export type GeneratedRecipe = z.infer<typeof GeneratedRecipe>;
 export type PhotoIngredients = z.infer<typeof PhotoIngredients>;
 export type PageIngredients = z.infer<typeof PageIngredients>;
 export type PlanEdit = z.infer<typeof PlanEdit>;
+
+/** Past Coles order lines matched to catalogue keys (#185). `key` is null for anything that isn't a cooking ingredient. */
+export const OrderMatches = z.object({
+  matches: z.array(z.object({
+    productId: z.string(),
+    key: z.string().nullable(),
+  })),
+});
+export type OrderMatches = z.infer<typeof OrderMatches>;

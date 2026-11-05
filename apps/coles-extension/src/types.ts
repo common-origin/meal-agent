@@ -1,6 +1,7 @@
 /**
  * Shared shapes for the extension. ExtensionListItem and ExtensionListResponse
- * mirror apps/web/src/lib/coles/extensionList.ts; keep the two in step.
+ * mirror apps/web/src/lib/coles/extensionList.ts, and PastOrder, OrderLine and
+ * MatchSuggestion mirror apps/web/src/lib/coles/orderHistory.ts; keep them in step.
  */
 
 export interface RememberedProduct {
@@ -68,10 +69,50 @@ export interface UserAddedProduct extends ProductInfo {
   productId: string;
 }
 
+/** One product line of a past Coles online order (#185). */
+export interface OrderLine {
+  productId: string;
+  name: string;
+  brand: string | null;
+  size: string | null;
+  quantity: number;
+  unitPrice: number | null;
+  totalPrice: number | null;
+}
+
+export interface PastOrder {
+  orderId: string;
+  orderedAt: string;
+  lines: OrderLine[];
+}
+
+/** An AI-suggested match from the order import, waiting for the user. */
+export interface MatchSuggestion {
+  productId: string;
+  productName: string;
+  key: string;
+  ingredientName: string;
+}
+
+export interface PurchasesResponse {
+  importedOrderIds: string[];
+  suggestions: MatchSuggestion[];
+}
+
+export interface ImportResponse {
+  imported: number;
+  remembered: number;
+  suggestions: MatchSuggestion[];
+}
+
+export type ReadOrdersResult = { orders: PastOrder[] } | { error: string };
+
 /** Messages to the content script. */
 export type ContentMessage =
   | { type: 'addToTrolley'; session: ColesSession; adds: TrolleyAdd[] }
-  | { type: 'clickAdd'; packs: number; productId: string; session: ColesSession | null };
+  | { type: 'clickAdd'; packs: number; productId: string; session: ColesSession | null }
+  /** Past completed orders placed on or after `since`, other than those in `skip`. */
+  | { type: 'readOrders'; session: ColesSession; since: string; skip: string[] };
 
 /** Messages from the content script to the background worker. */
 export type BackgroundMessage = { type: 'userAdded'; product: UserAddedProduct };

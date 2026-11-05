@@ -48,6 +48,8 @@ export async function POST(request: NextRequest) {
         pack_unit: pack?.unit ?? null,
         last_price: add.price,
         times_bought: existing?.product_id === add.productId ? existing.times_bought + 1 : 1,
+        // The user picked it, so order-history imports (#185) leave it alone.
+        source: 'chosen',
       },
       { onConflict: 'household_id,ingredient_key' },
     );

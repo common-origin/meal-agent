@@ -36,6 +36,19 @@ coles.com.au.
 5. Review the trolley and check out on coles.com.au, then click **Mark
    shopping done** on the shopping list.
 
+## Past orders
+
+Each time the panel opens (or you click **Reload**) with a Coles tab
+active, it reads your past online orders from the last 12 months that it
+hasn't seen before, and sends them to Meal Agent. Products it can match to
+an ingredient by name are remembered straight away, using whichever one you
+buy most, so those lines come ticked. A product you picked with **Find** or
+**Change** is never replaced.
+
+Products it can't match by name go to AI. Its guesses appear at the top of
+the panel under "Check these from your past orders": **Yes** remembers the
+product for that ingredient, **No** ignores it.
+
 ## How it adds to the trolley
 
 The background worker copies the API headers coles.com.au sends with its
@@ -56,9 +69,11 @@ Add (DevTools → Network → `trolley/store`) against `content.ts`.
 - `src/background.ts` copies the headers and remembers products you add while
   finding one for an item.
 - `src/content.ts` runs on coles.com.au: it calls the trolley API, does the
-  click fallback, and reports your own clicks on a product's Add button.
+  click fallback, reports your own clicks on a product's Add button, and
+  reads past orders.
 - `src/sidepanel.ts` is the list.
 - `src/options.ts` is the token setup.
 
 The app side is `apps/web/src/app/api/coles/*`,
-`apps/web/src/lib/coles/` and migration `011_coles_extension.sql`.
+`apps/web/src/lib/coles/` and migrations `011_coles_extension.sql` and
+`012_coles_purchase_history.sql`.

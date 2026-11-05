@@ -61,4 +61,6 @@ export const aiRateLimiters = {
   scanPantryImage: createRateLimiter({ limit: 10, windowMs: TEN_MINUTES_MS }),
   extractRecipeFromImage: createRateLimiter({ limit: 10, windowMs: TEN_MINUTES_MS }),
   extractRecipeFromUrl: createRateLimiter({ limit: 20, windowMs: TEN_MINUTES_MS }),
+  // The Coles extension imports order history each time its panel opens (#185).
+  orderMatch: createRateLimiter({ limit: 10, windowMs: TEN_MINUTES_MS }),
 };
