@@ -54,9 +54,9 @@ or discards it, and can undo the last accepted edit (logic in
 **Matching Coles order history (#185).** When the Coles extension imports
 past orders, `POST /api/coles/purchases` sends the products the ingredient
 catalogue's names couldn't match (at most 150 per import) to task
-`orderMatch` (prompts in `lib/prompts/orderMatch.ts`) with the catalogue's
-keys. It returns a key or null per product; keys not in the catalogue are
-dropped. Suggestions are only saved to product memory once the user
+`orderMatch` (prompts in `lib/prompts/orderMatch.ts`) with the keys on the
+household's shopping lists plus the catalogue's. It returns a key or null
+per product; keys not in that list are dropped. Suggestions are only saved to product memory once the user
 confirms them in the extension. The route has no session: it takes the
 household's extension token, and counts the call against the household
 owner's rate limit and daily cap. When AI fails or is over a limit, the

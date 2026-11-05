@@ -99,8 +99,11 @@ const TRAILING_FILLER = new Set([
   'pieces', 'family', 'large', 'medium', 'small', 'star', 'fresh', 'free', 'range', 'australian',
 ]);
 
-function lookup(phrase: string): string | null {
-  for (const candidate of [phrase, singularise(phrase)]) {
+/** The household's own list key for a phrase first, then the catalogue's. */
+function lookup(phrase: string, listKeys: ReadonlySet<string>): string | null {
+  const candidates = [phrase, singularise(phrase)];
+  for (const candidate of candidates) if (listKeys.has(candidate)) return candidate;
+  for (const candidate of candidates) {
     const entry = CATALOGUE_NAME_INDEX.get(candidate);
     if (entry) return entry.key;
   }
@@ -108,14 +111,17 @@ function lookup(phrase: string): string | null {
 }
 
 /**
- * The ingredient a Coles product is, by catalogue name: "Perino Red Grape
- * Tomatoes" → tomato, "Chicken Breast Fillets" → chicken breast. Phrases of
+ * The ingredient a Coles product is, by name: "Perino Red Grape Tomatoes" →
+ * tomato, "Chicken Breast Fillets" → chicken breast. `listKeys` are the keys
+ * the household's shopping lists use, which can be narrower than the
+ * catalogue's ("baby spinach", not "spinach"); a list key wins, since that's
+ * what product memory is looked up by. Phrases of
  * two or more words can match anywhere, longest first; a single word only
  * as the last word once trailing filler like "Pack" or "Skin On" is dropped,
  * since that's what the product is ("Women's Roll On Deodorant" isn't a
  * bread roll). Null when nothing matches, for AI to try.
  */
-export function catalogueKeyFor(productName: string): string | null {
+export function catalogueKeyFor(productName: string, listKeys: ReadonlySet<string> = new Set()): string | null {
   const words = productName
     .toLowerCase()
     .replace(/\b\d+\s*x\s*\d+(?:\.\d+)?\s*(?:kg|g|ml|l)\b/g, ' ')
@@ -126,14 +132,14 @@ export function catalogueKeyFor(productName: string): string | null {
   for (let length = words.length; length >= 2; length--) {
     // Rightmost first: the end of a product name says what it is.
     for (let start = words.length - length; start >= 0; start--) {
-      const key = lookup(words.slice(start, start + length).join(' '));
+      const key = lookup(words.slice(start, start + length).join(' '), listKeys);
       if (key) return key;
     }
   }
   let end = words.length;
   while (end > 1 && TRAILING_FILLER.has(words[end - 1])) end--;
   const last = words[end - 1];
-  return last && !TRAILING_FILLER.has(last) ? lookup(last) : null;
+  return last && !TRAILING_FILLER.has(last) ? lookup(last, listKeys) : null;
 }
 
 /** The display name for an ingredient key. */
@@ -200,10 +206,13 @@ export function productDisplayName(brand: string | null, name: string): string {
   return `${brand} ${name}`;
 }
 
+/** An ingredient key as lists store them: lowercase words ("baby spinach", "sun-dried tomato"). */
+export const INGREDIENT_KEY = /^[a-z0-9][a-z0-9 '&-]{0,79}$/;
+
 /** Validates a match confirmation from the extension, or returns null. */
 export function parseMatchConfirmation(body: unknown): { productId: string; key: string; accept: boolean } | null {
   if (!body || typeof body !== 'object') return null;
   const { productId, key, accept } = body as Record<string, unknown>;
-  if (!isString(productId) || !/^\d+$/.test(productId) || !isString(key) || !getCatalogueEntry(key) || typeof accept !== 'boolean') return null;
+  if (!isString(productId) || !/^\d+$/.test(productId) || !isString(key) || !INGREDIENT_KEY.test(key) || typeof accept !== 'boolean') return null;
   return { productId, key, accept };
 }
