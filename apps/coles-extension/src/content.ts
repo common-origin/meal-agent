@@ -150,18 +150,36 @@ async function trolleyReaches(session: ContentSession | null, productId: string,
   return false;
 }
 
+/** The product page's own Add button: the one whose label names the page heading. */
+function ownAddButton(): HTMLButtonElement | null {
+  const heading = document.querySelector('h1')?.textContent?.trim().toLowerCase() ?? '';
+  if (!heading) return null;
+  // The longest match, so a shorter recommendation like "Coles Dairy Cheese" can't win over the product.
+  let best: { button: HTMLButtonElement; length: number } | null = null;
+  for (const button of document.querySelectorAll<HTMLButtonElement>('button[data-testid="add-to-cart-button"]')) {
+    const label = button.getAttribute('aria-label')?.replace(/^Add to trolley:\s*/i, '').toLowerCase();
+    if (label && heading.startsWith(label) && label.length > (best?.length ?? 0)) best = { button, length: label.length };
+  }
+  return best?.button ?? null;
+}
+
+async function waitForOwnAddButton(timeoutMs = 8000): Promise<HTMLButtonElement | null> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const button = ownAddButton();
+    if (button) return button;
+    await wait(200);
+  }
+  return null;
+}
+
 /**
- * Fallback: click the product page's own buttons. The page's product is the
- * one whose Add button names the page heading; recommendation tiles further
- * down have Add buttons too, so never fall back to one of those.
+ * Fallback: click the product page's own buttons. Recommendation tiles on
+ * the page have Add buttons too, so never fall back to one of those. (The
+ * page has no <main>, so the heading is what tells them apart.)
  */
 async function clickAdd(packs: number, productId: string, session: ContentSession | null) {
-  await waitFor('main button[data-testid="add-to-cart-button"]');
-  const heading = document.querySelector('h1')?.textContent?.trim().toLowerCase() ?? '';
-  const add = Array.from(document.querySelectorAll<HTMLButtonElement>('main button[data-testid="add-to-cart-button"]')).find(b => {
-    const label = b.getAttribute('aria-label')?.replace(/^Add to trolley:\s*/i, '').toLowerCase();
-    return !!label && heading.startsWith(label);
-  });
+  const add = await waitForOwnAddButton();
   if (!add) return { ok: false, error: 'No Add button for this product (already in the trolley?). Check it there.' };
 
   const before = session ? await readTrolley(session) : null;
