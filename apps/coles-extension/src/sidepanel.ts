@@ -204,7 +204,7 @@ async function addTicked(): Promise<void> {
     results = await chrome.tabs.sendMessage(tabId, message).catch(() => {
       apiProblem = 'the Coles page wasn’t ready; reload it';
       return [];
-    }) as TrolleyResult[];
+    }) as TrolleyResult[] | undefined ?? [];
     apiProblem ||= results.find(r => !r.ok)?.error ?? '';
   }
   const okIds = new Set(results.filter(r => r.ok).map(r => r.productId));
