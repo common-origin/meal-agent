@@ -192,6 +192,8 @@ async function addTicked(): Promise<void> {
 
   const session = await loadColesSession();
   let results: TrolleyResult[] = [];
+  // Why the direct add didn't work, shown alongside the fallback's results.
+  let apiProblem = session?.storeId ? '' : 'no Coles session seen yet; browse a Coles page first';
   if (session?.storeId) {
     setStatus(`Adding ${toAdd.length} items…`);
     const message: ContentMessage = {
@@ -199,7 +201,11 @@ async function addTicked(): Promise<void> {
       session,
       adds: toAdd.map(line => ({ productId: line.item.product!.productId, packs: line.item.packs })),
     };
-    results = await chrome.tabs.sendMessage(tabId, message).catch(() => []) as TrolleyResult[];
+    results = await chrome.tabs.sendMessage(tabId, message).catch(() => {
+      apiProblem = 'the Coles page wasn’t ready; reload it';
+      return [];
+    }) as TrolleyResult[];
+    apiProblem ||= results.find(r => !r.ok)?.error ?? '';
   }
   const okIds = new Set(results.filter(r => r.ok).map(r => r.productId));
   const viaApi = toAdd.filter(line => okIds.has(line.item.product!.productId));
@@ -216,10 +222,11 @@ async function addTicked(): Promise<void> {
   busy = false;
   const failed = toAdd.filter(line => line.state === 'failed').length;
   const method = remaining.length === 0 ? 'directly' : viaApi.length === 0 ? 'by clicking each product page' : `${viaApi.length} directly, ${remaining.length} by clicking product pages`;
+  const why = remaining.length && apiProblem ? ` Direct add didn’t work: ${apiProblem}.` : '';
   setStatus(
-    failed
+    (failed
       ? `Added ${toAdd.length - failed} of ${toAdd.length} (${method}). Check the ones marked below.`
-      : `Added ${toAdd.length} items (${method}). Review your trolley on coles.com.au, then check out there.`,
+      : `Added ${toAdd.length} items (${method}). Review your trolley on coles.com.au, then check out there.`) + why,
     failed ? 'error' : 'ok',
   );
   render();
