@@ -9,7 +9,7 @@
  */
 
 import { createAdminClient } from '@/lib/supabase/server';
-import { INGREDIENT_CATALOGUE, getCatalogueEntry } from '@/lib/ingredients/catalogue';
+import { INGREDIENT_CATALOGUE } from '@/lib/ingredients/catalogue';
 import { runAiTask } from '@/lib/ai/run';
 import { isOverDailyAiCap } from '@/lib/ai/usage';
 import { OrderMatches } from '@/lib/ai/schemas';
@@ -58,6 +58,25 @@ async function historyRows(supabase: Admin, householdId: string): Promise<Histor
   }
 }
 
+/**
+ * Every ingredient key on the household's saved shopping lists. List keys
+ * can be narrower than the catalogue's ("baby spinach"), and product memory
+ * is looked up by them, so order lines are matched to these first.
+ */
+async function listKeys(supabase: Admin, householdId: string): Promise<Set<string>> {
+  const { data, error } = await supabase.from('shopping_lists').select('items').eq('household_id', householdId);
+  if (error) throw error;
+  const keys = new Set<string>();
+  for (const { items } of data) {
+    if (!Array.isArray(items)) continue;
+    for (const item of items) {
+      const key = item && typeof item === 'object' && !Array.isArray(item) ? (item as { key?: unknown }).key : undefined;
+      if (typeof key === 'string' && key) keys.add(key);
+    }
+  }
+  return keys;
+}
+
 /** Order ids already imported, so the extension only reads new ones. */
 export async function importedOrderIds(householdId: string): Promise<string[]> {
   return [...new Set((await historyRows(createAdminClient(), householdId)).map(row => row.order_id))];
@@ -98,11 +117,18 @@ async function householdUserId(supabase: Admin, householdId: string): Promise<st
  * them when AI is unavailable or over its limits, stay undecided for the
  * next import.
  */
-async function suggestKeys(supabase: Admin, householdId: string, products: HistoryRow[]): Promise<Map<string, string | null>> {
+async function suggestKeys(supabase: Admin, householdId: string, products: HistoryRow[], keys: ReadonlySet<string>): Promise<Map<string, string | null>> {
   const decided = new Map<string, string | null>();
   if (products.length === 0) return decided;
   const userId = await householdUserId(supabase, householdId);
   if (!userId || !aiRateLimiters.orderMatch.check(userId) || await isOverDailyAiCap(userId)) return decided;
+
+  // The household's list keys, plus the catalogue for ingredients not on a list yet.
+  const ingredients = [
+    ...[...keys].map(key => ({ key, name: ingredientName(key) })),
+    ...INGREDIENT_CATALOGUE.filter(entry => !keys.has(entry.key)).map(({ key, name }) => ({ key, name })),
+  ];
+  const allowed = new Set(ingredients.map(({ key }) => key));
 
   try {
     const result = await runAiTask('orderMatch', {
@@ -110,7 +136,7 @@ async function suggestKeys(supabase: Admin, householdId: string, products: Histo
       system: buildOrderMatchSystemPrompt(),
       prompt: buildOrderMatchPrompt(
         products.map(row => ({ productId: row.product_id, name: productDisplayName(row.brand, row.name), size: row.size })),
-        INGREDIENT_CATALOGUE.map(({ key, name }) => ({ key, name })),
+        ingredients,
       ),
       schema: OrderMatches,
     });
@@ -118,7 +144,7 @@ async function suggestKeys(supabase: Admin, householdId: string, products: Histo
     const asked = new Set(products.map(row => row.product_id));
     for (const { productId, key } of result.output.matches) {
       if (!asked.has(productId)) continue;
-      decided.set(productId, key && getCatalogueEntry(key) ? key : null);
+      decided.set(productId, key && allowed.has(key) ? key : null);
     }
   } catch (error) {
     console.error('Coles order match failed; will retry next import:', error);
@@ -188,13 +214,14 @@ export async function importOrders(householdId: string, orders: PastOrder[], now
   const { error: pruneError } = await supabase.from('purchase_history').delete().eq('household_id', householdId).lt('ordered_at', cutoff);
   if (pruneError) throw pruneError;
 
+  const keys = await listKeys(supabase, householdId);
   const known = new Set((await historyRows(supabase, householdId)).map(row => row.order_id));
   const fresh = orders.filter(order => !known.has(order.orderId) && order.orderedAt >= cutoff);
   const inserts = fresh.flatMap(order => {
     // One row per product per order: Coles can list a product twice (e.g. a substitution).
     const lines = new Map(order.lines.map(line => [line.productId, line]));
     return [...lines.values()].map(line => {
-      const key = catalogueKeyFor(line.name);
+      const key = catalogueKeyFor(line.name, keys);
       return {
         household_id: householdId,
         order_id: order.orderId,
@@ -220,6 +247,27 @@ export async function importOrders(householdId: string, orders: PastOrder[], now
 
   let rows = await historyRows(supabase, householdId);
 
+  // Name matching again for lines it decided (or couldn't), since the
+  // household's list keys grow week to week: a product matched to "spinach"
+  // moves to "baby spinach" once that's on a list. The user's own answers
+  // ('confirmed', 'rejected') and AI suggestions are left alone.
+  const rematched = new Map<string, string>();
+  for (const row of rows) {
+    if (!['alias', 'none', 'pending'].includes(row.match_status) || rematched.has(row.product_id)) continue;
+    const key = catalogueKeyFor(row.name, keys);
+    if (key && (row.match_status !== 'alias' || key !== row.ingredient_key)) rematched.set(row.product_id, key);
+  }
+  for (const [productId, key] of rematched) {
+    const { error } = await supabase
+      .from('purchase_history')
+      .update({ ingredient_key: key, match_status: 'alias', suggested_key: null })
+      .eq('household_id', householdId)
+      .eq('product_id', productId)
+      .in('match_status', ['alias', 'none', 'pending']);
+    if (error) throw error;
+  }
+  if (rematched.size > 0) rows = await historyRows(supabase, householdId);
+
   // A product decided in one order is decided in all of them.
   const decidedByProduct = new Map<string, HistoryRow>();
   for (const row of rows) if (DECIDED.has(row.match_status) && !decidedByProduct.has(row.product_id)) decidedByProduct.set(row.product_id, row);
@@ -227,7 +275,7 @@ export async function importOrders(householdId: string, orders: PastOrder[], now
   for (const row of rows) if (row.match_status === 'pending' && !decidedByProduct.has(row.product_id)) undecided.set(row.product_id, row);
   const toCarry = [...new Set(rows.filter(row => row.match_status === 'pending' && decidedByProduct.has(row.product_id)).map(row => row.product_id))];
 
-  const suggested = await suggestKeys(supabase, householdId, [...undecided.values()].slice(0, MAX_AI_PRODUCTS));
+  const suggested = await suggestKeys(supabase, householdId, [...undecided.values()].slice(0, MAX_AI_PRODUCTS), keys);
 
   const updates: { productId: string; values: { ingredient_key: string | null; match_status: string; suggested_key: string | null } }[] = [];
   for (const productId of toCarry) {
@@ -248,8 +296,8 @@ export async function importOrders(householdId: string, orders: PastOrder[], now
   }
   if (updates.length > 0) rows = await historyRows(supabase, householdId);
 
-  const keys = new Set(rows.filter(row => row.ingredient_key && MATCHED.includes(row.match_status)).map(row => row.ingredient_key as string));
-  const remembered = await rememberMostBought(supabase, householdId, rows, keys);
+  const matchedKeys = new Set(rows.filter(row => row.ingredient_key && MATCHED.includes(row.match_status)).map(row => row.ingredient_key as string));
+  const remembered = await rememberMostBought(supabase, householdId, rows, matchedKeys);
   return { imported: fresh.length, remembered, suggestions: suggestionsFrom(rows) };
 }
 

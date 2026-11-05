@@ -265,8 +265,8 @@ function showSuggestions(suggestions: MatchSuggestion[]): void {
   matchListEl.replaceChildren(...suggestions.map(suggestion => {
     const row = el('div', { className: 'match' },
       el('div', { className: 'text' },
-        el('div', { textContent: `${suggestion.ingredientName}?` }),
-        el('div', { className: 'product', textContent: suggestion.productName }),
+        el('div', { textContent: suggestion.productName }),
+        el('div', { className: 'product', textContent: `for ${suggestion.ingredientName}` }),
       ),
     );
     const answer = (accept: boolean) => {
@@ -275,6 +275,12 @@ function showSuggestions(suggestions: MatchSuggestion[]): void {
         .then(remembered => {
           row.remove();
           matchesEl.hidden = matchListEl.childElementCount === 0;
+          if (accept) {
+            const onList = [...lines.values()].some(line => line.item.key === suggestion.key);
+            importStatusEl.textContent = onList
+              ? `Remembered ${suggestion.productName} for ${suggestion.ingredientName}.`
+              : `Remembered ${suggestion.productName} for when ${suggestion.ingredientName} is on your list.`;
+          }
           if (remembered > 0) return loadList();
           return undefined;
         })

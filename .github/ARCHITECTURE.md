@@ -313,7 +313,10 @@ coles.com.au tab:
    orders from the last 12 months it hasn't seen
    (`GET /api/bff/orders`, then each order's items), and posts them to
    `POST /api/coles/purchases`. Lines are matched to ingredient keys by
-   catalogue name (`catalogueKeyFor` in `lib/coles/orderHistory.ts`); the
+   name (`catalogueKeyFor` in `lib/coles/orderHistory.ts`), against the
+   keys on the household's saved shopping lists first (they can be
+   narrower than the catalogue's, e.g. "baby spinach") and then the
+   catalogue, and re-matched on each import as list keys grow (#192); the
    rest go to the `orderMatch` AI task, whose suggestions the user
    confirms in the panel. Each matched key's most-bought product becomes
    its remembered product, unless the user chose one with Find/Change.

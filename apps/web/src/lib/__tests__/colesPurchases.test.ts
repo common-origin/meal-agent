@@ -125,6 +125,27 @@ describe('importOrders (#185)', () => {
     expect(tables.purchase_history.filter(row => row.product_id === '30').map(row => row.match_status)).toEqual(['suggested', 'suggested']);
   });
 
+  it('matches to the household’s list keys, and moves earlier matches onto them', async () => {
+    await importOrders(HOUSEHOLD, [order('1', '2026-10-01T00:00:00.000Z', [['40', 'Baby Spinach 120g']])], NOW);
+    expect(tables.purchase_history[0]).toMatchObject({ ingredient_key: 'spinach', match_status: 'alias' });
+
+    tables.shopping_lists = [{ household_id: HOUSEHOLD, items: [{ key: 'baby spinach' }, { key: 'garlic' }] }];
+    const result = await importOrders(HOUSEHOLD, [order('2', '2026-10-08T00:00:00.000Z', [['41', 'Cherry Tomatoes Punnet']])], NOW);
+
+    expect(tables.purchase_history.map(row => [row.product_id, row.ingredient_key])).toEqual([['40', 'baby spinach'], ['41', 'tomato']]);
+    expect(products().find(p => p.ingredient_key === 'baby spinach')).toMatchObject({ product_id: '40' });
+    expect(result.remembered).toBe(2);
+  });
+
+  it('offers AI the list keys and accepts them back', async () => {
+    tables.shopping_lists = [{ household_id: HOUSEHOLD, items: [{ key: 'black pepper' }] }];
+    runAiTask.mockResolvedValue({ blocked: false, output: { matches: [{ productId: '50', key: 'black pepper' }] } });
+    const result = await importOrders(HOUSEHOLD, [order('1', '2026-10-01T00:00:00.000Z', [['50', 'Cracked Pepper Grinder']])], NOW);
+
+    expect(runAiTask.mock.calls[0][1].prompt).toContain('black pepper');
+    expect(result.suggestions).toEqual([expect.objectContaining({ productId: '50', key: 'black pepper', ingredientName: 'Black pepper' })]);
+  });
+
   it('leaves products undecided when AI fails, to retry next import', async () => {
     runAiTask.mockRejectedValue(new Error('timeout'));
     const result = await importOrders(HOUSEHOLD, [order('1', '2026-10-01T00:00:00.000Z', [['30', 'Dairy Cheese Tasty']])], NOW);

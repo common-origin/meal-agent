@@ -45,9 +45,12 @@ an ingredient by name are remembered straight away, using whichever one you
 buy most, so those lines come ticked. A product you picked with **Find** or
 **Change** is never replaced.
 
+Products are matched to the ingredient names your shopping lists use, so
+"Baby Spinach 120g" goes with Baby spinach rather than plain spinach.
 Products it can't match by name go to AI. Its guesses appear at the top of
-the panel under "Check these from your past orders": **Yes** remembers the
-product for that ingredient, **No** ignores it.
+the panel under "Is this what you buy?": **Yes** remembers the product for
+that ingredient, so it comes ticked whenever that ingredient is on your
+list, and **No** ignores it. Neither adds anything to this week's list.
 
 ## How it adds to the trolley
 

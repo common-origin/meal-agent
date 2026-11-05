@@ -24,6 +24,14 @@ describe('catalogueKeyFor (#185)', () => {
     expect(catalogueKeyFor(name)).toBe(key);
   });
 
+  it('prefers the household’s own list keys, which can be narrower than the catalogue’s', () => {
+    const listKeys = new Set(['baby spinach', 'cherry tomato', 'chicken stock']);
+    expect(catalogueKeyFor('Baby Spinach 120g', listKeys)).toBe('baby spinach');
+    expect(catalogueKeyFor('Cherry Tomatoes Punnet', listKeys)).toBe('cherry tomato');
+    expect(catalogueKeyFor('Chicken Stock Liquid Salt Reduced', listKeys)).toBe('chicken stock');
+    expect(catalogueKeyFor('Baby Spinach 120g')).toBe('spinach');
+  });
+
   it.each([
     "Women's Roll On Shower Fresh Antiperspirant Deodorant",
     'Earl Grey Loose Leaf Tea',
@@ -99,8 +107,12 @@ describe('parseMatchConfirmation', () => {
     expect(parseMatchConfirmation({ productId: '1', key: 'garlic', accept: true })).toEqual({ productId: '1', key: 'garlic', accept: true });
   });
 
-  it('rejects an unknown key or missing answer', () => {
-    expect(parseMatchConfirmation({ productId: '1', key: 'not an ingredient', accept: true })).toBeNull();
+  it('accepts a list key that isn’t in the catalogue', () => {
+    expect(parseMatchConfirmation({ productId: '1', key: 'baby spinach', accept: true })).toEqual({ productId: '1', key: 'baby spinach', accept: true });
+  });
+
+  it('rejects a malformed key or missing answer', () => {
+    expect(parseMatchConfirmation({ productId: '1', key: 'Not <a> key', accept: true })).toBeNull();
     expect(parseMatchConfirmation({ productId: '1', key: 'garlic' })).toBeNull();
   });
 });
