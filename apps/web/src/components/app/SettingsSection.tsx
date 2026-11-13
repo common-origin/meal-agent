@@ -35,3 +35,16 @@ export default function SettingsSection({ title, description, children }: Settin
     </Box>
   );
 }
+
+/**
+ * Caps a text field, dropdown or number input at 540px (#196), so fields
+ * don't stretch across a wide inputs column. Sliders, checkboxes and lists
+ * keep the column's full width.
+ */
+export function SettingsField({ children }: { children: ReactNode }) {
+  return (
+    <Box maxWidth="540px" style={{ width: '100%' }}>
+      {children}
+    </Box>
+  );
+}

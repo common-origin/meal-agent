@@ -10,7 +10,7 @@ import Main from "@/components/app/Main";import {
 import type { FamilySettings } from "@/lib/types/settings";
 import { validateFamilySettings, DEFAULT_FAMILY_SETTINGS, DIETARY_TYPE_OPTIONS, MAX_RECIPE_RECIPIENTS, MAX_FLAVOR_PROFILE_LENGTH, MAX_SETTING_TEXT_LENGTH } from "@/lib/types/settings";
 import { track } from "@/lib/analytics";
-import SettingsSection from "@/components/app/SettingsSection";
+import SettingsSection, { SettingsField } from "@/components/app/SettingsSection";
 import ColesExtensionSettings from "@/components/app/ColesExtensionSettings";
 
 export default function SettingsPage() {
@@ -187,36 +187,40 @@ export default function SettingsPage() {
 							description="Who you're cooking for. New recipes are written for the total servings."
 						>
 							<Stack direction="column" gap="lg">
-								<NumberInput
-									label="Adults"
-									min={1}
-									max={10}
-									value={settings.adults}
-									onChange={(value) => {
-										const numValue = typeof value === 'number' ? value : 1;
-										setSettings(prev => ({
-											...prev,
-											adults: numValue,
-											totalServings: numValue + prev.children.length
-										}));
-									}}
-								/>
+								<SettingsField>
+									<NumberInput
+										label="Adults"
+										min={1}
+										max={10}
+										value={settings.adults}
+										onChange={(value) => {
+											const numValue = typeof value === 'number' ? value : 1;
+											setSettings(prev => ({
+												...prev,
+												adults: numValue,
+												totalServings: numValue + prev.children.length
+											}));
+										}}
+									/>
+								</SettingsField>
 								<Divider size="small" />
 								<Stack direction="column" gap="lg">
 									<Typography variant="subtitle">Children ({settings.children.length})</Typography>
 									{settings.children.map((child, index) => (
 										<Stack key={index} direction="row" gap="sm" alignItems="flex-end">
-											<NumberInput
-												label="Age"
-												min={0}
-												max={18}
-												value={child.age}
-												onChange={(value) => {
-													const numValue = typeof value === 'number' ? value : 0;
-													updateChild(index, numValue);
-												}}
-												placeholder="Child's age"
-											/>
+											<SettingsField>
+												<NumberInput
+													label="Age"
+													min={0}
+													max={18}
+													value={child.age}
+													onChange={(value) => {
+														const numValue = typeof value === 'number' ? value : 0;
+														updateChild(index, numValue);
+													}}
+													placeholder="Child's age"
+												/>
+											</SettingsField>
 											<Box>
 												<Button
 													variant="naked"
@@ -247,16 +251,18 @@ export default function SettingsPage() {
 							description="Set your primary diet type and any additional preferences"
 						>
 							<Stack direction="column" gap="lg">
-								<Dropdown
-									label="Primary diet"
-									helperText="This determines the types of recipes we'll suggest"
-									value={settings.dietaryType}
-									onChange={(value) => setSettings(prev => ({
-										...prev,
-										dietaryType: value as FamilySettings['dietaryType']
-									}))}
-									options={DIETARY_TYPE_OPTIONS.map(opt => ({ id: opt.id, label: opt.label }))}
-								/>
+								<SettingsField>
+									<Dropdown
+										label="Primary diet"
+										helperText="This determines the types of recipes we'll suggest"
+										value={settings.dietaryType}
+										onChange={(value) => setSettings(prev => ({
+											...prev,
+											dietaryType: value as FamilySettings['dietaryType']
+										}))}
+										options={DIETARY_TYPE_OPTIONS.map(opt => ({ id: opt.id, label: opt.label }))}
+									/>
+								</SettingsField>
 								<Divider size="small" />
 								<Stack direction="column" gap="sm">
 									<Typography variant="subtitle">Additional preferences</Typography>
@@ -306,71 +312,79 @@ export default function SettingsPage() {
 						>
 							<Stack direction="column" gap="lg">
 								<Box>
-									<Dropdown
-										label="Spice tolerance"
-										helperText="How spicy can your meals be?"
-										value={settings.spiceTolerance}
-										onChange={(value) => setSettings(prev => ({
-											...prev,
-											spiceTolerance: value as 'very_mild' | 'mild' | 'medium' | 'hot' | 'loves_hot'
-										}))}
-										options={[
-											{ id: 'very_mild', label: 'Very Mild (no spice)' },
-											{ id: 'mild', label: 'Mild (a little kick)' },
-											{ id: 'medium', label: 'Medium (moderate heat)' },
-											{ id: 'hot', label: 'Hot (bring the heat!)' },
-											{ id: 'loves_hot', label: 'Loves Hot (extra spicy)' }
-										]}
-									/>
+									<SettingsField>
+										<Dropdown
+											label="Spice tolerance"
+											helperText="How spicy can your meals be?"
+											value={settings.spiceTolerance}
+											onChange={(value) => setSettings(prev => ({
+												...prev,
+												spiceTolerance: value as 'very_mild' | 'mild' | 'medium' | 'hot' | 'loves_hot'
+											}))}
+											options={[
+												{ id: 'very_mild', label: 'Very Mild (no spice)' },
+												{ id: 'mild', label: 'Mild (a little kick)' },
+												{ id: 'medium', label: 'Medium (moderate heat)' },
+												{ id: 'hot', label: 'Hot (bring the heat!)' },
+												{ id: 'loves_hot', label: 'Loves Hot (extra spicy)' }
+											]}
+										/>
+									</SettingsField>
 								</Box>
 
 								<Box>
-									<Dropdown
-										label="Cooking skill"
-										helperText="How comfortable are you following recipes?"
-										value={settings.cookingSkill}
-										onChange={(value) => setSettings(prev => ({
-											...prev,
-											cookingSkill: value as 'beginner' | 'intermediate' | 'confident_home_cook' | 'advanced'
-										}))}
-										options={[
-											{ id: 'beginner', label: 'Beginner (new to cooking)' },
-											{ id: 'intermediate', label: 'Intermediate (comfortable with basics)' },
-											{ id: 'confident_home_cook', label: 'Confident Home Cook' },
-											{ id: 'advanced', label: 'Advanced (love a challenge)' }
-										]}
-									/>
+									<SettingsField>
+										<Dropdown
+											label="Cooking skill"
+											helperText="How comfortable are you following recipes?"
+											value={settings.cookingSkill}
+											onChange={(value) => setSettings(prev => ({
+												...prev,
+												cookingSkill: value as 'beginner' | 'intermediate' | 'confident_home_cook' | 'advanced'
+											}))}
+											options={[
+												{ id: 'beginner', label: 'Beginner (new to cooking)' },
+												{ id: 'intermediate', label: 'Intermediate (comfortable with basics)' },
+												{ id: 'confident_home_cook', label: 'Confident Home Cook' },
+												{ id: 'advanced', label: 'Advanced (love a challenge)' }
+											]}
+										/>
+									</SettingsField>
 								</Box>
 
 								<Box>
-									<Dropdown
-										label="Effort preference"
-										helperText="How much time and clean-up is okay on most nights?"
-										value={settings.effortPreference}
-										onChange={(value) => setSettings(prev => ({
-											...prev,
-											effortPreference: value as 'minimal_clean_up' | 'balanced' | 'happy_to_spend_time_on_weekends'
-										}))}
-										options={[
-											{ id: 'minimal_clean_up', label: 'Minimal Clean-up (one-pot meals)' },
-											{ id: 'balanced', label: 'Balanced (reasonable effort)' },
-											{ id: 'happy_to_spend_time_on_weekends', label: 'Happy to spend time on weekends' }
-										]}
-									/>
+									<SettingsField>
+										<Dropdown
+											label="Effort preference"
+											helperText="How much time and clean-up is okay on most nights?"
+											value={settings.effortPreference}
+											onChange={(value) => setSettings(prev => ({
+												...prev,
+												effortPreference: value as 'minimal_clean_up' | 'balanced' | 'happy_to_spend_time_on_weekends'
+											}))}
+											options={[
+												{ id: 'minimal_clean_up', label: 'Minimal Clean-up (one-pot meals)' },
+												{ id: 'balanced', label: 'Balanced (reasonable effort)' },
+												{ id: 'happy_to_spend_time_on_weekends', label: 'Happy to spend time on weekends' }
+											]}
+										/>
+									</SettingsField>
 								</Box>
 
 								<Box>
-									<TextField
-										label="Flavor profile description"
-										helperText="Describe your family&apos;s taste preferences in a few words"
-										value={settings.flavorProfileDescription}
-										maxLength={MAX_FLAVOR_PROFILE_LENGTH}
-										onChange={(e) => setSettings(prev => ({
-											...prev,
-											flavorProfileDescription: e.target.value
-										}))}
-										placeholder="e.g., fresh & herby, avoids heavy cream"
-									/>
+									<SettingsField>
+										<TextField
+											label="Flavor profile description"
+											helperText="Describe your family&apos;s taste preferences in a few words"
+											value={settings.flavorProfileDescription}
+											maxLength={MAX_FLAVOR_PROFILE_LENGTH}
+											onChange={(e) => setSettings(prev => ({
+												...prev,
+												flavorProfileDescription: e.target.value
+											}))}
+											placeholder="e.g., fresh & herby, avoids heavy cream"
+										/>
+									</SettingsField>
 								</Box>
 							</Stack>
 						</SettingsSection>
@@ -380,51 +394,57 @@ export default function SettingsPage() {
 							description="Used for ingredient availability and seasonal preferences"
 						>
 							<Stack direction="column" gap="lg">
-								<TextField
-									label="City"
-									value={settings.location.city}
-									maxLength={MAX_SETTING_TEXT_LENGTH}
-									onChange={(e) => setSettings(prev => ({
-										...prev,
-										location: {
-											...prev.location,
-											city: e.target.value
-										}
-									}))}
-									placeholder="e.g., Melbourne"
-								/>
-
-								<TextField
-									label="Country"
-									value={settings.location.country}
-									maxLength={MAX_SETTING_TEXT_LENGTH}
-									onChange={(e) => setSettings(prev => ({
-										...prev,
-										location: {
-											...prev.location,
-											country: e.target.value
-										}
-									}))}
-									placeholder="e.g., Australia"
-								/>
-
-								<Box>
-									<Dropdown
-										label="Hemisphere"
-										helperText="Affects seasonal ingredient recommendations"
-										value={settings.location.hemisphere}
-										onChange={(value) => setSettings(prev => ({
+								<SettingsField>
+									<TextField
+										label="City"
+										value={settings.location.city}
+										maxLength={MAX_SETTING_TEXT_LENGTH}
+										onChange={(e) => setSettings(prev => ({
 											...prev,
 											location: {
 												...prev.location,
-												hemisphere: value as 'northern' | 'southern'
+												city: e.target.value
 											}
 										}))}
-										options={[
-											{ id: 'northern', label: 'Northern Hemisphere' },
-											{ id: 'southern', label: 'Southern Hemisphere' }
-										]}
+										placeholder="e.g., Melbourne"
 									/>
+								</SettingsField>
+
+								<SettingsField>
+									<TextField
+										label="Country"
+										value={settings.location.country}
+										maxLength={MAX_SETTING_TEXT_LENGTH}
+										onChange={(e) => setSettings(prev => ({
+											...prev,
+											location: {
+												...prev.location,
+												country: e.target.value
+											}
+										}))}
+										placeholder="e.g., Australia"
+									/>
+								</SettingsField>
+
+								<Box>
+									<SettingsField>
+										<Dropdown
+											label="Hemisphere"
+											helperText="Affects seasonal ingredient recommendations"
+											value={settings.location.hemisphere}
+											onChange={(value) => setSettings(prev => ({
+												...prev,
+												location: {
+													...prev.location,
+													hemisphere: value as 'northern' | 'southern'
+												}
+											}))}
+											options={[
+												{ id: 'northern', label: 'Northern Hemisphere' },
+												{ id: 'southern', label: 'Southern Hemisphere' }
+											]}
+										/>
+									</SettingsField>
 								</Box>
 							</Stack>
 						</SettingsSection>
@@ -512,8 +532,8 @@ export default function SettingsPage() {
 								/>
 
 								{settings.batchCooking.enabled && (
-									<Box maxWidth="400px">
-										<Stack direction="column" gap="lg">
+									<Stack direction="column" gap="lg">
+										<SettingsField>
 											<Dropdown
 												label="Frequency"
 												value={settings.batchCooking.frequency}
@@ -530,7 +550,9 @@ export default function SettingsPage() {
 													{ id: 'none', label: 'None' }
 												]}
 											/>
+										</SettingsField>
 
+										<SettingsField>
 											<Dropdown
 												label="Preferred day"
 												value={settings.batchCooking.preferredDay}
@@ -547,8 +569,8 @@ export default function SettingsPage() {
 													{ id: 'friday', label: 'Friday' }
 												]}
 											/>
-										</Stack>
-									</Box>
+										</SettingsField>
+									</Stack>
 								)}
 							</Stack>
 						</SettingsSection>
@@ -557,19 +579,21 @@ export default function SettingsPage() {
 							title="Pantry ingredients priority"
 							description="Control how the AI prioritizes ingredients you already have in your pantry/fridge when generating meal plans."
 						>
-							<Dropdown
-								label="Priority Level"
-								helperText="Perishable items you add to your pantry list will automatically be prioritized regardless of this setting to help reduce food waste."
-								value={settings.pantryPreference}
-								onChange={(value) => setSettings(prev => ({
-									...prev,
-									pantryPreference: value as 'hard' | 'soft'
-								}))}
-								options={[
-									{ id: 'hard', label: 'High Priority - Strongly prefer recipes using these ingredients' },
-									{ id: 'soft', label: 'Low Priority - Consider these ingredients if suitable' }
-								]}
-							/>
+							<SettingsField>
+								<Dropdown
+									label="Priority Level"
+									helperText="Perishable items you add to your pantry list will automatically be prioritized regardless of this setting to help reduce food waste."
+									value={settings.pantryPreference}
+									onChange={(value) => setSettings(prev => ({
+										...prev,
+										pantryPreference: value as 'hard' | 'soft'
+									}))}
+									options={[
+										{ id: 'hard', label: 'High Priority - Strongly prefer recipes using these ingredients' },
+										{ id: 'soft', label: 'Low Priority - Consider these ingredients if suitable' }
+									]}
+								/>
+							</SettingsField>
 						</SettingsSection>
 
 						<SettingsSection
@@ -577,20 +601,22 @@ export default function SettingsPage() {
 							description="Set when you'd like to be reminded to plan your weekly meals and create your shopping list."
 						>
 							<Stack direction="row" gap="md">
-								<Dropdown
-									label="Reminder Day"
-									helperText="This will be used for future email/SMS notifications to help you stay on track with your meal planning routine."
-									value={settings.weeklyReminderDay || 'saturday'}
-									onChange={(value) => setSettings(prev => ({
-										...prev,
-										weeklyReminderDay: value as 'saturday' | 'sunday' | 'monday'
-									}))}
-									options={[
-										{ id: 'saturday', label: 'Saturday' },
-										{ id: 'sunday', label: 'Sunday' },
-										{ id: 'monday', label: 'Monday' }
-									]}
-								/>
+								<SettingsField>
+									<Dropdown
+										label="Reminder Day"
+										helperText="This will be used for future email/SMS notifications to help you stay on track with your meal planning routine."
+										value={settings.weeklyReminderDay || 'saturday'}
+										onChange={(value) => setSettings(prev => ({
+											...prev,
+											weeklyReminderDay: value as 'saturday' | 'sunday' | 'monday'
+										}))}
+										options={[
+											{ id: 'saturday', label: 'Saturday' },
+											{ id: 'sunday', label: 'Sunday' },
+											{ id: 'monday', label: 'Monday' }
+										]}
+									/>
+								</SettingsField>
 
 								<input
 									type="time"
@@ -649,18 +675,22 @@ export default function SettingsPage() {
 								) : (
 									<Stack direction="column" gap="md">
 										<Stack direction="row" gap="md">
-											<TextField
-												label="Name"
-												value={newRecipientName}
-												onChange={(e) => setNewRecipientName(e.target.value)}
-												placeholder="e.g., Sarah"
-											/>
-											<TextField
-												label="Email"
-												value={newRecipientEmail}
-												onChange={(e) => setNewRecipientEmail(e.target.value)}
-												placeholder="sarah@example.com"
-											/>
+											<SettingsField>
+												<TextField
+													label="Name"
+													value={newRecipientName}
+													onChange={(e) => setNewRecipientName(e.target.value)}
+													placeholder="e.g., Sarah"
+												/>
+											</SettingsField>
+											<SettingsField>
+												<TextField
+													label="Email"
+													value={newRecipientEmail}
+													onChange={(e) => setNewRecipientEmail(e.target.value)}
+													placeholder="sarah@example.com"
+												/>
+											</SettingsField>
 										</Stack>
 										<Stack direction="row" justifyContent="flex-end">
 											<Button
