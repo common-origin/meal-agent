@@ -66,8 +66,8 @@ importers:
         specifier: ^4.0.92
         version: 4.0.92(zod@4.6.7)
       '@common-origin/design-system':
-        specifier: ^3.1.0
-        version: 3.1.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(styled-components@6.5.3(css-to-react-native@3.2.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))
+        specifier: ^3.2.0
+        version: 3.2.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(styled-components@6.5.3(css-to-react-native@3.2.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))
       '@dnd-kit/core':
         specifier: ^6.3.1
         version: 6.3.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -281,8 +281,8 @@ packages:
     resolution: {integrity: sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg==}
     engines: {node: '>=6.9.0'}
 
-  '@common-origin/design-system@3.1.0':
-    resolution: {integrity: sha512-1RDDa6mwkUB2lTS4B2K2vv38O2XZ8vVtxI3zCVfkke5HZ0vK58Gu5I1H29opxPLopxmK+1h67Kso373KEOPBzw==}
+  '@common-origin/design-system@3.2.0':
+    resolution: {integrity: sha512-H4hYQumKQStzGi5vYlTEJoI7JqpZBqRqRpop1i4tTTBq5xMNAezsTBnHPOJojK8lewXJwe1l3ykxvzSPEqbGmA==}
     engines: {node: '>=20'}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
@@ -3585,7 +3585,7 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@common-origin/design-system@3.1.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(styled-components@6.5.3(css-to-react-native@3.2.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))':
+  '@common-origin/design-system@3.2.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(styled-components@6.5.3(css-to-react-native@3.2.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))':
     dependencies:
       date-fns: 4.1.0
       react: 19.3.0
