@@ -184,7 +184,7 @@ export default function SettingsPage() {
 					)}						{/* Each section: title and description left, inputs right (#196) */}
 						<SettingsSection
 							title="Household"
-							description="Who you're cooking for. Recipes are scaled to the total servings."
+							description="Who you're cooking for. New recipes are written for the total servings."
 						>
 							<Stack direction="column" gap="lg">
 								<NumberInput
