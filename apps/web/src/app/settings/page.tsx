@@ -631,15 +631,15 @@ export default function SettingsPage() {
 								<SettingsField>
 									<Dropdown
 										label="Priority Level"
-										helperText="Perishable items you add to your pantry list will automatically be prioritized regardless of this setting to help reduce food waste."
+										helperText="High plans meals around the ingredients you have. Low uses them when they suit a meal. Perishable items are always prioritized, to reduce food waste."
 										value={settings.pantryPreference}
 										onChange={(value) => setSettings(prev => ({
 											...prev,
 											pantryPreference: value as 'hard' | 'soft'
 										}))}
 										options={[
-											{ id: 'hard', label: 'High: plan around them' },
-											{ id: 'soft', label: 'Low: use if they fit' }
+											{ id: 'hard', label: 'High' },
+											{ id: 'soft', label: 'Low' }
 										]}
 									/>
 								</SettingsField>
