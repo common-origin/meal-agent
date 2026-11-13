@@ -9,9 +9,9 @@ import {
   defaultPlanningWeekISO,
   formatWeekRange,
   relativeWeekLabel,
-  suggestPlanningWeek,
   planningWeekOptions,
   parseWeekParam,
+  shouldPromptNextWeek,
 } from '../schedule';
 
 // Week of Mon 28 Sep – Sun 4 Oct 2026
@@ -117,26 +117,6 @@ describe('shiftWeekISO / formatWeekRange / relativeWeekLabel', () => {
   });
 });
 
-describe('suggestPlanningWeek (#194)', () => {
-  const today = '2026-11-10T12:00:00'; // Tue, week of 9 Nov
-
-  it('uses the week on screen when it has no plan', () => {
-    expect(suggestPlanningWeek('2026-11-16', [], today)).toBe('2026-11-16');
-  });
-
-  it("moves to the week after when the week on screen is planned and that one isn't", () => {
-    expect(suggestPlanningWeek('2026-11-09', ['2026-11-09'], today)).toBe('2026-11-16');
-  });
-
-  it('stays on the week on screen when the week after is planned too', () => {
-    expect(suggestPlanningWeek('2026-11-09', ['2026-11-09', '2026-11-16'], today)).toBe('2026-11-09');
-  });
-
-  it('never suggests a past week', () => {
-    expect(suggestPlanningWeek('2026-10-26', [], today)).toBe('2026-11-09');
-  });
-});
-
 describe('planningWeekOptions (#194)', () => {
   const today = '2026-11-15T12:00:00'; // Sun, week of 9 Nov
 
@@ -161,5 +141,21 @@ describe('parseWeekParam (#194)', () => {
     expect(parseWeekParam('')).toBeNull();
     expect(parseWeekParam('next-week')).toBeNull();
     expect(parseWeekParam('2026-02-30')).toBeNull();
+  });
+});
+
+describe('shouldPromptNextWeek (#195)', () => {
+  it('prompts on Friday to Sunday when this week is on screen and next week is unplanned', () => {
+    expect(shouldPromptNextWeek('2026-11-09', ['2026-11-09'], '2026-11-13T12:00:00')).toBe(true);
+    expect(shouldPromptNextWeek('2026-11-09', ['2026-11-09'], '2026-11-15T20:00:00')).toBe(true);
+  });
+
+  it('does not prompt Monday to Thursday', () => {
+    expect(shouldPromptNextWeek('2026-11-09', ['2026-11-09'], '2026-11-12T12:00:00')).toBe(false);
+  });
+
+  it('does not prompt once next week is planned, or for another week on screen', () => {
+    expect(shouldPromptNextWeek('2026-11-09', ['2026-11-09', '2026-11-16'], '2026-11-14T12:00:00')).toBe(false);
+    expect(shouldPromptNextWeek('2026-11-16', ['2026-11-09'], '2026-11-14T12:00:00')).toBe(false);
   });
 });

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Badge, EmptyState, IconButton, Stack, Typography, Button, type AgentInputHandle } from "@common-origin/design-system";
+import { Alert, Badge, Box, EmptyState, IconButton, Stack, Typography, Button, type AgentInputHandle } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import WeekPlanList from "@/components/app/WeekPlanList";
@@ -13,7 +13,7 @@ import WeeklyPlanWizard, { type WeeklyPlanData } from "@/components/app/WeeklyPl
 import PantrySheet from "@/components/app/PantrySheet";
 import { type MealCardProps } from "@/components/app/MealCard";
 import { type Recipe } from "@/lib/types/recipe";
-import { scheduleSundayToast, thisWeekMondayISO, shiftWeekISO, weekToOpen, defaultPlanningWeekISO, formatWeekRange, relativeWeekLabel, suggestPlanningWeek } from "@/lib/schedule";
+import { scheduleSundayToast, thisWeekMondayISO, shiftWeekISO, weekToOpen, defaultPlanningWeekISO, formatWeekRange, relativeWeekLabel, shouldPromptNextWeek } from "@/lib/schedule";
 import { formatPlanSummary, summarisePlan } from "@/lib/planSummary";
 import { loadHousehold, getDefaultHousehold, getRecipeRatings, getBlockedRecipes, getFavorites } from "@/lib/storage";
 import { getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan, hydrateRecencyFromSupabase, recordWeekHistory, listPlannedWeeks } from "@/lib/hybridStorage";
@@ -33,7 +33,7 @@ import { weekDateLabels } from "@/lib/dayCard";
 import { trackIngredientUsage } from "@/lib/ingredientAnalytics";
 import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
 import { apiErrorMessage, redirectToLoginIfUnauthenticated } from "@/lib/api/client";
-import { imageUploadFormData, PhotoTooLargeError } from "@/lib/client/resizeImage";
+import { scanPantryImage } from "@/lib/client/scanPantry";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -299,17 +299,16 @@ export default function PlanPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /** Opens the wizard on the week it should suggest (#194). */
-  const openWizard = () => {
-    setWizardWeek(suggestPlanningWeek(weekStartRef.current, plannedWeeks));
+  /** Opens the planner on `week` (#195): its replace warning is the confirmation when it's planned. */
+  const openPlanner = (week: string) => {
+    setWizardWeek(week);
     setShowWizard(true);
+    // Start over sits below the week, so the planner would otherwise open scrolled down
+    window.scrollTo({ top: 0 });
   };
 
-  /** "Plan this week" on an empty week: the wizard opens on exactly that week. */
-  const planWeekOnScreen = () => {
-    setWizardWeek(weekStartRef.current);
-    setShowWizard(true);
-  };
+  /** "Plan this week" on an empty week, and "Start over" on a planned one: the week on screen. */
+  const planWeekOnScreen = () => openPlanner(weekStartRef.current);
 
   /** The week arrows (#194): waits for any save in flight, then shows the week before or after. */
   const handleChangeWeek = async (offset: number) => {
@@ -470,11 +469,12 @@ export default function PlanPage() {
     const weeklySettings = {
       ...familySettings,
       cuisines: wizardData.cuisines.length > 0 ? wizardData.cuisines : familySettings.cuisines,
-      preferredChef: wizardData.preferredChef || familySettings.preferredChef,
+      // The planner pre-fills this from Settings, so an empty field means "no chef this week"
+      preferredChef: wizardData.preferredChef,
     };
     // Stays on the plan even if nothing generated: its alert says why, and the
     // nights offer Generate (going back to the wizard hid the alert, #171).
-    await generateWeek(weeklySettings, wizardData.pantryItems, wizardData.useSoonItems);
+    await generateWeek(weeklySettings, wizardData.pantryItems, wizardData.useSoonItems, wizardData.nights);
   };
 
   const handleScanPantryImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -485,34 +485,12 @@ export default function PlanPage() {
     setScanError(null);
 
     try {
-      console.log('📸 Scanning pantry image:', file.name);
-
-      // Resized on the client to stay well under Vercel's 4.5 MB body limit (#82).
-      const formData = await imageUploadFormData(file);
-
-      const response = await fetch('/api/scan-pantry-image', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (redirectToLoginIfUnauthenticated(response)) return;
-      // Vercel's 413 body isn't our JSON, so handle it before parsing.
-      if (response.status === 413) throw new PhotoTooLargeError();
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok || !data || data.error) {
-        throw new Error(apiErrorMessage(data));
-      }
-
-      console.log('✅ Ingredients detected:', data.items);
-
+      const items = await scanPantryImage(file);
+      if (!items) return;
       // Add detected ingredients to pantry items (avoiding duplicates), with their use-soon flags
-      const merged = mergeScan({ items: pantryItems, useSoon }, data.items);
+      const merged = mergeScan({ items: pantryItems, useSoon }, items);
       setPantryItems(merged.items);
       setUseSoon(merged.useSoon);
-
-
     } catch (error) {
       console.error('❌ Error scanning image:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to scan image';
@@ -522,11 +500,6 @@ export default function PlanPage() {
       // Clear the input even after an error, so picking the same photo again still fires onChange.
       event.target.value = '';
     }
-  };
-
-  const handleGenerateWithAI = async () => {
-    const familySettings = await getFamilySettings();
-    await generateWeek(familySettings, pantryItems, itemsToUseSoon({ items: pantryItems, useSoon }));
   };
 
   /** Settings, pantry and taste for a request outside a fresh plan (single day, retry, swap). */
@@ -630,9 +603,15 @@ export default function PlanPage() {
    * A full 7-day plan (#95): the lineup is chosen in code, then every day is
    * generated in parallel and shown as soon as it arrives. Saves once all
    * days have settled; failed days stay empty with a Retry button.
-   * Returns false if no day could be generated.
+   * Returns false if no day could be generated. Only `nights` (0 = Monday)
+   * are generated; the rest stay empty (#195).
    */
-  const generateWeek = async (familySettings: FamilySettings, pantry: string[], useSoonItems: string[]): Promise<boolean> => {
+  const generateWeek = async (
+    familySettings: FamilySettings,
+    pantry: string[],
+    useSoonItems: string[],
+    nights: number[] = [0, 1, 2, 3, 4, 5, 6]
+  ): Promise<boolean> => {
     if (isSignOutInProgress) {
       console.warn('Sign-out in progress, refusing to start plan generation');
       return false;
@@ -649,13 +628,14 @@ export default function PlanPage() {
     failedSlotsRef.current = {};
     dayErrorTextRef.current = {};
     setDayErrors({});
-    setGeneratingDays([0, 1, 2, 3, 4, 5, 6]);
+    setGeneratingDays(nights);
 
     try {
       const tasteSignals = await loadTasteSignals(previousPlan);
       const recentCuisines = getRecentRecipeIds()
         .map((id) => RecipeLibrary.getById(id)?.cuisine)
         .filter((cuisine): cuisine is string => Boolean(cuisine));
+      // The whole week's lineup keeps its variety rules; only the chosen nights are generated
       const slate = buildWeekSlate({
         settings: familySettings,
         cuisines: familySettings.cuisines,
@@ -663,7 +643,7 @@ export default function PlanPage() {
         useSoonItems,
         recentCuisines,
         seed: newSlateSeed(),
-      });
+      }).filter((slot) => nights.includes(slot.index));
       console.log('🗓️ Week lineup:', slate);
 
       const context = { familySettings, pantryItems: pantry, useSoonItems, tasteSignals };
@@ -695,9 +675,9 @@ export default function PlanPage() {
 
       const cost = await savePlan(newIds, familySettings, pantry);
       setAriaLiveMessage(
-        newIds.length === 7
+        newIds.length === slate.length
           ? "Weekly meal plan generated successfully!"
-          : `Generated ${newIds.length} of 7 days. You can retry the others.`
+          : `Generated ${newIds.length} of ${slate.length} days. You can retry the others.`
       );
       track('plan_composed', {
         dayCount: newIds.length,
@@ -1056,6 +1036,27 @@ export default function PlanPage() {
             </Alert>
           )}
 
+          {/* Friday to Sunday, on this week, with next week unplanned (#195) */}
+          {!isLoadingInitial && !isLoadingWeek && weekPlan.length > 0 && shouldPromptNextWeek(weekStart, plannedWeeks) && (
+            <Box border="default" borderRadius="md" p="md">
+              <Stack direction="row" gap="md" justifyContent="space-between" alignItems="center" wrap>
+                <Stack direction="column" gap="xs">
+                  <Typography variant="body"><strong>Next week isn&apos;t planned yet</strong></Typography>
+                  <Typography variant="small" color="subdued">{formatWeekRange(shiftWeekISO(weekStart, 1))}</Typography>
+                </Stack>
+                <Button
+                  variant="primary"
+                  size="small"
+                  onClick={() => openPlanner(shiftWeekISO(weekStartRef.current, 1))}
+                  // Not while this week is generating: its days would land on the new week
+                  disabled={planBusy}
+                >
+                  Plan next week
+                </Button>
+              </Stack>
+            </Box>
+          )}
+
           {/* A week with no saved plan (#194): offer to plan it, rather than seven empty nights */}
           {!isLoadingInitial && !isLoadingWeek && weekPlan.length === 0 ? (
             <EmptyState
@@ -1089,25 +1090,23 @@ export default function PlanPage() {
           />
           )}
 
-          {/* Starting over sits after the week, apart from Confirm plan */}
-          <ButtonGroup
-            left={
-              <Button variant="secondary" size="medium" iconName="refresh" onClick={openWizard}>
-                Start new week
-              </Button>
-            }
-            right={
-              <Button
-                variant="secondary"
-                size="medium"
-                onClick={handleGenerateWithAI}
-                // A week can't start while a day or swap is still in flight (#95), or on an unplanned week.
-                disabled={planBusy || weekPlan.length === 0}
-              >
-                {isGenerating ? 'Generating...' : 'Regenerate whole week'}
-              </Button>
-            }
-          />
+          {/* Starting over sits after the week, apart from Confirm plan (#195: one action) */}
+          {weekPlan.length > 0 && (
+            <ButtonGroup
+              left={
+                <Button
+                  variant="secondary"
+                  size="medium"
+                  iconName="refresh"
+                  onClick={planWeekOnScreen}
+                  // Not while a day or swap is still in flight (#95)
+                  disabled={planBusy}
+                >
+                  Start over
+                </Button>
+              }
+            />
+          )}
 
           {/* Docked at the bottom: type what to change (#38) */}
           {/* Shown whenever a week is on screen, even with every night empty ("add something Friday") */}

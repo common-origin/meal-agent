@@ -69,3 +69,12 @@ export function toggleUseSoon(state: PantryState, name: string): PantryState {
 export function itemsToUseSoon(state: PantryState): string[] {
   return state.items.filter((item) => isUseSoon(state, item));
 }
+
+/** The planner's one-line pantry summary (#195): "12 items · 3 use soon", or "Nothing added yet". */
+export function pantrySummary(state: PantryState): string {
+  const count = state.items.length;
+  if (count === 0) return 'Nothing added yet';
+  const soon = itemsToUseSoon(state).length;
+  const items = `${count} ${count === 1 ? 'item' : 'items'}`;
+  return soon > 0 ? `${items} · ${soon} use soon` : items;
+}
