@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Stack, Typography } from "@common-origin/design-system";
+import { Box, Button, Stack, Typography } from "@common-origin/design-system";
 import SettingsSection from "./SettingsSection";
 
 async function fetchToken(rotate: boolean): Promise<string> {
@@ -53,17 +53,29 @@ export default function ColesExtensionSettings() {
         </>
       }
     >
-      <Stack direction="column" gap="md">
+      <Stack direction="column" gap="2xl">
         {token ? (
-          <Stack direction="row" gap="sm" alignItems="center" wrap>
-            <Typography variant="body">{`${token.slice(0, 8)}…`}</Typography>
-            <Button variant="secondary" size="medium" onClick={copy}>
-              {copied ? 'Copied' : 'Copy token'}
-            </Button>
-            <Button variant="secondary" size="medium" onClick={replace}>
-              Replace token
-            </Button>
-          </Stack>
+          <>
+            {/* Laid out like the calendar link's card; Replace token sits outside it (#196) */}
+            <Box border="default" borderRadius="md" p="md">
+              <Stack direction="row" gap="md" justifyContent="space-between" alignItems="center">
+                <div style={{ minWidth: 0 }}>
+                  <Stack direction="column" gap="xs">
+                    <Typography variant="body"><strong>Extension token</strong></Typography>
+                    <Typography variant="small" color="subdued">{`${token.slice(0, 8)}…`}</Typography>
+                  </Stack>
+                </div>
+                <Button variant="secondary" size="small" onClick={copy}>
+                  {copied ? 'Copied' : 'Copy token'}
+                </Button>
+              </Stack>
+            </Box>
+            <Stack direction="row">
+              <Button variant="secondary" size="medium" onClick={replace}>
+                Replace token
+              </Button>
+            </Stack>
+          </>
         ) : (
           !error && <Typography color="subdued">Loading your extension token…</Typography>
         )}
