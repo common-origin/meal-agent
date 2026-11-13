@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Alert, Box, Button, Checkbox, Chip, Container, Dropdown, Modal, NumberInput, Slider, Stack, TextField, Typography, tokens } from "@common-origin/design-system";
+import { Alert, Box, Button, Checkbox, Chip, Container, Dropdown, Modal, NumberInput, Slider, Stack, TextField, Typography } from "@common-origin/design-system";
 import Main from "@/components/app/Main";import {
   getFamilySettings,
   saveFamilySettings,
@@ -21,6 +21,9 @@ function adultOptions(current: number): { id: string; label: string }[] {
   const counts = current > 4 ? [1, 2, 3, 4, current] : [1, 2, 3, 4];
   return counts.map((n) => ({ id: String(n), label: String(n) }));
 }
+
+/** The weekly planning reminder's fixed time (#196). */
+const REMINDER_TIME = '09:00';
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<FamilySettings>(DEFAULT_FAMILY_SETTINGS);
@@ -73,7 +76,8 @@ export default function SettingsPage() {
       return;
     }
 
-    const success = await saveFamilySettings(settings);
+    // The reminder is always at 9am (#196): there's no time to pick, so an older saved time is replaced.
+    const success = await saveFamilySettings({ ...settings, weeklyReminderTime: REMINDER_TIME });
     if (success) {
       setSaved(true);
       setErrors([]);
@@ -632,40 +636,22 @@ export default function SettingsPage() {
 								title="Weekly planning reminder"
 								description="Set when you'd like to be reminded to plan your weekly meals and create your shopping list."
 							>
-								{/* Wraps on a phone, so the time drops under the day instead of off the card */}
-								<Stack direction="row" gap="2xl" wrap>
-									<div style={{ flex: '1 1 240px', minWidth: 0, maxWidth: '540px' }}>
-										<Dropdown
-											label="Reminder Day"
-											helperText="This will be used for future email/SMS notifications to help you stay on track with your meal planning routine."
-											value={settings.weeklyReminderDay || 'saturday'}
-											onChange={(value) => setSettings(prev => ({
-												...prev,
-												weeklyReminderDay: value as 'saturday' | 'sunday' | 'monday'
-											}))}
-											options={[
-												{ id: 'saturday', label: 'Saturday' },
-												{ id: 'sunday', label: 'Sunday' },
-												{ id: 'monday', label: 'Monday' }
-											]}
-										/>
-									</div>
-
-									<input
-										type="time"
-										value={settings.weeklyReminderTime || '18:00'}
-										onChange={(e) => setSettings(prev => ({
+								<SettingsField>
+									<Dropdown
+										label="Reminder Day"
+										helperText="You'll be reminded at 9am that day. This will be used for future email/SMS notifications to help you stay on track with your meal planning routine."
+										value={settings.weeklyReminderDay || 'saturday'}
+										onChange={(value) => setSettings(prev => ({
 											...prev,
-											weeklyReminderTime: e.target.value
+											weeklyReminderDay: value as 'saturday' | 'sunday' | 'monday'
 										}))}
-										style={{
-											padding: '8px 12px',
-											border: `1px solid ${tokens.semantic.color.border.input}`,
-											borderRadius: '4px',
-											fontSize: '14px',
-										}}
+										options={[
+											{ id: 'saturday', label: 'Saturday' },
+											{ id: 'sunday', label: 'Sunday' },
+											{ id: 'monday', label: 'Monday' }
+										]}
 									/>
-								</Stack>
+								</SettingsField>
 							</SettingsSection>
 
 							<SettingsSection

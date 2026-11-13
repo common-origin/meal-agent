@@ -100,7 +100,7 @@ export interface FamilySettings {
   varietyLevel: number; // 1-5, 3 = balanced
   leftoverFriendly: boolean;
   pantryPreference: 'hard' | 'soft'; // How strongly to prioritize pantry items
-  weeklyReminderTime?: string; // HH:MM format, e.g., "18:00" for 6pm reminder to plan the week
+  weeklyReminderTime?: string; // HH:MM format; always "09:00" since #196 (no time to pick in Settings)
   weeklyReminderDay?: 'saturday' | 'sunday' | 'monday'; // Day to send weekly reminder
 
   // Sharing — people the user can email recipes to (e.g. partner). Capped at MAX_RECIPE_RECIPIENTS.
@@ -182,7 +182,7 @@ export const DEFAULT_FAMILY_SETTINGS: FamilySettings = {
   varietyLevel: 3, // Balanced
   leftoverFriendly: true,
   pantryPreference: 'hard', // Default to prioritizing pantry items
-  weeklyReminderTime: '18:00', // Default 6pm reminder
+  weeklyReminderTime: '09:00', // 9am reminder (#196)
   weeklyReminderDay: 'saturday', // Default Saturday reminder
 
   recipeRecipients: [],
