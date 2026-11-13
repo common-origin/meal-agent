@@ -92,10 +92,13 @@ export default function SettingsPage() {
     }
   };
 
+  // The age to add a child with, from the form under the children's cards (#196).
+  const [newChildAge, setNewChildAge] = useState(5);
+
   const addChild = () => {
     setSettings(prev => ({
       ...prev,
-      children: [...prev.children, { age: 5 }],
+      children: [...prev.children, { age: newChildAge }],
       totalServings: prev.totalServings + 1,
     }));
   };
@@ -105,15 +108,6 @@ export default function SettingsPage() {
       ...prev,
       children: prev.children.filter((_, i) => i !== index),
       totalServings: Math.max(1, prev.totalServings - 1),
-    }));
-  };
-
-  const updateChild = (index: number, age: number) => {
-    setSettings(prev => ({
-      ...prev,
-      children: prev.children.map((child, i) => 
-        i === index ? { age } : child
-      )
     }));
   };
 
@@ -206,38 +200,52 @@ export default function SettingsPage() {
 								<Divider size="small" />
 								<Stack direction="column" gap="lg">
 									<Typography variant="subtitle">Children ({settings.children.length})</Typography>
-									{settings.children.map((child, index) => (
-										<Stack key={index} direction="row" gap="sm" alignItems="flex-end">
-											<SettingsField>
-												<NumberInput
-													label="Age"
-													min={0}
-													max={18}
-													value={child.age}
-													onChange={(value) => {
-														const numValue = typeof value === 'number' ? value : 0;
-														updateChild(index, numValue);
-													}}
-													placeholder="Child's age"
-												/>
-											</SettingsField>
-											<Box>
-												<Button
-													variant="naked"
-													size="large"
-													onClick={() => removeChild(index)}
-													aria-label="Remove child"
+									{/* One card per child, as Recipe sharing lists its recipients (#196) */}
+									{settings.children.length > 0 && (
+										<Stack direction="column" gap="sm">
+											{settings.children.map((child, index) => (
+												<Box
+													key={index}
+													border="default"
+													borderRadius="md"
+													p="md"
+													bg="color.fill.muted"
 												>
-													Remove
-												</Button>
-											</Box>
+													<Stack direction="row" gap="md" justifyContent="space-between" alignItems="center">
+														<Stack direction="column" gap="xs">
+															<Typography variant="body"><strong>Child {index + 1}</strong></Typography>
+															<Typography variant="small" color="subdued">Age {child.age}</Typography>
+														</Stack>
+														<Button
+															variant="secondary"
+															size="small"
+															onClick={() => removeChild(index)}
+															aria-label={`Remove child ${index + 1}`}
+														>
+															Remove
+														</Button>
+													</Stack>
+												</Box>
+											))}
 										</Stack>
-									))}
-									<Box my="md">
-										<Button variant="secondary" onClick={addChild}>
-											Add child
-										</Button>
-									</Box>
+									)}
+									<Stack direction="column" gap="md">
+										<SettingsField>
+											<NumberInput
+												label="Age"
+												min={0}
+												max={18}
+												value={newChildAge}
+												onChange={(value) => setNewChildAge(typeof value === 'number' ? value : 0)}
+												placeholder="Child's age"
+											/>
+										</SettingsField>
+										<Stack direction="row" justifyContent="flex-end">
+											<Button variant="secondary" size="medium" onClick={addChild}>
+												Add child
+											</Button>
+										</Stack>
+									</Stack>
 								</Stack>
 
 								<Chip>
