@@ -91,7 +91,9 @@ const Frame = styled.article<{ $layout: DayCardLayout; $tone: DayCardTone }>`
     grid-template-areas: "lead day body actions";
     /* The day and the body's first line share a baseline */
     align-items: baseline;
-    padding: ${space[400]} ${space[400]} ${space[400]} ${space[100]};
+    /* Right is the top padding less the actions' -0.375rem lift (below), so the buttons sit
+       as far from the right edge as from the top */
+    padding: ${space[400]} calc(${space[400]} - 0.375rem) ${space[400]} ${space[100]};
   }
 `;
 
