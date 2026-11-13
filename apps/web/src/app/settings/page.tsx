@@ -182,7 +182,7 @@ export default function SettingsPage() {
 						<Stack direction="column" gap="sm">
 							<Typography variant="h1">Settings</Typography>
 							<Typography variant="body">
-								Configure your preferences for AI-powered meal planning
+								Configure your preferences for meal planning
 							</Typography>
 						</Stack>
 
@@ -626,7 +626,7 @@ export default function SettingsPage() {
 
 							<SettingsSection
 								title="Pantry ingredients priority"
-								description="Control how the AI prioritizes ingredients you already have in your pantry/fridge when generating meal plans."
+								description="Control how much your meal plans use the ingredients already in your pantry and fridge."
 							>
 								<SettingsField>
 									<Dropdown
