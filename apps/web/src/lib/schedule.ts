@@ -20,13 +20,13 @@ export function thisWeekMondayISO(): string {
   return mondayOfWeekISO();
 }
 
-export function nextWeekMondayISO(): string {
-  return dayjs(mondayOfWeekISO()).add(1, "week").format("YYYY-MM-DD");
-}
-
 /** The Monday `weeks` weeks after (or before, if negative) `mondayISO`. */
 export function shiftWeekISO(mondayISO: string, weeks: number): string {
   return dayjs(mondayISO).add(weeks, "week").format("YYYY-MM-DD");
+}
+
+export function nextWeekMondayISO(): string {
+  return shiftWeekISO(mondayOfWeekISO(), 1);
 }
 
 /**
@@ -40,6 +40,16 @@ export function weekToShow(plannedWeeks: string[], today: dayjs.ConfigType = und
   if (plannedWeeks.includes(thisWeek)) return thisWeek;
   const upcoming = plannedWeeks.filter((week) => week > thisWeek).sort();
   return upcoming[0] ?? null;
+}
+
+/**
+ * The planned week to open with no link saying which (#194): on Friday to
+ * Sunday, the soonest planned week from next week on, since a weekend plan
+ * is for the week ahead; otherwise, or if nothing is planned from next week,
+ * `weekToShow` (today's week if planned, else the soonest after it).
+ */
+export function weekToOpen(plannedWeeks: string[], today: dayjs.ConfigType = undefined): string | null {
+  return weekToShow(plannedWeeks, defaultPlanningWeekISO(today)) ?? weekToShow(plannedWeeks, today);
 }
 
 /**

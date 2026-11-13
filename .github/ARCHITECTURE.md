@@ -248,8 +248,9 @@ signup):
   (`monday`..`sunday`); each day is `{ recipeId, servings?, reason? }`,
   where `reason` is the AI's "why this meal" line for that week (#94).
   A plan belongs to its own `week_start` (#194): `/plan` opens the week
-  covering today if it's planned, else the next planned week
-  (`weekToShow` in `schedule.ts`), the wizard picks which week a new
+  covering today if it's planned, else the next planned week, preferring
+  the week ahead from Friday to Sunday (`weekToOpen` in `schedule.ts`);
+  `/shopping-list` without `?week=` uses the same rule. The wizard picks which week a new
   plan is for, and Confirm plan links to `/shopping-list?week=…`.
   Nothing looks a plan up by "next Monday" any more
 - **`shopping_lists`** — one row per household per week; `items` is the

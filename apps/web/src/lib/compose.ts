@@ -17,7 +17,7 @@ import {
  */
 export function composeWeek(
   household: Household,
-  overrides?: WeeklyOverrides
+  overrides?: Partial<WeeklyOverrides>
 ): PlanWeek {
   const startISO = overrides?.weekOfISO || nextWeekMondayISO();
   const dinnerCount = overrides?.dinners || DEFAULT_DINNERS_PER_WEEK;

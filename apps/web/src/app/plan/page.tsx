@@ -13,7 +13,7 @@ import WeeklyPlanWizard, { type WeeklyPlanData } from "@/components/app/WeeklyPl
 import PantrySheet from "@/components/app/PantrySheet";
 import { type MealCardProps } from "@/components/app/MealCard";
 import { type Recipe } from "@/lib/types/recipe";
-import { scheduleSundayToast, thisWeekMondayISO, shiftWeekISO, weekToShow, defaultPlanningWeekISO, formatWeekRange, relativeWeekLabel, suggestPlanningWeek } from "@/lib/schedule";
+import { scheduleSundayToast, thisWeekMondayISO, shiftWeekISO, weekToOpen, defaultPlanningWeekISO, formatWeekRange, relativeWeekLabel, suggestPlanningWeek } from "@/lib/schedule";
 import { formatPlanSummary, summarisePlan } from "@/lib/planSummary";
 import { loadHousehold, getDefaultHousehold, getRecipeRatings, getBlockedRecipes, getFavorites } from "@/lib/storage";
 import { getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan, hydrateRecencyFromSupabase, recordWeekHistory, listPlannedWeeks } from "@/lib/hybridStorage";
@@ -193,6 +193,9 @@ export default function PlanPage() {
   const enterWeek = (week: string) => {
     weekStartRef.current = week;
     setWeekStart(week);
+    // Off screen straight away: the week being left must not stay editable under the new week's
+    // dates, where an edit would save its meals over the new week's plan.
+    commitPlan([]);
     slotByRecipeRef.current.clear();
     failedSlotsRef.current = {};
     dayErrorTextRef.current = {};
@@ -280,8 +283,8 @@ export default function PlanPage() {
       setBudgetPerMeal(familySettings.budgetPerMeal.max);
       setPlannedWeeks(weeks);
 
-      // The week covering today if it's planned, else the next planned week (#194).
-      const week = weekToShow(weeks);
+      // Today's week if planned, else the next planned one; at the weekend, the week ahead first (#194).
+      const week = weekToOpen(weeks);
       if (week) {
         await showWeek(week);
       } else {
@@ -1074,7 +1077,7 @@ export default function PlanPage() {
             dayErrors={dayErrors}
             onRetryDay={isGenerating || preview ? undefined : handleRetryDay}
             onDeleteClick={isGenerating || preview ? undefined : handleDeleteMeal}
-            isGeneratingPlan={isLoadingInitial}
+            isGeneratingPlan={isLoadingInitial || isLoadingWeek}
             // Not while any night is generating: its result lands by index, over a meal moved there
             onReorder={planBusy ? undefined : handleReorder}
             onMoveNight={planBusy ? undefined : handleMoveNight}

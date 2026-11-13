@@ -5,6 +5,7 @@ import {
   nextWeekMondayISO,
   shiftWeekISO,
   weekToShow,
+  weekToOpen,
   defaultPlanningWeekISO,
   formatWeekRange,
   relativeWeekLabel,
@@ -64,6 +65,24 @@ describe('weekToShow (#194)', () => {
   it('ignores past weeks and returns null when nothing is planned ahead', () => {
     expect(weekToShow(['2026-10-26'], '2026-11-10T12:00:00')).toBeNull();
     expect(weekToShow([], '2026-11-10T12:00:00')).toBeNull();
+  });
+});
+
+describe('weekToOpen (#194)', () => {
+  const planned = ['2026-11-09', '2026-11-16'];
+
+  it("opens today's week on Monday to Thursday", () => {
+    expect(weekToOpen(planned, '2026-11-12T12:00:00')).toBe('2026-11-09');
+  });
+
+  it('opens the week ahead on Friday to Sunday once it is planned', () => {
+    expect(weekToOpen(planned, '2026-11-15T18:00:00')).toBe('2026-11-16');
+    expect(weekToOpen(planned, '2026-11-13T18:00:00')).toBe('2026-11-16');
+  });
+
+  it("falls back to today's week at the weekend when nothing is planned ahead", () => {
+    expect(weekToOpen(['2026-11-09'], '2026-11-15T18:00:00')).toBe('2026-11-09');
+    expect(weekToOpen([], '2026-11-15T18:00:00')).toBeNull();
   });
 });
 

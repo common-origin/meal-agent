@@ -12,7 +12,7 @@ import { loadHousehold, getDefaultHousehold } from "@/lib/storage";
 import { clearShoppingComplete, isShoppingComplete as isWeekShoppingComplete, markShoppingComplete } from "@/lib/shoppingCompletion";
 import { loadCurrentWeekPlan, savePantryItems, loadPantryItems, hydrateRecencyFromSupabase, syncRecencyToSupabase, listPlannedWeeks } from "@/lib/hybridStorage";
 import { composeWeek } from "@/lib/compose";
-import { defaultPlanningWeekISO, formatWeekRange, parseWeekParam, thisWeekMondayISO, weekToShow } from "@/lib/schedule";
+import { defaultPlanningWeekISO, formatWeekRange, parseWeekParam, thisWeekMondayISO, weekToOpen } from "@/lib/schedule";
 import { track, type CostOptimizedMeta } from "@/lib/analytics";
 import { estimateIngredientCost } from "@/lib/colesMapping";
 import { RecipeLibrary } from "@/lib/library";
@@ -39,7 +39,7 @@ export default function ShoppingListPage() {
   const [isShoppingComplete, setIsShoppingComplete] = useState(false);
   const [weeklyNutrition, setWeeklyNutrition] = useState<WeeklyNutrition | null>(null);
   // The Monday of the plan this list is for (#194): the link's ?week=, else the week the plan page
-  // would open (today's if planned, else the next planned one), else the week you'd plan next.
+  // would open (weekToOpen: the week ahead at the weekend, else today's), else the week you'd plan next.
   const [weekStart, setWeekStart] = useState<string | null>(null);
   const weekRef = useRef<string>(defaultPlanningWeekISO());
 
@@ -171,7 +171,7 @@ export default function ShoppingListPage() {
       // Pull in any recency history recorded on other devices first, so
       // variety enforcement below sees what's actually been cooked recently
       await hydrateRecencyFromSupabase();
-      plan = composeWeek(household);
+      plan = composeWeek(household, { weekOfISO: nextWeekISO });
       // Push this week's picks to Supabase (fire-and-forget) so other
       // devices see them too
       syncRecencyToSupabase(nextWeekISO, plan.days.map(d => d.recipeId))
@@ -233,7 +233,7 @@ export default function ShoppingListPage() {
     (async () => {
       const fromLink = parseWeekParam(new URLSearchParams(window.location.search).get('week'));
       const week =
-        fromLink ?? weekToShow(await listPlannedWeeks(thisWeekMondayISO()).catch(() => [])) ?? defaultPlanningWeekISO();
+        fromLink ?? weekToOpen(await listPlannedWeeks(thisWeekMondayISO()).catch(() => [])) ?? defaultPlanningWeekISO();
       weekRef.current = week;
       setWeekStart(week);
 
