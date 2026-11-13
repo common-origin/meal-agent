@@ -1,7 +1,8 @@
 "use client";
 
 import { Children, Fragment, type ReactNode } from "react";
-import { Box, Divider, Grid, GridCol, Stack, Typography } from "@common-origin/design-system";
+import styled from "styled-components";
+import { Box, Divider, Grid, GridCol, Stack, Typography, tokens } from "@common-origin/design-system";
 
 interface SettingsSectionProps {
   title: string;
@@ -12,21 +13,35 @@ interface SettingsSectionProps {
 }
 
 /**
+ * The card's padding (#196): 16px on phones, 32px from the design system's
+ * `md` breakpoint up. Box's `p` can't vary by breakpoint, so it lives here.
+ */
+const FormPadding = styled.div`
+  padding: ${tokens.semantic.space[400]};
+
+  @media (min-width: ${tokens.semantic.breakpoint.md}) {
+    padding: ${tokens.semantic.space[800]};
+  }
+`;
+
+/**
  * The one card holding every /settings section (#196), with a divider
  * between each pair of sections.
  */
 export function SettingsForm({ children }: { children: ReactNode }) {
   const sections = Children.toArray(children);
   return (
-    <Box borderRadius="lg" p="4xl" bg="surface.raised">
-      <Stack direction="column" gap="xl">
-        {sections.map((section, index) => (
-          <Fragment key={index}>
-            {index > 0 && <Divider size="small" />}
-            {section}
-          </Fragment>
-        ))}
-      </Stack>
+    <Box borderRadius="lg" bg="surface.raised">
+      <FormPadding>
+        <Stack direction="column" gap="xl">
+          {sections.map((section, index) => (
+            <Fragment key={index}>
+              {index > 0 && <Divider size="small" />}
+              {section}
+            </Fragment>
+          ))}
+        </Stack>
+      </FormPadding>
     </Box>
   );
 }
