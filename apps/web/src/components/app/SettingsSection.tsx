@@ -18,7 +18,7 @@ interface SettingsSectionProps {
 export function SettingsForm({ children }: { children: ReactNode }) {
   const sections = Children.toArray(children);
   return (
-    <Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
+    <Box borderRadius="lg" p="lg" bg="surface.raised">
       <Stack direction="column" gap="xl">
         {sections.map((section, index) => (
           <Fragment key={index}>
