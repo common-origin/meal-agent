@@ -180,7 +180,7 @@ export default function SettingsPage() {
 					<Stack direction="column" gap="xl">
 						{/* Header */}
 						<Stack direction="column" gap="sm">
-							<Typography variant="h1">Family settings</Typography>
+							<Typography variant="h1">Settings</Typography>
 							<Typography variant="body">
 								Configure your family&apos;s preferences for AI-powered meal planning
 							</Typography>
