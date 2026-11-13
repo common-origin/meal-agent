@@ -12,6 +12,7 @@ import { validateFamilySettings, DEFAULT_FAMILY_SETTINGS, DIETARY_TYPE_OPTIONS, 
 import { track } from "@/lib/analytics";
 import SettingsSection, { SettingsField, SettingsForm } from "@/components/app/SettingsSection";
 import ColesExtensionSettings from "@/components/app/ColesExtensionSettings";
+import TextListField from "@/components/app/TextListField";
 
 /**
  * Adults is a choice of 1 to 4 (#196). A household saved with more (validation
@@ -352,6 +353,24 @@ export default function SettingsPage() {
 											}))}
 										/>
 									</Stack>
+									<SettingsField>
+										<TextListField
+											label="Allergies"
+											helperText="Recipes are generated to leave these out entirely"
+											placeholder="e.g., peanuts"
+											values={settings.allergies}
+											onChange={(allergies) => setSettings(prev => ({ ...prev, allergies }))}
+										/>
+									</SettingsField>
+									<SettingsField>
+										<TextListField
+											label="Foods to avoid"
+											helperText="Ingredients you'd rather not have, but aren't allergic to"
+											placeholder="e.g., mushrooms"
+											values={settings.avoidFoods}
+											onChange={(avoidFoods) => setSettings(prev => ({ ...prev, avoidFoods }))}
+										/>
+									</SettingsField>
 								</Stack>
 							</SettingsSection>
 
