@@ -63,7 +63,7 @@ export default function TextListField({ label, helperText, placeholder, values, 
             onKeyDown={onKeyDown}
           />
         </div>
-        <Button variant="secondary" size="medium" onClick={add} disabled={atCap || !draft.trim()}>
+        <Button variant="secondary" size="large" iconName="add" onClick={add} disabled={atCap || !draft.trim()}>
           Add
         </Button>
       </Stack>
