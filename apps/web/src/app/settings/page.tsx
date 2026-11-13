@@ -264,9 +264,10 @@ export default function SettingsPage() {
 										</Modal>
 									</Stack>
 
-									<Chip>
-										Total servings: <strong>{settings.totalServings}</strong>
-									</Chip>
+									{/* One string: the chip is a flex box, so separate text and <strong> nodes lost their space */}
+									<Box>
+										<Chip>{`Total servings: ${settings.totalServings}`}</Chip>
+									</Box>
 								</Stack>
 							</SettingsSection>
 
