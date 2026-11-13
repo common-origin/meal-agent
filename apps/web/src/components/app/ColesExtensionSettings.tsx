@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Box, Button, Stack, Typography } from "@common-origin/design-system";
+import { Button, Stack, Typography } from "@common-origin/design-system";
+import SettingsSection from "./SettingsSection";
 
 async function fetchToken(rotate: boolean): Promise<string> {
   const res = await fetch('/api/household/extension-token', { method: rotate ? 'POST' : 'GET' }).catch(() => null);
@@ -43,13 +44,16 @@ export default function ColesExtensionSettings() {
   };
 
   return (
-    <Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
-      <Stack direction="column" gap="md">
-        <Typography variant="h3">Coles extension</Typography>
-        <Typography color="subdued">
+    <SettingsSection
+      title="Coles extension"
+      description={
+        <>
           Paste this token into the Meal Agent for Coles extension&apos;s options. It lets the extension read your
           approved shopping list and remember the products you buy. Treat it like a password.
-        </Typography>
+        </>
+      }
+    >
+      <Stack direction="column" gap="md">
         {token ? (
           <Stack direction="row" gap="sm" alignItems="center" wrap>
             <Typography variant="body">{`${token.slice(0, 8)}…`}</Typography>
@@ -69,6 +73,6 @@ export default function ColesExtensionSettings() {
           </Typography>
         )}
       </Stack>
-    </Box>
+    </SettingsSection>
   );
 }
