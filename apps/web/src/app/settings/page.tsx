@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Alert, Box, Button, Checkbox, Chip, Container, Divider, Dropdown, NumberInput, Slider, Stack, TextField, Typography, tokens } from "@common-origin/design-system";
+import { Alert, Box, Button, Checkbox, Chip, Container, Dropdown, Modal, NumberInput, Slider, Stack, TextField, Typography } from "@common-origin/design-system";
 import Main from "@/components/app/Main";import {
   getFamilySettings,
   saveFamilySettings,
@@ -10,7 +10,20 @@ import Main from "@/components/app/Main";import {
 import type { FamilySettings } from "@/lib/types/settings";
 import { validateFamilySettings, DEFAULT_FAMILY_SETTINGS, DIETARY_TYPE_OPTIONS, MAX_RECIPE_RECIPIENTS, MAX_FLAVOR_PROFILE_LENGTH, MAX_SETTING_TEXT_LENGTH } from "@/lib/types/settings";
 import { track } from "@/lib/analytics";
+import SettingsSection, { SettingsField, SettingsForm } from "@/components/app/SettingsSection";
 import ColesExtensionSettings from "@/components/app/ColesExtensionSettings";
+
+/**
+ * Adults is a choice of 1 to 4 (#196). A household saved with more (validation
+ * allows up to 10) keeps its number as an extra option rather than a blank field.
+ */
+function adultOptions(current: number): { id: string; label: string }[] {
+  const counts = current > 4 ? [1, 2, 3, 4, current] : [1, 2, 3, 4];
+  return counts.map((n) => ({ id: String(n), label: String(n) }));
+}
+
+/** The weekly planning reminder's fixed time (#196). */
+const REMINDER_TIME = '09:00';
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<FamilySettings>(DEFAULT_FAMILY_SETTINGS);
@@ -63,7 +76,8 @@ export default function SettingsPage() {
       return;
     }
 
-    const success = await saveFamilySettings(settings);
+    // The reminder is always at 9am (#196): there's no time to pick, so an older saved time is replaced.
+    const success = await saveFamilySettings({ ...settings, weeklyReminderTime: REMINDER_TIME });
     if (success) {
       setSaved(true);
       setErrors([]);
@@ -91,12 +105,22 @@ export default function SettingsPage() {
     }
   };
 
-  const addChild = () => {
+  // "Add child" opens a dialog to pick the new child's age (#196).
+  const [addChildOpen, setAddChildOpen] = useState(false);
+  const [newChildAge, setNewChildAge] = useState(5);
+
+  const openAddChild = () => {
+    setNewChildAge(5);
+    setAddChildOpen(true);
+  };
+
+  const confirmAddChild = () => {
     setSettings(prev => ({
       ...prev,
-      children: [...prev.children, { age: 5 }],
+      children: [...prev.children, { age: newChildAge }],
       totalServings: prev.totalServings + 1,
     }));
+    setAddChildOpen(false);
   };
 
   const removeChild = (index: number) => {
@@ -107,16 +131,8 @@ export default function SettingsPage() {
     }));
   };
 
-  const updateChild = (index: number, age: number) => {
-    setSettings(prev => ({
-      ...prev,
-      children: prev.children.map((child, i) => 
-        i === index ? { age } : child
-      )
-    }));
-  };
-
-  // Recipe recipients (people you can email recipes to)
+  // Recipe recipients (people you can email recipes to). "Add recipient" opens a dialog (#196).
+  const [addRecipientOpen, setAddRecipientOpen] = useState(false);
   const [newRecipientName, setNewRecipientName] = useState('');
   const [newRecipientEmail, setNewRecipientEmail] = useState('');
   const recipients = settings.recipeRecipients ?? [];
@@ -127,15 +143,27 @@ export default function SettingsPage() {
     newRecipientName.trim().length > 0 &&
     emailRe.test(newRecipientEmail.trim()) &&
     !recipients.some(r => r.email.toLowerCase() === newRecipientEmail.trim().toLowerCase());
+  // Why the email can't be added yet, once something is typed
+  const newEmail = newRecipientEmail.trim();
+  const newRecipientEmailError =
+    newEmail.length === 0 ? undefined
+    : !emailRe.test(newEmail) ? 'Enter a valid email address'
+    : recipients.some(r => r.email.toLowerCase() === newEmail.toLowerCase()) ? 'Already a recipient'
+    : undefined;
 
-  const addRecipient = () => {
+  const openAddRecipient = () => {
+    setNewRecipientName('');
+    setNewRecipientEmail('');
+    setAddRecipientOpen(true);
+  };
+
+  const confirmAddRecipient = () => {
     if (!canAddRecipient) return;
     setSettings(prev => ({
       ...prev,
       recipeRecipients: [...(prev.recipeRecipients ?? []), { name: newRecipientName.trim(), email: newRecipientEmail.trim() }],
     }));
-    setNewRecipientName('');
-    setNewRecipientEmail('');
+    setAddRecipientOpen(false);
   };
 
   const removeRecipient = (index: number) => {
@@ -147,7 +175,7 @@ export default function SettingsPage() {
 
   return (
     <>
-			<Main maxWidth="md">
+			<Main maxWidth="960px">
 				<Container>
 					<Stack direction="column" gap="xl">
 						{/* Header */}
@@ -180,153 +208,160 @@ export default function SettingsPage() {
 								))}
 							</Stack>
 						</Alert>
-					)}						{/* Household Section */}
-						<Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
-							<Stack direction="column" gap="md">
-								<Typography variant="h3">Household</Typography>
-								<Box maxWidth="420px">
-									<Stack direction="column" gap="lg">
-										<NumberInput
+					)}
+
+						{/* Each section: title and description left, inputs right, one card with dividers (#196) */}
+						<SettingsForm>
+							<SettingsSection
+								title="Household"
+								description="Who you're cooking for. New recipes are written for the total servings."
+							>
+								<Stack direction="column" gap="2xl">
+									<SettingsField>
+										<Dropdown
 											label="Adults"
-											min={1}
-											max={10}
-											value={settings.adults}
+											value={String(settings.adults)}
 											onChange={(value) => {
-												const numValue = typeof value === 'number' ? value : 1;
+												const numValue = Number(value);
 												setSettings(prev => ({
 													...prev,
 													adults: numValue,
 													totalServings: numValue + prev.children.length
 												}));
 											}}
+											options={adultOptions(settings.adults)}
+										/>
+									</SettingsField>
+									<Stack direction="column" gap="2xl">
+										{/* One card per child, as Recipe sharing lists its recipients (#196) */}
+										{settings.children.length > 0 && (
+											<Stack direction="column" gap="sm">
+												{settings.children.map((child, index) => (
+													<Box
+														key={index}
+														border="default"
+														borderRadius="md"
+														p="md"
+														bg="color.fill.muted"
+													>
+														<Stack direction="row" gap="md" justifyContent="space-between" alignItems="center">
+															<Stack direction="column" gap="xs">
+																<Typography variant="body"><strong>Child {index + 1}</strong></Typography>
+																<Typography variant="small" color="subdued">Age {child.age}</Typography>
+															</Stack>
+															<Button
+																variant="secondary"
+																size="small"
+																onClick={() => removeChild(index)}
+																aria-label={`Remove child ${index + 1}`}
+															>
+																Remove
+															</Button>
+														</Stack>
+													</Box>
+												))}
+											</Stack>
+										)}
+										{/* Adding a child opens a dialog to pick their age (#196) */}
+										<Stack direction="row">
+											<Button variant="secondary" size="medium" iconName="add" onClick={openAddChild}>
+												Add child
+											</Button>
+										</Stack>
+										<Modal
+											isOpen={addChildOpen}
+											onClose={() => setAddChildOpen(false)}
+											title="Add a child"
+											size="small"
+											actions={[
+												{ label: 'Cancel', onClick: () => setAddChildOpen(false), variant: 'secondary' },
+												{ label: 'Add child', onClick: confirmAddChild, variant: 'primary' },
+											]}
+										>
+											<NumberInput
+												label="Age"
+												min={0}
+												max={18}
+												value={newChildAge}
+												onChange={(value) => setNewChildAge(typeof value === 'number' ? value : 0)}
+												placeholder="Child's age"
+											/>
+										</Modal>
+									</Stack>
+
+									{/* One string: the chip is a flex box, so separate text and <strong> nodes lost their space */}
+									<Box>
+										<Chip>{`Total servings: ${settings.totalServings}`}</Chip>
+									</Box>
+								</Stack>
+							</SettingsSection>
+
+							<SettingsSection
+								title="Dietary requirements"
+								description="Set your primary diet type and any additional preferences"
+							>
+								<Stack direction="column" gap="2xl">
+									<SettingsField>
+										<Dropdown
+											label="Primary diet"
+											helperText="This determines the types of recipes we'll suggest"
+											value={settings.dietaryType}
+											onChange={(value) => setSettings(prev => ({
+												...prev,
+												dietaryType: value as FamilySettings['dietaryType']
+											}))}
+											options={DIETARY_TYPE_OPTIONS.map(opt => ({ id: opt.id, label: opt.label }))}
+										/>
+									</SettingsField>
+									<Stack direction="column" gap="sm">
+										<Typography variant="label">Additional preferences</Typography>
+
+										<Checkbox
+											label="Prefer gluten-free options"
+											checked={settings.glutenFreePreference}
+											onChange={(e) => setSettings(prev => ({
+												...prev,
+												glutenFreePreference: e.target.checked
+											}))}
+										/>
+
+										<Checkbox
+											label="Dairy-free"
+											checked={settings.dairyFree}
+											onChange={(e) => setSettings(prev => ({
+												...prev,
+												dairyFree: e.target.checked
+											}))}
+										/>
+
+										<Checkbox
+											label="Focus on high protein meals"
+											checked={settings.proteinFocus}
+											onChange={(e) => setSettings(prev => ({
+												...prev,
+												proteinFocus: e.target.checked
+											}))}
+										/>
+
+										<Checkbox
+											label="Leftover-friendly meals"
+											checked={settings.leftoverFriendly}
+											onChange={(e) => setSettings(prev => ({
+												...prev,
+												leftoverFriendly: e.target.checked
+											}))}
 										/>
 									</Stack>
-								</Box>
-								<Divider size="small" />
-								<Box maxWidth="420px">
-									<Stack direction="column" gap="lg">
-										<Stack direction="column" gap="lg">
-											<Typography variant="subtitle">Children ({settings.children.length})</Typography>
-											{settings.children.map((child, index) => (
-												<Stack key={index} direction="row" gap="sm" alignItems="flex-end">
-													<NumberInput
-														label="Age"
-														min={0}
-														max={18}
-														value={child.age}
-														onChange={(value) => {
-															const numValue = typeof value === 'number' ? value : 0;
-															updateChild(index, numValue);
-														}}
-														placeholder="Child's age"
-													/>
-													<Box>
-														<Button
-															variant="naked"
-															size="large"
-															onClick={() => removeChild(index)}
-															aria-label="Remove child"
-														>
-															Remove
-														</Button>
-													</Box>
-												</Stack>
-											))}
-											<Box my="md">
-												<Button variant="secondary" onClick={addChild}>
-													Add child
-												</Button>
-											</Box>
-										</Stack>
-
-										<Chip>
-											Total servings: <strong>{settings.totalServings}</strong>
-										</Chip>
-									</Stack>
-								</Box>
-							</Stack>
-						</Box>
-
-						{/* Dietary requirements */}
-						<Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
-							<Stack direction="column" gap="lg">
-								<Stack direction="column" gap="sm">
-									<Typography variant="h3">Dietary requirements</Typography>
-									<Typography variant="small" color="subdued">
-										Set your primary diet type and any additional preferences
-									</Typography>
 								</Stack>
-								
-								<Box maxWidth="420px">
-									<Dropdown
-										label="Primary diet"
-										helperText="This determines the types of recipes we'll suggest"
-										value={settings.dietaryType}
-										onChange={(value) => setSettings(prev => ({
-											...prev,
-											dietaryType: value as FamilySettings['dietaryType']
-										}))}
-										options={DIETARY_TYPE_OPTIONS.map(opt => ({ id: opt.id, label: opt.label }))}
-									/>
-								</Box>
+							</SettingsSection>
 
-								<Divider size="small" />
-
-								<Stack direction="column" gap="sm">
-									<Typography variant="subtitle">Additional preferences</Typography>
-									
-									<Checkbox
-										label="Prefer gluten-free options"
-										checked={settings.glutenFreePreference}
-										onChange={(e) => setSettings(prev => ({
-											...prev,
-											glutenFreePreference: e.target.checked
-										}))}
-									/>
-
-									<Checkbox
-										label="Dairy-free"
-										checked={settings.dairyFree}
-										onChange={(e) => setSettings(prev => ({
-											...prev,
-											dairyFree: e.target.checked
-										}))}
-									/>
-
-									<Checkbox
-										label="Focus on high protein meals"
-										checked={settings.proteinFocus}
-										onChange={(e) => setSettings(prev => ({
-											...prev,
-											proteinFocus: e.target.checked
-										}))}
-									/>
-
-									<Checkbox
-										label="Leftover-friendly meals"
-										checked={settings.leftoverFriendly}
-										onChange={(e) => setSettings(prev => ({
-											...prev,
-											leftoverFriendly: e.target.checked
-										}))}
-									/>
-								</Stack>
-							</Stack>
-						</Box>
-
-						{/* Cooking Profile */}
-						<Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
-							<Stack direction="column" gap="2xl">
-								<Stack direction="column" gap="md">
-									<Typography variant="h3">Cooking profile</Typography>
-									<Typography variant="small" color="subdued">
-										Help us understand your cooking preferences and skill level
-									</Typography>
-								</Stack>
-								
-								<Box maxWidth="500px">
-									<Stack direction="column" gap="lg">
-										<Box>
+							<SettingsSection
+								title="Cooking profile"
+								description="Help us understand your cooking preferences and skill level"
+							>
+								<Stack direction="column" gap="2xl">
+									<Box>
+										<SettingsField>
 											<Dropdown
 												label="Spice tolerance"
 												helperText="How spicy can your meals be?"
@@ -343,9 +378,11 @@ export default function SettingsPage() {
 													{ id: 'loves_hot', label: 'Loves Hot (extra spicy)' }
 												]}
 											/>
-										</Box>
+										</SettingsField>
+									</Box>
 
-										<Box>
+									<Box>
+										<SettingsField>
 											<Dropdown
 												label="Cooking skill"
 												helperText="How comfortable are you following recipes?"
@@ -361,9 +398,11 @@ export default function SettingsPage() {
 													{ id: 'advanced', label: 'Advanced (love a challenge)' }
 												]}
 											/>
-										</Box>
+										</SettingsField>
+									</Box>
 
-										<Box>
+									<Box>
+										<SettingsField>
 											<Dropdown
 												label="Effort preference"
 												helperText="How much time and clean-up is okay on most nights?"
@@ -378,9 +417,11 @@ export default function SettingsPage() {
 													{ id: 'happy_to_spend_time_on_weekends', label: 'Happy to spend time on weekends' }
 												]}
 											/>
-										</Box>
+										</SettingsField>
+									</Box>
 
-										<Box>
+									<Box>
+										<SettingsField>
 											<TextField
 												label="Flavor profile description"
 												helperText="Describe your family&apos;s taste preferences in a few words"
@@ -392,24 +433,17 @@ export default function SettingsPage() {
 												}))}
 												placeholder="e.g., fresh & herby, avoids heavy cream"
 											/>
-										</Box>
-									</Stack>
-								</Box>
-							</Stack>
-						</Box>
-
-						{/* Location & Seasonality */}
-						<Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
-							<Stack direction="column" gap="2xl">
-								<Stack direction="column" gap="md">
-									<Typography variant="h3">Location & seasonality</Typography>
-									<Typography variant="small" color="subdued">
-										Used for ingredient availability and seasonal preferences
-									</Typography>
+										</SettingsField>
+									</Box>
 								</Stack>
-								
-								<Box maxWidth="500px">
-									<Stack direction="column" gap="lg">
+							</SettingsSection>
+
+							<SettingsSection
+								title="Location & seasonality"
+								description="Used for ingredient availability and seasonal preferences"
+							>
+								<Stack direction="column" gap="2xl">
+									<SettingsField>
 										<TextField
 											label="City"
 											value={settings.location.city}
@@ -423,7 +457,9 @@ export default function SettingsPage() {
 											}))}
 											placeholder="e.g., Melbourne"
 										/>
+									</SettingsField>
 
+									<SettingsField>
 										<TextField
 											label="Country"
 											value={settings.location.country}
@@ -437,8 +473,10 @@ export default function SettingsPage() {
 											}))}
 											placeholder="e.g., Australia"
 										/>
+									</SettingsField>
 
-										<Box>
+									<Box>
+										<SettingsField>
 											<Dropdown
 												label="Hemisphere"
 												helperText="Affects seasonal ingredient recommendations"
@@ -455,18 +493,16 @@ export default function SettingsPage() {
 													{ id: 'southern', label: 'Southern Hemisphere' }
 												]}
 											/>
-										</Box>
-									</Stack>
-								</Box>
-							</Stack>
-						</Box>
+										</SettingsField>
+									</Box>
+								</Stack>
+							</SettingsSection>
 
-						{/* Budget & Time */}
-						<Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
-							<Stack direction="column" gap="md">
-								<Typography variant="h3">Budget & time</Typography>
-								
-								<Stack direction="column" gap="xl">
+							<SettingsSection
+								title="Budget & time"
+								description="What a dinner should cost and how long it can take. The plan's budget is the max per meal times its dinners."
+							>
+								<Stack direction="column" gap="2xl">
 									<Slider
 										label={`Budget per meal (min): $${settings.budgetPerMeal.min}`}
 										min={10}
@@ -525,154 +561,117 @@ export default function SettingsPage() {
 										}))}
 									/>
 								</Stack>
-							</Stack>
-						</Box>
+							</SettingsSection>
 
-						{/* Batch Cooking */}
-						<Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
-							<Stack direction="column" gap="md">
-								<Typography variant="h3">Batch cooking</Typography>
-								
-								<Checkbox
-									label="Enable batch cooking"
-									checked={settings.batchCooking.enabled}
-									onChange={(e) => setSettings(prev => ({
-										...prev,
-										batchCooking: {
-											...prev.batchCooking,
-											enabled: e.target.checked
-										}
-									}))}
-								/>
-
-								{settings.batchCooking.enabled && (
-									<Box maxWidth="400px">
-										<Stack direction="column" gap="lg">
-											<Dropdown
-												label="Frequency"
-												value={settings.batchCooking.frequency}
-												onChange={(value) => setSettings(prev => ({
-													...prev,
-													batchCooking: {
-														...prev.batchCooking,
-														frequency: value as 'weekly' | 'biweekly' | 'none'
-													}
-												}))}
-												options={[
-													{ id: 'weekly', label: 'Weekly' },
-													{ id: 'biweekly', label: 'Bi-weekly' },
-													{ id: 'none', label: 'None' }
-												]}
-											/>
-
-											<Dropdown
-												label="Preferred day"
-												value={settings.batchCooking.preferredDay}
-												onChange={(value) => setSettings(prev => ({
-													...prev,
-													batchCooking: {
-														...prev.batchCooking,
-														preferredDay: value as 'sunday' | 'saturday' | 'friday'
-													}
-												}))}
-												options={[
-													{ id: 'sunday', label: 'Sunday' },
-													{ id: 'saturday', label: 'Saturday' },
-													{ id: 'friday', label: 'Friday' }
-												]}
-											/>
-										</Stack>
-									</Box>
-								)}
-							</Stack>
-						</Box>
-
-						{/* Pantry Preference */}
-						<Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
-							<Box maxWidth="500px">
+							<SettingsSection
+								title="Batch cooking"
+								description="Cook in bulk on one day and eat from it across the week."
+							>
 								<Stack direction="column" gap="2xl">
-									<Stack direction="column" gap="md">
-										<Typography variant="h3">Pantry ingredients priority</Typography>
-										<Typography variant="body">
-											Control how the AI prioritizes ingredients you already have in your pantry/fridge when generating meal plans.
-										</Typography>
-									</Stack>
-									
+									<Checkbox
+										label="Enable batch cooking"
+										checked={settings.batchCooking.enabled}
+										onChange={(e) => setSettings(prev => ({
+											...prev,
+											batchCooking: {
+												...prev.batchCooking,
+												enabled: e.target.checked
+											}
+										}))}
+									/>
+
+									{settings.batchCooking.enabled && (
+										<Stack direction="column" gap="2xl">
+											<SettingsField>
+												<Dropdown
+													label="Frequency"
+													value={settings.batchCooking.frequency}
+													onChange={(value) => setSettings(prev => ({
+														...prev,
+														batchCooking: {
+															...prev.batchCooking,
+															frequency: value as 'weekly' | 'biweekly' | 'none'
+														}
+													}))}
+													options={[
+														{ id: 'weekly', label: 'Weekly' },
+														{ id: 'biweekly', label: 'Bi-weekly' },
+														{ id: 'none', label: 'None' }
+													]}
+												/>
+											</SettingsField>
+
+											<SettingsField>
+												<Dropdown
+													label="Preferred day"
+													value={settings.batchCooking.preferredDay}
+													onChange={(value) => setSettings(prev => ({
+														...prev,
+														batchCooking: {
+															...prev.batchCooking,
+															preferredDay: value as 'sunday' | 'saturday' | 'friday'
+														}
+													}))}
+													options={[
+														{ id: 'sunday', label: 'Sunday' },
+														{ id: 'saturday', label: 'Saturday' },
+														{ id: 'friday', label: 'Friday' }
+													]}
+												/>
+											</SettingsField>
+										</Stack>
+									)}
+								</Stack>
+							</SettingsSection>
+
+							<SettingsSection
+								title="Pantry ingredients priority"
+								description="Control how the AI prioritizes ingredients you already have in your pantry/fridge when generating meal plans."
+							>
+								<SettingsField>
 									<Dropdown
 										label="Priority Level"
-										helperText="Perishable items you add to your pantry list will automatically be prioritized regardless of this setting to help reduce food waste."
+										helperText="High plans meals around the ingredients you have. Low uses them when they suit a meal. Perishable items are always prioritized, to reduce food waste."
 										value={settings.pantryPreference}
 										onChange={(value) => setSettings(prev => ({
 											...prev,
 											pantryPreference: value as 'hard' | 'soft'
 										}))}
 										options={[
-											{ id: 'hard', label: 'High Priority - Strongly prefer recipes using these ingredients' },
-											{ id: 'soft', label: 'Low Priority - Consider these ingredients if suitable' }
+											{ id: 'hard', label: 'High' },
+											{ id: 'soft', label: 'Low' }
 										]}
 									/>
-								</Stack>
-							</Box>
-						</Box>
+								</SettingsField>
+							</SettingsSection>
 
-						{/* Weekly Planning Reminder */}
-						<Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
-							<Box maxWidth="500px">
+							<SettingsSection
+								title="Weekly planning reminder"
+								description="Set when you'd like to be reminded to plan your weekly meals and create your shopping list."
+							>
+								<SettingsField>
+									<Dropdown
+										label="Reminder Day"
+										helperText="You'll be reminded at 9am that day. This will be used for future email/SMS notifications to help you stay on track with your meal planning routine."
+										value={settings.weeklyReminderDay || 'saturday'}
+										onChange={(value) => setSettings(prev => ({
+											...prev,
+											weeklyReminderDay: value as 'saturday' | 'sunday' | 'monday'
+										}))}
+										options={[
+											{ id: 'saturday', label: 'Saturday' },
+											{ id: 'sunday', label: 'Sunday' },
+											{ id: 'monday', label: 'Monday' }
+										]}
+									/>
+								</SettingsField>
+							</SettingsSection>
+
+							<SettingsSection
+								title="Recipe sharing"
+								description={`People you can email a recipe to from the recipe page. Up to ${MAX_RECIPE_RECIPIENTS} recipients.`}
+							>
 								<Stack direction="column" gap="2xl">
-									<Stack direction="column" gap="md">
-										<Typography variant="h3">Weekly planning reminder</Typography>
-										<Typography variant="body">
-											Set when you&apos;d like to be reminded to plan your weekly meals and create your shopping list.
-										</Typography>
-									</Stack>
-									
-									<Stack direction="row" gap="md">
-										<Dropdown
-											label="Reminder Day"
-											helperText="This will be used for future email/SMS notifications to help you stay on track with your meal planning routine."
-											value={settings.weeklyReminderDay || 'saturday'}
-											onChange={(value) => setSettings(prev => ({
-												...prev,
-												weeklyReminderDay: value as 'saturday' | 'sunday' | 'monday'
-											}))}
-											options={[
-												{ id: 'saturday', label: 'Saturday' },
-												{ id: 'sunday', label: 'Sunday' },
-												{ id: 'monday', label: 'Monday' }
-											]}
-										/>
-
-										<input
-											type="time"
-											value={settings.weeklyReminderTime || '18:00'}
-											onChange={(e) => setSettings(prev => ({
-												...prev,
-												weeklyReminderTime: e.target.value
-											}))}
-											style={{
-												padding: '8px 12px',
-												border: `1px solid ${tokens.semantic.color.border.input}`,
-												borderRadius: '4px',
-												fontSize: '14px',
-											}}
-										/>
-									</Stack>
-								</Stack>
-							</Box>
-						</Box>
-
-
-						{/* Recipe Sharing */}
-						<Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
-							<Box maxWidth="600px">
-								<Stack direction="column" gap="2xl">
-									<Stack direction="column" gap="md">
-										<Typography variant="h3">Recipe sharing</Typography>
-										<Typography variant="body">
-											People you can email a recipe to from the recipe page. Up to {MAX_RECIPE_RECIPIENTS} recipients.
-										</Typography>
-									</Stack>
-
 									{recipients.length > 0 && (
 										<Stack direction="column" gap="sm">
 											{recipients.map((r, i) => (
@@ -684,10 +683,13 @@ export default function SettingsPage() {
 													bg="color.fill.muted"
 												>
 													<Stack direction="row" gap="md" justifyContent="space-between" alignItems="center">
-														<Stack direction="column" gap="xs">
-															<Typography variant="body"><strong>{r.name}</strong></Typography>
-															<Typography variant="small" color="subdued">{r.email}</Typography>
-														</Stack>
+														{/* Shrinks, and wraps a long email, so Remove stays inside the card on a phone */}
+														<div style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
+															<Stack direction="column" gap="xs">
+																<Typography variant="body"><strong>{r.name}</strong></Typography>
+																<Typography variant="small" color="subdued">{r.email}</Typography>
+															</Stack>
+														</div>
 														<Button
 															variant="secondary"
 															size="small"
@@ -706,67 +708,84 @@ export default function SettingsPage() {
 											You&apos;ve reached the maximum of {MAX_RECIPE_RECIPIENTS} recipients. Remove one to add another.
 										</Typography>
 									) : (
-										<Stack direction="column" gap="md">
-											<Stack direction="row" gap="md">
-												<TextField
-													label="Name"
-													value={newRecipientName}
-													onChange={(e) => setNewRecipientName(e.target.value)}
-													placeholder="e.g., Sarah"
-												/>
-												<TextField
-													label="Email"
-													value={newRecipientEmail}
-													onChange={(e) => setNewRecipientEmail(e.target.value)}
-													placeholder="sarah@example.com"
-												/>
-											</Stack>
-											<Stack direction="row" justifyContent="flex-end">
-												<Button
-													variant="secondary"
-													size="medium"
-													onClick={addRecipient}
-													disabled={!canAddRecipient}
-												>
+										<>
+											{/* Adding a recipient opens a dialog, as Add child does (#196) */}
+											<Stack direction="row">
+												<Button variant="secondary" size="medium" iconName="add" onClick={openAddRecipient}>
 													Add recipient
 												</Button>
 											</Stack>
-										</Stack>
+											<Modal
+												isOpen={addRecipientOpen}
+												onClose={() => setAddRecipientOpen(false)}
+												title="Add a recipient"
+												size="small"
+												actions={[
+													{ label: 'Cancel', onClick: () => setAddRecipientOpen(false), variant: 'secondary' },
+													{ label: 'Add recipient', onClick: confirmAddRecipient, variant: 'primary', disabled: !canAddRecipient },
+												]}
+											>
+												<Stack direction="column" gap="2xl">
+													<TextField
+														label="Name"
+														value={newRecipientName}
+														onChange={(e) => setNewRecipientName(e.target.value)}
+														placeholder="e.g., Sarah"
+													/>
+													<TextField
+														label="Email"
+														type="email"
+														value={newRecipientEmail}
+														onChange={(e) => setNewRecipientEmail(e.target.value)}
+														placeholder="sarah@example.com"
+														error={newRecipientEmailError}
+													/>
+												</Stack>
+											</Modal>
+										</>
 									)}
 								</Stack>
-							</Box>
-						</Box>
+							</SettingsSection>
 
-						{/* Calendar Sync */}
-						<Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
-							<Stack direction="column" gap="md">
-								<Typography variant="h3">Calendar Sync</Typography>
-								<Typography color="subdued">
-									Subscribe to this link from a calendar app to see this week&apos;s meals automatically —
-									works with{' '}
-									<a href="https://github.com/derekantrican/GAS-ICS-Sync" target="_blank" rel="noreferrer">
-										GAS-ICS-Sync
-									</a>{' '}
-									for a fully automatic Google Calendar sync. Treat this link like a password: anyone with it can see your meal plan.
-								</Typography>
+							<SettingsSection
+								title="Calendar Sync"
+								description={
+									<>
+										Subscribe to this link from a calendar app to see this week&apos;s meals automatically —
+										works with{' '}
+										<a href="https://github.com/derekantrican/GAS-ICS-Sync" target="_blank" rel="noreferrer">
+											GAS-ICS-Sync
+										</a>{' '}
+										for a fully automatic Google Calendar sync. Treat this link like a password: anyone with it can see your meal plan.
+									</>
+								}
+							>
 								{icsUrl ? (
-									<Stack direction="row" gap="sm" alignItems="center">
-										<Box maxWidth="480px" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-											<Typography variant="body">{icsUrl}</Typography>
-										</Box>
-										<Button variant="secondary" size="medium" onClick={copyIcsUrl}>
-											Copy link
-										</Button>
-									</Stack>
+									/* Laid out like a recipient card, without the grey fill (#196) */
+									<Box border="default" borderRadius="md" p="md">
+										<Stack direction="row" gap="md" justifyContent="space-between" alignItems="center">
+											<div style={{ minWidth: 0 }}>
+												<Stack direction="column" gap="xs">
+													<Typography variant="body"><strong>Calendar link</strong></Typography>
+													<div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+														<Typography variant="small" color="subdued">{icsUrl}</Typography>
+													</div>
+												</Stack>
+											</div>
+											<Button variant="secondary" size="small" onClick={copyIcsUrl}>
+												Copy link
+											</Button>
+										</Stack>
+									</Box>
 								) : (
 									<Typography color="subdued">
 										{icsError ?? 'Loading your calendar link…'}
 									</Typography>
 								)}
-							</Stack>
-						</Box>
+							</SettingsSection>
 
-						<ColesExtensionSettings />
+							<ColesExtensionSettings />
+						</SettingsForm>
 
 						{/* Actions */}
 						<Stack direction="row" gap="md" justifyContent="flex-end">
