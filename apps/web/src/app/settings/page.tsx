@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Alert, Box, Button, Checkbox, Chip, Container, Divider, Dropdown, NumberInput, Slider, Stack, TextField, Typography, tokens } from "@common-origin/design-system";
+import { Alert, Box, Button, Checkbox, Chip, Container, Dropdown, NumberInput, Slider, Stack, TextField, Typography, tokens } from "@common-origin/design-system";
 import Main from "@/components/app/Main";import {
   getFamilySettings,
   saveFamilySettings,
@@ -10,7 +10,7 @@ import Main from "@/components/app/Main";import {
 import type { FamilySettings } from "@/lib/types/settings";
 import { validateFamilySettings, DEFAULT_FAMILY_SETTINGS, DIETARY_TYPE_OPTIONS, MAX_RECIPE_RECIPIENTS, MAX_FLAVOR_PROFILE_LENGTH, MAX_SETTING_TEXT_LENGTH } from "@/lib/types/settings";
 import { track } from "@/lib/analytics";
-import SettingsSection, { SettingsField } from "@/components/app/SettingsSection";
+import SettingsSection, { SettingsField, SettingsForm } from "@/components/app/SettingsSection";
 import ColesExtensionSettings from "@/components/app/ColesExtensionSettings";
 
 export default function SettingsPage() {
@@ -175,37 +175,485 @@ export default function SettingsPage() {
 								))}
 							</Stack>
 						</Alert>
-					)}						{/* Each section: title and description left, inputs right (#196) */}
-						<SettingsSection
-							title="Household"
-							description="Who you're cooking for. New recipes are written for the total servings."
-						>
-							<Stack direction="column" gap="lg">
-								<SettingsField>
-									<NumberInput
-										label="Adults"
-										min={1}
-										max={10}
-										value={settings.adults}
-										onChange={(value) => {
-											const numValue = typeof value === 'number' ? value : 1;
-											setSettings(prev => ({
+					)}
+
+						{/* Each section: title and description left, inputs right, one card with dividers (#196) */}
+						<SettingsForm>
+							<SettingsSection
+								title="Household"
+								description="Who you're cooking for. New recipes are written for the total servings."
+							>
+								<Stack direction="column" gap="lg">
+									<SettingsField>
+										<NumberInput
+											label="Adults"
+											min={1}
+											max={10}
+											value={settings.adults}
+											onChange={(value) => {
+												const numValue = typeof value === 'number' ? value : 1;
+												setSettings(prev => ({
+													...prev,
+													adults: numValue,
+													totalServings: numValue + prev.children.length
+												}));
+											}}
+										/>
+									</SettingsField>
+									<Stack direction="column" gap="lg">
+										<Typography variant="subtitle">Children ({settings.children.length})</Typography>
+										{/* One card per child, as Recipe sharing lists its recipients (#196) */}
+										{settings.children.length > 0 && (
+											<Stack direction="column" gap="sm">
+												{settings.children.map((child, index) => (
+													<Box
+														key={index}
+														border="default"
+														borderRadius="md"
+														p="md"
+														bg="color.fill.muted"
+													>
+														<Stack direction="row" gap="md" justifyContent="space-between" alignItems="center">
+															<Stack direction="column" gap="xs">
+																<Typography variant="body"><strong>Child {index + 1}</strong></Typography>
+																<Typography variant="small" color="subdued">Age {child.age}</Typography>
+															</Stack>
+															<Button
+																variant="secondary"
+																size="small"
+																onClick={() => removeChild(index)}
+																aria-label={`Remove child ${index + 1}`}
+															>
+																Remove
+															</Button>
+														</Stack>
+													</Box>
+												))}
+											</Stack>
+										)}
+										<Stack direction="column" gap="md">
+											<SettingsField>
+												<NumberInput
+													label="Age"
+													min={0}
+													max={18}
+													value={newChildAge}
+													onChange={(value) => setNewChildAge(typeof value === 'number' ? value : 0)}
+													placeholder="Child's age"
+												/>
+											</SettingsField>
+											<Stack direction="row" justifyContent="flex-end">
+												<Button variant="secondary" size="medium" onClick={addChild}>
+													Add child
+												</Button>
+											</Stack>
+										</Stack>
+									</Stack>
+
+									<Chip>
+										Total servings: <strong>{settings.totalServings}</strong>
+									</Chip>
+								</Stack>
+							</SettingsSection>
+
+							<SettingsSection
+								title="Dietary requirements"
+								description="Set your primary diet type and any additional preferences"
+							>
+								<Stack direction="column" gap="lg">
+									<SettingsField>
+										<Dropdown
+											label="Primary diet"
+											helperText="This determines the types of recipes we'll suggest"
+											value={settings.dietaryType}
+											onChange={(value) => setSettings(prev => ({
 												...prev,
-												adults: numValue,
-												totalServings: numValue + prev.children.length
-											}));
-										}}
+												dietaryType: value as FamilySettings['dietaryType']
+											}))}
+											options={DIETARY_TYPE_OPTIONS.map(opt => ({ id: opt.id, label: opt.label }))}
+										/>
+									</SettingsField>
+									<Stack direction="column" gap="sm">
+										<Typography variant="subtitle">Additional preferences</Typography>
+
+										<Checkbox
+											label="Prefer gluten-free options"
+											checked={settings.glutenFreePreference}
+											onChange={(e) => setSettings(prev => ({
+												...prev,
+												glutenFreePreference: e.target.checked
+											}))}
+										/>
+
+										<Checkbox
+											label="Dairy-free"
+											checked={settings.dairyFree}
+											onChange={(e) => setSettings(prev => ({
+												...prev,
+												dairyFree: e.target.checked
+											}))}
+										/>
+
+										<Checkbox
+											label="Focus on high protein meals"
+											checked={settings.proteinFocus}
+											onChange={(e) => setSettings(prev => ({
+												...prev,
+												proteinFocus: e.target.checked
+											}))}
+										/>
+
+										<Checkbox
+											label="Leftover-friendly meals"
+											checked={settings.leftoverFriendly}
+											onChange={(e) => setSettings(prev => ({
+												...prev,
+												leftoverFriendly: e.target.checked
+											}))}
+										/>
+									</Stack>
+								</Stack>
+							</SettingsSection>
+
+							<SettingsSection
+								title="Cooking profile"
+								description="Help us understand your cooking preferences and skill level"
+							>
+								<Stack direction="column" gap="lg">
+									<Box>
+										<SettingsField>
+											<Dropdown
+												label="Spice tolerance"
+												helperText="How spicy can your meals be?"
+												value={settings.spiceTolerance}
+												onChange={(value) => setSettings(prev => ({
+													...prev,
+													spiceTolerance: value as 'very_mild' | 'mild' | 'medium' | 'hot' | 'loves_hot'
+												}))}
+												options={[
+													{ id: 'very_mild', label: 'Very Mild (no spice)' },
+													{ id: 'mild', label: 'Mild (a little kick)' },
+													{ id: 'medium', label: 'Medium (moderate heat)' },
+													{ id: 'hot', label: 'Hot (bring the heat!)' },
+													{ id: 'loves_hot', label: 'Loves Hot (extra spicy)' }
+												]}
+											/>
+										</SettingsField>
+									</Box>
+
+									<Box>
+										<SettingsField>
+											<Dropdown
+												label="Cooking skill"
+												helperText="How comfortable are you following recipes?"
+												value={settings.cookingSkill}
+												onChange={(value) => setSettings(prev => ({
+													...prev,
+													cookingSkill: value as 'beginner' | 'intermediate' | 'confident_home_cook' | 'advanced'
+												}))}
+												options={[
+													{ id: 'beginner', label: 'Beginner (new to cooking)' },
+													{ id: 'intermediate', label: 'Intermediate (comfortable with basics)' },
+													{ id: 'confident_home_cook', label: 'Confident Home Cook' },
+													{ id: 'advanced', label: 'Advanced (love a challenge)' }
+												]}
+											/>
+										</SettingsField>
+									</Box>
+
+									<Box>
+										<SettingsField>
+											<Dropdown
+												label="Effort preference"
+												helperText="How much time and clean-up is okay on most nights?"
+												value={settings.effortPreference}
+												onChange={(value) => setSettings(prev => ({
+													...prev,
+													effortPreference: value as 'minimal_clean_up' | 'balanced' | 'happy_to_spend_time_on_weekends'
+												}))}
+												options={[
+													{ id: 'minimal_clean_up', label: 'Minimal Clean-up (one-pot meals)' },
+													{ id: 'balanced', label: 'Balanced (reasonable effort)' },
+													{ id: 'happy_to_spend_time_on_weekends', label: 'Happy to spend time on weekends' }
+												]}
+											/>
+										</SettingsField>
+									</Box>
+
+									<Box>
+										<SettingsField>
+											<TextField
+												label="Flavor profile description"
+												helperText="Describe your family&apos;s taste preferences in a few words"
+												value={settings.flavorProfileDescription}
+												maxLength={MAX_FLAVOR_PROFILE_LENGTH}
+												onChange={(e) => setSettings(prev => ({
+													...prev,
+													flavorProfileDescription: e.target.value
+												}))}
+												placeholder="e.g., fresh & herby, avoids heavy cream"
+											/>
+										</SettingsField>
+									</Box>
+								</Stack>
+							</SettingsSection>
+
+							<SettingsSection
+								title="Location & seasonality"
+								description="Used for ingredient availability and seasonal preferences"
+							>
+								<Stack direction="column" gap="lg">
+									<SettingsField>
+										<TextField
+											label="City"
+											value={settings.location.city}
+											maxLength={MAX_SETTING_TEXT_LENGTH}
+											onChange={(e) => setSettings(prev => ({
+												...prev,
+												location: {
+													...prev.location,
+													city: e.target.value
+												}
+											}))}
+											placeholder="e.g., Melbourne"
+										/>
+									</SettingsField>
+
+									<SettingsField>
+										<TextField
+											label="Country"
+											value={settings.location.country}
+											maxLength={MAX_SETTING_TEXT_LENGTH}
+											onChange={(e) => setSettings(prev => ({
+												...prev,
+												location: {
+													...prev.location,
+													country: e.target.value
+												}
+											}))}
+											placeholder="e.g., Australia"
+										/>
+									</SettingsField>
+
+									<Box>
+										<SettingsField>
+											<Dropdown
+												label="Hemisphere"
+												helperText="Affects seasonal ingredient recommendations"
+												value={settings.location.hemisphere}
+												onChange={(value) => setSettings(prev => ({
+													...prev,
+													location: {
+														...prev.location,
+														hemisphere: value as 'northern' | 'southern'
+													}
+												}))}
+												options={[
+													{ id: 'northern', label: 'Northern Hemisphere' },
+													{ id: 'southern', label: 'Southern Hemisphere' }
+												]}
+											/>
+										</SettingsField>
+									</Box>
+								</Stack>
+							</SettingsSection>
+
+							<SettingsSection
+								title="Budget & time"
+								description="What a dinner should cost and how long it can take. The plan's budget is the max per meal times its dinners."
+							>
+								<Stack direction="column" gap="xl">
+									<Slider
+										label={`Budget per meal (min): $${settings.budgetPerMeal.min}`}
+										min={10}
+										max={50}
+										value={settings.budgetPerMeal.min}
+										onChange={(value: number) => setSettings(prev => ({
+											...prev,
+											budgetPerMeal: {
+												...prev.budgetPerMeal,
+												min: value
+											}
+										}))}
+									/>
+
+									<Slider
+										label={`Budget per meal (max): $${settings.budgetPerMeal.max}`}
+										min={10}
+										max={50}
+										value={settings.budgetPerMeal.max}
+										onChange={(value: number) => setSettings(prev => ({
+											...prev,
+											budgetPerMeal: {
+												...prev.budgetPerMeal,
+												max: value
+											}
+										}))}
+									/>
+
+									<Slider
+										label={`Max cooking time (weeknights): ${settings.maxCookTime.weeknight} minutes`}
+										min={15}
+										max={90}
+										step={5}
+										value={settings.maxCookTime.weeknight}
+										onChange={(value: number) => setSettings(prev => ({
+											...prev,
+											maxCookTime: {
+												...prev.maxCookTime,
+												weeknight: value
+											}
+										}))}
+									/>
+
+									<Slider
+										label={`Max cooking time (weekends): ${settings.maxCookTime.weekend} minutes`}
+										min={15}
+										max={120}
+										step={5}
+										value={settings.maxCookTime.weekend}
+										onChange={(value: number) => setSettings(prev => ({
+											...prev,
+											maxCookTime: {
+												...prev.maxCookTime,
+												weekend: value
+											}
+										}))}
+									/>
+								</Stack>
+							</SettingsSection>
+
+							<SettingsSection
+								title="Batch cooking"
+								description="Cook in bulk on one day and eat from it across the week."
+							>
+								<Stack direction="column" gap="md">
+									<Checkbox
+										label="Enable batch cooking"
+										checked={settings.batchCooking.enabled}
+										onChange={(e) => setSettings(prev => ({
+											...prev,
+											batchCooking: {
+												...prev.batchCooking,
+												enabled: e.target.checked
+											}
+										}))}
+									/>
+
+									{settings.batchCooking.enabled && (
+										<Stack direction="column" gap="lg">
+											<SettingsField>
+												<Dropdown
+													label="Frequency"
+													value={settings.batchCooking.frequency}
+													onChange={(value) => setSettings(prev => ({
+														...prev,
+														batchCooking: {
+															...prev.batchCooking,
+															frequency: value as 'weekly' | 'biweekly' | 'none'
+														}
+													}))}
+													options={[
+														{ id: 'weekly', label: 'Weekly' },
+														{ id: 'biweekly', label: 'Bi-weekly' },
+														{ id: 'none', label: 'None' }
+													]}
+												/>
+											</SettingsField>
+
+											<SettingsField>
+												<Dropdown
+													label="Preferred day"
+													value={settings.batchCooking.preferredDay}
+													onChange={(value) => setSettings(prev => ({
+														...prev,
+														batchCooking: {
+															...prev.batchCooking,
+															preferredDay: value as 'sunday' | 'saturday' | 'friday'
+														}
+													}))}
+													options={[
+														{ id: 'sunday', label: 'Sunday' },
+														{ id: 'saturday', label: 'Saturday' },
+														{ id: 'friday', label: 'Friday' }
+													]}
+												/>
+											</SettingsField>
+										</Stack>
+									)}
+								</Stack>
+							</SettingsSection>
+
+							<SettingsSection
+								title="Pantry ingredients priority"
+								description="Control how the AI prioritizes ingredients you already have in your pantry/fridge when generating meal plans."
+							>
+								<SettingsField>
+									<Dropdown
+										label="Priority Level"
+										helperText="Perishable items you add to your pantry list will automatically be prioritized regardless of this setting to help reduce food waste."
+										value={settings.pantryPreference}
+										onChange={(value) => setSettings(prev => ({
+											...prev,
+											pantryPreference: value as 'hard' | 'soft'
+										}))}
+										options={[
+											{ id: 'hard', label: 'High Priority - Strongly prefer recipes using these ingredients' },
+											{ id: 'soft', label: 'Low Priority - Consider these ingredients if suitable' }
+										]}
 									/>
 								</SettingsField>
-								<Divider size="small" />
+							</SettingsSection>
+
+							<SettingsSection
+								title="Weekly planning reminder"
+								description="Set when you'd like to be reminded to plan your weekly meals and create your shopping list."
+							>
+								<Stack direction="row" gap="md">
+									<SettingsField>
+										<Dropdown
+											label="Reminder Day"
+											helperText="This will be used for future email/SMS notifications to help you stay on track with your meal planning routine."
+											value={settings.weeklyReminderDay || 'saturday'}
+											onChange={(value) => setSettings(prev => ({
+												...prev,
+												weeklyReminderDay: value as 'saturday' | 'sunday' | 'monday'
+											}))}
+											options={[
+												{ id: 'saturday', label: 'Saturday' },
+												{ id: 'sunday', label: 'Sunday' },
+												{ id: 'monday', label: 'Monday' }
+											]}
+										/>
+									</SettingsField>
+
+									<input
+										type="time"
+										value={settings.weeklyReminderTime || '18:00'}
+										onChange={(e) => setSettings(prev => ({
+											...prev,
+											weeklyReminderTime: e.target.value
+										}))}
+										style={{
+											padding: '8px 12px',
+											border: `1px solid ${tokens.semantic.color.border.input}`,
+											borderRadius: '4px',
+											fontSize: '14px',
+										}}
+									/>
+								</Stack>
+							</SettingsSection>
+
+							<SettingsSection
+								title="Recipe sharing"
+								description={`People you can email a recipe to from the recipe page. Up to ${MAX_RECIPE_RECIPIENTS} recipients.`}
+							>
 								<Stack direction="column" gap="lg">
-									<Typography variant="subtitle">Children ({settings.children.length})</Typography>
-									{/* One card per child, as Recipe sharing lists its recipients (#196) */}
-									{settings.children.length > 0 && (
+									{recipients.length > 0 && (
 										<Stack direction="column" gap="sm">
-											{settings.children.map((child, index) => (
+											{recipients.map((r, i) => (
 												<Box
-													key={index}
+													key={`${r.email}-${i}`}
 													border="default"
 													borderRadius="md"
 													p="md"
@@ -213,14 +661,13 @@ export default function SettingsPage() {
 												>
 													<Stack direction="row" gap="md" justifyContent="space-between" alignItems="center">
 														<Stack direction="column" gap="xs">
-															<Typography variant="body"><strong>Child {index + 1}</strong></Typography>
-															<Typography variant="small" color="subdued">Age {child.age}</Typography>
+															<Typography variant="body"><strong>{r.name}</strong></Typography>
+															<Typography variant="small" color="subdued">{r.email}</Typography>
 														</Stack>
 														<Button
 															variant="secondary"
 															size="small"
-															onClick={() => removeChild(index)}
-															aria-label={`Remove child ${index + 1}`}
+															onClick={() => removeRecipient(i)}
 														>
 															Remove
 														</Button>
@@ -229,522 +676,77 @@ export default function SettingsPage() {
 											))}
 										</Stack>
 									)}
-									<Stack direction="column" gap="md">
-										<SettingsField>
-											<NumberInput
-												label="Age"
-												min={0}
-												max={18}
-												value={newChildAge}
-												onChange={(value) => setNewChildAge(typeof value === 'number' ? value : 0)}
-												placeholder="Child's age"
-											/>
-										</SettingsField>
-										<Stack direction="row" justifyContent="flex-end">
-											<Button variant="secondary" size="medium" onClick={addChild}>
-												Add child
-											</Button>
+
+									{recipientsAtCap ? (
+										<Typography variant="small" color="subdued">
+											You&apos;ve reached the maximum of {MAX_RECIPE_RECIPIENTS} recipients. Remove one to add another.
+										</Typography>
+									) : (
+										<Stack direction="column" gap="md">
+											<Stack direction="row" gap="md">
+												<SettingsField>
+													<TextField
+														label="Name"
+														value={newRecipientName}
+														onChange={(e) => setNewRecipientName(e.target.value)}
+														placeholder="e.g., Sarah"
+													/>
+												</SettingsField>
+												<SettingsField>
+													<TextField
+														label="Email"
+														value={newRecipientEmail}
+														onChange={(e) => setNewRecipientEmail(e.target.value)}
+														placeholder="sarah@example.com"
+													/>
+												</SettingsField>
+											</Stack>
+											<Stack direction="row" justifyContent="flex-end">
+												<Button
+													variant="secondary"
+													size="medium"
+													onClick={addRecipient}
+													disabled={!canAddRecipient}
+												>
+													Add recipient
+												</Button>
+											</Stack>
 										</Stack>
-									</Stack>
+									)}
 								</Stack>
+							</SettingsSection>
 
-								<Chip>
-									Total servings: <strong>{settings.totalServings}</strong>
-								</Chip>
-							</Stack>
-						</SettingsSection>
-
-						<SettingsSection
-							title="Dietary requirements"
-							description="Set your primary diet type and any additional preferences"
-						>
-							<Stack direction="column" gap="lg">
-								<SettingsField>
-									<Dropdown
-										label="Primary diet"
-										helperText="This determines the types of recipes we'll suggest"
-										value={settings.dietaryType}
-										onChange={(value) => setSettings(prev => ({
-											...prev,
-											dietaryType: value as FamilySettings['dietaryType']
-										}))}
-										options={DIETARY_TYPE_OPTIONS.map(opt => ({ id: opt.id, label: opt.label }))}
-									/>
-								</SettingsField>
-								<Divider size="small" />
-								<Stack direction="column" gap="sm">
-									<Typography variant="subtitle">Additional preferences</Typography>
-
-									<Checkbox
-										label="Prefer gluten-free options"
-										checked={settings.glutenFreePreference}
-										onChange={(e) => setSettings(prev => ({
-											...prev,
-											glutenFreePreference: e.target.checked
-										}))}
-									/>
-
-									<Checkbox
-										label="Dairy-free"
-										checked={settings.dairyFree}
-										onChange={(e) => setSettings(prev => ({
-											...prev,
-											dairyFree: e.target.checked
-										}))}
-									/>
-
-									<Checkbox
-										label="Focus on high protein meals"
-										checked={settings.proteinFocus}
-										onChange={(e) => setSettings(prev => ({
-											...prev,
-											proteinFocus: e.target.checked
-										}))}
-									/>
-
-									<Checkbox
-										label="Leftover-friendly meals"
-										checked={settings.leftoverFriendly}
-										onChange={(e) => setSettings(prev => ({
-											...prev,
-											leftoverFriendly: e.target.checked
-										}))}
-									/>
-								</Stack>
-							</Stack>
-						</SettingsSection>
-
-						<SettingsSection
-							title="Cooking profile"
-							description="Help us understand your cooking preferences and skill level"
-						>
-							<Stack direction="column" gap="lg">
-								<Box>
-									<SettingsField>
-										<Dropdown
-											label="Spice tolerance"
-											helperText="How spicy can your meals be?"
-											value={settings.spiceTolerance}
-											onChange={(value) => setSettings(prev => ({
-												...prev,
-												spiceTolerance: value as 'very_mild' | 'mild' | 'medium' | 'hot' | 'loves_hot'
-											}))}
-											options={[
-												{ id: 'very_mild', label: 'Very Mild (no spice)' },
-												{ id: 'mild', label: 'Mild (a little kick)' },
-												{ id: 'medium', label: 'Medium (moderate heat)' },
-												{ id: 'hot', label: 'Hot (bring the heat!)' },
-												{ id: 'loves_hot', label: 'Loves Hot (extra spicy)' }
-											]}
-										/>
-									</SettingsField>
-								</Box>
-
-								<Box>
-									<SettingsField>
-										<Dropdown
-											label="Cooking skill"
-											helperText="How comfortable are you following recipes?"
-											value={settings.cookingSkill}
-											onChange={(value) => setSettings(prev => ({
-												...prev,
-												cookingSkill: value as 'beginner' | 'intermediate' | 'confident_home_cook' | 'advanced'
-											}))}
-											options={[
-												{ id: 'beginner', label: 'Beginner (new to cooking)' },
-												{ id: 'intermediate', label: 'Intermediate (comfortable with basics)' },
-												{ id: 'confident_home_cook', label: 'Confident Home Cook' },
-												{ id: 'advanced', label: 'Advanced (love a challenge)' }
-											]}
-										/>
-									</SettingsField>
-								</Box>
-
-								<Box>
-									<SettingsField>
-										<Dropdown
-											label="Effort preference"
-											helperText="How much time and clean-up is okay on most nights?"
-											value={settings.effortPreference}
-											onChange={(value) => setSettings(prev => ({
-												...prev,
-												effortPreference: value as 'minimal_clean_up' | 'balanced' | 'happy_to_spend_time_on_weekends'
-											}))}
-											options={[
-												{ id: 'minimal_clean_up', label: 'Minimal Clean-up (one-pot meals)' },
-												{ id: 'balanced', label: 'Balanced (reasonable effort)' },
-												{ id: 'happy_to_spend_time_on_weekends', label: 'Happy to spend time on weekends' }
-											]}
-										/>
-									</SettingsField>
-								</Box>
-
-								<Box>
-									<SettingsField>
-										<TextField
-											label="Flavor profile description"
-											helperText="Describe your family&apos;s taste preferences in a few words"
-											value={settings.flavorProfileDescription}
-											maxLength={MAX_FLAVOR_PROFILE_LENGTH}
-											onChange={(e) => setSettings(prev => ({
-												...prev,
-												flavorProfileDescription: e.target.value
-											}))}
-											placeholder="e.g., fresh & herby, avoids heavy cream"
-										/>
-									</SettingsField>
-								</Box>
-							</Stack>
-						</SettingsSection>
-
-						<SettingsSection
-							title="Location & seasonality"
-							description="Used for ingredient availability and seasonal preferences"
-						>
-							<Stack direction="column" gap="lg">
-								<SettingsField>
-									<TextField
-										label="City"
-										value={settings.location.city}
-										maxLength={MAX_SETTING_TEXT_LENGTH}
-										onChange={(e) => setSettings(prev => ({
-											...prev,
-											location: {
-												...prev.location,
-												city: e.target.value
-											}
-										}))}
-										placeholder="e.g., Melbourne"
-									/>
-								</SettingsField>
-
-								<SettingsField>
-									<TextField
-										label="Country"
-										value={settings.location.country}
-										maxLength={MAX_SETTING_TEXT_LENGTH}
-										onChange={(e) => setSettings(prev => ({
-											...prev,
-											location: {
-												...prev.location,
-												country: e.target.value
-											}
-										}))}
-										placeholder="e.g., Australia"
-									/>
-								</SettingsField>
-
-								<Box>
-									<SettingsField>
-										<Dropdown
-											label="Hemisphere"
-											helperText="Affects seasonal ingredient recommendations"
-											value={settings.location.hemisphere}
-											onChange={(value) => setSettings(prev => ({
-												...prev,
-												location: {
-													...prev.location,
-													hemisphere: value as 'northern' | 'southern'
-												}
-											}))}
-											options={[
-												{ id: 'northern', label: 'Northern Hemisphere' },
-												{ id: 'southern', label: 'Southern Hemisphere' }
-											]}
-										/>
-									</SettingsField>
-								</Box>
-							</Stack>
-						</SettingsSection>
-
-						<SettingsSection
-							title="Budget & time"
-							description="What a dinner should cost and how long it can take. The plan's budget is the max per meal times its dinners."
-						>
-							<Stack direction="column" gap="xl">
-								<Slider
-									label={`Budget per meal (min): $${settings.budgetPerMeal.min}`}
-									min={10}
-									max={50}
-									value={settings.budgetPerMeal.min}
-									onChange={(value: number) => setSettings(prev => ({
-										...prev,
-										budgetPerMeal: {
-											...prev.budgetPerMeal,
-											min: value
-										}
-									}))}
-								/>
-
-								<Slider
-									label={`Budget per meal (max): $${settings.budgetPerMeal.max}`}
-									min={10}
-									max={50}
-									value={settings.budgetPerMeal.max}
-									onChange={(value: number) => setSettings(prev => ({
-										...prev,
-										budgetPerMeal: {
-											...prev.budgetPerMeal,
-											max: value
-										}
-									}))}
-								/>
-
-								<Slider
-									label={`Max cooking time (weeknights): ${settings.maxCookTime.weeknight} minutes`}
-									min={15}
-									max={90}
-									step={5}
-									value={settings.maxCookTime.weeknight}
-									onChange={(value: number) => setSettings(prev => ({
-										...prev,
-										maxCookTime: {
-											...prev.maxCookTime,
-											weeknight: value
-										}
-									}))}
-								/>
-
-								<Slider
-									label={`Max cooking time (weekends): ${settings.maxCookTime.weekend} minutes`}
-									min={15}
-									max={120}
-									step={5}
-									value={settings.maxCookTime.weekend}
-									onChange={(value: number) => setSettings(prev => ({
-										...prev,
-										maxCookTime: {
-											...prev.maxCookTime,
-											weekend: value
-										}
-									}))}
-								/>
-							</Stack>
-						</SettingsSection>
-
-						<SettingsSection
-							title="Batch cooking"
-							description="Cook in bulk on one day and eat from it across the week."
-						>
-							<Stack direction="column" gap="md">
-								<Checkbox
-									label="Enable batch cooking"
-									checked={settings.batchCooking.enabled}
-									onChange={(e) => setSettings(prev => ({
-										...prev,
-										batchCooking: {
-											...prev.batchCooking,
-											enabled: e.target.checked
-										}
-									}))}
-								/>
-
-								{settings.batchCooking.enabled && (
-									<Stack direction="column" gap="lg">
-										<SettingsField>
-											<Dropdown
-												label="Frequency"
-												value={settings.batchCooking.frequency}
-												onChange={(value) => setSettings(prev => ({
-													...prev,
-													batchCooking: {
-														...prev.batchCooking,
-														frequency: value as 'weekly' | 'biweekly' | 'none'
-													}
-												}))}
-												options={[
-													{ id: 'weekly', label: 'Weekly' },
-													{ id: 'biweekly', label: 'Bi-weekly' },
-													{ id: 'none', label: 'None' }
-												]}
-											/>
-										</SettingsField>
-
-										<SettingsField>
-											<Dropdown
-												label="Preferred day"
-												value={settings.batchCooking.preferredDay}
-												onChange={(value) => setSettings(prev => ({
-													...prev,
-													batchCooking: {
-														...prev.batchCooking,
-														preferredDay: value as 'sunday' | 'saturday' | 'friday'
-													}
-												}))}
-												options={[
-													{ id: 'sunday', label: 'Sunday' },
-													{ id: 'saturday', label: 'Saturday' },
-													{ id: 'friday', label: 'Friday' }
-												]}
-											/>
-										</SettingsField>
+							<SettingsSection
+								title="Calendar Sync"
+								description={
+									<>
+										Subscribe to this link from a calendar app to see this week&apos;s meals automatically —
+										works with{' '}
+										<a href="https://github.com/derekantrican/GAS-ICS-Sync" target="_blank" rel="noreferrer">
+											GAS-ICS-Sync
+										</a>{' '}
+										for a fully automatic Google Calendar sync. Treat this link like a password: anyone with it can see your meal plan.
+									</>
+								}
+							>
+								{icsUrl ? (
+									<Stack direction="row" gap="sm" alignItems="center">
+										<Box maxWidth="480px" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+											<Typography variant="body">{icsUrl}</Typography>
+										</Box>
+										<Button variant="secondary" size="medium" onClick={copyIcsUrl}>
+											Copy link
+										</Button>
 									</Stack>
-								)}
-							</Stack>
-						</SettingsSection>
-
-						<SettingsSection
-							title="Pantry ingredients priority"
-							description="Control how the AI prioritizes ingredients you already have in your pantry/fridge when generating meal plans."
-						>
-							<SettingsField>
-								<Dropdown
-									label="Priority Level"
-									helperText="Perishable items you add to your pantry list will automatically be prioritized regardless of this setting to help reduce food waste."
-									value={settings.pantryPreference}
-									onChange={(value) => setSettings(prev => ({
-										...prev,
-										pantryPreference: value as 'hard' | 'soft'
-									}))}
-									options={[
-										{ id: 'hard', label: 'High Priority - Strongly prefer recipes using these ingredients' },
-										{ id: 'soft', label: 'Low Priority - Consider these ingredients if suitable' }
-									]}
-								/>
-							</SettingsField>
-						</SettingsSection>
-
-						<SettingsSection
-							title="Weekly planning reminder"
-							description="Set when you'd like to be reminded to plan your weekly meals and create your shopping list."
-						>
-							<Stack direction="row" gap="md">
-								<SettingsField>
-									<Dropdown
-										label="Reminder Day"
-										helperText="This will be used for future email/SMS notifications to help you stay on track with your meal planning routine."
-										value={settings.weeklyReminderDay || 'saturday'}
-										onChange={(value) => setSettings(prev => ({
-											...prev,
-											weeklyReminderDay: value as 'saturday' | 'sunday' | 'monday'
-										}))}
-										options={[
-											{ id: 'saturday', label: 'Saturday' },
-											{ id: 'sunday', label: 'Sunday' },
-											{ id: 'monday', label: 'Monday' }
-										]}
-									/>
-								</SettingsField>
-
-								<input
-									type="time"
-									value={settings.weeklyReminderTime || '18:00'}
-									onChange={(e) => setSettings(prev => ({
-										...prev,
-										weeklyReminderTime: e.target.value
-									}))}
-									style={{
-										padding: '8px 12px',
-										border: `1px solid ${tokens.semantic.color.border.input}`,
-										borderRadius: '4px',
-										fontSize: '14px',
-									}}
-								/>
-							</Stack>
-						</SettingsSection>
-
-						<SettingsSection
-							title="Recipe sharing"
-							description={`People you can email a recipe to from the recipe page. Up to ${MAX_RECIPE_RECIPIENTS} recipients.`}
-						>
-							<Stack direction="column" gap="lg">
-								{recipients.length > 0 && (
-									<Stack direction="column" gap="sm">
-										{recipients.map((r, i) => (
-											<Box
-												key={`${r.email}-${i}`}
-												border="default"
-												borderRadius="md"
-												p="md"
-												bg="color.fill.muted"
-											>
-												<Stack direction="row" gap="md" justifyContent="space-between" alignItems="center">
-													<Stack direction="column" gap="xs">
-														<Typography variant="body"><strong>{r.name}</strong></Typography>
-														<Typography variant="small" color="subdued">{r.email}</Typography>
-													</Stack>
-													<Button
-														variant="secondary"
-														size="small"
-														onClick={() => removeRecipient(i)}
-													>
-														Remove
-													</Button>
-												</Stack>
-											</Box>
-										))}
-									</Stack>
-								)}
-
-								{recipientsAtCap ? (
-									<Typography variant="small" color="subdued">
-										You&apos;ve reached the maximum of {MAX_RECIPE_RECIPIENTS} recipients. Remove one to add another.
-									</Typography>
 								) : (
-									<Stack direction="column" gap="md">
-										<Stack direction="row" gap="md">
-											<SettingsField>
-												<TextField
-													label="Name"
-													value={newRecipientName}
-													onChange={(e) => setNewRecipientName(e.target.value)}
-													placeholder="e.g., Sarah"
-												/>
-											</SettingsField>
-											<SettingsField>
-												<TextField
-													label="Email"
-													value={newRecipientEmail}
-													onChange={(e) => setNewRecipientEmail(e.target.value)}
-													placeholder="sarah@example.com"
-												/>
-											</SettingsField>
-										</Stack>
-										<Stack direction="row" justifyContent="flex-end">
-											<Button
-												variant="secondary"
-												size="medium"
-												onClick={addRecipient}
-												disabled={!canAddRecipient}
-											>
-												Add recipient
-											</Button>
-										</Stack>
-									</Stack>
+									<Typography color="subdued">
+										{icsError ?? 'Loading your calendar link…'}
+									</Typography>
 								)}
-							</Stack>
-						</SettingsSection>
+							</SettingsSection>
 
-						<SettingsSection
-							title="Calendar Sync"
-							description={
-								<>
-									Subscribe to this link from a calendar app to see this week&apos;s meals automatically —
-									works with{' '}
-									<a href="https://github.com/derekantrican/GAS-ICS-Sync" target="_blank" rel="noreferrer">
-										GAS-ICS-Sync
-									</a>{' '}
-									for a fully automatic Google Calendar sync. Treat this link like a password: anyone with it can see your meal plan.
-								</>
-							}
-						>
-							{icsUrl ? (
-								<Stack direction="row" gap="sm" alignItems="center">
-									<Box maxWidth="480px" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-										<Typography variant="body">{icsUrl}</Typography>
-									</Box>
-									<Button variant="secondary" size="medium" onClick={copyIcsUrl}>
-										Copy link
-									</Button>
-								</Stack>
-							) : (
-								<Typography color="subdued">
-									{icsError ?? 'Loading your calendar link…'}
-								</Typography>
-							)}
-						</SettingsSection>
-
-						<ColesExtensionSettings />
+							<ColesExtensionSettings />
+						</SettingsForm>
 
 						{/* Actions */}
 						<Stack direction="row" gap="md" justifyContent="flex-end">
