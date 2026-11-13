@@ -141,23 +141,6 @@ export function formatTimeUntilSunday(): string {
   }
 }
 
-/**
- * The week the wizard starts on (#194): the week on screen if it's not past
- * and has no plan; otherwise the week after it if that one is free (so "Start
- * new week" doesn't default to replacing the plan you're looking at);
- * otherwise the week on screen, which the wizard then says it will replace.
- */
-export function suggestPlanningWeek(
-  pageWeek: string,
-  plannedWeeks: string[],
-  today: dayjs.ConfigType = undefined
-): string {
-  const base = pageWeek >= mondayOfWeekISO(today) ? pageWeek : defaultPlanningWeekISO(today);
-  if (!plannedWeeks.includes(base)) return base;
-  const after = shiftWeekISO(base, 1);
-  return plannedWeeks.includes(after) ? base : after;
-}
-
 /** The weeks the wizard offers: this week, the next two, and `selected` if it's further out. */
 export function planningWeekOptions(selected: string, today: dayjs.ConfigType = undefined): string[] {
   const thisWeek = mondayOfWeekISO(today);
@@ -171,4 +154,18 @@ export function parseWeekParam(param: string | null | undefined): string | null 
   if (!param || !/^\d{4}-\d{2}-\d{2}$/.test(param)) return null;
   const date = dayjs(param);
   return date.isValid() && date.format("YYYY-MM-DD") === param ? mondayOfWeekISO(date) : null;
+}
+
+/**
+ * Whether the plan page suggests planning next week (#195): the week on
+ * screen is this week, it's Friday to Sunday, and next week has no plan.
+ */
+export function shouldPromptNextWeek(
+  weekOnScreen: string,
+  plannedWeeks: string[],
+  today: dayjs.ConfigType = undefined
+): boolean {
+  const thisWeek = mondayOfWeekISO(today);
+  const weekend = defaultPlanningWeekISO(today) !== thisWeek;
+  return weekOnScreen === thisWeek && weekend && !plannedWeeks.includes(shiftWeekISO(thisWeek, 1));
 }

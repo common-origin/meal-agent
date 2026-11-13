@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { Alert, InlineAlert, FilterChip, Divider, Dropdown, Stack, Typography, Button, Box, TextField, List, ListItem, IconButton, Chip, tokens } from "@common-origin/design-system";
+import { useEffect, useRef, useState } from "react";
+import { Alert, Box, Button, Dropdown, FilterChip, InlineAlert, Stack, TextField, Typography } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
+import PantrySheet from "@/components/app/PantrySheet";
 import { CUISINE_OPTIONS, MAX_SETTING_TEXT_LENGTH } from "@/lib/types/settings";
 import { apiErrorMessage, redirectToLoginIfUnauthenticated } from "@/lib/api/client";
 import { imageUploadFormData, PhotoTooLargeError } from "@/lib/client/resizeImage";
-import { addItem, isUseSoon, itemsToUseSoon, mergeScan, removeItem, toggleUseSoon, type PantryState } from "@/lib/pantryItems";
+import { itemsToUseSoon, mergeScan, pantrySummary, type PantryState } from "@/lib/pantryItems";
 import { formatWeekRange, planningWeekOptions, relativeWeekLabel } from "@/lib/schedule";
+import { getFamilySettings, loadPantryItems } from "@/lib/hybridStorage";
 
 interface WeeklyPlanWizardProps {
   onComplete: (data: WeeklyPlanData) => void;
@@ -22,6 +24,8 @@ interface WeeklyPlanWizardProps {
 export interface WeeklyPlanData {
   /** The Monday of the week this plan is for (#194). */
   weekStart: string;
+  /** The nights to plan, 0 = Monday to 6 = Sunday (#195); the others stay empty. */
+  nights: number[];
   pantryItems: string[];
   /** Pantry items flagged to use this week (#91). */
   useSoonItems: string[];
@@ -29,26 +33,61 @@ export interface WeeklyPlanData {
   preferredChef?: string;
 }
 
+const NIGHTS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const ALL_NIGHTS = [0, 1, 2, 3, 4, 5, 6];
+
 /** "This week · Mon 9 – Sun 15 Nov", or just the dates further out. */
 function weekOptionLabel(week: string): string {
   const relative = relativeWeekLabel(week);
   return relative ? `${relative} · ${formatWeekRange(week)}` : formatWeekRange(week);
 }
 
+/** A labelled group on the planner, in the field label style. */
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <Stack direction="column" gap="sm">
+      <Typography variant="label">{label}</Typography>
+      {children}
+      {hint && <Typography variant="small" color="subdued">{hint}</Typography>}
+    </Stack>
+  );
+}
+
+/**
+ * Plan your week (#195): one screen, ready to generate as soon as it opens.
+ * The pantry comes from the household's saved list and the cuisines and chef
+ * from Settings, so every choice here is optional.
+ */
 export default function WeeklyPlanWizard({ onComplete, onCancel, initialWeek, plannedWeeks }: WeeklyPlanWizardProps) {
-  const [currentStep, setCurrentStep] = useState(1);
   const [weekStart, setWeekStart] = useState(initialWeek);
   const weekOptions = planningWeekOptions(initialWeek);
   const replacesPlan = plannedWeeks.includes(weekStart);
+  const [nights, setNights] = useState<number[]>(ALL_NIGHTS);
   const [pantry, setPantry] = useState<PantryState>({ items: [], useSoon: [] });
-  const pantryItems = pantry.items;
-  const [newPantryItem, setNewPantryItem] = useState('');
+  const [showPantry, setShowPantry] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
+  const scanInputRef = useRef<HTMLInputElement>(null);
   const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
   const [preferredChef, setPreferredChef] = useState('');
+  const [showMore, setShowMore] = useState(false);
+  // Until Settings and the saved pantry load, so Generate doesn't run on empty defaults
+  const [loaded, setLoaded] = useState(false);
 
-  const totalSteps = 3;
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([getFamilySettings(), loadPantryItems().catch(() => [] as string[])]).then(([settings, savedPantry]) => {
+      if (cancelled) return;
+      // "Use soon" is per week, so it starts empty (#91)
+      setPantry({ items: savedPantry, useSoon: [] });
+      setSelectedCuisines(settings.cuisines.filter((id) => CUISINE_OPTIONS.some((option) => option.id === id)));
+      setPreferredChef(settings.preferredChef ?? '');
+      setLoaded(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleScanPantryImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -77,11 +116,9 @@ export default function WeeklyPlanWizard({ onComplete, onCancel, initialWeek, pl
       }
 
       setPantry((current) => mergeScan(current, data.items));
-
     } catch (error) {
       console.error('Error scanning image:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to scan image';
-      setScanError(errorMessage);
+      setScanError(error instanceof Error ? error.message : 'Failed to scan image');
     } finally {
       setIsScanning(false);
       // Clear the input even after an error, so picking the same photo again still fires onChange.
@@ -89,378 +126,178 @@ export default function WeeklyPlanWizard({ onComplete, onCancel, initialWeek, pl
     }
   };
 
-  const handleAddPantryItem = () => {
-    if (newPantryItem.trim()) {
-      setPantry((current) => addItem(current, newPantryItem));
-      setNewPantryItem('');
-    }
-  };
+  const toggleNight = (night: number) =>
+    setNights((current) => (current.includes(night) ? current.filter((n) => n !== night) : [...current, night].sort()));
 
-  const handleRemovePantryItem = (index: number) => {
-    setPantry((current) => removeItem(current, index));
-  };
+  const toggleCuisine = (cuisineId: string) =>
+    setSelectedCuisines((current) =>
+      current.includes(cuisineId) ? current.filter((id) => id !== cuisineId) : [...current, cuisineId]
+    );
 
-  const toggleCuisine = (cuisineId: string) => {
-    setSelectedCuisines(prev => {
-      if (prev.includes(cuisineId)) {
-        return prev.filter(id => id !== cuisineId);
-      } else {
-        return [...prev, cuisineId];
-      }
+  const canGenerate = loaded && nights.length > 0;
+
+  const handleGenerate = () => {
+    if (!canGenerate) return;
+    onComplete({
+      weekStart,
+      nights,
+      pantryItems: pantry.items,
+      useSoonItems: itemsToUseSoon(pantry),
+      // None selected: the plan page falls back to Settings' cuisines
+      cuisines: selectedCuisines,
+      preferredChef: preferredChef.trim() || undefined,
     });
-  };
-
-  const handleNext = () => {
-    if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      // Complete wizard
-      onComplete({
-        weekStart,
-        pantryItems,
-        useSoonItems: itemsToUseSoon(pantry),
-        cuisines: selectedCuisines,
-        preferredChef: preferredChef.trim() || undefined,
-      });
-    }
-  };
-
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const canProceed = () => {
-    if (currentStep === 1) return true; // Pantry is optional
-    if (currentStep === 2) return selectedCuisines.length > 0;
-    return true;
   };
 
   return (
     <Main maxWidth="md">
-      <Box>
-        {/* Progress Indicator */}
-        <Box mb="xl">
-          <Stack direction="row" gap="md" justifyContent="center" alignItems="center">
-            {[1, 2, 3].map((step) => (
-              <Stack key={step} direction="row" gap="sm" alignItems="center">
-                <Box
-                  p="sm"
-                  bg={step === currentStep ? 'color.fill.emphasis' : step < currentStep ? 'color.fill.success' : 'surface.raised'}
-                  borderRadius="circle"
-                  style={{
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Typography variant="body" color={step === currentStep || step < currentStep ? 'inverse' : 'default'}>
-                    {step < currentStep ? '✓' : step}
-                  </Typography>
-                </Box>
-                <Typography variant="body">
-                  {step === 1 ? 'Pantry' : step === 2 ? 'Cuisines' : 'Generate'}
-                </Typography>
-                {step < 3 && <Typography variant="body" color="subdued">→</Typography>}
-              </Stack>
-            ))}
-          </Stack>
-        </Box>
+      <Stack direction="column" gap="xl">
+        <Stack direction="column" gap="xs">
+          <Typography variant="h1">Plan your week</Typography>
+          <Typography variant="body" color="subdued">
+            Everything here is optional. Generate when you&apos;re ready.
+          </Typography>
+        </Stack>
 
-        {/* Step 1: Pantry Stocktake */}
-        {currentStep === 1 && (
-          <Box border="default" borderRadius="lg" p="xl" pb="9xl" bg="surface.raised">
-            <Stack direction="column" gap="lg">
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography variant="h2">Step 1: Pantry stocktake</Typography>
-              </Stack>
-
-              {/* Which week this plan is for (#194): it's saved to, and shown on, that week */}
-              <Stack direction="column" gap="sm" alignItems="flex-start">
-                <Typography variant="h3">Which week?</Typography>
-                <Box maxWidth="420px" style={{ width: '100%' }}>
-                  <Dropdown
-                    label="Week to plan"
-                    options={weekOptions.map((week) => ({ id: week, label: weekOptionLabel(week) }))}
-                    value={weekStart}
-                    onChange={setWeekStart}
-                  />
-                </Box>
-                {replacesPlan && (
-                  <InlineAlert variant="warning">
-                    This week already has a plan. Generating will replace it.
-                  </InlineAlert>
-                )}
-              </Stack>
-
-              <Divider size="small"/>
-
-              <Typography variant="body">
-                What ingredients do you already have at home that you want to use this week? Add them manually or scan your fridge/pantry.
-              </Typography>
-
-              {scanError && (
-                <Alert variant="error" dismissible onDismiss={() => setScanError(null)}>
-                  {scanError}
-                </Alert>
+        <Box borderRadius="lg" p="xl" bg="surface.raised">
+          <Stack direction="column" gap="2xl">
+            <Stack direction="column" gap="sm">
+              <Box maxWidth="540px" style={{ width: '100%' }}>
+                <Dropdown
+                  label="Week"
+                  options={weekOptions.map((week) => ({ id: week, label: weekOptionLabel(week) }))}
+                  value={weekStart}
+                  onChange={setWeekStart}
+                />
+              </Box>
+              {replacesPlan && (
+                <InlineAlert variant="warning">
+                  This week already has a plan. Generating will replace it.
+                </InlineAlert>
               )}
+            </Stack>
 
-              <Divider size="small"/>
-              
-              <Box>
-                <Stack direction="column" gap="lg" alignItems="flex-start">
-                  <Typography variant="h3">Smart scan</Typography>
-                  <Typography variant="label">Scan an image of your pantry or fridge</Typography>
+            <Field
+              label="Nights"
+              hint={
+                nights.length === 0
+                  ? undefined
+                  : `${nights.length} ${nights.length === 1 ? 'night' : 'nights'}. Switch off any you won't be cooking.`
+              }
+            >
+              <Stack direction="row" gap="sm" wrap>
+                {NIGHTS.map((name, night) => (
+                  <FilterChip key={name} selected={nights.includes(night)} onClick={() => toggleNight(night)}>
+                    {name}
+                  </FilterChip>
+                ))}
+              </Stack>
+              {nights.length === 0 && <InlineAlert variant="warning">Choose at least one night to plan.</InlineAlert>}
+            </Field>
+
+            <Field label="Pantry" hint="What you already have, so the plan uses it up.">
+              <Stack direction="row" gap="md" alignItems="center" justifyContent="space-between" wrap>
+                <Typography variant="body">{loaded ? pantrySummary(pantry) : 'Loading your pantry…'}</Typography>
+                <Stack direction="row" gap="sm">
+                  <Button variant="secondary" size="small" onClick={() => setShowPantry(true)} disabled={!loaded}>
+                    Edit
+                  </Button>
                   <input
+                    ref={scanInputRef}
                     type="file"
                     accept="image/*"
                     capture="environment"
                     onChange={handleScanPantryImage}
                     style={{ display: 'none' }}
-                    id="pantry-image-upload-wizard"
-                  />
-                  <Button
-                    variant="primary"
-                    size="large"
-                    iconName={isScanning ? undefined : 'export'}
-                    onClick={() => document.getElementById('pantry-image-upload-wizard')?.click()}
-                    disabled={isScanning}
-                  >
-                    {isScanning ? 'Scanning image...' : 'Upload image'}
-                  </Button>
-                </Stack>
-              </Box>
-
-              <Divider size="small"/>
-
-              <Stack direction="column" gap="lg" alignItems="flex-start">
-                <Typography variant="h3">Add an ingredient</Typography>
-                <Stack direction="row" gap="sm" alignItems="flex-end">
-                  <TextField
-                    label="Add ingredient"
-                    value={newPantryItem}
-                    onChange={(e) => setNewPantryItem(e.target.value)}
-                    placeholder="e.g., chicken breast, tomatoes, rice"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleAddPantryItem();
-                      }
-                    }}
-                    style={{ flex: 1 }}
+                    aria-label="Scan a photo of your pantry or fridge"
                   />
                   <Button
                     variant="secondary"
-                    size="large"
-                    iconName="add"
-                    onClick={handleAddPantryItem}
-                    disabled={!newPantryItem.trim()}
+                    size="small"
+                    iconName={isScanning ? undefined : 'export'}
+                    onClick={() => scanInputRef.current?.click()}
+                    disabled={!loaded || isScanning}
                   >
-                    Add item
+                    {isScanning ? 'Scanning…' : 'Scan'}
                   </Button>
                 </Stack>
               </Stack>
-
-              {pantryItems.length > 0 && (
-                <>
-                  <Divider size="small"/>
-                  <Stack direction="column" gap="lg">
-                    <Typography variant="subtitle">Items in your pantry ({pantryItems.length})</Typography>
-                    <Box p="none" border="default" bg="surface.raised">
-                      <List dividers spacing="comfortable">
-                        {pantryItems.map((item, idx) => (
-                          <ListItem
-                            key={idx}
-                            primary={item}
-                            badge={
-                              <Stack direction="row" gap="sm" alignItems="center">
-                                <FilterChip
-                                  selected={isUseSoon(pantry, item)}
-                                  onClick={() => setPantry((current) => toggleUseSoon(current, item))}
-                                  aria-label={`Use ${item} soon`}
-                                >
-                                  Use soon
-                                </FilterChip>
-                                <IconButton
-                                  variant="naked"
-                                  iconName="trash"
-                                  size="small"
-                                  onClick={() => handleRemovePantryItem(idx)}
-                                  aria-label={`Remove ${item}`}
-                                />
-                              </Stack>
-                            }
-                          />
-                        ))}
-                      </List>
-                    </Box>
-                  </Stack>
-                </>
+              {scanError && (
+                <Alert variant="error" dismissible onDismiss={() => setScanError(null)}>
+                  {scanError}
+                </Alert>
               )}
+            </Field>
 
-              {pantryItems.length === 0 && (
-                <InlineAlert variant="info">
-                  No items added yet. Add ingredients above or skip this step if you don&apos;t want to specify pantry items this week.
-                </InlineAlert>
-              )}
-            </Stack>
-          </Box>
-        )}
-
-        {/* Step 2: Cuisine Selection */}
-        {currentStep === 2 && (
-          <Box border="default" borderRadius="lg" p="xl" pb="9xl" bg="surface.raised">
-            <Stack direction="column" gap="lg">
-              <Typography variant="h2">Step 2: Cuisine preferences</Typography>
-              <Typography variant="body">
-                What type of food would you like to eat this week? Select one or more cuisines.
-              </Typography>
-
-              <Divider size="small"/>
-
-              <Typography variant="h3">Select cuisine</Typography>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                gap: '12px',
-              }}>
+            <Field label="Cuisines" hint="Pre-selected from your Settings. With none selected, your Settings are used.">
+              <Stack direction="row" gap="sm" wrap>
                 {CUISINE_OPTIONS.map((cuisine) => (
-                  <button
+                  <FilterChip
                     key={cuisine.id}
+                    selected={selectedCuisines.includes(cuisine.id)}
                     onClick={() => toggleCuisine(cuisine.id)}
-                    style={{
-                      padding: '16px',
-                      // Selected: the design system's selected fill and edge (decision 0016)
-                      border: `1px solid ${selectedCuisines.includes(cuisine.id) ? tokens.semantic.color.border.accent : tokens.semantic.color.border.input}`,
-                      borderRadius: '8px',
-                      backgroundColor: selectedCuisines.includes(cuisine.id) ? tokens.semantic.color.fill['accent-muted'] : tokens.semantic.surface.raised,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
                   >
-                    <Stack direction="column" gap="xs" alignItems="center">
-                      <div style={{ fontSize: '32px' }}>
-                        {cuisine.emoji}
-                      </div>
-                      <div 
-                        style={{ 
-                          fontWeight: selectedCuisines.includes(cuisine.id) ? 600 : 400,
-                          fontSize: '14px',
-                          color: selectedCuisines.includes(cuisine.id) ? tokens.semantic.color.text.accent : 'inherit'
-                        }}
-                      >
-                        {cuisine.label}
-                      </div>
-                    </Stack>
-                  </button>
+                    {`${cuisine.emoji} ${cuisine.label}`}
+                  </FilterChip>
                 ))}
-              </div>
+              </Stack>
+            </Field>
 
-              {selectedCuisines.length === 0 && (
-                <InlineAlert variant="warning">
-                  Please select at least one cuisine to continue
-                </InlineAlert>
+            <Stack direction="column" gap="md">
+              <Stack direction="row">
+                <Button
+                  variant="naked"
+                  size="small"
+                  iconName={showMore ? 'arrowUp' : 'arrowDown'}
+                  onClick={() => setShowMore((open) => !open)}
+                  aria-expanded={showMore}
+                >
+                  More options
+                </Button>
+              </Stack>
+              {showMore && (
+                <Box maxWidth="540px" style={{ width: '100%' }}>
+                  <TextField
+                    label="Preferred chef or recipe source"
+                    value={preferredChef}
+                    maxLength={MAX_SETTING_TEXT_LENGTH}
+                    onChange={(e) => setPreferredChef(e.target.value)}
+                    placeholder="e.g., Jamie Oliver, Ottolenghi, RecipeTin Eats"
+                    helperText="Recipes will match this style. Pre-filled from your Settings."
+                  />
+                </Box>
               )}
-
-              {selectedCuisines.length > 0 && (
-                <InlineAlert variant="success">
-                  {selectedCuisines.length} cuisine{selectedCuisines.length > 1 ? 's' : ''} selected
-                </InlineAlert>
-              )}
-
-              <Divider size="small"/>
-
-              <Typography variant="h3">Select inspiration</Typography>
-
-              <Box>
-                <TextField
-                  label="Preferred Chef or Recipe Source (optional)"
-                  value={preferredChef}
-                  maxLength={MAX_SETTING_TEXT_LENGTH}
-                  onChange={(e) => setPreferredChef(e.target.value)}
-                  placeholder="e.g., Jamie Oliver, Ottolenghi, RecipeTin Eats"
-                  helperText="The AI will try to match the style of recipes from your preferred chef or recipe source"
-                />
-              </Box>
             </Stack>
-          </Box>
-        )}
+          </Stack>
+        </Box>
 
-        {/* Step 3: Ready to Generate */}
-        {currentStep === 3 && (
-          <Box border="default" borderRadius="lg" p="xl" pb="9xl" bg="surface.raised">
-            <Stack direction="column" gap="lg">
-              <Typography variant="h2">Step 3: Generate your meal plan</Typography>
-              <Typography variant="body">
-                Great! We&apos;re ready to create your personalized weekly meal plan based on your preferences.
-              </Typography>
-
-              <Box p="lg" bg="surface.raised" borderRadius="md" border="default">
-                <Stack direction="column" gap="sm">
-                  <Typography variant="h3">
-                    Your weekly plan summary:
-                  </Typography>
-                  <Typography>{weekOptionLabel(weekStart)}</Typography>
-                  <Stack direction="row" gap="md">
-                    <Chip>{pantryItems.length}</Chip>
-                    <Typography> pantry items to use</Typography>
-                  </Stack>
-                  <Stack direction="row" gap="md">
-                    <Chip>{selectedCuisines.length}</Chip>
-                    <Typography> cuisine{selectedCuisines.length > 1 ? 's' : ''}: {selectedCuisines.join(', ')}</Typography>
-                  </Stack>
-                </Stack>
-              </Box>
-
-              <Typography variant="small">
-                Click &quot;Generate plan&quot; below to create your personalized weekly meal plan with AI
-              </Typography>
-            </Stack>
-          </Box>
-        )}
-
-        {/* Navigation Buttons */}
-        <Box mt="xl" mb="9xl">
+        <Box mb="9xl">
           <ButtonGroup
             left={
-              <Button
-                variant="secondary"
-                size="large"
-                iconName="arrowLeft"
-                onClick={handleBack}
-                disabled={currentStep === 1}
-              >
-                Back
-              </Button>
+              onCancel ? (
+                <Button variant="secondary" size="large" onClick={onCancel}>
+                  Cancel
+                </Button>
+              ) : null
             }
             right={
-              <>
-                {onCancel && (
-                  <Button
-                    variant="secondary"
-                    size="large"
-                    onClick={onCancel}
-                  >
-                    Cancel
-                  </Button>
-                )}
-                
-                <Button
-                  variant="primary"
-                  size="large"
-                  iconName="check"
-                  onClick={handleNext}
-                  disabled={!canProceed()}
-                >
-                  {currentStep === totalSteps ? 'Generate plan' : 'Next'}
-                </Button>
-              </>
+              <Button variant="primary" size="large" iconName="check" onClick={handleGenerate} disabled={!canGenerate}>
+                Generate plan
+              </Button>
             }
           />
         </Box>
-      </Box>
+      </Stack>
+
+      <PantrySheet
+        isOpen={showPantry}
+        onClose={() => setShowPantry(false)}
+        pantry={pantry}
+        onUpdatePantry={setPantry}
+        onScanImage={handleScanPantryImage}
+        isScanning={isScanning}
+        scanError={scanError}
+      />
     </Main>
   );
 }

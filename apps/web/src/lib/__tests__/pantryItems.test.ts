@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { addItem, isUseSoon, itemsToUseSoon, mergeScan, removeItem, toggleUseSoon, type PantryState } from '../pantryItems';
+import { addItem, isUseSoon, itemsToUseSoon, mergeScan, removeItem, toggleUseSoon, type PantryState, pantrySummary } from '../pantryItems';
 
 const empty: PantryState = { items: [], useSoon: [] };
 
@@ -51,5 +51,20 @@ describe('pantryItems', () => {
   it('ignores an out-of-range remove', () => {
     const state = { items: ['milk'], useSoon: ['milk'] };
     expect(removeItem(state, 5)).toBe(state);
+  });
+});
+
+describe('pantrySummary (#195)', () => {
+  it('says when nothing is added', () => {
+    expect(pantrySummary({ items: [], useSoon: [] })).toBe('Nothing added yet');
+  });
+
+  it('counts items, singular and plural', () => {
+    expect(pantrySummary({ items: ['rice'], useSoon: [] })).toBe('1 item');
+    expect(pantrySummary({ items: ['rice', 'eggs'], useSoon: [] })).toBe('2 items');
+  });
+
+  it('adds the use-soon count, ignoring flags for items no longer listed', () => {
+    expect(pantrySummary({ items: ['rice', 'spinach', 'milk'], useSoon: ['Spinach', 'milk', 'gone'] })).toBe('3 items · 2 use soon');
   });
 });
