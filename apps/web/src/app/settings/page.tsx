@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Alert, Box, Button, Checkbox, Chip, Container, Dropdown, NumberInput, Slider, Stack, TextField, Typography, tokens } from "@common-origin/design-system";
+import { Alert, Box, Button, Checkbox, Chip, Container, Dropdown, Modal, NumberInput, Slider, Stack, TextField, Typography, tokens } from "@common-origin/design-system";
 import Main from "@/components/app/Main";import {
   getFamilySettings,
   saveFamilySettings,
@@ -92,15 +92,22 @@ export default function SettingsPage() {
     }
   };
 
-  // The age to add a child with, from the form under the children's cards (#196).
+  // "Add child" opens a dialog to pick the new child's age (#196).
+  const [addChildOpen, setAddChildOpen] = useState(false);
   const [newChildAge, setNewChildAge] = useState(5);
 
-  const addChild = () => {
+  const openAddChild = () => {
+    setNewChildAge(5);
+    setAddChildOpen(true);
+  };
+
+  const confirmAddChild = () => {
     setSettings(prev => ({
       ...prev,
       children: [...prev.children, { age: newChildAge }],
       totalServings: prev.totalServings + 1,
     }));
+    setAddChildOpen(false);
   };
 
   const removeChild = (index: number) => {
@@ -230,23 +237,31 @@ export default function SettingsPage() {
 												))}
 											</Stack>
 										)}
-										<Stack direction="column" gap="2xl">
-											<SettingsField>
-												<NumberInput
-													label="Age"
-													min={0}
-													max={18}
-													value={newChildAge}
-													onChange={(value) => setNewChildAge(typeof value === 'number' ? value : 0)}
-													placeholder="Child's age"
-												/>
-											</SettingsField>
-											<Stack direction="row" justifyContent="flex-end">
-												<Button variant="secondary" size="medium" onClick={addChild}>
-													Add child
-												</Button>
-											</Stack>
+										{/* Adding a child opens a dialog to pick their age (#196) */}
+										<Stack direction="row">
+											<Button variant="secondary" size="medium" iconName="add" onClick={openAddChild}>
+												Add child
+											</Button>
 										</Stack>
+										<Modal
+											isOpen={addChildOpen}
+											onClose={() => setAddChildOpen(false)}
+											title="Add a child"
+											size="small"
+											actions={[
+												{ label: 'Cancel', onClick: () => setAddChildOpen(false), variant: 'secondary' },
+												{ label: 'Add child', onClick: confirmAddChild, variant: 'primary' },
+											]}
+										>
+											<NumberInput
+												label="Age"
+												min={0}
+												max={18}
+												value={newChildAge}
+												onChange={(value) => setNewChildAge(typeof value === 'number' ? value : 0)}
+												placeholder="Child's age"
+											/>
+										</Modal>
 									</Stack>
 
 									<Chip>
