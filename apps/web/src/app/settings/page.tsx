@@ -297,7 +297,7 @@ export default function SettingsPage() {
 										/>
 									</SettingsField>
 									<Stack direction="column" gap="sm">
-										<Typography variant="subtitle">Additional preferences</Typography>
+										<Typography variant="label">Additional preferences</Typography>
 
 										<Checkbox
 											label="Prefer gluten-free options"
