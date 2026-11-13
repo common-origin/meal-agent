@@ -131,7 +131,8 @@ export default function SettingsPage() {
     }));
   };
 
-  // Recipe recipients (people you can email recipes to)
+  // Recipe recipients (people you can email recipes to). "Add recipient" opens a dialog (#196).
+  const [addRecipientOpen, setAddRecipientOpen] = useState(false);
   const [newRecipientName, setNewRecipientName] = useState('');
   const [newRecipientEmail, setNewRecipientEmail] = useState('');
   const recipients = settings.recipeRecipients ?? [];
@@ -142,15 +143,27 @@ export default function SettingsPage() {
     newRecipientName.trim().length > 0 &&
     emailRe.test(newRecipientEmail.trim()) &&
     !recipients.some(r => r.email.toLowerCase() === newRecipientEmail.trim().toLowerCase());
+  // Why the email can't be added yet, once something is typed
+  const newEmail = newRecipientEmail.trim();
+  const newRecipientEmailError =
+    newEmail.length === 0 ? undefined
+    : !emailRe.test(newEmail) ? 'Enter a valid email address'
+    : recipients.some(r => r.email.toLowerCase() === newEmail.toLowerCase()) ? 'Already a recipient'
+    : undefined;
 
-  const addRecipient = () => {
+  const openAddRecipient = () => {
+    setNewRecipientName('');
+    setNewRecipientEmail('');
+    setAddRecipientOpen(true);
+  };
+
+  const confirmAddRecipient = () => {
     if (!canAddRecipient) return;
     setSettings(prev => ({
       ...prev,
       recipeRecipients: [...(prev.recipeRecipients ?? []), { name: newRecipientName.trim(), email: newRecipientEmail.trim() }],
     }));
-    setNewRecipientName('');
-    setNewRecipientEmail('');
+    setAddRecipientOpen(false);
   };
 
   const removeRecipient = (index: number) => {
@@ -695,36 +708,41 @@ export default function SettingsPage() {
 											You&apos;ve reached the maximum of {MAX_RECIPE_RECIPIENTS} recipients. Remove one to add another.
 										</Typography>
 									) : (
-										<Stack direction="column" gap="2xl">
-											<Stack direction="row" gap="2xl">
-												<SettingsField>
+										<>
+											{/* Adding a recipient opens a dialog, as Add child does (#196) */}
+											<Stack direction="row">
+												<Button variant="secondary" size="medium" iconName="add" onClick={openAddRecipient}>
+													Add recipient
+												</Button>
+											</Stack>
+											<Modal
+												isOpen={addRecipientOpen}
+												onClose={() => setAddRecipientOpen(false)}
+												title="Add a recipient"
+												size="small"
+												actions={[
+													{ label: 'Cancel', onClick: () => setAddRecipientOpen(false), variant: 'secondary' },
+													{ label: 'Add recipient', onClick: confirmAddRecipient, variant: 'primary', disabled: !canAddRecipient },
+												]}
+											>
+												<Stack direction="column" gap="2xl">
 													<TextField
 														label="Name"
 														value={newRecipientName}
 														onChange={(e) => setNewRecipientName(e.target.value)}
 														placeholder="e.g., Sarah"
 													/>
-												</SettingsField>
-												<SettingsField>
 													<TextField
 														label="Email"
+														type="email"
 														value={newRecipientEmail}
 														onChange={(e) => setNewRecipientEmail(e.target.value)}
 														placeholder="sarah@example.com"
+														error={newRecipientEmailError}
 													/>
-												</SettingsField>
-											</Stack>
-											<Stack direction="row" justifyContent="flex-end">
-												<Button
-													variant="secondary"
-													size="medium"
-													onClick={addRecipient}
-													disabled={!canAddRecipient}
-												>
-													Add recipient
-												</Button>
-											</Stack>
-										</Stack>
+												</Stack>
+											</Modal>
+										</>
 									)}
 								</Stack>
 							</SettingsSection>
