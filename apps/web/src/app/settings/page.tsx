@@ -183,7 +183,7 @@ export default function SettingsPage() {
 								title="Household"
 								description="Who you're cooking for. New recipes are written for the total servings."
 							>
-								<Stack direction="column" gap="lg">
+								<Stack direction="column" gap="2xl">
 									<SettingsField>
 										<NumberInput
 											label="Adults"
@@ -200,7 +200,7 @@ export default function SettingsPage() {
 											}}
 										/>
 									</SettingsField>
-									<Stack direction="column" gap="lg">
+									<Stack direction="column" gap="2xl">
 										{/* One card per child, as Recipe sharing lists its recipients (#196) */}
 										{settings.children.length > 0 && (
 											<Stack direction="column" gap="sm">
@@ -230,7 +230,7 @@ export default function SettingsPage() {
 												))}
 											</Stack>
 										)}
-										<Stack direction="column" gap="md">
+										<Stack direction="column" gap="2xl">
 											<SettingsField>
 												<NumberInput
 													label="Age"
@@ -259,7 +259,7 @@ export default function SettingsPage() {
 								title="Dietary requirements"
 								description="Set your primary diet type and any additional preferences"
 							>
-								<Stack direction="column" gap="lg">
+								<Stack direction="column" gap="2xl">
 									<SettingsField>
 										<Dropdown
 											label="Primary diet"
@@ -318,7 +318,7 @@ export default function SettingsPage() {
 								title="Cooking profile"
 								description="Help us understand your cooking preferences and skill level"
 							>
-								<Stack direction="column" gap="lg">
+								<Stack direction="column" gap="2xl">
 									<Box>
 										<SettingsField>
 											<Dropdown
@@ -401,7 +401,7 @@ export default function SettingsPage() {
 								title="Location & seasonality"
 								description="Used for ingredient availability and seasonal preferences"
 							>
-								<Stack direction="column" gap="lg">
+								<Stack direction="column" gap="2xl">
 									<SettingsField>
 										<TextField
 											label="City"
@@ -461,7 +461,7 @@ export default function SettingsPage() {
 								title="Budget & time"
 								description="What a dinner should cost and how long it can take. The plan's budget is the max per meal times its dinners."
 							>
-								<Stack direction="column" gap="xl">
+								<Stack direction="column" gap="2xl">
 									<Slider
 										label={`Budget per meal (min): $${settings.budgetPerMeal.min}`}
 										min={10}
@@ -526,7 +526,7 @@ export default function SettingsPage() {
 								title="Batch cooking"
 								description="Cook in bulk on one day and eat from it across the week."
 							>
-								<Stack direction="column" gap="md">
+								<Stack direction="column" gap="2xl">
 									<Checkbox
 										label="Enable batch cooking"
 										checked={settings.batchCooking.enabled}
@@ -540,7 +540,7 @@ export default function SettingsPage() {
 									/>
 
 									{settings.batchCooking.enabled && (
-										<Stack direction="column" gap="lg">
+										<Stack direction="column" gap="2xl">
 											<SettingsField>
 												<Dropdown
 													label="Frequency"
@@ -608,7 +608,7 @@ export default function SettingsPage() {
 								title="Weekly planning reminder"
 								description="Set when you'd like to be reminded to plan your weekly meals and create your shopping list."
 							>
-								<Stack direction="row" gap="md">
+								<Stack direction="row" gap="2xl">
 									<SettingsField>
 										<Dropdown
 											label="Reminder Day"
@@ -647,7 +647,7 @@ export default function SettingsPage() {
 								title="Recipe sharing"
 								description={`People you can email a recipe to from the recipe page. Up to ${MAX_RECIPE_RECIPIENTS} recipients.`}
 							>
-								<Stack direction="column" gap="lg">
+								<Stack direction="column" gap="2xl">
 									{recipients.length > 0 && (
 										<Stack direction="column" gap="sm">
 											{recipients.map((r, i) => (
@@ -684,8 +684,8 @@ export default function SettingsPage() {
 											You&apos;ve reached the maximum of {MAX_RECIPE_RECIPIENTS} recipients. Remove one to add another.
 										</Typography>
 									) : (
-										<Stack direction="column" gap="md">
-											<Stack direction="row" gap="md">
+										<Stack direction="column" gap="2xl">
+											<Stack direction="row" gap="2xl">
 												<SettingsField>
 													<TextField
 														label="Name"
