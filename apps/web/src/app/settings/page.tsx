@@ -182,7 +182,7 @@ export default function SettingsPage() {
 						<Stack direction="column" gap="sm">
 							<Typography variant="h1">Settings</Typography>
 							<Typography variant="body">
-								Configure your family&apos;s preferences for AI-powered meal planning
+								Configure your preferences for AI-powered meal planning
 							</Typography>
 						</Stack>
 
