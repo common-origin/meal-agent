@@ -56,6 +56,8 @@ const SectionColumns = styled.div`
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   row-gap: ${tokens.semantic.space[400]};
+  /* Room under each section, before the divider to the next (2rem) */
+  margin-bottom: ${tokens.semantic.space[800]};
 
   /* Grid items default to min-width: auto and won't shrink below their content (a long email). */
   & > * {
