@@ -761,14 +761,22 @@ export default function SettingsPage() {
 								}
 							>
 								{icsUrl ? (
-									<Stack direction="row" gap="sm" alignItems="center">
-										<Box maxWidth="480px" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-											<Typography variant="body">{icsUrl}</Typography>
-										</Box>
-										<Button variant="secondary" size="medium" onClick={copyIcsUrl}>
-											Copy link
-										</Button>
-									</Stack>
+									/* Laid out like a recipient card, without the grey fill (#196) */
+									<Box border="default" borderRadius="md" p="md">
+										<Stack direction="row" gap="md" justifyContent="space-between" alignItems="center">
+											<div style={{ minWidth: 0 }}>
+												<Stack direction="column" gap="xs">
+													<Typography variant="body"><strong>Calendar link</strong></Typography>
+													<div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+														<Typography variant="small" color="subdued">{icsUrl}</Typography>
+													</div>
+												</Stack>
+											</div>
+											<Button variant="secondary" size="small" onClick={copyIcsUrl}>
+												Copy link
+											</Button>
+										</Stack>
+									</Box>
 								) : (
 									<Typography color="subdued">
 										{icsError ?? 'Loading your calendar link…'}
