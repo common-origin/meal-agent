@@ -608,8 +608,9 @@ export default function SettingsPage() {
 								title="Weekly planning reminder"
 								description="Set when you'd like to be reminded to plan your weekly meals and create your shopping list."
 							>
-								<Stack direction="row" gap="2xl">
-									<SettingsField>
+								{/* Wraps on a phone, so the time drops under the day instead of off the card */}
+								<Stack direction="row" gap="2xl" wrap>
+									<div style={{ flex: '1 1 240px', minWidth: 0, maxWidth: '540px' }}>
 										<Dropdown
 											label="Reminder Day"
 											helperText="This will be used for future email/SMS notifications to help you stay on track with your meal planning routine."
@@ -624,7 +625,7 @@ export default function SettingsPage() {
 												{ id: 'monday', label: 'Monday' }
 											]}
 										/>
-									</SettingsField>
+									</div>
 
 									<input
 										type="time"
