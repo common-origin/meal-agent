@@ -24,6 +24,52 @@ export function nextWeekMondayISO(): string {
   return dayjs(mondayOfWeekISO()).add(1, "week").format("YYYY-MM-DD");
 }
 
+/** The Monday `weeks` weeks after (or before, if negative) `mondayISO`. */
+export function shiftWeekISO(mondayISO: string, weeks: number): string {
+  return dayjs(mondayISO).add(weeks, "week").format("YYYY-MM-DD");
+}
+
+/**
+ * The planned week to open (#194): the week covering `today` if it has a
+ * plan, otherwise the soonest planned week after it, otherwise null. Plans
+ * are found by their own `week_start`, never by "next Monday", so a plan made
+ * on Sunday for the coming week is still found on the Monday.
+ */
+export function weekToShow(plannedWeeks: string[], today: dayjs.ConfigType = undefined): string | null {
+  const thisWeek = mondayOfWeekISO(today);
+  if (plannedWeeks.includes(thisWeek)) return thisWeek;
+  const upcoming = plannedWeeks.filter((week) => week > thisWeek).sort();
+  return upcoming[0] ?? null;
+}
+
+/**
+ * The week the planner suggests when nothing says otherwise (#194): next week
+ * from Friday to Sunday, when the weekend shop is for the week ahead; this
+ * week from Monday to Thursday.
+ */
+export function defaultPlanningWeekISO(today: dayjs.ConfigType = undefined): string {
+  const thisWeek = mondayOfWeekISO(today);
+  const day = dayjs(today).day(); // 0 = Sunday
+  return day === 0 || day >= 5 ? shiftWeekISO(thisWeek, 1) : thisWeek;
+}
+
+/** "Mon 16 – Sun 22 Nov", or "Mon 27 Oct – Sun 2 Nov" across a month. */
+export function formatWeekRange(mondayISO: string): string {
+  const start = dayjs(mondayISO);
+  const end = start.add(6, "day");
+  const startLabel = start.month() === end.month() ? start.format("ddd D") : start.format("ddd D MMM");
+  return `${startLabel} – ${end.format("ddd D MMM")}`;
+}
+
+/** "This week", "Next week", "Last week", or null for any other week. */
+export function relativeWeekLabel(mondayISO: string, today: dayjs.ConfigType = undefined): string | null {
+  const thisWeek = mondayOfWeekISO(today);
+  if (mondayISO === thisWeek) return "This week";
+  if (mondayISO === shiftWeekISO(thisWeek, 1)) return "Next week";
+  if (mondayISO === shiftWeekISO(thisWeek, -1)) return "Last week";
+  return null;
+}
+
 export function getNextSunday8AM(): Date {
   const now = dayjs();
   let nextSunday = now.day(0); // This Sunday
@@ -83,4 +129,36 @@ export function formatTimeUntilSunday(): string {
   } else {
     return `${hours} hour${hours > 1 ? "s" : ""}`;
   }
+}
+
+/**
+ * The week the wizard starts on (#194): the week on screen if it's not past
+ * and has no plan; otherwise the week after it if that one is free (so "Start
+ * new week" doesn't default to replacing the plan you're looking at);
+ * otherwise the week on screen, which the wizard then says it will replace.
+ */
+export function suggestPlanningWeek(
+  pageWeek: string,
+  plannedWeeks: string[],
+  today: dayjs.ConfigType = undefined
+): string {
+  const base = pageWeek >= mondayOfWeekISO(today) ? pageWeek : defaultPlanningWeekISO(today);
+  if (!plannedWeeks.includes(base)) return base;
+  const after = shiftWeekISO(base, 1);
+  return plannedWeeks.includes(after) ? base : after;
+}
+
+/** The weeks the wizard offers: this week, the next two, and `selected` if it's further out. */
+export function planningWeekOptions(selected: string, today: dayjs.ConfigType = undefined): string[] {
+  const thisWeek = mondayOfWeekISO(today);
+  const weeks = [thisWeek, shiftWeekISO(thisWeek, 1), shiftWeekISO(thisWeek, 2)];
+  if (selected >= thisWeek && !weeks.includes(selected)) weeks.push(selected);
+  return weeks.sort();
+}
+
+/** The `?week=` a link carries (#194), as that week's Monday; null if it's missing or not a date. */
+export function parseWeekParam(param: string | null | undefined): string | null {
+  if (!param || !/^\d{4}-\d{2}-\d{2}$/.test(param)) return null;
+  const date = dayjs(param);
+  return date.isValid() && date.format("YYYY-MM-DD") === param ? mondayOfWeekISO(date) : null;
 }

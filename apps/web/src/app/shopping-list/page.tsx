@@ -10,9 +10,9 @@ import { ingredientKey } from "@/lib/ingredients/resolve";
 import { generateShoppingListCSV, downloadCSV } from "@/lib/csv";
 import { loadHousehold, getDefaultHousehold } from "@/lib/storage";
 import { clearShoppingComplete, isShoppingComplete as isWeekShoppingComplete, markShoppingComplete } from "@/lib/shoppingCompletion";
-import { loadCurrentWeekPlan, savePantryItems, loadPantryItems, hydrateRecencyFromSupabase, syncRecencyToSupabase } from "@/lib/hybridStorage";
+import { loadCurrentWeekPlan, savePantryItems, loadPantryItems, hydrateRecencyFromSupabase, syncRecencyToSupabase, listPlannedWeeks } from "@/lib/hybridStorage";
 import { composeWeek } from "@/lib/compose";
-import { nextWeekMondayISO } from "@/lib/schedule";
+import { defaultPlanningWeekISO, formatWeekRange, parseWeekParam, thisWeekMondayISO, weekToShow } from "@/lib/schedule";
 import { track, type CostOptimizedMeta } from "@/lib/analytics";
 import { estimateIngredientCost } from "@/lib/colesMapping";
 import { RecipeLibrary } from "@/lib/library";
@@ -38,6 +38,10 @@ export default function ShoppingListPage() {
   const [apiPrices, setApiPrices] = useState<Map<string, { cost: number; source: 'api' | 'static' | 'category'; livePrice?: boolean }>>(new Map());
   const [isShoppingComplete, setIsShoppingComplete] = useState(false);
   const [weeklyNutrition, setWeeklyNutrition] = useState<WeeklyNutrition | null>(null);
+  // The Monday of the plan this list is for (#194): the link's ?week=, else the week the plan page
+  // would open (today's if planned, else the next planned one), else the week you'd plan next.
+  const [weekStart, setWeekStart] = useState<string | null>(null);
+  const weekRef = useRef<string>(defaultPlanningWeekISO());
 
   // Serializes pantry-preference read-modify-write cycles so two quick
   // mark/unmark clicks can't interleave their loadPantryItems/savePantryItems
@@ -82,7 +86,7 @@ export default function ShoppingListPage() {
     
     // Get current plan
     const household = loadHousehold() || getDefaultHousehold();
-    const nextWeekISO = nextWeekMondayISO();
+    const nextWeekISO = weekRef.current;
     
     // Check if user has a saved week plan (from AI generation or manual selection)
     const savedPlan = await loadCurrentWeekPlan(nextWeekISO);
@@ -226,19 +230,24 @@ export default function ShoppingListPage() {
   useEffect(() => {
     track('page_view', { page: '/shopping-list' });
     
-    // Check if shopping is already complete for this week
-    const isComplete = isWeekShoppingComplete(nextWeekMondayISO());
-    setIsShoppingComplete(isComplete);
-    
-    // Generate shopping list on mount (only if not complete)
-    if (!isComplete) {
-      const loadShoppingList = async () => {
+    (async () => {
+      const fromLink = parseWeekParam(new URLSearchParams(window.location.search).get('week'));
+      const week =
+        fromLink ?? weekToShow(await listPlannedWeeks(thisWeekMondayISO()).catch(() => [])) ?? defaultPlanningWeekISO();
+      weekRef.current = week;
+      setWeekStart(week);
+
+      // Check if shopping is already complete for this week
+      const isComplete = isWeekShoppingComplete(week);
+      setIsShoppingComplete(isComplete);
+
+      // Generate shopping list on mount (only if not complete)
+      if (!isComplete) {
         await generateShoppingList();
-      };
-      loadShoppingList();
-    } else {
-      setLoading(false);
-    }
+      } else {
+        setLoading(false);
+      }
+    })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -264,7 +273,7 @@ export default function ShoppingListPage() {
       const res = await fetch('/api/coles/list', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ weekStart: nextWeekMondayISO(), items: toColesListItems(aggregatedItems) }),
+        body: JSON.stringify({ weekStart: weekRef.current, items: toColesListItems(aggregatedItems) }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error ?? 'Could not send the list to Coles.');
@@ -311,7 +320,7 @@ export default function ShoppingListPage() {
 
   const handleShoppingComplete = () => {
     // Mark shopping as complete for this week
-    const nextWeekISO = nextWeekMondayISO();
+    const nextWeekISO = weekRef.current;
     markShoppingComplete(nextWeekISO);
     setIsShoppingComplete(true);
     
@@ -323,7 +332,7 @@ export default function ShoppingListPage() {
 
   /** Reopens this week's list from the completed screen (#173). */
   const handleShowListAgain = async () => {
-    clearShoppingComplete(nextWeekMondayISO());
+    clearShoppingComplete(weekRef.current);
     setIsShoppingComplete(false);
     setLoading(true);
     await generateShoppingList();
@@ -343,7 +352,10 @@ export default function ShoppingListPage() {
       <Main maxWidth="md">
         <Container>
           <Stack direction="column" gap="lg">
-            <Typography variant="h1">Shopping list</Typography>
+            <Stack direction="column" gap="xs">
+              <Typography variant="h1">Shopping list</Typography>
+              {weekStart && <Typography variant="small" color="subdued">{formatWeekRange(weekStart)}</Typography>}
+            </Stack>
             <Alert variant="success" title="Shopping completed">
               Your shopping has been marked as complete. The list will show again when you confirm your next plan.
             </Alert>
@@ -387,7 +399,10 @@ export default function ShoppingListPage() {
           <Stack direction="column" gap="lg">
             {/* Header */}
             <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <Typography variant="h1">Shopping list</Typography>
+              <Stack direction="column" gap="xs">
+                <Typography variant="h1">Shopping list</Typography>
+                {weekStart && <Typography variant="small" color="subdued">{formatWeekRange(weekStart)}</Typography>}
+              </Stack>
               <Stack direction="row" gap="md">
                 <Button variant="secondary" size="large" onClick={handleExportCSV}>
                   Export CSV

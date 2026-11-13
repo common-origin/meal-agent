@@ -126,6 +126,18 @@ export async function loadMealPlan(weekStart: string): Promise<SupabaseStorage.M
 }
 
 /**
+ * The household's planned weeks from `fromISO` on (#194). Signed out, that's
+ * the one plan localStorage keeps, if it's in range.
+ */
+export async function listPlannedWeeks(fromISO: string): Promise<string[]> {
+  if (await isAuthenticated()) {
+    return SupabaseStorage.listMealPlanWeeks(fromISO);
+  }
+  const week = LocalStorage.loadSavedPlanWeek();
+  return week && week >= fromISO ? [week] : [];
+}
+
+/**
  * Current Week Plan
  *
  * Adapts between the plan/shopping-list pages' array-based day format and

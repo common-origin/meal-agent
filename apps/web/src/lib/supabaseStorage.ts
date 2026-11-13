@@ -199,6 +199,33 @@ export async function saveMealPlan(plan: MealPlan): Promise<boolean> {
   }
 }
 
+/** The household's planned weeks (their `week_start`s) from `fromISO` on, oldest first (#194). */
+export async function listMealPlanWeeks(fromISO: string): Promise<string[]> {
+  try {
+    const householdId = await getHouseholdId();
+    if (!householdId) return [];
+
+    const supabase = createBrowserClient();
+
+    const { data, error } = await supabase
+      .from('meal_plans')
+      .select('week_start')
+      .eq('household_id', householdId)
+      .gte('week_start', fromISO)
+      .order('week_start', { ascending: true });
+
+    if (error || !data) {
+      if (error) console.error('Error listing meal plan weeks:', error);
+      return [];
+    }
+
+    return data.map((row) => row.week_start);
+  } catch (error) {
+    console.error('Error in listMealPlanWeeks:', error);
+    return [];
+  }
+}
+
 export async function loadMealPlan(weekStart: string): Promise<MealPlan | null> {
   try {
     const householdId = await getHouseholdId();

@@ -8,15 +8,36 @@ vi.mock('@/lib/hybridStorage', () => ({
   loadPantryItems: vi.fn(async () => []),
   hydrateRecencyFromSupabase: vi.fn(async () => undefined),
   syncRecencyToSupabase: vi.fn(async () => undefined),
+  listPlannedWeeks: vi.fn(async () => []),
 }));
 vi.mock('@/lib/compose', () => ({ composeWeek: () => ({ startISO: '2026-10-26', days: [], costEstimate: 0, conflicts: [] }) }));
 vi.mock('@/lib/shoppingListAggregator', () => ({ aggregateShoppingList: () => [], toLegacyFormat: () => [] }));
 vi.mock('@/lib/analytics', () => ({ track: vi.fn() }));
-vi.mock('@/lib/schedule', () => ({ nextWeekMondayISO: () => '2026-10-26' }));
+// No ?week= and nothing planned ahead: the list falls back to the week you'd plan next
+vi.mock('@/lib/schedule', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/schedule')>()),
+  defaultPlanningWeekISO: () => '2026-10-26',
+}));
 vi.mock('@/components/app/ApiQuotaWarning', () => ({ default: () => null }));
 
 import ShoppingListPage from '../page';
 import { isShoppingComplete, markShoppingComplete } from '@/lib/shoppingCompletion';
+import { loadCurrentWeekPlan } from '@/lib/hybridStorage';
+
+describe("/shopping-list follows the plan's week (#194)", () => {
+  beforeEach(() => localStorage.clear());
+
+  it('builds the list for the ?week= the plan page links to', async () => {
+    window.history.pushState({}, '', '/shopping-list?week=2026-11-16');
+    try {
+      render(<ShoppingListPage />);
+      expect(await screen.findByText('Mon 16 – Sun 22 Nov')).toBeInTheDocument();
+      expect(loadCurrentWeekPlan).toHaveBeenCalledWith('2026-11-16');
+    } finally {
+      window.history.pushState({}, '', '/');
+    }
+  });
+});
 
 describe('/shopping-list completed screen (#173)', () => {
   beforeEach(() => localStorage.clear());

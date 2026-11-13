@@ -1,20 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, InlineAlert, FilterChip, Divider, Stack, Typography, Button, Box, TextField, List, ListItem, IconButton, Chip, tokens } from "@common-origin/design-system";
+import { Alert, InlineAlert, FilterChip, Divider, Dropdown, Stack, Typography, Button, Box, TextField, List, ListItem, IconButton, Chip, tokens } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import { CUISINE_OPTIONS, MAX_SETTING_TEXT_LENGTH } from "@/lib/types/settings";
 import { apiErrorMessage, redirectToLoginIfUnauthenticated } from "@/lib/api/client";
 import { imageUploadFormData, PhotoTooLargeError } from "@/lib/client/resizeImage";
 import { addItem, isUseSoon, itemsToUseSoon, mergeScan, removeItem, toggleUseSoon, type PantryState } from "@/lib/pantryItems";
+import { formatWeekRange, planningWeekOptions, relativeWeekLabel } from "@/lib/schedule";
 
 interface WeeklyPlanWizardProps {
   onComplete: (data: WeeklyPlanData) => void;
   onCancel?: () => void;
+  /** The Monday of the week selected to start with (#194). */
+  initialWeek: string;
+  /** Weeks that already have a plan, so choosing one can say it will be replaced. */
+  plannedWeeks: string[];
 }
 
 export interface WeeklyPlanData {
+  /** The Monday of the week this plan is for (#194). */
+  weekStart: string;
   pantryItems: string[];
   /** Pantry items flagged to use this week (#91). */
   useSoonItems: string[];
@@ -22,8 +29,17 @@ export interface WeeklyPlanData {
   preferredChef?: string;
 }
 
-export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWizardProps) {
+/** "This week · Mon 9 – Sun 15 Nov", or just the dates further out. */
+function weekOptionLabel(week: string): string {
+  const relative = relativeWeekLabel(week);
+  return relative ? `${relative} · ${formatWeekRange(week)}` : formatWeekRange(week);
+}
+
+export default function WeeklyPlanWizard({ onComplete, onCancel, initialWeek, plannedWeeks }: WeeklyPlanWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [weekStart, setWeekStart] = useState(initialWeek);
+  const weekOptions = planningWeekOptions(initialWeek);
+  const replacesPlan = plannedWeeks.includes(weekStart);
   const [pantry, setPantry] = useState<PantryState>({ items: [], useSoon: [] });
   const pantryItems = pantry.items;
   const [newPantryItem, setNewPantryItem] = useState('');
@@ -100,6 +116,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
     } else {
       // Complete wizard
       onComplete({
+        weekStart,
         pantryItems,
         useSoonItems: itemsToUseSoon(pantry),
         cuisines: selectedCuisines,
@@ -160,6 +177,26 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
               <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Typography variant="h2">Step 1: Pantry stocktake</Typography>
               </Stack>
+
+              {/* Which week this plan is for (#194): it's saved to, and shown on, that week */}
+              <Stack direction="column" gap="sm" alignItems="flex-start">
+                <Typography variant="h3">Which week?</Typography>
+                <Box maxWidth="420px" style={{ width: '100%' }}>
+                  <Dropdown
+                    label="Week to plan"
+                    options={weekOptions.map((week) => ({ id: week, label: weekOptionLabel(week) }))}
+                    value={weekStart}
+                    onChange={setWeekStart}
+                  />
+                </Box>
+                {replacesPlan && (
+                  <InlineAlert variant="warning">
+                    This week already has a plan. Generating will replace it.
+                  </InlineAlert>
+                )}
+              </Stack>
+
+              <Divider size="small"/>
 
               <Typography variant="body">
                 What ingredients do you already have at home that you want to use this week? Add them manually or scan your fridge/pantry.
@@ -365,6 +402,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel }: WeeklyPlanWiz
                   <Typography variant="h3">
                     Your weekly plan summary:
                   </Typography>
+                  <Typography>{weekOptionLabel(weekStart)}</Typography>
                   <Stack direction="row" gap="md">
                     <Chip>{pantryItems.length}</Chip>
                     <Typography> pantry items to use</Typography>
