@@ -13,6 +13,15 @@ import { track } from "@/lib/analytics";
 import SettingsSection, { SettingsField, SettingsForm } from "@/components/app/SettingsSection";
 import ColesExtensionSettings from "@/components/app/ColesExtensionSettings";
 
+/**
+ * Adults is a choice of 1 to 4 (#196). A household saved with more (validation
+ * allows up to 10) keeps its number as an extra option rather than a blank field.
+ */
+function adultOptions(current: number): { id: string; label: string }[] {
+  const counts = current > 4 ? [1, 2, 3, 4, current] : [1, 2, 3, 4];
+  return counts.map((n) => ({ id: String(n), label: String(n) }));
+}
+
 export default function SettingsPage() {
   const [settings, setSettings] = useState<FamilySettings>(DEFAULT_FAMILY_SETTINGS);
   const [saved, setSaved] = useState(false);
@@ -192,19 +201,18 @@ export default function SettingsPage() {
 							>
 								<Stack direction="column" gap="2xl">
 									<SettingsField>
-										<NumberInput
+										<Dropdown
 											label="Adults"
-											min={1}
-											max={10}
-											value={settings.adults}
+											value={String(settings.adults)}
 											onChange={(value) => {
-												const numValue = typeof value === 'number' ? value : 1;
+												const numValue = Number(value);
 												setSettings(prev => ({
 													...prev,
 													adults: numValue,
 													totalServings: numValue + prev.children.length
 												}));
 											}}
+											options={adultOptions(settings.adults)}
 										/>
 									</SettingsField>
 									<Stack direction="column" gap="2xl">
