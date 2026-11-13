@@ -222,7 +222,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel, initialWeek, pl
                     selected={selectedCuisines.includes(cuisine.id)}
                     onClick={() => toggleCuisine(cuisine.id)}
                   >
-                    {`${cuisine.emoji} ${cuisine.label}`}
+                    {cuisine.label}
                   </FilterChip>
                 ))}
               </Stack>
