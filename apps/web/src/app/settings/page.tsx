@@ -621,8 +621,8 @@ export default function SettingsPage() {
 											pantryPreference: value as 'hard' | 'soft'
 										}))}
 										options={[
-											{ id: 'hard', label: 'High Priority - Strongly prefer recipes using these ingredients' },
-											{ id: 'soft', label: 'Low Priority - Consider these ingredients if suitable' }
+											{ id: 'hard', label: 'High: plan around them' },
+											{ id: 'soft', label: 'Low: use if they fit' }
 										]}
 									/>
 								</SettingsField>
