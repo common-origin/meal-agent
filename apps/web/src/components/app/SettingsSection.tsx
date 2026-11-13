@@ -2,7 +2,7 @@
 
 import { Children, Fragment, type ReactNode } from "react";
 import styled from "styled-components";
-import { Box, Divider, Grid, GridCol, Stack, Typography, tokens } from "@common-origin/design-system";
+import { Box, Divider, Stack, Typography, tokens } from "@common-origin/design-system";
 
 interface SettingsSectionProps {
   title: string;
@@ -47,6 +47,28 @@ export function SettingsForm({ children }: { children: ReactNode }) {
 }
 
 /**
+ * A section's two columns (#196): title and description, then inputs, 2 : 3
+ * with 64px between them from the `md` breakpoint up; stacked below it. Not
+ * the design system's Grid, which puts its gap between every one of its
+ * columns, so an uneven split would multiply the gap.
+ */
+const SectionColumns = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: ${tokens.semantic.space[400]};
+
+  /* Grid items default to min-width: auto and won't shrink below their content (a long email). */
+  & > * {
+    min-width: 0;
+  }
+
+  @media (min-width: ${tokens.semantic.breakpoint.md}) {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    column-gap: ${tokens.semantic.space[1600]};
+  }
+`;
+
+/**
  * One section of /settings (#196): title and description on the left, the
  * inputs on the right, stacking into one column (title first) below the
  * design system's `md` breakpoint. Sits inside SettingsForm, which draws
@@ -55,19 +77,15 @@ export function SettingsForm({ children }: { children: ReactNode }) {
 export default function SettingsSection({ title, description, children }: SettingsSectionProps) {
   return (
     <Box as="section" aria-label={title}>
-      <Grid cols={3} gapX="8" gapY="4">
-        <GridCol span={3} spanMd={1}>
-          <Stack direction="column" gap="sm">
-            <Typography variant="h4" as="h2">{title}</Typography>
-            <Typography variant="small" color="subdued">
-              {description}
-            </Typography>
-          </Stack>
-        </GridCol>
-        <GridCol span={3} spanMd={2}>
-          {children}
-        </GridCol>
-      </Grid>
+      <SectionColumns>
+        <Stack direction="column" gap="sm">
+          <Typography variant="h4" as="h2">{title}</Typography>
+          <Typography variant="small" color="subdued">
+            {description}
+          </Typography>
+        </Stack>
+        <div>{children}</div>
+      </SectionColumns>
     </Box>
   );
 }

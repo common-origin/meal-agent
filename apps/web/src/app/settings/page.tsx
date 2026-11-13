@@ -660,10 +660,13 @@ export default function SettingsPage() {
 													bg="color.fill.muted"
 												>
 													<Stack direction="row" gap="md" justifyContent="space-between" alignItems="center">
-														<Stack direction="column" gap="xs">
-															<Typography variant="body"><strong>{r.name}</strong></Typography>
-															<Typography variant="small" color="subdued">{r.email}</Typography>
-														</Stack>
+														{/* Shrinks, and wraps a long email, so Remove stays inside the card on a phone */}
+														<div style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
+															<Stack direction="column" gap="xs">
+																<Typography variant="body"><strong>{r.name}</strong></Typography>
+																<Typography variant="small" color="subdued">{r.email}</Typography>
+															</Stack>
+														</div>
 														<Button
 															variant="secondary"
 															size="small"
