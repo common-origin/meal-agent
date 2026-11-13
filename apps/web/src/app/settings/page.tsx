@@ -201,7 +201,6 @@ export default function SettingsPage() {
 										/>
 									</SettingsField>
 									<Stack direction="column" gap="lg">
-										<Typography variant="subtitle">Children ({settings.children.length})</Typography>
 										{/* One card per child, as Recipe sharing lists its recipients (#196) */}
 										{settings.children.length > 0 && (
 											<Stack direction="column" gap="sm">
