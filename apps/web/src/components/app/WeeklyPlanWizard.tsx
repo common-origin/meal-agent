@@ -6,8 +6,7 @@ import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import PantrySheet from "@/components/app/PantrySheet";
 import { CUISINE_OPTIONS, MAX_SETTING_TEXT_LENGTH } from "@/lib/types/settings";
-import { apiErrorMessage, redirectToLoginIfUnauthenticated } from "@/lib/api/client";
-import { imageUploadFormData, PhotoTooLargeError } from "@/lib/client/resizeImage";
+import { scanPantryImage } from "@/lib/client/scanPantry";
 import { itemsToUseSoon, mergeScan, pantrySummary, type PantryState } from "@/lib/pantryItems";
 import { formatWeekRange, planningWeekOptions, relativeWeekLabel } from "@/lib/schedule";
 import { getFamilySettings, loadPantryItems } from "@/lib/hybridStorage";
@@ -76,12 +75,15 @@ export default function WeeklyPlanWizard({ onComplete, onCancel, initialWeek, pl
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([getFamilySettings(), loadPantryItems().catch(() => [] as string[])]).then(([settings, savedPantry]) => {
+    // Either load failing still opens the planner, just without that pre-fill
+    Promise.all([getFamilySettings().catch(() => null), loadPantryItems().catch(() => [] as string[])]).then(([settings, savedPantry]) => {
       if (cancelled) return;
       // "Use soon" is per week, so it starts empty (#91)
       setPantry({ items: savedPantry, useSoon: [] });
-      setSelectedCuisines(settings.cuisines.filter((id) => CUISINE_OPTIONS.some((option) => option.id === id)));
-      setPreferredChef(settings.preferredChef ?? '');
+      if (settings) {
+        setSelectedCuisines(settings.cuisines.filter((id) => CUISINE_OPTIONS.some((option) => option.id === id)));
+        setPreferredChef(settings.preferredChef ?? '');
+      }
       setLoaded(true);
     });
     return () => {
@@ -97,25 +99,8 @@ export default function WeeklyPlanWizard({ onComplete, onCancel, initialWeek, pl
     setScanError(null);
 
     try {
-      // Resized on the client to stay well under Vercel's 4.5 MB body limit (#82).
-      const formData = await imageUploadFormData(file);
-
-      const response = await fetch('/api/scan-pantry-image', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (redirectToLoginIfUnauthenticated(response)) return;
-      // Vercel's 413 body isn't our JSON, so handle it before parsing.
-      if (response.status === 413) throw new PhotoTooLargeError();
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok || !data || data.error) {
-        throw new Error(apiErrorMessage(data));
-      }
-
-      setPantry((current) => mergeScan(current, data.items));
+      const items = await scanPantryImage(file);
+      if (items) setPantry((current) => mergeScan(current, items));
     } catch (error) {
       console.error('Error scanning image:', error);
       setScanError(error instanceof Error ? error.message : 'Failed to scan image');
@@ -127,7 +112,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel, initialWeek, pl
   };
 
   const toggleNight = (night: number) =>
-    setNights((current) => (current.includes(night) ? current.filter((n) => n !== night) : [...current, night].sort()));
+    setNights((current) => (current.includes(night) ? current.filter((n) => n !== night) : [...current, night].sort((a, b) => a - b)));
 
   const toggleCuisine = (cuisineId: string) =>
     setSelectedCuisines((current) =>

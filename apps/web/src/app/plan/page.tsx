@@ -33,7 +33,7 @@ import { weekDateLabels } from "@/lib/dayCard";
 import { trackIngredientUsage } from "@/lib/ingredientAnalytics";
 import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
 import { apiErrorMessage, redirectToLoginIfUnauthenticated } from "@/lib/api/client";
-import { imageUploadFormData, PhotoTooLargeError } from "@/lib/client/resizeImage";
+import { scanPantryImage } from "@/lib/client/scanPantry";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -469,7 +469,8 @@ export default function PlanPage() {
     const weeklySettings = {
       ...familySettings,
       cuisines: wizardData.cuisines.length > 0 ? wizardData.cuisines : familySettings.cuisines,
-      preferredChef: wizardData.preferredChef || familySettings.preferredChef,
+      // The planner pre-fills this from Settings, so an empty field means "no chef this week"
+      preferredChef: wizardData.preferredChef,
     };
     // Stays on the plan even if nothing generated: its alert says why, and the
     // nights offer Generate (going back to the wizard hid the alert, #171).
@@ -484,34 +485,12 @@ export default function PlanPage() {
     setScanError(null);
 
     try {
-      console.log('📸 Scanning pantry image:', file.name);
-
-      // Resized on the client to stay well under Vercel's 4.5 MB body limit (#82).
-      const formData = await imageUploadFormData(file);
-
-      const response = await fetch('/api/scan-pantry-image', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (redirectToLoginIfUnauthenticated(response)) return;
-      // Vercel's 413 body isn't our JSON, so handle it before parsing.
-      if (response.status === 413) throw new PhotoTooLargeError();
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok || !data || data.error) {
-        throw new Error(apiErrorMessage(data));
-      }
-
-      console.log('✅ Ingredients detected:', data.items);
-
+      const items = await scanPantryImage(file);
+      if (!items) return;
       // Add detected ingredients to pantry items (avoiding duplicates), with their use-soon flags
-      const merged = mergeScan({ items: pantryItems, useSoon }, data.items);
+      const merged = mergeScan({ items: pantryItems, useSoon }, items);
       setPantryItems(merged.items);
       setUseSoon(merged.useSoon);
-
-
     } catch (error) {
       console.error('❌ Error scanning image:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to scan image';
@@ -1065,7 +1044,13 @@ export default function PlanPage() {
                   <Typography variant="body"><strong>Next week isn&apos;t planned yet</strong></Typography>
                   <Typography variant="small" color="subdued">{formatWeekRange(shiftWeekISO(weekStart, 1))}</Typography>
                 </Stack>
-                <Button variant="primary" size="small" onClick={() => openPlanner(shiftWeekISO(weekStartRef.current, 1))}>
+                <Button
+                  variant="primary"
+                  size="small"
+                  onClick={() => openPlanner(shiftWeekISO(weekStartRef.current, 1))}
+                  // Not while this week is generating: its days would land on the new week
+                  disabled={planBusy}
+                >
                   Plan next week
                 </Button>
               </Stack>
