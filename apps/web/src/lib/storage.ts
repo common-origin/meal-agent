@@ -271,6 +271,11 @@ export function saveCurrentWeekPlan(
   return Storage.set(CURRENT_WEEK_PLAN_KEY, plan);
 }
 
+/** The week of the one plan kept in localStorage, if any (#194). */
+export function loadSavedPlanWeek(): string | null {
+  return Storage.get<StoredWeekPlan | null>(CURRENT_WEEK_PLAN_KEY, null)?.weekOfISO ?? null;
+}
+
 /**
  * Load current week plan
  */
