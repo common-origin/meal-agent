@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { AuthError } from '@supabase/supabase-js';
-import { getAuthErrorMessage, getAuthErrorMessageForCode } from '../authErrorMessages';
+import { getAuthErrorMessage, getAuthErrorMessageForCode, isSignupRefused } from '../authErrorMessages';
 
 describe('getAuthErrorMessage', () => {
   it('maps a known error code to friendly copy instead of the raw message', () => {
@@ -76,5 +76,21 @@ describe('getAuthErrorMessageForCode', () => {
     expect(getAuthErrorMessageForCode('some_future_code_not_in_our_map', 'sign up')).toBe(
       'Something went wrong trying to sign up. Please try again.'
     );
+  });
+});
+
+describe('a signup refused by the invite check (migration 013)', () => {
+  it('shows invite-only copy instead of the generic failure', () => {
+    const error = new AuthError('Database error saving new user', 500, 'unexpected_failure');
+    expect(getAuthErrorMessage(error, 'sign up')).toBe(
+      "Meal Agent is invite-only at the moment, and this email hasn't been invited."
+    );
+  });
+
+  it('recognises Supabase\'s message, and nothing else', () => {
+    expect(isSignupRefused('Database error saving new user')).toBe(true);
+    expect(isSignupRefused('Database+error+saving+new+user'.replace(/\+/g, ' '))).toBe(true);
+    expect(isSignupRefused('Email link is invalid or has expired')).toBe(false);
+    expect(isSignupRefused(null)).toBe(false);
   });
 });

@@ -21,7 +21,22 @@ const KNOWN_ERROR_MESSAGES: Partial<Record<string, string>> = {
   bad_oauth_callback: 'Something went wrong connecting to Google. Please try again.',
   oauth_provider_not_supported: 'Google sign-in is not available right now. Please try again later.',
   provider_disabled: 'Google sign-in is not available right now. Please try again later.',
+  // Our own code, for a signup refused by the invite check (migration 013).
+  not_invited: "Meal Agent is invite-only at the moment, and this email hasn't been invited.",
 };
+
+/**
+ * The invite check (migration 013) refuses a signup by failing the insert
+ * into auth.users. Supabase Auth reports any such failure with this message
+ * and a generic code; signup creates no other rows that can fail, so it
+ * means "not invited".
+ */
+const SIGNUP_REFUSED_MESSAGE = 'Database error saving new user';
+
+/** True for Supabase's report of a signup the invite check refused. */
+export function isSignupRefused(message: string | null | undefined): boolean {
+  return !!message && message.includes(SIGNUP_REFUSED_MESSAGE);
+}
 
 /**
  * Turns a Supabase Auth error code into copy safe to render to the user.
@@ -50,5 +65,6 @@ export function getAuthErrorMessage(
   error: unknown,
   context: 'sign in' | 'sign up' = 'sign in'
 ): string {
+  if (isAuthError(error) && isSignupRefused(error.message)) return getAuthErrorMessageForCode('not_invited');
   return getAuthErrorMessageForCode(isAuthError(error) ? error.code : undefined, context);
 }

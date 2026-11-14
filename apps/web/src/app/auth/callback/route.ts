@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { isSafeRedirectPath } from '@/lib/utils/url';
+import { isSignupRefused } from '@/lib/auth/authErrorMessages';
 import { NextResponse } from 'next/server';
 
 /**
@@ -14,6 +15,18 @@ export async function GET(request: Request) {
   const origin = requestUrl.origin;
   const next = requestUrl.searchParams.get('next');
   const destination = isSafeRedirectPath(next) ? next : '/plan';
+
+  // A failed OAuth signup comes back with an error and no code, e.g. the
+  // invite check refusing it (migration 013). Send it to the login page
+  // rather than on to the app, which would only bounce it there unexplained.
+  const providerError = requestUrl.searchParams.get('error');
+  if (!code && providerError) {
+    const description = requestUrl.searchParams.get('error_description');
+    const errorCode = isSignupRefused(description)
+      ? 'not_invited'
+      : (requestUrl.searchParams.get('error_code') ?? providerError);
+    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(errorCode)}`);
+  }
 
   if (code) {
     const supabase = await createClient();

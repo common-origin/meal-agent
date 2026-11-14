@@ -54,6 +54,12 @@ export function createRateLimiter({ limit, windowMs, now = Date.now }: RateLimit
 const TEN_MINUTES_MS = 10 * 60 * 1000;
 
 // One limiter per AI route, shared by every request this instance serves.
+/**
+ * /api/coles-search spends the shared RapidAPI key's monthly quota (1,000 on
+ * the free tier), so one account can't burn through it in a burst.
+ */
+export const colesSearchRateLimiter = createRateLimiter({ limit: 60, windowMs: TEN_MINUTES_MS });
+
 export const aiRateLimiters = {
   // A week is 7 parallel requests (#95) and each typed edit regenerates its nights (#38).
   generateRecipes: createRateLimiter({ limit: 40, windowMs: TEN_MINUTES_MS }),

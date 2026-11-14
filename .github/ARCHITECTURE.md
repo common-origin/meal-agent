@@ -36,7 +36,7 @@ convention to `proxy.ts` in issue #22 — same behavior, Next.js 16.3.x just
 renamed the convention.)
 
 Its `matcher` is deliberately narrow — only `/plan`, `/shopping-list`,
-`/recipes`, `/settings`, `/debug`, `/login`, and `/signup` — not "every
+`/recipes`, `/settings`, `/debug`, `/admin`, `/login`, and `/signup` — not "every
 route." Earlier it matched almost everything, including the homepage, and
 the `supabase.auth.getUser()` call inside it had no timeout: a slow
 Supabase response could hang the proxy and 504 the *entire site*, not
@@ -60,9 +60,12 @@ Pages, by area:
 - **Other**: `/about`, `/analytics`
 - **Debug**: `/debug/api-usage`, `/debug/coles-api-test`,
   `/debug/ingredient-analytics`, `/debug/persistent-cache`,
-  `/debug/search-mapping` (auth-gated — the proxy matcher covers
-  `/debug/:path*`)
-- **Admin**: `/admin/debug` (not auth-gated — outside the proxy's matcher)
+  `/debug/search-mapping`
+- **Admin**: `/admin/debug`
+- Both are owner-only: the proxy sends any signed-in user whose email isn't
+  in `ADMIN_EMAILS` to `/plan` (`lib/auth/admin.ts`; unset means nobody),
+  and `/api/debug/*` answers anyone else with a 404 (`requireAdmin` in
+  `lib/api/guard.ts`)
 
 Key components: `WeekPlanList` (the Monday–Sunday list; each night is a
 `DayCard` frame, with `SortableDay`/`PlanMeal`/`MealMenu` for a planned meal and
@@ -109,7 +112,9 @@ and counts AI use against the household owner), then applies a per-user rate lim
 (`lib/api/guard.ts`, `lib/api/rateLimit.ts`, `lib/api/schemas.ts`; details
 in `AI.md`). `share-recipe-email` uses the same rate limiter.
 
-**Pricing/shopping**: `coles-search` (product lookup), `ingredient-analytics`
+**Pricing/shopping**: `coles-search` (product lookup; needs a session and
+is rate limited to 60 a user per 10 minutes, since each call spends the
+shared RapidAPI quota), `ingredient-analytics`
 (client-side analytics metadata)
 
 **Coles extension** (#184, see [Coles extension](#coles-extension) below):
@@ -274,8 +279,16 @@ signup):
   latency and outcome. Written after the response by
   `lib/ai/usage.ts`, and counted for the per-user daily AI cap (see
   `AI.md`)
+- **`signup_invites`** (migration 013) — the emails allowed to create an
+  account. A `BEFORE INSERT` trigger on `auth.users`
+  (`enforce_signup_invite`) refuses any other signup, so no user or
+  household is created; existing accounts are seeded in and unaffected.
+  RLS is on with no policies, so invites are managed in the SQL editor.
+  Supabase reports a refusal as "Database error saving new user", which the
+  login and signup pages show as "not invited"
+  (`lib/auth/authErrorMessages.ts`, `app/auth/callback/route.ts`)
 
-Migrations run in numeric order, 001 through 010 (009 and 010 are
+Migrations run in numeric order, 001 through 013 (009 and 010 are
 independent of each other) — see `supabase/README.md` for the exact
 steps. There's no migration-runner in CI; each one is applied by
 hand in the Supabase SQL editor, same as every migration so far.

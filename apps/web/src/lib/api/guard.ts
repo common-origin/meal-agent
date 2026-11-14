@@ -12,6 +12,7 @@ import { getCurrentUser } from '@/lib/supabase/server';
 import type { RateLimiter } from './rateLimit';
 import { isOverDailyAiCap } from '@/lib/ai/usage';
 import { aiErrorResponse } from '@/lib/ai/errors';
+import { isAdminEmail } from '@/lib/auth/admin';
 
 type Guarded<T> = { ok: true; value: T } | { ok: false; response: NextResponse };
 
@@ -21,10 +22,26 @@ type Guarded<T> = { ok: true; value: T } | { ok: false; response: NextResponse }
  * the same as checking it before the call.
  */
 export async function requireUserWithinLimit(limiter: RateLimiter): Promise<Guarded<User>> {
+  const guarded = await requireUserWithinBurst(limiter);
+  if (!guarded.ok) return guarded;
+  if (await isOverDailyAiCap(guarded.value.id)) return { ok: false, response: aiErrorResponse('daily_cap') };
+  return guarded;
+}
+
+/** Signed-in user, counted against `limiter`, for a route that makes no AI call. */
+export async function requireUserWithinBurst(limiter: RateLimiter): Promise<Guarded<User>> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, response: aiErrorResponse('unauthenticated') };
   if (!limiter.check(user.id)) return { ok: false, response: aiErrorResponse('rate_limited') };
-  if (await isOverDailyAiCap(user.id)) return { ok: false, response: aiErrorResponse('daily_cap') };
+  return { ok: true, value: user };
+}
+
+/** Signed-in admin (ADMIN_EMAILS). Anyone else gets a 404, as if the route weren't there. */
+export async function requireAdmin(): Promise<Guarded<User>> {
+  const user = await getCurrentUser();
+  if (!user || !isAdminEmail(user.email)) {
+    return { ok: false, response: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
+  }
   return { ok: true, value: user };
 }
 

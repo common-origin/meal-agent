@@ -9,6 +9,7 @@
 
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { isAdminEmail, isAdminPath } from '@/lib/auth/admin';
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -78,6 +79,7 @@ export async function proxy(request: NextRequest) {
     '/recipes',
     '/settings',
     '/debug',
+    '/admin',
   ];
 
   const isProtectedPath = protectedPaths.some((path) =>
@@ -89,6 +91,14 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('redirectTo', request.nextUrl.pathname);
+    return NextResponse.redirect(url);
+  }
+
+  // Debug and admin pages are for the app's owner only (ADMIN_EMAILS).
+  if (user && isAdminPath(request.nextUrl.pathname) && !isAdminEmail(user.email)) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/plan';
+    url.search = '';
     return NextResponse.redirect(url);
   }
 
@@ -117,6 +127,7 @@ export const config = {
     '/recipes/:path*',
     '/settings/:path*',
     '/debug/:path*',
+    '/admin/:path*',
     '/login',
     '/signup',
   ],

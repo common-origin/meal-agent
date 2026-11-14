@@ -39,8 +39,44 @@ describe('proxy', () => {
     getUserMock.mockReset();
   });
 
+  describe('owner-only paths', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it.each(['/debug', '/debug/api-usage', '/admin/debug'])(
+      'sends a signed-in non-admin from %s to /plan',
+      async (path) => {
+        vi.stubEnv('ADMIN_EMAILS', 'owner@example.com');
+        getUserMock.mockResolvedValue({ data: { user: { id: 'user-2', email: 'guest@example.com' } } });
+
+        const response = await proxy(makeRequest(path));
+
+        expect(locationOf(response)?.pathname).toBe('/plan');
+      }
+    );
+
+    it('lets an admin through, ignoring case', async () => {
+      vi.stubEnv('ADMIN_EMAILS', 'Owner@Example.com, other@example.com');
+      getUserMock.mockResolvedValue({ data: { user: { id: 'user-1', email: 'owner@example.com' } } });
+
+      const response = await proxy(makeRequest('/debug/api-usage'));
+
+      expect(locationOf(response)).toBeNull();
+    });
+
+    it('lets nobody through when ADMIN_EMAILS is unset', async () => {
+      vi.stubEnv('ADMIN_EMAILS', '');
+      getUserMock.mockResolvedValue({ data: { user: { id: 'user-1', email: 'owner@example.com' } } });
+
+      const response = await proxy(makeRequest('/debug'));
+
+      expect(locationOf(response)?.pathname).toBe('/plan');
+    });
+  });
+
   describe('protected paths', () => {
-    it.each(['/plan', '/shopping-list', '/recipes', '/settings', '/debug'])(
+    it.each(['/plan', '/shopping-list', '/recipes', '/settings', '/debug', '/admin/debug'])(
       'redirects an unauthenticated request to %s to /login with a redirectTo param',
       async (path) => {
         getUserMock.mockResolvedValue({ data: { user: null } });
@@ -53,7 +89,7 @@ describe('proxy', () => {
       }
     );
 
-    it.each(['/plan', '/shopping-list', '/recipes', '/settings', '/debug'])(
+    it.each(['/plan', '/shopping-list', '/recipes', '/settings'])(
       'lets an authenticated request through to %s',
       async (path) => {
         getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } } });
@@ -75,7 +111,7 @@ describe('proxy', () => {
     });
 
     it("config.matcher covers every path in protectedPaths (including nested routes), so a regression here can't silently stop Next.js from invoking this proxy on a protected route", () => {
-      const protectedPaths = ['/plan', '/shopping-list', '/recipes', '/settings', '/debug'];
+      const protectedPaths = ['/plan', '/shopping-list', '/recipes', '/settings', '/debug', '/admin'];
 
       for (const path of protectedPaths) {
         // Next.js's `:path*` matches zero or more segments, so
