@@ -560,6 +560,20 @@ describe('one error contract (#96)', () => {
     });
   });
 
+  it('generate-recipes returns 422 allergen_conflict without the unsafe recipe', async () => {
+    signIn();
+    mocks.generateRecipes.mockResolvedValue({
+      allergenConflict: true,
+      conflicts: [{ allergy: 'shellfish', ingredient: 'king prawns' }],
+    });
+    const res = await routes[0].call();
+    expect(res.status).toBe(422);
+    expect(await res.json()).toEqual({
+      error: "We couldn't make a recipe that avoids your allergies. Please try again.",
+      code: 'allergen_conflict',
+    });
+  });
+
   it.each([1, 3])('route %i returns 422 blocked with friendly copy and no raw finish reason', async (index) => {
     signIn();
     routes[index].prepareValid();
@@ -749,7 +763,8 @@ describe('AI deadlines', () => {
   const realTimeout = AbortSignal.timeout.bind(AbortSignal);
 
   it.each([
-    ['generate-recipes', generateRecipesMaxDuration, AI_TASKS.generation.deadlineMs],
+    // A recipe that uses an allergen is regenerated once, so two calls can run.
+    ['generate-recipes', generateRecipesMaxDuration, 2 * AI_TASKS.generation.deadlineMs],
     ['scan-pantry-image', scanPantryMaxDuration, AI_TASKS.pantryScan.deadlineMs],
     ['extract-recipe-from-image', extractFromImageMaxDuration, AI_TASKS.recipeFromImage.deadlineMs],
     // The page fetch runs before the AI call, so both budgets count.

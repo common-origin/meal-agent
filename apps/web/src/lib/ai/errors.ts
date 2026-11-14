@@ -23,6 +23,8 @@ export const AI_ERRORS = {
   invalid_request: { status: 400, message: 'Something was wrong with that request.' },
   recitation: { status: 422, message: "We couldn't read this page automatically. Please add the recipe manually." },
   blocked: { status: 422, message: "We couldn't process this photo. Try a different one." },
+  // Generation kept using an ingredient the household is allergic to; nothing unsafe is returned.
+  allergen_conflict: { status: 422, message: "We couldn't make a recipe that avoids your allergies. Please try again." },
   image_too_large: { status: 413, message: 'That photo is too large. Try a smaller one.' },
   unknown: { status: 500, message: 'Something went wrong. Please try again.' },
 } as const satisfies Record<string, { status: number; message: string }>;

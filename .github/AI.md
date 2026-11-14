@@ -176,6 +176,18 @@ cuisine, ingredient `prep`, and a cost per serve from Coles prices
 (`lib/recipeCost.ts`, #89). Units are always `g | ml | tsp | tbsp | unit`;
 the shared prompt rules are in `lib/prompts/recipeFormat.ts`.
 
+Generated recipes are checked against the household's allergies
+(`findAllergenConflicts` in `apps/web/src/lib/allergens.ts`) as well as
+being told about them in the prompt. Each allergy is matched against every
+ingredient's name and prep as whole words; common allergens (nuts, peanuts,
+shellfish, fish, egg, dairy, sesame, soy, gluten) expand to the ingredients
+that contain them, and anything else is matched as typed. A recipe that
+fails is dropped, and `generateRecipes` retries once with the conflicts
+named in the prompt. If that fails too, the route returns 422,
+`code: "allergen_conflict"`, and no recipe. Because of the retry, the
+route's `maxDuration` is 130 s. Foods to avoid are preferences and are not
+checked.
+
 The cookbook photo route (#92) asks for the ingredients as data and the
 method paraphrased in the model's own words (at most 10 steps), plus the
 book title and/or author as `source` (stored in `source.chef`). If Gemini
