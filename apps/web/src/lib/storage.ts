@@ -107,7 +107,7 @@ export function loadHousehold(): Household | null {
 export function getDefaultHousehold(): Household {
   return {
     id: "default",
-    members: { adults: 2, kids: 2 },
+    members: { adults: 2, kids: 0 },
     diet: { glutenLight: false, highProtein: false, organicPreferred: false },
     retailer: "coles",
     pantry: [],

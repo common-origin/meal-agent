@@ -10,8 +10,20 @@ import { DEFAULT_FAMILY_SETTINGS } from '../../types/settings';
 import { VALID_TAGS } from '../../tagNormalizer';
 
 // Reference settings from #87: 2 adults, 2 kids, 3 cuisines, 6 pantry items.
+// Spelled out, since the defaults went neutral (#211) and the snapshot is this household.
 const reference: RecipeGenerationRequest = {
-  familySettings: { ...DEFAULT_FAMILY_SETTINGS, cuisines: ['mexican', 'italian', 'indian'], lastUpdated: '2026-10-01T00:00:00.000Z' },
+  familySettings: {
+    ...DEFAULT_FAMILY_SETTINGS,
+    children: [{ age: 5 }, { age: 7 }],
+    totalServings: 4,
+    cuisines: ['mexican', 'italian', 'indian'],
+    glutenFreePreference: true,
+    proteinFocus: true,
+    location: { city: 'Melbourne', country: 'Australia', hemisphere: 'southern' },
+    budgetPerMeal: { min: 15, max: 20 },
+    batchCooking: { enabled: true, frequency: 'weekly', preferredDay: 'sunday' },
+    lastUpdated: '2026-10-01T00:00:00.000Z',
+  },
   numberOfRecipes: 5,
   pantryItems: ['chicken thighs', 'broccoli', 'carrots', 'greek yoghurt', 'spinach', 'cheddar cheese'],
   timeZone: 'Australia/Melbourne',

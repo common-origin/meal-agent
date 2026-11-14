@@ -68,6 +68,18 @@ export async function getFamilySettings(): Promise<FamilySettings> {
   return LocalStorage.getFamilySettings();
 }
 
+/**
+ * getFamilySettings, plus whether a signed-in household has never saved its
+ * settings and so needs first-run setup (#211). One load serves both.
+ */
+export async function getFamilySettingsAndSetup(): Promise<{ settings: FamilySettings; needsSetup: boolean }> {
+  if (await isAuthenticated()) {
+    const { settings, needsSetup } = await SupabaseStorage.loadFamilySettingsStateFromDb();
+    if (settings) return { settings, needsSetup };
+  }
+  return { settings: LocalStorage.loadFamilySettings() ?? LocalStorage.getFamilySettings(), needsSetup: false };
+}
+
 export async function resetFamilySettings(): Promise<boolean> {
   return await saveFamilySettings(DEFAULT_FAMILY_SETTINGS);
 }

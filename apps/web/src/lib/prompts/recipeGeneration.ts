@@ -143,9 +143,11 @@ export function buildRecipeGenerationPrompt(request: RecipeGenerationRequest): s
     : `${familySettings.adults} adults`;
 
   const hemisphere = (familySettings.location?.hemisphere || 'southern') as Hemisphere;
-  const place = familySettings.location?.city && familySettings.location?.country
-    ? `${familySettings.location.city}, ${familySettings.location.country}`
-    : 'Melbourne, Australia';
+  // Whatever of city and country the household gave; Australia-only for now.
+  const place = [familySettings.location?.city, familySettings.location?.country]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(', ') || 'Australia';
   const cuisines = familySettings.cuisines.length > 0 ? familySettings.cuisines.join(', ') : 'any';
   const slot = request.slot;
 

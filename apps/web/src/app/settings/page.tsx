@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Alert, Box, Button, Checkbox, Chip, Container, Dropdown, Modal, NumberInput, Slider, Stack, TextField, Typography } from "@common-origin/design-system";
-import Main from "@/components/app/Main";import {
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Alert, Box, Button, Checkbox, Chip, Container, Dropdown, FilterChip, Modal, NumberInput, Slider, Stack, TextField, Typography } from "@common-origin/design-system";
+import Main from "@/components/app/Main";
+import {
   getFamilySettings,
   saveFamilySettings,
   resetFamilySettings
 } from "@/lib/hybridStorage";
 import type { FamilySettings } from "@/lib/types/settings";
-import { validateFamilySettings, DEFAULT_FAMILY_SETTINGS, DIETARY_TYPE_OPTIONS, MAX_RECIPE_RECIPIENTS, MAX_FLAVOR_PROFILE_LENGTH, MAX_SETTING_TEXT_LENGTH } from "@/lib/types/settings";
+import { validateFamilySettings, CUISINE_OPTIONS, DEFAULT_FAMILY_SETTINGS, DIETARY_TYPE_OPTIONS, MAX_RECIPE_RECIPIENTS, MAX_FLAVOR_PROFILE_LENGTH, MAX_SETTING_TEXT_LENGTH } from "@/lib/types/settings";
 import { track } from "@/lib/analytics";
 import SettingsSection, { SettingsField, SettingsForm } from "@/components/app/SettingsSection";
 import ColesExtensionSettings from "@/components/app/ColesExtensionSettings";
@@ -26,7 +28,12 @@ function adultOptions(current: number): { id: string; label: string }[] {
 /** The weekly planning reminder's fixed time (#196). */
 const REMINDER_TIME = '09:00';
 
-export default function SettingsPage() {
+/**
+ * Settings, or with `welcome` the first-run setup (#211): a new household
+ * fills in the sections a first plan needs, and saving goes to the plan.
+ */
+function SettingsPageContent({ welcome }: { welcome: boolean }) {
+  const router = useRouter();
   const [settings, setSettings] = useState<FamilySettings>(DEFAULT_FAMILY_SETTINGS);
   const [saved, setSaved] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
@@ -34,7 +41,7 @@ export default function SettingsPage() {
   const [icsError, setIcsError] = useState<string | null>(null);
 
   useEffect(() => {
-    track('page_view', { page: '/settings' });
+    track('page_view', { page: welcome ? '/settings?welcome=1' : '/settings' });
 
     // Load settings from Supabase
     const loadSettings = async () => {
@@ -42,6 +49,9 @@ export default function SettingsPage() {
       setSettings(loadedSettings);
     };
     loadSettings();
+
+    // Setup doesn't show the calendar link.
+    if (welcome) return;
 
     // Load the calendar feed URL (only available for signed-in households —
     // an unauthenticated/local-only user has no server-side plan to poll)
@@ -59,7 +69,7 @@ export default function SettingsPage() {
       }
     };
     loadIcsUrl();
-  }, []);
+  }, [welcome]);
 
   const copyIcsUrl = () => {
     if (!icsUrl) return;
@@ -79,22 +89,33 @@ export default function SettingsPage() {
 
     // The reminder is always at 9am (#196): there's no time to pick, so an older saved time is replaced.
     const success = await saveFamilySettings({ ...settings, weeklyReminderTime: REMINDER_TIME });
-    if (success) {
-      setSaved(true);
-      setErrors([]);
-      // Track as override saved since user is customizing their preferences
-      track('override_saved', { 
-        cuisines: settings.cuisines.length,
-        glutenFree: settings.glutenFreePreference,
-        budgetRange: `${settings.budgetPerMeal.min}-${settings.budgetPerMeal.max}`,
-      });
-      
-      // Scroll to top to show success message
+    if (!success) {
+      // Said, not silent: in setup a failed save would otherwise look like a dead button.
+      setErrors(["Your settings couldn't be saved. Check your connection and try again."]);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      
-      // Hide success message after 3 seconds
-      setTimeout(() => setSaved(false), 3000);
+      return;
     }
+    if (welcome) {
+      track('override_saved', { setup: true, cuisines: settings.cuisines.length });
+      // Replace, so Back from the plan doesn't return to setup.
+      router.replace('/plan');
+      return;
+    }
+
+    setSaved(true);
+    setErrors([]);
+    // Track as override saved since user is customizing their preferences
+    track('override_saved', {
+      cuisines: settings.cuisines.length,
+      glutenFree: settings.glutenFreePreference,
+      budgetRange: `${settings.budgetPerMeal.min}-${settings.budgetPerMeal.max}`,
+    });
+
+    // Scroll to top to show success message
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Hide success message after 3 seconds
+    setTimeout(() => setSaved(false), 3000);
   };
 
   const handleReset = async () => {
@@ -181,9 +202,11 @@ export default function SettingsPage() {
 					<Stack direction="column" gap="xl">
 						{/* Header */}
 						<Stack direction="column" gap="sm">
-							<Typography variant="h1">Settings</Typography>
+							<Typography variant="h1">{welcome ? 'Set up your household' : 'Settings'}</Typography>
 							<Typography variant="body">
-								Configure your preferences for meal planning
+								{welcome
+									? 'Tell us who you cook for and what suits you, and your first plan will fit. You can change any of this later in Settings.'
+									: 'Configure your preferences for meal planning'}
 							</Typography>
 						</Stack>
 
@@ -375,6 +398,29 @@ export default function SettingsPage() {
 							</SettingsSection>
 
 							<SettingsSection
+								title="Cuisines"
+								description="What you like to cook. None picked means any cuisine. Each week's planner can change these for that week."
+							>
+								<Stack direction="row" gap="sm" wrap>
+									{CUISINE_OPTIONS.map((cuisine) => (
+										<FilterChip
+											key={cuisine.id}
+											selected={settings.cuisines.includes(cuisine.id)}
+											onClick={() => setSettings(prev => ({
+												...prev,
+												cuisines: prev.cuisines.includes(cuisine.id)
+													? prev.cuisines.filter(id => id !== cuisine.id)
+													: [...prev.cuisines, cuisine.id],
+											}))}
+										>
+											{cuisine.label}
+										</FilterChip>
+									))}
+								</Stack>
+							</SettingsSection>
+
+							{!welcome && (
+							<SettingsSection
 								title="Cooking profile"
 								description="Help us understand your cooking preferences and skill level"
 							>
@@ -456,6 +502,7 @@ export default function SettingsPage() {
 									</Box>
 								</Stack>
 							</SettingsSection>
+							)}
 
 							<SettingsSection
 								title="Location & seasonality"
@@ -582,6 +629,8 @@ export default function SettingsPage() {
 								</Stack>
 							</SettingsSection>
 
+							{/* Setup stops here; the rest keeps its defaults until Settings (#211). */}
+							{!welcome && (<>
 							<SettingsSection
 								title="Batch cooking"
 								description="Cook in bulk on one day and eat from it across the week."
@@ -804,28 +853,46 @@ export default function SettingsPage() {
 							</SettingsSection>
 
 							<ColesExtensionSettings />
+							</>)}
 						</SettingsForm>
 
 						{/* Actions */}
 						<Stack direction="row" gap="md" justifyContent="flex-end">
-							<Button
-								variant="secondary"
-								size="large"
-								onClick={handleReset}
-							>
-								Reset to Defaults
-							</Button>
+							{!welcome && (
+								<Button
+									variant="secondary"
+									size="large"
+									onClick={handleReset}
+								>
+									Reset to Defaults
+								</Button>
+							)}
 							<Button
 								variant="primary"
 								size="large"
 								onClick={handleSave}
 							>
-								Save Settings
+								{welcome ? 'Save and start planning' : 'Save Settings'}
 							</Button>
 						</Stack>
 					</Stack>
 				</Container>
 			</Main>
     </>
+  );
+}
+
+/** Settings, in welcome mode when the URL has ?welcome=1. */
+function SettingsPageFromUrl() {
+  const searchParams = useSearchParams();
+  return <SettingsPageContent welcome={searchParams.get('welcome') === '1'} />;
+}
+
+export default function SettingsPage() {
+  // As on /signup: the prerender renders the fallback, plain Settings.
+  return (
+    <Suspense fallback={<SettingsPageContent welcome={false} />}>
+      <SettingsPageFromUrl />
+    </Suspense>
   );
 }

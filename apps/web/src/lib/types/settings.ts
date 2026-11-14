@@ -132,22 +132,29 @@ export const CUISINE_OPTIONS = [
   { id: 'french', label: 'French', emoji: '🥐' },
 ] as const;
 
+/** First-run setup: Settings in welcome mode (#211). */
+export const SETUP_PATH = '/settings?welcome=1';
+
 /**
- * Default family settings based on user requirements
+ * Where a new household starts, and what fills any field a saved household
+ * lacks. Neutral on purpose: no children, cuisines, diet flags or city, so a
+ * household's first plan isn't written for someone else's family. A new
+ * household fills these in at first-run setup (/settings?welcome=1).
  */
 export const DEFAULT_FAMILY_SETTINGS: FamilySettings = {
   adults: 2,
-  children: [{ age: 5 }, { age: 7 }],
-  totalServings: 4,
+  children: [],
+  totalServings: 2,
   
-  cuisines: ['mexican', 'australian', 'italian', 'indian', 'asian'],
+  // None means "any" (lib/prompts/recipeGeneration.ts).
+  cuisines: [],
   customCuisines: [],
   preferredChef: undefined,
   
   dietaryType: 'omnivore',
-  glutenFreePreference: true,
+  glutenFreePreference: false,
   dairyFree: false,
-  proteinFocus: true,
+  proteinFocus: false,
   allergies: [],
   avoidFoods: [],
   favoriteIngredients: [],
@@ -160,13 +167,13 @@ export const DEFAULT_FAMILY_SETTINGS: FamilySettings = {
   
   // Location & Seasonality
   location: {
-    city: 'Melbourne',
+    city: '',
     country: 'Australia',
     hemisphere: 'southern',
   },
   
   budgetPerMeal: {
-    min: 15,
+    min: 10,
     max: 20,
   },
   maxCookTime: {
@@ -175,7 +182,7 @@ export const DEFAULT_FAMILY_SETTINGS: FamilySettings = {
   },
   
   batchCooking: {
-    enabled: true,
+    enabled: false,
     frequency: 'weekly',
     preferredDay: 'sunday',
   },
@@ -238,6 +245,9 @@ export function validateFamilySettings(settings: Partial<FamilySettings>): strin
   }
 
   if (settings.location) {
+    if (!settings.location.city.trim()) {
+      errors.push('Enter your city');
+    }
     if (settings.location.city.length > MAX_SETTING_TEXT_LENGTH || settings.location.country.length > MAX_SETTING_TEXT_LENGTH) {
       errors.push(`City and country must be at most ${MAX_SETTING_TEXT_LENGTH} characters`);
     }
@@ -247,10 +257,6 @@ export function validateFamilySettings(settings: Partial<FamilySettings>): strin
     errors.push('Variety level must be between 1 and 5');
   }
   
-  if (settings.cuisines && settings.cuisines.length === 0) {
-    errors.push('At least one cuisine must be selected');
-  }
-
   if (settings.recipeRecipients) {
     if (settings.recipeRecipients.length > MAX_RECIPE_RECIPIENTS) {
       errors.push(`You can save at most ${MAX_RECIPE_RECIPIENTS} recipe recipients`);
