@@ -5,6 +5,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { colesSearchRateLimiter } from '@/lib/api/rateLimit';
+import { requireUserWithinBurst } from '@/lib/api/guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,6 +26,10 @@ interface RawProduct {
 }
 
 export async function POST(request: NextRequest) {
+  // Signed in, and rate limited per user: each call spends the shared RapidAPI quota.
+  const auth = await requireUserWithinBurst(colesSearchRateLimiter);
+  if (!auth.ok) return auth.response;
+
   try {
     const body = await request.json();
     const { query } = body;

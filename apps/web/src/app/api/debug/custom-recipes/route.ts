@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { RecipeLibrary } from "@/lib/library";
+import { requireAdmin } from "@/lib/api/guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,6 +10,9 @@ export const dynamic = "force-dynamic";
  * GET /api/debug/custom-recipes
  */
 export async function GET() {
+  const admin = await requireAdmin();
+  if (!admin.ok) return admin.response;
+
   try {
     const customRecipes = RecipeLibrary.getCustomRecipes();
     const allRecipes = RecipeLibrary.getAll();

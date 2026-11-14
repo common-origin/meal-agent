@@ -100,7 +100,15 @@
    - Verify success: Should see "Success. No rows returned"
    - This adds the `purchase_history` table and `household_products.source` for importing Coles order history (#185). Run it after `011`. Until it's run, the extension can't import past orders, and remembering a product with Find fails
 
-14. **Verify Tables Created:**
+14. **Run Invite-Only Signup Migration (Step 13):**
+   - Click "New Query"
+   - Copy entire contents of `supabase/migrations/013_invite_only_signup.sql`
+   - Paste into SQL Editor
+   - Click "Run" or press Cmd+Enter
+   - Verify success: Should see "Success. No rows returned"
+   - This adds the `signup_invites` table and a trigger that refuses a signup from any email not in it. Everyone with an account when it runs is added, so nobody is locked out. To invite someone: `INSERT INTO public.signup_invites (email, note) VALUES ('name@example.com', 'Sam');` (lower case). Add the row before using the dashboard's "Invite user" too, which is refused for an email that isn't in the table
+
+15. **Verify Tables Created:**
    ```sql
    SELECT table_name 
    FROM information_schema.tables 
@@ -121,8 +129,9 @@
    - recipe_history
    - recipes
    - shopping_lists
+   - signup_invites
 
-15. **Verify RLS Enabled:**
+16. **Verify RLS Enabled:**
    ```sql
    SELECT tablename, rowsecurity 
    FROM pg_tables 
@@ -146,9 +155,10 @@
 - **recipe_history** - Recipes used per composed week, for cross-device repeat-avoidance
 - **household_products** - The Coles product a household buys for each ingredient, for the Coles extension (#184)
 - **purchase_history** - Past Coles online order lines with the price paid, kept 12 months (#185)
+- **signup_invites** - Emails allowed to create an account; any other signup is refused (013)
 
 ### Automatic Behaviors:
-- **New User Signup** → Auto-creates household, adds user as owner, creates default settings
+- **New User Signup** → Refused unless the email is in `signup_invites` (013); otherwise auto-creates household, adds user as owner, creates default settings
 - **Updated Timestamps** → Auto-updated on every row modification
 - **Household ID Helper** → Function to get current user's household ID
 

@@ -93,4 +93,23 @@ describe('auth callback route', () => {
     expect(exchangeCodeForSessionMock).not.toHaveBeenCalled();
     expect(response.headers.get('location')).toBe('https://example.com/plan');
   });
+
+  it('sends a signup the invite check refused to /login with not_invited, without exchanging a code', async () => {
+    const response = await GET(
+      new Request(
+        'https://example.com/auth/callback?error=server_error&error_code=unexpected_failure&error_description=Database+error+saving+new+user'
+      )
+    );
+
+    expect(exchangeCodeForSessionMock).not.toHaveBeenCalled();
+    expect(response.headers.get('location')).toBe('https://example.com/login?error=not_invited');
+  });
+
+  it('forwards any other provider error code to /login', async () => {
+    const response = await GET(
+      new Request('https://example.com/auth/callback?error=access_denied&error_description=User+cancelled')
+    );
+
+    expect(response.headers.get('location')).toBe('https://example.com/login?error=access_denied');
+  });
 });

@@ -134,7 +134,7 @@ function SignupForm({ redirectTo, pending = false }: SignupFormProps) {
           <Stack direction="column" gap="sm">
             <Typography variant="h2">Get started</Typography>
             <Typography color="subdued">
-              Create your account and start planning meals
+              Meal Agent is invite-only for now. Sign up with the email you were invited with.
             </Typography>
           </Stack>
 
