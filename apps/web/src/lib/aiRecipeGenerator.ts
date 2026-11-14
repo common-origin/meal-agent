@@ -9,6 +9,8 @@ import type { Recipe } from './types/recipe';
 import type { RecipeGenerationRequest } from './prompts/recipeGeneration';
 import { buildSystemPrompt, buildRecipeGenerationPrompt } from './prompts/recipeGeneration';
 import { runAiTask } from './ai/run';
+import type { AiTaskResult } from './ai/run';
+import type { z } from 'zod';
 import { GeneratedRecipes } from './ai/schemas';
 import { toRecipe } from './ai/normalizeRecipe';
 import { findAllergenConflicts, type AllergenConflict } from './allergens';
@@ -83,10 +85,23 @@ export async function generateRecipes(
   for (let attempt = 1; attempt <= ALLERGEN_ATTEMPTS; attempt++) {
     const prompt = conflicts.length > 0 ? basePrompt + allergenRetryNote(conflicts) : basePrompt;
     // Model, thinking, deadline, retries and usage logging: lib/ai (#83).
-    const result = await runAiTask('generation', { system, prompt, userId, schema: GeneratedRecipes });
+    let result: AiTaskResult<z.output<typeof GeneratedRecipes>>;
+    try {
+      result = await runAiTask('generation', { system, prompt, userId, schema: GeneratedRecipes });
+    } catch (error) {
+      // A failed retry keeps the safe recipes the first answer already gave.
+      if (attempt > 1 && recipes.length > 0) {
+        console.warn('generateRecipes: allergen retry failed, keeping the safe recipes', error);
+        break;
+      }
+      throw error;
+    }
 
     // A withheld response has no recipes; say so rather than reporting a format problem.
-    if (result.blocked) return { blocked: true, rawFinishReason: result.rawFinishReason };
+    if (result.blocked) {
+      if (attempt > 1 && recipes.length > 0) break;
+      return { blocked: true, rawFinishReason: result.rawFinishReason };
+    }
 
     // Validated against the schema already; normalise into Recipes (IDs, tags, cost).
     conflicts = [];

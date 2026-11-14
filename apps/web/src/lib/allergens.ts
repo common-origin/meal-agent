@@ -19,6 +19,12 @@ interface AllergenGroup {
   terms: string[];
   /** Phrases that contain a term but are safe ("coconut milk" for dairy). */
   safe?: string[];
+  /**
+   * Labels that make an ingredient safe ("dairy-free cheese"). Defaults to
+   * the aliases; set where an alias is narrower than the allergy, since
+   * lactose-free milk still has milk protein and wheat-free bread can be rye.
+   */
+  freeOf?: string[];
 }
 
 const PEANUT_TERMS = ['peanut', 'groundnut', 'satay', 'monkey nut'];
@@ -60,8 +66,9 @@ const GROUPS: AllergenGroup[] = [
     safe: [
       'coconut milk', 'coconut cream', 'almond milk', 'oat milk', 'soy milk', 'rice milk',
       'peanut butter', 'nut butter', 'almond butter', 'cashew butter', 'cocoa butter',
-      'butter bean', 'cream of tartar',
+      'butter bean', 'butter lettuce', 'butterhead', 'cream of tartar',
     ],
+    freeOf: ['dairy', 'milk'],
   },
   { aliases: ['sesame', 'sesame seed', 'sesame seeds'], terms: ['sesame', 'tahini', 'halva', 'gomasio', "za'atar", 'zaatar', 'dukkah'] },
   { aliases: ['soy', 'soya', 'soybean', 'soybeans'], terms: ['soy', 'soya', 'tofu', 'edamame', 'miso', 'tamari', 'tempeh'] },
@@ -78,6 +85,7 @@ const GROUPS: AllergenGroup[] = [
       'rice flour', 'corn flour', 'almond flour', 'coconut flour', 'chickpea flour', 'buckwheat flour',
       'rice noodle', 'rice vermicelli', 'glass noodle', 'rice paper', 'corn tortilla',
     ],
+    freeOf: ['gluten'],
   },
 ];
 
@@ -90,9 +98,25 @@ function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/** `term` as a whole word or phrase, optionally plural: "nut" matches "nuts", not "nutmeg" or "coconut". */
+/**
+ * `term` as a whole word or phrase, optionally plural: "nut" matches "nuts",
+ * not "nutmeg" or "coconut", and "berry" matches "berries".
+ */
 function termPattern(term: string, flags = ''): RegExp {
-  return new RegExp(`(^|[^a-zà-ÿ])${escapeRegExp(term)}(s|es)?(?![a-zà-ÿ])`, flags);
+  const word = /[^aeiou]y$/.test(term)
+    ? `${escapeRegExp(term.slice(0, -1))}(?:y|ies)`
+    : `${escapeRegExp(term)}(?:s|es)?`;
+  return new RegExp(`(^|[^a-zà-ÿ])${word}(?![a-zà-ÿ])`, flags);
+}
+
+/** "Peanut allergy", "allergic to shellfish", "sesame (severe)" → the allergen itself. */
+function allergenName(typed: string): string {
+  return normalise(typed)
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/\b(allergic to|allergy to|allergies|allergy|intolerance|intolerant|anaphylaxis|severe)\b/g, ' ')
+    .replace(/[^a-zà-ÿ' -]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /** The group a typed allergy names, or one built from the allergy as typed. */
@@ -100,7 +124,7 @@ function groupFor(allergy: string): AllergenGroup {
   const known = GROUPS.find((group) => group.aliases.includes(allergy));
   if (known) return known;
   // "Kiwi fruit" or "mustard": match the words themselves, and a typed plural's singular.
-  const singular = allergy.replace(/(es|s)$/, '');
+  const singular = allergy.endsWith('ies') ? `${allergy.slice(0, -3)}y` : allergy.replace(/(es|s)$/, '');
   return { aliases: [allergy], terms: singular.length > 2 && singular !== allergy ? [allergy, singular] : [allergy] };
 }
 
@@ -118,14 +142,13 @@ export interface AllergenConflict {
 export function findAllergenConflicts(recipe: Pick<Recipe, 'ingredients'>, allergies: string[]): AllergenConflict[] {
   const conflicts: AllergenConflict[] = [];
   for (const typed of allergies) {
-    const allergy = normalise(typed);
+    const allergy = allergenName(typed);
     if (!allergy) continue;
     const group = groupFor(allergy);
     const patterns = group.terms.map((term) => termPattern(term));
     // "Gluten-free soy sauce", "dairy free cheese": labelled as safe for this allergy.
-    const labelledSafe = group.aliases.map((alias) => termPattern(`${alias}-free`)).concat(
-      group.aliases.map((alias) => termPattern(`${alias} free`))
-    );
+    const freeOf = group.freeOf ?? group.aliases;
+    const labelledSafe = freeOf.flatMap((label) => [termPattern(`${label}-free`), termPattern(`${label} free`)]);
 
     for (const ingredient of recipe.ingredients) {
       let text = normalise(`${ingredient.name} ${ingredient.prep ?? ''}`);

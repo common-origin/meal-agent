@@ -154,4 +154,33 @@ describe('generateRecipes: allergens', () => {
     expect(runAiTask).toHaveBeenCalledTimes(1);
     expect(result).toMatchObject({ recipes: [expect.objectContaining({ title: 'Garlic Prawn Linguine' })] });
   });
+
+  it('keeps the safe recipes from a mixed answer and retries only for the shortfall', async () => {
+    const threeRequest = { ...allergicRequest, numberOfRecipes: 3 };
+    runAiTask
+      .mockResolvedValueOnce(generated([validGeneratedRecipe(), withPrawns(), validGeneratedRecipe({ title: 'Beef Ragu' })]))
+      .mockResolvedValueOnce(generated([validGeneratedRecipe({ title: 'Pumpkin Risotto' }), validGeneratedRecipe({ title: 'Extra' })]));
+    const result = await generateRecipes(threeRequest, { userId: 'user-1' });
+
+    expect(runAiTask).toHaveBeenCalledTimes(2);
+    if (!('recipes' in result)) throw new Error('expected recipes');
+    expect(result.recipes.map((r) => r.title)).toEqual(['Lemon Chicken Traybake', 'Beef Ragu', 'Pumpkin Risotto']);
+  });
+
+  it.each([
+    ['throws', () => runAiTask.mockRejectedValueOnce(new AiTaskError('timeout', 'deadline'))],
+    ['is blocked', () => runAiTask.mockResolvedValueOnce({ blocked: true, output: undefined, rawFinishReason: 'SAFETY' })],
+  ])('keeps the safe recipes when the retry %s', async (_name, failRetry) => {
+    runAiTask.mockResolvedValueOnce(generated([validGeneratedRecipe(), withPrawns()]));
+    failRetry();
+    const result = await generateRecipes({ ...allergicRequest, numberOfRecipes: 2 }, { userId: 'user-1' });
+    if (!('recipes' in result)) throw new Error('expected recipes');
+    expect(result.recipes.map((r) => r.title)).toEqual(['Lemon Chicken Traybake']);
+  });
+
+  it('still throws when the retry fails and there is nothing safe to keep', async () => {
+    const error = new AiTaskError('timeout', 'deadline');
+    runAiTask.mockResolvedValueOnce(generated([withPrawns()])).mockRejectedValueOnce(error);
+    await expect(generateRecipes(allergicRequest, { userId: 'user-1' })).rejects.toBe(error);
+  });
 });

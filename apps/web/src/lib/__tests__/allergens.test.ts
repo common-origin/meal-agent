@@ -61,4 +61,27 @@ describe('findAllergenConflicts', () => {
     expect(flagged(['kiwis'], 'kiwi fruit')).toEqual(['kiwi fruit']);
     expect(flagged(['celery'], 'celery sticks', 'celeriac')).toEqual(['celery sticks']);
   });
+
+  it('does not let a narrower label clear a broader allergy', () => {
+    // Lactose-free milk still has milk protein; wheat-free bread can be rye.
+    expect(flagged(['dairy'], 'lactose-free milk')).toEqual(['lactose-free milk']);
+    expect(flagged(['coeliac'], 'wheat-free rye bread')).toEqual(['wheat-free rye bread']);
+    expect(flagged(['milk'], 'dairy-free yoghurt')).toEqual([]);
+  });
+
+  it('reads the allergen out of how people phrase it', () => {
+    expect(flagged(['Peanut allergy'], 'satay sauce')).toEqual(['satay sauce']);
+    expect(flagged(['allergic to shellfish'], 'prawns')).toEqual(['prawns']);
+    expect(flagged(['sesame (severe)'], 'tahini')).toEqual(['tahini']);
+  });
+
+  it('matches -y words and their -ies plurals', () => {
+    expect(flagged(['berry'], 'mixed berries')).toEqual(['mixed berries']);
+    expect(flagged(['cherries'], 'glacé cherry')).toEqual(['glacé cherry']);
+    expect(flagged(['fish'], 'anchovies')).toEqual(['anchovies']);
+  });
+
+  it('does not flag butter lettuce for dairy', () => {
+    expect(flagged(['dairy'], 'butter lettuce', 'butterhead lettuce')).toEqual([]);
+  });
 });
