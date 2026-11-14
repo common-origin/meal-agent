@@ -15,8 +15,9 @@ import { aiErrorResponse, aiFailureResponse } from '@/lib/ai/errors';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// Must stay above AI_TASKS.generation.deadlineMs, so the route can return its 504 first.
-export const maxDuration = 120;
+// Must stay above two AI_TASKS.generation.deadlineMs (a recipe that uses an
+// allergen is regenerated once), so the route can return its 504 first.
+export const maxDuration = 130;
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,6 +45,11 @@ export async function POST(request: NextRequest) {
       return aiErrorResponse('blocked', {
         message: "We couldn't create recipes for these settings. Please try again or adjust your preferences.",
       });
+    }
+
+    if ('allergenConflict' in result) {
+      console.warn('generate-recipes: every recipe used an allergen, even after a retry');
+      return aiErrorResponse('allergen_conflict');
     }
 
     console.log('✅ Successfully generated recipes:', result.recipes.length);
