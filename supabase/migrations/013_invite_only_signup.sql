@@ -8,7 +8,10 @@
 --
 -- To invite someone, run in the SQL editor:
 --   INSERT INTO public.signup_invites (email, note) VALUES ('name@example.com', 'Sam');
--- Emails are stored lower case, and the check ignores case.
+-- Emails are stored lower case, and the check ignores case. Add the row
+-- before using the Supabase dashboard's "Invite user" (or
+-- auth.admin.inviteUserByEmail): those create the user too, so they're
+-- refused for an email that isn't here yet.
 --
 -- A refused signup fails inside Supabase Auth, which reports it as
 -- "Database error saving new user"; the app shows its own "not invited"

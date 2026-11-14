@@ -106,7 +106,7 @@
    - Paste into SQL Editor
    - Click "Run" or press Cmd+Enter
    - Verify success: Should see "Success. No rows returned"
-   - This adds the `signup_invites` table and a trigger that refuses a signup from any email not in it. Everyone with an account when it runs is added, so nobody is locked out. To invite someone: `INSERT INTO public.signup_invites (email, note) VALUES ('name@example.com', 'Sam');` (lower case)
+   - This adds the `signup_invites` table and a trigger that refuses a signup from any email not in it. Everyone with an account when it runs is added, so nobody is locked out. To invite someone: `INSERT INTO public.signup_invites (email, note) VALUES ('name@example.com', 'Sam');` (lower case). Add the row before using the dashboard's "Invite user" too, which is refused for an email that isn't in the table
 
 15. **Verify Tables Created:**
    ```sql

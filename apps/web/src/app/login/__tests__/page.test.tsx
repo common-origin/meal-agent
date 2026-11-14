@@ -14,8 +14,9 @@ vi.mock('next/navigation', () => ({
 }));
 
 const signInWithOAuth = vi.fn<(options: unknown) => Promise<{ error: null }>>(async () => ({ error: null }));
+const signInWithOtp = vi.fn<(options: unknown) => Promise<{ error: unknown }>>(async () => ({ error: null }));
 vi.mock('@/lib/supabase/client', () => ({
-  createClient: () => ({ auth: { signInWithOAuth } }),
+  createClient: () => ({ auth: { signInWithOAuth, signInWithOtp } }),
 }));
 
 import LoginPage from '../page';
@@ -68,5 +69,23 @@ describe('/login and /signup read the URL after the form renders (#164)', () => 
     const submit = html.match(/<button[^>]*type="submit"[^>]*>/)?.[0] ?? '';
     expect(submit).toContain('disabled');
     expect(renderToString(<SignupPage />).match(/<button[^>]*type="submit"[^>]*>/)?.[0]).toContain('disabled');
+  });
+});
+
+describe('/signup for an email that has not been invited (migration 013)', () => {
+  it('shows the invite-only copy when Supabase refuses the magic link', async () => {
+    const { AuthApiError } = await import('@supabase/supabase-js');
+    signInWithOtp.mockResolvedValueOnce({
+      error: new AuthApiError('Database error saving new user', 500, 'unexpected_failure'),
+    });
+    params = new URLSearchParams();
+    suspendSearchParams = false;
+    render(<SignupPage />);
+
+    fireEvent.change(screen.getByPlaceholderText('you@example.com'), { target: { value: 'stranger@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send magic link' }));
+
+    expect(await screen.findByText(/invite-only/)).toBeInTheDocument();
+    expect(screen.queryByText(/Database error/)).not.toBeInTheDocument();
   });
 });

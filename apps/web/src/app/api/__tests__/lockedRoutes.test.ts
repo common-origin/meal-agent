@@ -49,12 +49,12 @@ describe('coles-search', () => {
     expect((await res.json()).results[0].productName).toBe('Milk 2L');
   });
 
-  it('rate limits each user to 60 searches per 10 minutes', async () => {
+  it('rate limits each user to 150 searches per 10 minutes', async () => {
     signIn();
-    for (let i = 0; i < 60; i++) expect((await search()).status).toBe(200);
+    for (let i = 0; i < 150; i++) expect((await search()).status).toBe(200);
     const res = await search();
     expect(res.status).toBe(429);
-    expect(fetch).toHaveBeenCalledTimes(60);
+    expect(fetch).toHaveBeenCalledTimes(150);
   });
 });
 

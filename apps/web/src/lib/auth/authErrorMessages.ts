@@ -22,14 +22,16 @@ const KNOWN_ERROR_MESSAGES: Partial<Record<string, string>> = {
   oauth_provider_not_supported: 'Google sign-in is not available right now. Please try again later.',
   provider_disabled: 'Google sign-in is not available right now. Please try again later.',
   // Our own code, for a signup refused by the invite check (migration 013).
-  not_invited: "Meal Agent is invite-only at the moment, and this email hasn't been invited.",
+  // Supabase reports every failure creating a user the same way, so this
+  // can't be certain it was the invite check; it says what's most likely.
+  not_invited: "We couldn't create an account for this email. Meal Agent is invite-only at the moment, so check it's the email you were invited with.",
 };
 
 /**
  * The invite check (migration 013) refuses a signup by failing the insert
- * into auth.users. Supabase Auth reports any such failure with this message
- * and a generic code; signup creates no other rows that can fail, so it
- * means "not invited".
+ * into auth.users. Supabase Auth reports any failure creating a user with
+ * this message and a generic code (handle_new_user failing looks the same),
+ * so the copy for it names the invite as the likely cause, not the certain one.
  */
 const SIGNUP_REFUSED_MESSAGE = 'Database error saving new user';
 

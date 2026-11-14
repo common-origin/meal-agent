@@ -82,9 +82,7 @@ describe('getAuthErrorMessageForCode', () => {
 describe('a signup refused by the invite check (migration 013)', () => {
   it('shows invite-only copy instead of the generic failure', () => {
     const error = new AuthError('Database error saving new user', 500, 'unexpected_failure');
-    expect(getAuthErrorMessage(error, 'sign up')).toBe(
-      "Meal Agent is invite-only at the moment, and this email hasn't been invited."
-    );
+    expect(getAuthErrorMessage(error, 'sign up')).toMatch(/invite-only/);
   });
 
   it('recognises Supabase\'s message, and nothing else', () => {

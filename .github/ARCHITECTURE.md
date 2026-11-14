@@ -113,7 +113,7 @@ and counts AI use against the household owner), then applies a per-user rate lim
 in `AI.md`). `share-recipe-email` uses the same rate limiter.
 
 **Pricing/shopping**: `coles-search` (product lookup; needs a session and
-is rate limited to 60 a user per 10 minutes, since each call spends the
+is rate limited to 150 a user per 10 minutes, since each call spends the
 shared RapidAPI quota), `ingredient-analytics`
 (client-side analytics metadata)
 
