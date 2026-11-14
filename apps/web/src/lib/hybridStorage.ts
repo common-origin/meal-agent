@@ -68,6 +68,12 @@ export async function getFamilySettings(): Promise<FamilySettings> {
   return LocalStorage.getFamilySettings();
 }
 
+/** A signed-in household that has never saved its settings, so needs first-run setup. */
+export async function householdNeedsSetup(): Promise<boolean> {
+  if (!(await isAuthenticated())) return false;
+  return SupabaseStorage.householdNeedsSetup();
+}
+
 export async function resetFamilySettings(): Promise<boolean> {
   return await saveFamilySettings(DEFAULT_FAMILY_SETTINGS);
 }

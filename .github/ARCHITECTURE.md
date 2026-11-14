@@ -242,7 +242,12 @@ signup):
   `owner`/`member` role
 - **`family_settings`** — meal-planning preferences; `full_settings` is a
   JSONB column (migration 004) holding the complete settings object, with
-  a handful of columns duplicated out of it for querying
+  a handful of columns duplicated out of it for querying. A new household's
+  row has `full_settings` NULL until its first save, and that's how first-run
+  setup is detected: `/plan` sends it to `/settings?welcome=1`, a shortened
+  Settings page, before its first plan (#211). Missing fields come from
+  `DEFAULT_FAMILY_SETTINGS`, which is deliberately neutral (no children,
+  cuisines, diet flags or city)
 - **`recipes`** — `id` is `TEXT`, not `UUID` (migration 003 — supports
   semantic IDs like `ai-recipe-name-1a2b3c4d` alongside real UUIDs), plus
   `nutrition` JSONB (migration 005) and a nullable `cuisine` (migration

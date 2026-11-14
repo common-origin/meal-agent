@@ -84,6 +84,32 @@ export async function saveFamilySettingsToDb(settings: FamilySettings): Promise<
   }
 }
 
+/**
+ * True when the signed-in household has never saved its settings: the
+ * new-user trigger creates the row with full_settings NULL, and the first
+ * save from Settings fills it. False when they're saved, and on any error,
+ * so a failed check never traps someone in first-run setup.
+ */
+export async function householdNeedsSetup(): Promise<boolean> {
+  try {
+    const householdId = await getHouseholdId();
+    if (!householdId) return false;
+
+    const supabase = createBrowserClient();
+    const { data, error } = await supabase
+      .from('family_settings')
+      .select('full_settings')
+      .eq('household_id', householdId)
+      .maybeSingle();
+
+    if (error || !data) return false;
+    return data.full_settings === null;
+  } catch (error) {
+    console.error('Error in householdNeedsSetup:', error);
+    return false;
+  }
+}
+
 export async function loadFamilySettingsFromDb(): Promise<FamilySettings | null> {
   try {
     const householdId = await getHouseholdId();
@@ -131,10 +157,17 @@ export async function loadFamilySettingsFromDb(): Promise<FamilySettings | null>
       };
     }
     
-    // Fallback: reconstruct from simplified columns (backward compatibility)
+    // Fallback: reconstruct from simplified columns (backward compatibility).
+    // A new household's row is all column defaults ('medium' cook time,
+    // total_servings 4), so those fall through to DEFAULT_FAMILY_SETTINGS (#211).
+    const cookTimes: Record<string, FamilySettings['maxCookTime']> = {
+      quick: { weeknight: 30, weekend: 90 },
+      moderate: { weeknight: 45, weekend: 90 },
+      standard: { weeknight: 60, weekend: 90 },
+    };
     return {
       ...DEFAULT_FAMILY_SETTINGS,
-      totalServings: data.total_servings,
+      totalServings: data.adults + data.kids_ages.length,
       adults: data.adults,
       children: data.kids_ages.map(age => ({ age })),
       cuisines: data.cuisines,
@@ -142,10 +175,7 @@ export async function loadFamilySettingsFromDb(): Promise<FamilySettings | null>
       proteinFocus: data.dietary_restrictions.includes('high-protein'),
       avoidFoods: data.dietary_restrictions.filter(r => !['gluten-free-preference', 'high-protein'].includes(r)),
       cookingSkill: data.skill_level as 'beginner' | 'intermediate' | 'confident_home_cook' | 'advanced',
-      maxCookTime: {
-        weeknight: data.cooking_time_preference === 'quick' ? 30 : data.cooking_time_preference === 'moderate' ? 45 : 60,
-        weekend: 90,
-      },
+      maxCookTime: cookTimes[data.cooking_time_preference] ?? DEFAULT_FAMILY_SETTINGS.maxCookTime,
       lastUpdated: data.updated_at,
     };
   } catch (error) {
