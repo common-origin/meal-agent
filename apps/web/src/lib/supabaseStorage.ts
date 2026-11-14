@@ -85,35 +85,25 @@ export async function saveFamilySettingsToDb(settings: FamilySettings): Promise<
 }
 
 /**
- * True when the signed-in household has never saved its settings: the
- * new-user trigger creates the row with full_settings NULL, and the first
- * save from Settings fills it. False when they're saved, and on any error,
- * so a failed check never traps someone in first-run setup.
+ * The household's settings, and whether it still needs first-run setup
+ * (#211): the new-user trigger creates the row with full_settings NULL, and
+ * the first save from Settings fills it. needsSetup is false on any error,
+ * so a failed load never traps someone in setup.
  */
-export async function householdNeedsSetup(): Promise<boolean> {
-  try {
-    const householdId = await getHouseholdId();
-    if (!householdId) return false;
-
-    const supabase = createBrowserClient();
-    const { data, error } = await supabase
-      .from('family_settings')
-      .select('full_settings')
-      .eq('household_id', householdId)
-      .maybeSingle();
-
-    if (error || !data) return false;
-    return data.full_settings === null;
-  } catch (error) {
-    console.error('Error in householdNeedsSetup:', error);
-    return false;
-  }
+export interface FamilySettingsState {
+  settings: FamilySettings | null;
+  needsSetup: boolean;
 }
 
 export async function loadFamilySettingsFromDb(): Promise<FamilySettings | null> {
+  return (await loadFamilySettingsStateFromDb()).settings;
+}
+
+export async function loadFamilySettingsStateFromDb(): Promise<FamilySettingsState> {
+  const none: FamilySettingsState = { settings: null, needsSetup: false };
   try {
     const householdId = await getHouseholdId();
-    if (!householdId) return null;
+    if (!householdId) return none;
     
     const supabase = createBrowserClient();
     
@@ -124,7 +114,7 @@ export async function loadFamilySettingsFromDb(): Promise<FamilySettings | null>
       .single();
     
     if (error || !data) {
-      return null;
+      return none;
     }
     
     // Get defaults to merge with
@@ -134,7 +124,7 @@ export async function loadFamilySettingsFromDb(): Promise<FamilySettings | null>
     if (data.full_settings && typeof data.full_settings === 'object' && !Array.isArray(data.full_settings)) {
       const loadedSettings = data.full_settings as unknown as FamilySettings;
       // Merge with defaults to ensure all fields exist
-      return {
+      return { needsSetup: false, settings: {
         ...DEFAULT_FAMILY_SETTINGS,
         ...loadedSettings,
         // Ensure nested objects are properly merged
@@ -154,7 +144,7 @@ export async function loadFamilySettingsFromDb(): Promise<FamilySettings | null>
           ...DEFAULT_FAMILY_SETTINGS.batchCooking,
           ...(loadedSettings.batchCooking || {}),
         },
-      };
+      } };
     }
     
     // Fallback: reconstruct from simplified columns (backward compatibility).
@@ -165,7 +155,7 @@ export async function loadFamilySettingsFromDb(): Promise<FamilySettings | null>
       moderate: { weeknight: 45, weekend: 90 },
       standard: { weeknight: 60, weekend: 90 },
     };
-    return {
+    return { needsSetup: data.full_settings === null, settings: {
       ...DEFAULT_FAMILY_SETTINGS,
       totalServings: data.adults + data.kids_ages.length,
       adults: data.adults,
@@ -177,10 +167,10 @@ export async function loadFamilySettingsFromDb(): Promise<FamilySettings | null>
       cookingSkill: data.skill_level as 'beginner' | 'intermediate' | 'confident_home_cook' | 'advanced',
       maxCookTime: cookTimes[data.cooking_time_preference] ?? DEFAULT_FAMILY_SETTINGS.maxCookTime,
       lastUpdated: data.updated_at,
-    };
+    } };
   } catch (error) {
-    console.error('Error in loadFamilySettingsFromDb:', error);
-    return null;
+    console.error('Error in loadFamilySettingsStateFromDb:', error);
+    return none;
   }
 }
 

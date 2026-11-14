@@ -1,12 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { DEFAULT_FAMILY_SETTINGS } from '@/lib/types/settings';
 import type { FamilySettings } from '@/lib/types/settings';
 
-const push = vi.fn();
+const replace = vi.fn();
 let params = new URLSearchParams();
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push }),
+  useRouter: () => ({ replace }),
   useSearchParams: () => params,
 }));
 
@@ -20,11 +20,16 @@ vi.mock('@/lib/hybridStorage', () => ({
 import SettingsPage from '../page';
 
 beforeEach(() => {
-  push.mockReset();
+  replace.mockReset();
+  saveFamilySettings.mockImplementation(async () => true);
   saveFamilySettings.mockClear();
   params = new URLSearchParams();
   vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({}), { status: 500 })));
   window.scrollTo = vi.fn();
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 describe('first-run setup: Settings with ?welcome=1 (#211)', () => {
@@ -47,11 +52,23 @@ describe('first-run setup: Settings with ?welcome=1 (#211)', () => {
     fireEvent.click(screen.getByText('Thai'));
     fireEvent.click(screen.getByRole('button', { name: 'Save and start planning' }));
 
-    await waitFor(() => expect(push).toHaveBeenCalledWith('/plan'));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/plan'));
     expect(saveFamilySettings.mock.calls[0][0]).toMatchObject({
       cuisines: ['thai'],
       location: { city: 'Brisbane' },
     });
+  });
+
+  it('says so when the save fails, rather than leaving a dead button', async () => {
+    params = new URLSearchParams({ welcome: '1' });
+    saveFamilySettings.mockImplementation(async () => false);
+    render(<SettingsPage />);
+
+    fireEvent.change(screen.getByPlaceholderText('e.g., Melbourne'), { target: { value: 'Brisbane' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save and start planning' }));
+
+    expect(await screen.findByText(/couldn't be saved/)).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
   });
 
   it('is the full Settings page without it', async () => {

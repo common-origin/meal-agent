@@ -89,27 +89,33 @@ function SettingsPageContent({ welcome }: { welcome: boolean }) {
 
     // The reminder is always at 9am (#196): there's no time to pick, so an older saved time is replaced.
     const success = await saveFamilySettings({ ...settings, weeklyReminderTime: REMINDER_TIME });
-    if (success && welcome) {
-      track('override_saved', { setup: true, cuisines: settings.cuisines.length });
-      router.push('/plan');
+    if (!success) {
+      // Said, not silent: in setup a failed save would otherwise look like a dead button.
+      setErrors(["Your settings couldn't be saved. Check your connection and try again."]);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    if (success) {
-      setSaved(true);
-      setErrors([]);
-      // Track as override saved since user is customizing their preferences
-      track('override_saved', { 
-        cuisines: settings.cuisines.length,
-        glutenFree: settings.glutenFreePreference,
-        budgetRange: `${settings.budgetPerMeal.min}-${settings.budgetPerMeal.max}`,
-      });
-      
-      // Scroll to top to show success message
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      
-      // Hide success message after 3 seconds
-      setTimeout(() => setSaved(false), 3000);
+    if (welcome) {
+      track('override_saved', { setup: true, cuisines: settings.cuisines.length });
+      // Replace, so Back from the plan doesn't return to setup.
+      router.replace('/plan');
+      return;
     }
+
+    setSaved(true);
+    setErrors([]);
+    // Track as override saved since user is customizing their preferences
+    track('override_saved', {
+      cuisines: settings.cuisines.length,
+      glutenFree: settings.glutenFreePreference,
+      budgetRange: `${settings.budgetPerMeal.min}-${settings.budgetPerMeal.max}`,
+    });
+
+    // Scroll to top to show success message
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Hide success message after 3 seconds
+    setTimeout(() => setSaved(false), 3000);
   };
 
   const handleReset = async () => {

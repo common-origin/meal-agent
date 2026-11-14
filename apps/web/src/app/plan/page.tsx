@@ -16,7 +16,7 @@ import { type Recipe } from "@/lib/types/recipe";
 import { scheduleSundayToast, thisWeekMondayISO, shiftWeekISO, weekToOpen, defaultPlanningWeekISO, formatWeekRange, relativeWeekLabel, shouldPromptNextWeek } from "@/lib/schedule";
 import { formatPlanSummary, summarisePlan } from "@/lib/planSummary";
 import { loadHousehold, getDefaultHousehold, getRecipeRatings, getBlockedRecipes, getFavorites } from "@/lib/storage";
-import { getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan, hydrateRecencyFromSupabase, recordWeekHistory, listPlannedWeeks, householdNeedsSetup } from "@/lib/hybridStorage";
+import { getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan, hydrateRecencyFromSupabase, recordWeekHistory, listPlannedWeeks, getFamilySettingsAndSetup } from "@/lib/hybridStorage";
 import { SETUP_PATH } from "@/lib/types/settings";
 import { getRecentRecipeIds } from "@/lib/recencyTracker";
 import { buildTasteSignals, type TasteSignals } from "@/lib/tasteSignals";
@@ -268,10 +268,9 @@ export default function PlanPage() {
       // Load data in parallel for faster initial render
       const { loadAllRecipes } = await import('@/lib/hybridStorage');
 
-      const [needsSetup, supabaseRecipes, familySettings, weeks] = await Promise.all([
-        householdNeedsSetup(),
+      const [supabaseRecipes, { settings: familySettings, needsSetup }, weeks] = await Promise.all([
         loadAllRecipes(),
-        getFamilySettings(),
+        getFamilySettingsAndSetup(),
         listPlannedWeeks(thisWeekMondayISO()),
       ]);
 

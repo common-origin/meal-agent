@@ -42,7 +42,9 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
-import { householdNeedsSetup, loadFamilySettingsFromDb } from '../supabaseStorage';
+import { loadFamilySettingsStateFromDb, loadFamilySettingsFromDb } from '../supabaseStorage';
+
+const householdNeedsSetup = async () => (await loadFamilySettingsStateFromDb()).needsSetup;
 
 beforeEach(() => {
   mocks.user = { id: 'user-1' };
@@ -50,7 +52,7 @@ beforeEach(() => {
   mocks.settingsError = null;
 });
 
-describe('householdNeedsSetup (#211)', () => {
+describe('needsSetup (#211)', () => {
   it('is true for a household that has never saved its settings', async () => {
     expect(await householdNeedsSetup()).toBe(true);
   });
