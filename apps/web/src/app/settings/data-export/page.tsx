@@ -122,7 +122,7 @@ export default function YourDataPage() {
             >
               <Stack direction="row">
                 <Button
-                  variant="secondary"
+                  variant="danger"
                   size="medium"
                   onClick={() => {
                     setConfirmEmail('');
