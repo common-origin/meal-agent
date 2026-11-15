@@ -10,21 +10,25 @@ import type { User } from '@supabase/supabase-js';
 import type { z } from 'zod';
 import { getCurrentUser } from '@/lib/supabase/server';
 import type { RateLimiter } from './rateLimit';
-import { isOverDailyAiCap } from '@/lib/ai/usage';
+import { checkAiAllowance } from '@/lib/ai/usage';
 import { aiErrorResponse } from '@/lib/ai/errors';
 import { isAdminEmail } from '@/lib/auth/admin';
 
 type Guarded<T> = { ok: true; value: T } | { ok: false; response: NextResponse };
 
 /**
- * Signed-in user, counted against `limiter` (burst) and the daily AI cap.
- * Each AI route makes one AI call per request, so checking the cap here is
- * the same as checking it before the call.
+ * Signed-in user, counted against `limiter` (burst), their daily AI cap and
+ * the day's spend ceiling across all users (#215). Each AI route makes one
+ * AI call per request, so checking here is the same as checking before the
+ * call. If usage can't be read, the call is refused.
  */
 export async function requireUserWithinLimit(limiter: RateLimiter): Promise<Guarded<User>> {
   const guarded = await requireUserWithinBurst(limiter);
   if (!guarded.ok) return guarded;
-  if (await isOverDailyAiCap(guarded.value.id)) return { ok: false, response: aiErrorResponse('daily_cap') };
+  const allowance = await checkAiAllowance(guarded.value.id);
+  if (allowance !== 'ok') {
+    return { ok: false, response: aiErrorResponse(allowance === 'unavailable' ? 'ai_unavailable' : allowance) };
+  }
   return guarded;
 }
 

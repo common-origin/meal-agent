@@ -82,7 +82,7 @@
    - Paste into SQL Editor
    - Click "Run" or press Cmd+Enter
    - Verify success: Should see "Success. No rows returned"
-   - This adds the `ai_usage` table: one row per AI call (tokens, estimated cost, latency, outcome), used for the per-user daily AI cap. It doesn't depend on `009`; the two can run in either order. The app tolerates the table being missing: usage just isn't recorded and the daily cap isn't enforced
+   - This adds the `ai_usage` table: one row per AI call (tokens, estimated cost, latency, outcome), used for the per-user daily AI cap. It doesn't depend on `009`; the two can run in either order. Since #215 the AI limits fail closed, so AI features need this table (and `014`)
 
 12. **Run Coles Extension Migration (Step 11):**
    - Click "New Query"
@@ -108,7 +108,15 @@
    - Verify success: Should see "Success. No rows returned"
    - This adds the `signup_invites` table and a trigger that refuses a signup from any email not in it. Everyone with an account when it runs is added, so nobody is locked out. To invite someone: `INSERT INTO public.signup_invites (email, note) VALUES ('name@example.com', 'Sam');` (lower case). Add the row before using the dashboard's "Invite user" too, which is refused for an email that isn't in the table
 
-15. **Verify Tables Created:**
+15. **Run AI Spend Ceiling Migration (Step 14):**
+   - Click "New Query"
+   - Copy entire contents of `supabase/migrations/014_ai_spend_since.sql`
+   - Paste into SQL Editor
+   - Click "Run" or press Cmd+Enter
+   - Verify success: Should see "Success. No rows returned"
+   - This adds `ai_spend_since()`, the day's AI spend across all users, for the daily spend ceiling (#215). **Run it before deploying #215**: the app refuses AI calls while it can't read usage
+
+16. **Verify Tables Created:**
    ```sql
    SELECT table_name 
    FROM information_schema.tables 
@@ -151,7 +159,7 @@
 - **shopping_lists** - Aggregated shopping items per week
 - **pantry_preferences** - Items always in pantry (exclude from shopping)
 - **api_usage** - Original AI cost table from 001; nothing writes to it (superseded by `ai_usage`)
-- **ai_usage** - One row per AI call: task, model, tokens, estimated cost, latency, outcome; backs the daily AI cap (#85)
+- **ai_usage** - One row per AI call: task, model, tokens, estimated cost, latency, outcome; backs the per-user daily AI cap (#85) and the daily spend ceiling (014, #215)
 - **recipe_history** - Recipes used per composed week, for cross-device repeat-avoidance
 - **household_products** - The Coles product a household buys for each ingredient, for the Coles extension (#184)
 - **purchase_history** - Past Coles online order lines with the price paid, kept 12 months (#185)

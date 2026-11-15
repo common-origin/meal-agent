@@ -48,7 +48,7 @@ function query(table: string) {
 vi.mock('@/lib/supabase/server', () => ({ createAdminClient: () => ({ from: query }) }));
 const runAiTask = vi.fn();
 vi.mock('@/lib/ai/run', () => ({ runAiTask: (...args: unknown[]) => runAiTask(...args) }));
-vi.mock('@/lib/ai/usage', () => ({ isOverDailyAiCap: async () => false }));
+vi.mock('@/lib/ai/usage', () => ({ checkAiAllowance: async () => 'ok' }));
 
 const { importOrders, confirmMatch } = await import('../coles/purchases');
 

@@ -219,6 +219,10 @@ few minutes.
 [Usage, cost and the daily cap](#usage-cost-and-the-daily-cap)); it resets
 at midnight UTC.
 
+**"AI features are paused for today"** — the day's spend ceiling across all
+users is reached (same section). It lifts at midnight UTC, or sooner if you
+raise `AI_DAILY_SPEND_CAP_USD` and redeploy.
+
 **"AI features aren't available right now"** — the provider refused
 for billing: Gemini returns 402 "Your prepayment credits are depleted". No
 retry helps; top up the project's prepaid credits in AI Studio
@@ -278,8 +282,22 @@ table when models or rates change.
 Each user gets **100 AI calls per UTC day**, counted from `ai_usage`
 (`DAILY_AI_CALL_CAP`). Over it, AI routes return 429,
 `code: "daily_cap"`: "You've reached today's AI limit. It resets
-tomorrow." If the count can't be read (e.g. migration 010 hasn't run), the
-cap fails open and logs a warning.
+tomorrow."
+
+Across **all** users, estimated spend is capped per UTC day (#215): the sum
+of `ai_usage.cost_usd` since midnight UTC, read through the
+`ai_spend_since()` function (migration 014). The ceiling is **$5** unless
+`AI_DAILY_SPEND_CAP_USD` is set in Vercel. Once it's reached, every AI
+feature returns 503, `code: "spend_cap"` ("AI features are paused for
+today"), until midnight UTC. The first refusal logs an `ai_spend_cap` error
+and emails `ADMIN_EMAILS` through Resend, once per server instance per day.
+
+Both limits are read with the service role (`checkAiAllowance` in
+`lib/ai/usage.ts`), so they also hold in the Coles extension's order
+matching, which has no session. They **fail closed**: if usage can't be
+read (migration 014 not run, Supabase down), the call is refused with
+`ai_unavailable`. Both are approximate, because rows are written after each
+response.
 
 Monthly cost by task (run in the Supabase SQL editor):
 

@@ -11,11 +11,13 @@ const mocks = vi.hoisted(() => ({
   generateText: vi.fn(),
   safeFetchHtml: vi.fn(),
   createClient: vi.fn(),
+  createAdminClient: vi.fn(),
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
   getCurrentUser: mocks.getCurrentUser,
   createClient: mocks.createClient,
+  createAdminClient: mocks.createAdminClient,
 }));
 
 vi.mock('@/lib/aiRecipeGenerator', () => ({
@@ -173,8 +175,9 @@ beforeEach(() => {
   vi.spyOn(console, 'warn').mockImplementation(() => {});
   vi.spyOn(console, 'error').mockImplementation(() => {});
   vi.spyOn(console, 'info').mockImplementation(() => {});
-  // No ai_usage table by default: the daily cap fails open and usage writes are skipped.
+  // Usage writes are skipped (no session client); usage reads see an empty day (#215).
   mocks.createClient.mockRejectedValue(new Error('no Supabase in tests'));
+  mocks.createAdminClient.mockReturnValue(adminWithUsage({ count: 0, spend: 0 }));
 });
 
 describe.each(routes)('$name', (route) => {
@@ -219,17 +222,17 @@ describe.each(routes)('$name', (route) => {
   });
 });
 
-/** A Supabase client whose ai_usage count for today is `count`. */
-function supabaseWithUsageCount(count: number) {
-  const query = { eq: () => query, gte: async () => ({ count, error: null }) };
-  return { from: () => ({ select: () => query, insert: async () => ({ error: null }) }) };
+/** The service-role client checkAiAllowance reads: today's calls for the user, and today's spend for everyone. */
+function adminWithUsage({ count, spend, error = null }: { count: number; spend: number; error?: { message: string } | null }) {
+  const query = { eq: () => query, gte: async () => ({ count, error }) };
+  return { from: () => ({ select: () => query }), rpc: async () => ({ data: spend, error: null }) };
 }
 
 describe.each(routes)('$name daily AI cap and usage logging', (route) => {
   it("returns 429 daily_cap once the user has hit today's cap, before calling the model", async () => {
     signIn();
     route.prepareValid();
-    mocks.createClient.mockResolvedValue(supabaseWithUsageCount(100));
+    mocks.createAdminClient.mockReturnValue(adminWithUsage({ count: 100, spend: 0 }));
     const res = await route.call();
     expect(res.status).toBe(429);
     expect(await res.json()).toEqual({ error: "You've reached today's AI limit. It resets tomorrow.", code: 'daily_cap' });
@@ -240,8 +243,30 @@ describe.each(routes)('$name daily AI cap and usage logging', (route) => {
   it('allows the call just under the cap', async () => {
     signIn();
     route.prepareValid();
-    mocks.createClient.mockResolvedValue(supabaseWithUsageCount(99));
+    mocks.createAdminClient.mockReturnValue(adminWithUsage({ count: 99, spend: 0 }));
     expect((await route.call()).status).toBe(200);
+  });
+
+  it('returns 503 spend_cap once the day\'s spend across all users reaches the ceiling (#215)', async () => {
+    signIn();
+    route.prepareValid();
+    mocks.createAdminClient.mockReturnValue(adminWithUsage({ count: 0, spend: 5 }));
+    const res = await route.call();
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ error: "AI features are paused for today. They'll be back tomorrow.", code: 'spend_cap' });
+    expect(mocks.generateRecipes).not.toHaveBeenCalled();
+    expect(mocks.generateText).not.toHaveBeenCalled();
+  });
+
+  it('refuses the call when usage cannot be read (fails closed, #215)', async () => {
+    signIn();
+    route.prepareValid();
+    mocks.createAdminClient.mockReturnValue(adminWithUsage({ count: 0, spend: 0, error: { message: 'boom' } }));
+    const res = await route.call();
+    expect(res.status).toBe(503);
+    expect((await res.json()).code).toBe('ai_unavailable');
+    expect(mocks.generateRecipes).not.toHaveBeenCalled();
+    expect(mocks.generateText).not.toHaveBeenCalled();
   });
 });
 
