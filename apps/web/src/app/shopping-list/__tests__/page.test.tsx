@@ -9,6 +9,8 @@ vi.mock('@/lib/hybridStorage', () => ({
   hydrateRecencyFromSupabase: vi.fn(async () => undefined),
   syncRecencyToSupabase: vi.fn(async () => undefined),
   listPlannedWeeks: vi.fn(async () => []),
+  // No saved time zone: the browser's day decides the week (#232)
+  getFamilySettings: vi.fn(async () => ({ location: {} })),
 }));
 vi.mock('@/lib/compose', () => ({ composeWeek: () => ({ startISO: '2026-10-26', days: [], costEstimate: 0, conflicts: [] }) }));
 vi.mock('@/lib/shoppingListAggregator', () => ({ aggregateShoppingList: () => [], toLegacyFormat: () => [] }));

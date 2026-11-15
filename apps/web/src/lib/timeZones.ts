@@ -48,3 +48,19 @@ export function timeZoneOptions(current: string | undefined): { id: string; labe
   if (current && !options.some((option) => option.id === current)) options.push({ id: current, label: current });
   return options;
 }
+
+/** The zone a household's days follow: its saved zone, else the browser's, else the default (#232). */
+export function householdTimeZone(saved: string | undefined): string {
+  return pickTimeZone(saved, Intl.DateTimeFormat().resolvedOptions().timeZone);
+}
+
+/**
+ * Today's date in `timeZone`, as YYYY-MM-DD (#232). Week logic (which week
+ * to plan, "This week") goes by the household's day, not the server's or
+ * the browser's clock.
+ */
+export function todayInTimeZone(timeZone: string, now: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-AU', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
+  const part = (type: 'year' | 'month' | 'day') => parts.find((p) => p.type === type)?.value ?? '';
+  return `${part('year')}-${part('month')}-${part('day')}`;
+}

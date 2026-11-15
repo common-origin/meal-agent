@@ -13,7 +13,7 @@ import WeeklyPlanWizard, { type WeeklyPlanData } from "@/components/app/WeeklyPl
 import PantrySheet from "@/components/app/PantrySheet";
 import { type MealCardProps } from "@/components/app/MealCard";
 import { type Recipe } from "@/lib/types/recipe";
-import { scheduleSundayToast, thisWeekMondayISO, shiftWeekISO, weekToOpen, defaultPlanningWeekISO, formatWeekRange, relativeWeekLabel, shouldPromptNextWeek } from "@/lib/schedule";
+import { scheduleSundayToast, mondayOfWeekISO, shiftWeekISO, weekToOpen, defaultPlanningWeekISO, formatWeekRange, relativeWeekLabel, shouldPromptNextWeek } from "@/lib/schedule";
 import { formatPlanSummary, summarisePlan } from "@/lib/planSummary";
 import { loadHousehold, getDefaultHousehold, getRecipeRatings, getBlockedRecipes, getFavorites } from "@/lib/storage";
 import { getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan, hydrateRecencyFromSupabase, recordWeekHistory, listPlannedWeeks, getFamilySettingsAndSetup, hydrateFavoritesFromSupabase } from "@/lib/hybridStorage";
@@ -31,6 +31,7 @@ import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
 import { recipeSourceLabel } from "@/lib/recipeDisplay";
 import { weekDateLabels } from "@/lib/dayCard";
+import { householdTimeZone, todayInTimeZone } from "@/lib/timeZones";
 import { trackIngredientUsage } from "@/lib/ingredientAnalytics";
 import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
 import { apiErrorMessage, redirectToLoginIfUnauthenticated } from "@/lib/api/client";
@@ -106,7 +107,7 @@ export default function PlanPage() {
   const { beginGeneration, endGeneration, isSignOutInProgress } = useGenerationActivity();
   const [showWizard, setShowWizard] = useState(false);
   // The week the wizard opens on (#194); set each time it opens.
-  const [wizardWeek, setWizardWeek] = useState<string>(() => defaultPlanningWeekISO());
+  const [wizardWeek, setWizardWeek] = useState<string>('');
   const [showPantrySheet, setShowPantrySheet] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const router = useRouter();
@@ -135,14 +136,23 @@ export default function PlanPage() {
   const saveChainRef = useRef<Promise<unknown>>(Promise.resolve());
   // The Monday of the week on screen (#194). Every save, history entry and
   // shopping list uses this, never "next Monday", so a plan stays on its week.
-  const [weekStart, setWeekStart] = useState<string>(() => defaultPlanningWeekISO());
+  // Empty until mounted: the default week depends on today's date, which the
+  // server (UTC) and browser can disagree on, so it's chosen after loading,
+  // in the household's time zone, to avoid a hydration mismatch (#232).
+  const [weekStart, setWeekStart] = useState<string>('');
   const weekStartRef = useRef(weekStart);
+  // The household's time zone (#220), once settings have loaded; "today" is
+  // read from it on each render, so it doesn't go stale if the page stays open.
+  const [timeZone, setTimeZone] = useState<string | null>(null);
+  const today = timeZone ? todayInTimeZone(timeZone) : null;
   // Weeks from this one on that have a saved plan, so the wizard can say which it would replace.
   const [plannedWeeks, setPlannedWeeks] = useState<string[]>([]);
   const persistPlan = (pantry: string[]): Promise<boolean> => {
     // The week and plan as they are now: if the user has moved to another week by the time this
     // runs, this save still writes the plan it was made for, to that plan's week.
     const week = weekStartRef.current;
+    // No week until the initial load has chosen one (#232): nothing to save yet.
+    if (!week) return Promise.resolve(false);
     const snapshot = weekPlanRef.current;
     const run = saveChainRef.current.then(async () => {
       const plan = weekStartRef.current === week ? weekPlanRef.current : snapshot;
@@ -271,7 +281,8 @@ export default function PlanPage() {
       const [supabaseRecipes, { settings: familySettings, needsSetup }, weeks] = await Promise.all([
         loadAllRecipes(),
         getFamilySettingsAndSetup(),
-        listPlannedWeeks(thisWeekMondayISO()),
+        // From a week back: today here may still be yesterday in the household's zone, decided below.
+        listPlannedWeeks(shiftWeekISO(mondayOfWeekISO(), -1)),
         // So the week's "favourite" reasons reflect the whole household (#222)
         hydrateFavoritesFromSupabase().catch((err) => console.warn('Could not load favourites:', err)),
       ]);
@@ -292,13 +303,22 @@ export default function PlanPage() {
       setBudgetPerMeal(familySettings.budgetPerMeal.max);
       setPlannedWeeks(weeks);
 
+      // The household's day decides the weeks (#232), else the browser's.
+      const zone = householdTimeZone(familySettings.location?.timeZone);
+      const householdToday = todayInTimeZone(zone);
+      setTimeZone(zone);
+      const defaultWeek = defaultPlanningWeekISO(householdToday);
+      weekStartRef.current = defaultWeek;
+      setWeekStart(defaultWeek);
+
       // Today's week if planned, else the next planned one; at the weekend, the week ahead first (#194).
-      const week = weekToOpen(weeks);
+      const week = weekToOpen(weeks, householdToday);
       if (week) {
         await showWeek(week);
       } else {
         // Nothing planned from this week on: straight into planning
         console.log('🧙 Plan page: No upcoming plan, showing wizard');
+        setWizardWeek(defaultWeek);
         setShowWizard(true);
       }
 
@@ -940,8 +960,8 @@ export default function PlanPage() {
     [weekPlan]
   );
   const summary = useMemo(() => summarisePlan(planRecipes, budgetPerMeal), [planRecipes, budgetPerMeal]);
-  const weekDates = useMemo(() => weekDateLabels(weekStart), [weekStart]);
-  const weekRelative = relativeWeekLabel(weekStart);
+  const weekDates = useMemo(() => (weekStart ? weekDateLabels(weekStart) : []), [weekStart]);
+  const weekRelative = weekStart && today ? relativeWeekLabel(weekStart, today) : null;
   // Confirm waits for generation and for an open edit preview (accept or discard it first).
   const planBusy = isGenerating || generatingDays.length > 0 || editBusy || preview !== null;
 
@@ -978,6 +998,7 @@ export default function PlanPage() {
           // generate a plan, which would now land on whichever week was showing.
           onCancel={() => setShowWizard(false)}
           initialWeek={wizardWeek}
+          today={today ?? undefined}
           plannedWeeks={plannedWeeks}
         />
       ) : (
@@ -995,7 +1016,8 @@ export default function PlanPage() {
                   onClick={() => handleChangeWeek(-1)}
                   disabled={isLoadingInitial || isLoadingWeek || planBusy || isConfirming}
                 />
-                <Typography variant="h1">{formatWeekRange(weekStart)}</Typography>
+                {/* A non-breaking space keeps the header's height until the week is chosen (#232) */}
+                <Typography variant="h1">{weekStart ? formatWeekRange(weekStart) : '\u00a0'}</Typography>
                 <IconButton
                   variant="naked"
                   size="medium"
@@ -1046,7 +1068,7 @@ export default function PlanPage() {
           )}
 
           {/* Friday to Sunday, on this week, with next week unplanned (#195) */}
-          {!isLoadingInitial && !isLoadingWeek && weekPlan.length > 0 && shouldPromptNextWeek(weekStart, plannedWeeks) && (
+          {!isLoadingInitial && !isLoadingWeek && weekPlan.length > 0 && today !== null && shouldPromptNextWeek(weekStart, plannedWeeks, today) && (
             <Box border="default" borderRadius="md" p="md">
               <Stack direction="row" gap="md" justifyContent="space-between" alignItems="center" wrap>
                 <Stack direction="column" gap="xs">

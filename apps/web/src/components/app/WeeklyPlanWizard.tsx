@@ -18,6 +18,8 @@ interface WeeklyPlanWizardProps {
   initialWeek: string;
   /** Weeks that already have a plan, so choosing one can say it will be replaced. */
   plannedWeeks: string[];
+  /** Today in the household's time zone (#232), so "This week" matches the plan page. */
+  today?: string;
 }
 
 export interface WeeklyPlanData {
@@ -36,8 +38,8 @@ const NIGHTS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const ALL_NIGHTS = [0, 1, 2, 3, 4, 5, 6];
 
 /** "This week · Mon 9 – Sun 15 Nov", or just the dates further out. */
-function weekOptionLabel(week: string): string {
-  const relative = relativeWeekLabel(week);
+function weekOptionLabel(week: string, today?: string): string {
+  const relative = relativeWeekLabel(week, today);
   return relative ? `${relative} · ${formatWeekRange(week)}` : formatWeekRange(week);
 }
 
@@ -57,7 +59,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
  * The pantry comes from the household's saved list and the cuisines and chef
  * from Settings, so every choice here is optional.
  */
-export default function WeeklyPlanWizard({ onComplete, onCancel, initialWeek, plannedWeeks }: WeeklyPlanWizardProps) {
+export default function WeeklyPlanWizard({ onComplete, onCancel, initialWeek, plannedWeeks, today }: WeeklyPlanWizardProps) {
   const [weekStart, setWeekStart] = useState(initialWeek);
   const weekOptions = planningWeekOptions(initialWeek);
   const replacesPlan = plannedWeeks.includes(weekStart);
@@ -150,7 +152,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel, initialWeek, pl
               <Box maxWidth="540px" style={{ width: '100%' }}>
                 <Dropdown
                   label="Week"
-                  options={weekOptions.map((week) => ({ id: week, label: weekOptionLabel(week) }))}
+                  options={weekOptions.map((week) => ({ id: week, label: weekOptionLabel(week, today) }))}
                   value={weekStart}
                   onChange={setWeekStart}
                 />
