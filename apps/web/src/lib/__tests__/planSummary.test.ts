@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatPlanSummary, summarisePlan } from '../planSummary';
+import { planSummaryParts, summarisePlan } from '../planSummary';
 import type { Recipe } from '../types/recipe';
 
 const recipe = (overrides: Partial<Recipe> = {}): Recipe => ({
@@ -45,11 +45,11 @@ describe('summarisePlan (#38)', () => {
   });
 });
 
-describe('formatPlanSummary (#38)', () => {
-  it('reads as one line, marking a rough cost with ~', () => {
-    expect(formatPlanSummary({ cost: 117.6, budget: 140, dinners: 7, roughCost: false, nutrition: { calories: 520, protein: 0, carbs: 0, fat: 0, meals: 7 } })).toBe(
-      '$118 of $140 · 7 dinners · ~520 kcal avg'
+describe('planSummaryParts (#38)', () => {
+  it('gives one tag per figure, marking a rough cost with ~', () => {
+    expect(planSummaryParts({ cost: 117.6, budget: 140, dinners: 7, roughCost: false, nutrition: { calories: 520, protein: 0, carbs: 0, fat: 0, meals: 7 } })).toEqual(
+      ['$118 of $140', '7 dinners', '~520 kcal avg']
     );
-    expect(formatPlanSummary({ cost: 18, budget: 20, dinners: 1, roughCost: true, nutrition: null })).toBe('~$18 of $20 · 1 dinner');
+    expect(planSummaryParts({ cost: 18, budget: 20, dinners: 1, roughCost: true, nutrition: null })).toEqual(['~$18 of $20', '1 dinner']);
   });
 });

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Badge, Box, EmptyState, IconButton, Stack, Typography, Button, type AgentInputHandle } from "@common-origin/design-system";
+import { Alert, Badge, EmptyState, IconButton, Stack, Tag, Typography, Button, type AgentInputHandle } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import WeekPlanList from "@/components/app/WeekPlanList";
@@ -14,7 +14,7 @@ import PantrySheet from "@/components/app/PantrySheet";
 import { type MealCardProps } from "@/components/app/MealCard";
 import { type Recipe } from "@/lib/types/recipe";
 import { scheduleSundayToast, mondayOfWeekISO, shiftWeekISO, weekToOpen, defaultPlanningWeekISO, formatWeekRange, relativeWeekLabel, shouldPromptNextWeek } from "@/lib/schedule";
-import { formatPlanSummary, summarisePlan } from "@/lib/planSummary";
+import { planSummaryParts, summarisePlan } from "@/lib/planSummary";
 import { loadHousehold, getDefaultHousehold, getRecipeRatings, getBlockedRecipes, getFavorites } from "@/lib/storage";
 import { getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan, hydrateRecencyFromSupabase, recordWeekHistory, listPlannedWeeks, getFamilySettingsAndSetup, hydrateFavoritesFromSupabase, hydrateRecipesFromSupabase } from "@/lib/hybridStorage";
 import { SETUP_PATH } from "@/lib/types/settings";
@@ -103,6 +103,8 @@ async function loadTasteSignals(plan: (MealCardProps | null)[]): Promise<TasteSi
   });
 }
 
+const NEXT_WEEK_PROMPT_DISMISSED_KEY = 'meal-agent:next-week-prompt-dismissed';
+
 export default function PlanPage() {
   const { beginGeneration, endGeneration, isSignOutInProgress } = useGenerationActivity();
   const [showWizard, setShowWizard] = useState(false);
@@ -110,6 +112,16 @@ export default function PlanPage() {
   const [wizardWeek, setWizardWeek] = useState<string>('');
   const [showPantrySheet, setShowPantrySheet] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  // The next week whose "not planned yet" prompt was dismissed in this browser: it stays hidden
+  // for that week only, and comes back the weekend after for the following one.
+  const [dismissedNextWeek, setDismissedNextWeek] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      setDismissedNextWeek(localStorage.getItem(NEXT_WEEK_PROMPT_DISMISSED_KEY));
+    } catch {
+      // Storage blocked: the prompt just shows again next visit
+    }
+  }, []);
   const router = useRouter();
   const [weekPlan, setWeekPlan] = useState<(MealCardProps | null)[]>([]);
   // The plan's source of truth for async work: days resolve out of order, so
@@ -1022,9 +1034,12 @@ export default function PlanPage() {
               {/* Title plus a subdued line, composed from Typography in a Stack as the design system
                   documents (PageTitle was removed in 3.0). `small`, not `caption`: caption is uppercase. */}
               {(weekRelative || summary.dinners > 0) && (
-                <Typography variant="small" color="subdued">
-                  {[weekRelative, summary.dinners > 0 ? formatPlanSummary(summary) : null].filter(Boolean).join(' · ')}
-                </Typography>
+                <Stack direction="row" gap="xs" alignItems="center" wrap>
+                  {weekRelative && <Typography variant="small" color="subdued">{weekRelative}</Typography>}
+                  {summary.dinners > 0 && planSummaryParts(summary).map((part) => (
+                    <Tag key={part} size="small">{part}</Tag>
+                  ))}
+                </Stack>
               )}
             </Stack>
             <Stack direction="row" gap="sm" alignItems="center" wrap>
@@ -1060,13 +1075,21 @@ export default function PlanPage() {
           )}
 
           {/* Friday to Sunday, on this week, with next week unplanned (#195) */}
-          {!isLoadingInitial && !isLoadingWeek && weekPlan.length > 0 && today !== null && shouldPromptNextWeek(weekStart, plannedWeeks, today) && (
-            <Box border="default" borderRadius="md" p="md">
-              <Stack direction="row" gap="md" justifyContent="space-between" alignItems="center" wrap>
-                <Stack direction="column" gap="xs">
-                  <Typography variant="body"><strong>Next week isn&apos;t planned yet</strong></Typography>
-                  <Typography variant="small" color="subdued">{formatWeekRange(shiftWeekISO(weekStart, 1))}</Typography>
-                </Stack>
+          {!isLoadingInitial && !isLoadingWeek && weekPlan.length > 0 && today !== null && shouldPromptNextWeek(weekStart, plannedWeeks, today) && dismissedNextWeek !== shiftWeekISO(weekStart, 1) && (
+            <Alert
+              variant="info"
+              title="Next week isn't planned yet"
+              dismissible
+              onDismiss={() => {
+                const nextWeek = shiftWeekISO(weekStart, 1);
+                setDismissedNextWeek(nextWeek);
+                try {
+                  localStorage.setItem(NEXT_WEEK_PROMPT_DISMISSED_KEY, nextWeek);
+                } catch {
+                  // Storage blocked: hidden for this visit only
+                }
+              }}
+              action={
                 <Button
                   variant="primary"
                   size="small"
@@ -1076,8 +1099,10 @@ export default function PlanPage() {
                 >
                   Plan next week
                 </Button>
-              </Stack>
-            </Box>
+              }
+            >
+              {formatWeekRange(shiftWeekISO(weekStart, 1))}
+            </Alert>
           )}
 
           {/* A week with no saved plan (#194): offer to plan it, rather than seven empty nights */}

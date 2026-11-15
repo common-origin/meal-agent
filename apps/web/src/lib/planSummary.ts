@@ -46,13 +46,13 @@ export function summarisePlan(
   };
 }
 
-/** e.g. "$118 of $140 · 7 dinners · ~520 kcal avg"; "~$" marks a rough cost. */
-export function formatPlanSummary(summary: PlanSummary): string {
+/** The plan header's tags, e.g. ["$118 of $140", "7 dinners", "~520 kcal avg"]; "~$" marks a rough cost. */
+export function planSummaryParts(summary: PlanSummary): string[] {
   const money = (value: number) => `$${Math.round(value)}`;
   const parts = [
     `${summary.roughCost ? '~' : ''}${money(summary.cost)} of ${money(summary.budget)}`,
     `${summary.dinners} ${summary.dinners === 1 ? 'dinner' : 'dinners'}`,
   ];
   if (summary.nutrition) parts.push(`~${summary.nutrition.calories} kcal avg`);
-  return parts.join(' · ');
+  return parts;
 }

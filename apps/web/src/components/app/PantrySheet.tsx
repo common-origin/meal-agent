@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { InlineAlert, Stack, Typography, IconButton, Box, TextField, Sheet, Button, FilterChip } from "@common-origin/design-system";
+import { InlineAlert, Stack, Typography, IconButton, Box, TextField, Sheet, Button, FilterChip, List, ListItem, Tag } from "@common-origin/design-system";
 import { addItem, isUseSoon, removeItem, toggleUseSoon, type PantryState } from "@/lib/pantryItems";
 
 interface PantrySheetProps {
@@ -119,7 +119,8 @@ export default function PantrySheet({
               />
               <Button
                 variant="secondary"
-                size="medium"
+                // large is 48px, the TextField's height, so the two line up
+                size="large"
                 onClick={handleAddItem}
                 disabled={!newItem.trim()}
               >
@@ -132,29 +133,22 @@ export default function PantrySheet({
         {/* Items List */}
         <Box border="default" borderRadius="lg" p="md">
           <Stack direction="column" gap="sm">
-            <Typography variant="subtitle">
-              Your Items ({pantryItems.length})
-            </Typography>
+            <Stack direction="row" gap="sm" alignItems="center">
+              <Typography variant="label">Your items</Typography>
+              <Tag size="small">{pantryItems.length}</Tag>
+            </Stack>
 
             {pantryItems.length === 0 ? (
               <Typography variant="small" color="subdued">
                 💡 No items added yet. Scan a photo or add items manually above.
               </Typography>
             ) : (
-              <Stack direction="column" gap="xs">
+              <List>
                 {pantryItems.map((item, idx) => (
-                  <Box
+                  <ListItem
                     key={idx}
-                    p="sm"
-                    bg="color.fill.muted"
-                    borderRadius="sm"
-                  >
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
-                    >
-                      <Typography variant="body">• {item}</Typography>
+                    primary={item}
+                    badge={
                       <Stack direction="row" gap="sm" alignItems="center">
                         <FilterChip
                           selected={isUseSoon(pantry, item)}
@@ -171,10 +165,10 @@ export default function PantrySheet({
                           Remove
                         </Button>
                       </Stack>
-                    </Stack>
-                  </Box>
+                    }
+                  />
                 ))}
-              </Stack>
+              </List>
             )}
           </Stack>
         </Box>

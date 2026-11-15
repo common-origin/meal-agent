@@ -1,6 +1,6 @@
 "use client";
 
-import { Children, Fragment, type ReactNode } from "react";
+import { Children, Fragment, isValidElement, type ReactNode } from "react";
 import styled from "styled-components";
 import { Box, Divider, Stack, Typography, tokens } from "@common-origin/design-system";
 
@@ -25,11 +25,25 @@ const FormPadding = styled.div`
 `;
 
 /**
+ * The form's sections, looking inside fragments: a fragment (such as one that
+ * hides several sections during setup) would otherwise count as one section
+ * and lose the dividers between its sections.
+ */
+function sectionsOf(children: ReactNode): ReactNode[] {
+  return Children.toArray(children).flatMap((child) =>
+    isValidElement<{ children?: ReactNode }>(child) && child.type === Fragment
+      ? sectionsOf(child.props.children)
+      : [child]
+  );
+}
+
+/**
  * The one card holding every /settings section (#196), with a divider
- * between each pair of sections.
+ * between each pair of sections. Wrap sections in SettingsGroup to keep
+ * them together without a divider.
  */
 export function SettingsForm({ children }: { children: ReactNode }) {
-  const sections = Children.toArray(children);
+  const sections = sectionsOf(children);
   return (
     <Box borderRadius="lg" bg="surface.raised">
       <FormPadding>
@@ -44,6 +58,14 @@ export function SettingsForm({ children }: { children: ReactNode }) {
       </FormPadding>
     </Box>
   );
+}
+
+/**
+ * Related sections kept together in SettingsForm, with no divider between
+ * them (e.g. Household and its members). Each keeps its own two columns.
+ */
+export function SettingsGroup({ children }: { children: ReactNode }) {
+  return <div>{children}</div>;
 }
 
 /**
