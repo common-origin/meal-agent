@@ -485,3 +485,126 @@ export async function migrateLocalStorageToSupabase(): Promise<{
     return { success: false, errors };
   }
 }
+
+/**
+ * Favourites (#222)
+ *
+ * household_favorites in Supabase is the source of truth; localStorage
+ * (lib/storage.ts) is the synchronous cache everything reads.
+ */
+
+const FAVORITES_SYNCED_PREFIX = 'meal-agent:favorites-synced:';
+
+/**
+ * Toggles not yet confirmed by Supabase: recipeId → favourite or not. Kept
+ * in localStorage so a refresh can't undo a toggle whose write is still in
+ * flight, and a failed write is retried rather than lost.
+ */
+function readPendingFavorites(): Record<string, boolean> {
+  try {
+    const raw = localStorage.getItem(LocalStorage.FAVORITES_PENDING_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, boolean>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writePendingFavorites(pending: Record<string, boolean>): void {
+  try {
+    if (Object.keys(pending).length === 0) localStorage.removeItem(LocalStorage.FAVORITES_PENDING_KEY);
+    else localStorage.setItem(LocalStorage.FAVORITES_PENDING_KEY, JSON.stringify(pending));
+  } catch {
+    // Storage blocked: the toggle is still sent; it just can't be retried.
+  }
+}
+
+/** Sends one pending toggle; clears it once confirmed, unless it was toggled again meanwhile. */
+async function pushPendingFavorite(recipeId: string, favorite: boolean): Promise<boolean> {
+  const ok = favorite
+    ? await SupabaseStorage.addFavoritesToDb([recipeId])
+    : await SupabaseStorage.removeFavoriteFromDb(recipeId);
+  if (ok) {
+    const pending = readPendingFavorites();
+    if (pending[recipeId] === favorite) {
+      delete pending[recipeId];
+      writePendingFavorites(pending);
+    }
+  }
+  return ok;
+}
+
+/**
+ * Toggles a favourite: in the local cache now (as before), then in Supabase
+ * in the background. Returns whether it's now a favourite. Until Supabase
+ * confirms it, the toggle stays pending: a refresh keeps it, and retries it
+ * if the write failed.
+ */
+export function toggleFavorite(recipeId: string): boolean {
+  LocalStorage.toggleFavorite(recipeId);
+  const nowFavorite = LocalStorage.isFavorite(recipeId);
+  // Recorded before any await, so a refresh that resolves meanwhile keeps it.
+  writePendingFavorites({ ...readPendingFavorites(), [recipeId]: nowFavorite });
+  void (async () => {
+    // Signed out: it stays pending and goes up with the next signed-in refresh.
+    if (!(await isAuthenticated())) return;
+    if (!(await pushPendingFavorite(recipeId, nowFavorite))) {
+      console.warn(`Could not ${nowFavorite ? 'save' : 'remove'} favourite ${recipeId} for the household; will retry`);
+    }
+  })();
+  return nowFavorite;
+}
+
+/**
+ * Loads the household's favourites into the local cache and returns them.
+ * The first time this device syncs a household, favourites it has locally
+ * but the server doesn't are uploaded and kept; after that the server wins,
+ * so removals elsewhere carry over, except for this device's toggles that
+ * Supabase hasn't confirmed yet, which are applied on top and retried.
+ * Signed out, or when Supabase can't be read, the local list is returned
+ * unchanged.
+ */
+export async function hydrateFavoritesFromSupabase(): Promise<string[]> {
+  if (!(await isAuthenticated())) return LocalStorage.getFavorites();
+
+  // Reading the server first also clears a cache left from another household (#217).
+  const remote = await SupabaseStorage.loadFavoritesFromDb();
+  if (!remote) return LocalStorage.getFavorites();
+
+  const syncedKey = `${FAVORITES_SYNCED_PREFIX}${remote.householdId}`;
+  let firstSync = false;
+  try {
+    firstSync = localStorage.getItem(syncedKey) === null;
+  } catch {
+    firstSync = false;
+  }
+
+  let favorites = remote.recipeIds;
+  if (firstSync) {
+    const localOnly = LocalStorage.getFavorites().filter(id => !remote.recipeIds.includes(id));
+    if (localOnly.length > 0) {
+      if (!(await SupabaseStorage.addFavoritesToDb(localOnly))) {
+        // Keep them locally and try the upload again next time.
+        return [...new Set([...remote.recipeIds, ...LocalStorage.getFavorites()])];
+      }
+      favorites = [...remote.recipeIds, ...localOnly];
+    }
+    try {
+      localStorage.setItem(syncedKey, new Date().toISOString());
+    } catch {
+      // Storage blocked: the upload just runs again next time, harmlessly.
+    }
+  }
+
+  // This device's unconfirmed toggles win over what the server returned: an
+  // in-flight one would otherwise be undone, and a failed one gets retried.
+  const pending = readPendingFavorites();
+  for (const [recipeId, favorite] of Object.entries(pending)) {
+    favorites = favorite
+      ? (favorites.includes(recipeId) ? favorites : [...favorites, recipeId])
+      : favorites.filter(id => id !== recipeId);
+  }
+  LocalStorage.setFavorites(favorites);
+  await Promise.all(Object.entries(pending).map(([recipeId, favorite]) => pushPendingFavorite(recipeId, favorite)));
+  return favorites;
+}

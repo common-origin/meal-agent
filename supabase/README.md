@@ -124,7 +124,15 @@
    - Verify success: Should see "Success. No rows returned"
    - This adds `household_invites` and the functions behind Settings → Household members and `/join/<token>` (#217), makes one household per user a rule, and limits updating a household (and its tokens) to its owner. If it fails with a duplicate key, someone is in two households: the comment at the top of the file shows how to find them
 
-17. **Verify Tables Created:**
+17. **Run Household Favourites Migration (Step 16):**
+   - Click "New Query"
+   - Copy entire contents of `supabase/migrations/016_household_favorites.sql`
+   - Paste into SQL Editor
+   - Click "Run" or press Cmd+Enter
+   - Verify success: Should see "Success. No rows returned"
+   - This adds `household_favorites`, so favourites follow a household across devices and members (#222). Until it's run, favourites keep working on each device, but don't sync
+
+18. **Verify Tables Created:**
    ```sql
    SELECT table_name 
    FROM information_schema.tables 
@@ -147,7 +155,7 @@
    - shopping_lists
    - signup_invites
 
-18. **Verify RLS Enabled:**
+19. **Verify RLS Enabled:**
    ```sql
    SELECT tablename, rowsecurity 
    FROM pg_tables 
@@ -162,6 +170,7 @@
 - **households** - Family units that share meal plans
 - **household_members** - Links users to households with owner/member roles; one household per user (015)
 - **household_invites** - An owner's invite to one email, accepted at `/join/<token>` or at signup (015)
+- **household_favorites** - The household's favourite recipes, shared across devices and members (016)
 - **family_settings** - Preferences for meal generation (servings, cuisines, etc.)
 - **recipes** - AI-generated or user-added recipes
 - **meal_plans** - Weekly meal schedules (JSONB format)

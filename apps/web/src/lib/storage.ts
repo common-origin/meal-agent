@@ -148,6 +148,15 @@ export function toggleFavorite(recipeId: string): boolean {
   return success;
 }
 
+/** Favourite toggles Supabase hasn't confirmed yet (#222); household data, so cleared with the rest. */
+export const FAVORITES_PENDING_KEY = "meal-agent:favorites-pending";
+
+/** Replaces the cached favourites, e.g. with the household's from Supabase (#222). */
+export function setFavorites(recipeIds: string[]): boolean {
+  const household = loadHousehold() || getDefaultHousehold();
+  return saveHousehold({ ...household, favorites: [...new Set(recipeIds)] });
+}
+
 export function isFavorite(recipeId: string): boolean {
   const household = loadHousehold() || getDefaultHousehold();
   return household.favorites.includes(recipeId);
@@ -419,6 +428,7 @@ export function clearHouseholdScopedCaches(): void {
     Storage.remove(CURRENT_WEEK_PLAN_KEY);
     Storage.remove(RECIPE_RATINGS_KEY);
     Storage.remove(BLOCKED_RECIPES_KEY);
+    localStorage.removeItem(FAVORITES_PENDING_KEY);
 
     // Weekly overrides and shopping-completion state are each one key per
     // week with no registry of which weeks exist, so sweep by prefix

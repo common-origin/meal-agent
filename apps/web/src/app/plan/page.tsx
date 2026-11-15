@@ -16,7 +16,7 @@ import { type Recipe } from "@/lib/types/recipe";
 import { scheduleSundayToast, thisWeekMondayISO, shiftWeekISO, weekToOpen, defaultPlanningWeekISO, formatWeekRange, relativeWeekLabel, shouldPromptNextWeek } from "@/lib/schedule";
 import { formatPlanSummary, summarisePlan } from "@/lib/planSummary";
 import { loadHousehold, getDefaultHousehold, getRecipeRatings, getBlockedRecipes, getFavorites } from "@/lib/storage";
-import { getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan, hydrateRecencyFromSupabase, recordWeekHistory, listPlannedWeeks, getFamilySettingsAndSetup } from "@/lib/hybridStorage";
+import { getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan, hydrateRecencyFromSupabase, recordWeekHistory, listPlannedWeeks, getFamilySettingsAndSetup, hydrateFavoritesFromSupabase } from "@/lib/hybridStorage";
 import { SETUP_PATH } from "@/lib/types/settings";
 import { getRecentRecipeIds } from "@/lib/recencyTracker";
 import { buildTasteSignals, type TasteSignals } from "@/lib/tasteSignals";
@@ -272,6 +272,8 @@ export default function PlanPage() {
         loadAllRecipes(),
         getFamilySettingsAndSetup(),
         listPlannedWeeks(thisWeekMondayISO()),
+        // So the week's "favourite" reasons reflect the whole household (#222)
+        hydrateFavoritesFromSupabase().catch((err) => console.warn('Could not load favourites:', err)),
       ]);
 
       // A new household sets itself up before its first plan (#211).
