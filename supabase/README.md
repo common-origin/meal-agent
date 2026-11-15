@@ -168,6 +168,33 @@
 - ✅ Owner role can invite/remove members
 - ✅ Complete data isolation between accounts
 
+## Deleting an account on request
+
+The privacy policy (`/privacy`) promises to delete an account and its
+household's data within 30 days of an emailed request. Deleting the user
+under Authentication → Users is **not enough**: it removes their membership,
+but `households` has no link to `auth.users`, so the household and all its
+data stay. In the SQL editor, with their email:
+
+```sql
+-- 1. Find their household (check no one else is a member before deleting it).
+SELECT hm.household_id, count(*) OVER (PARTITION BY hm.household_id) AS members
+FROM public.household_members hm
+JOIN auth.users u ON u.id = hm.user_id
+WHERE u.email = 'name@example.com';
+
+-- 2. Delete the household: settings, recipes, plans, shopping lists, pantry,
+--    Coles products and orders all cascade from it.
+DELETE FROM public.households WHERE id = '<household_id>';
+
+-- 3. Their AI usage log (no content, but tied to them) and their invite.
+DELETE FROM public.ai_usage WHERE user_id = (SELECT id FROM auth.users WHERE email = 'name@example.com');
+DELETE FROM public.signup_invites WHERE email = 'name@example.com';
+```
+
+Then delete the user under Authentication → Users. If the household has other
+members, skip step 2 and only delete this user.
+
 ## Next Steps
 
 After running these migrations:

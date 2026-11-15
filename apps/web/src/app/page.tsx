@@ -79,6 +79,11 @@ export default function HomePage() {
             </Box>
           </ResponsiveGrid>
         </div>
+        <div style={{ textAlign: "center" }}>
+          <Typography variant="small" color="subdued">
+            <Link href="/privacy">Privacy</Link> · <Link href="/terms">Terms</Link>
+          </Typography>
+        </div>
       </Stack>
     </main>
   );

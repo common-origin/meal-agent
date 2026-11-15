@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Box, Button, Stack, TextField, Typography, tokens } from '@common-origin/design-system';
 import { createClient } from '@/lib/supabase/client';
@@ -184,6 +185,11 @@ function SignupForm({ redirectTo, pending = false }: SignupFormProps) {
               </Button>
             </Stack>
           </form>
+
+          <Typography variant="small" color="subdued">
+            By signing up you agree to the <Link href="/terms">terms</Link> and{' '}
+            <Link href="/privacy">privacy policy</Link>.
+          </Typography>
 
           <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Typography color="subdued">
