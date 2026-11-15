@@ -14,7 +14,8 @@ export const LEGAL_LAST_UPDATED = "15 November 2026";
 export function LegalSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <Stack direction="column" gap="sm">
-      <Typography variant="h2">{title}</Typography>
+      {/* A lighter style than h2, still an h2 element for the outline. */}
+      <Typography variant="h4" as="h2">{title}</Typography>
       {children}
     </Stack>
   );
