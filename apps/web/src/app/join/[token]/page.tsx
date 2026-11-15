@@ -95,7 +95,7 @@ export default function JoinHouseholdPage() {
             <>
               <Typography variant="h2">Join {inviter}&apos;s household?</Typography>
               <Typography>You&apos;ll share their plans, recipes, shopping list and settings.</Typography>
-              <Alert variant="warning">
+              <Alert variant="warning" appearance="borderless">
                 {preview.soleMember
                   ? 'Your own plans, recipes, shopping list and settings will be deleted. This can’t be undone.'
                   : "You'll leave your current household. Its other members keep it."}

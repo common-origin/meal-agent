@@ -99,12 +99,12 @@ export default function HouseholdMembersSettings() {
     >
       <Stack direction="column" gap="2xl">
         {error && (
-          <Alert variant="error" dismissible onDismiss={() => setError(null)}>
+          <Alert variant="error" appearance="borderless" dismissible onDismiss={() => setError(null)}>
             {error}
           </Alert>
         )}
         {notice && (
-          <Alert variant="success" dismissible onDismiss={() => setNotice(null)}>
+          <Alert variant="success" appearance="borderless" dismissible onDismiss={() => setNotice(null)}>
             {notice}
           </Alert>
         )}
