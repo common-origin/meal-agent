@@ -353,8 +353,11 @@ instead.
 ## Coles extension
 
 `apps/coles-extension` is a Manifest V3 Chrome extension, loaded unpacked
-from its `dist/` (see its README). Its side panel sits beside the user's
-coles.com.au tab:
+(see its README). Households download it from Settings → Coles extension:
+the web app's `build` script builds the extension and zips it into
+`apps/web/public/coles-extension.zip` (`scripts/package.mjs`, #229), so
+each deploy serves the current build; it isn't in the Chrome Web Store.
+Its side panel sits beside the user's coles.com.au tab:
 
 1. "Shop at Coles" on `/shopping-list` saves the list to `shopping_lists`
    and opens coles.com.au.

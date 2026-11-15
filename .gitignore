@@ -15,3 +15,7 @@ build
 .vscode/settings.json
 # Supabase CLI local cache
 supabase/.temp/
+
+# Built from apps/coles-extension by apps/web's build (#229)
+apps/web/public/coles-extension.zip
+apps/web/public/coles-extension.json

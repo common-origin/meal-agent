@@ -7,19 +7,39 @@ coles.com.au.
 
 ## Set up
 
-1. Build it:
+It works in desktop Chrome (and Chromium browsers such as Edge and Brave).
 
-   ```bash
-   pnpm -C apps/coles-extension build
-   ```
-
+1. In Meal Agent, go to **Settings → Coles extension**, click **Download
+   the extension**, and unzip it. Keep the `meal-agent-for-coles` folder
+   somewhere it won't be deleted: Chrome runs it from there.
 2. In Chrome, open `chrome://extensions`, turn on **Developer mode**, click
-   **Load unpacked** and choose `apps/coles-extension/dist`. After a rebuild,
-   click the extension's reload button there.
-3. In Meal Agent, go to **Settings → Coles extension** and copy the token.
+   **Load unpacked** and choose the `meal-agent-for-coles` folder.
+3. Copy the token from **Settings → Coles extension**.
 4. Open the extension's **Options** (right-click its icon), paste the token,
    and leave the app URL as `https://meal-agent.vercel.app` (or use
    `http://localhost:3000` for a local copy). Save.
+
+To update, download it again, replace the folder's contents, and click the
+extension's reload button in `chrome://extensions`.
+
+### Where the download comes from
+
+Each build of the web app (`pnpm -C apps/web build`, so every Vercel deploy
+and CI run) builds this extension and zips `dist/` into
+`apps/web/public/coles-extension.zip` with `scripts/package.mjs` (#229),
+plus `coles-extension.json` with the manifest's version, which Settings
+shows. Neither is committed. Bump `version` in `static/manifest.json` when
+the extension changes, so households can tell they need the new one.
+
+### Developing
+
+```bash
+pnpm -C apps/coles-extension build
+```
+
+Then **Load unpacked** `apps/coles-extension/dist` instead, and click the
+extension's reload button after each rebuild. `pnpm dev` doesn't build the
+zip; run `pnpm -C apps/web build:extension` to try the download locally.
 
 ## Each week
 

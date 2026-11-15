@@ -17,15 +17,35 @@ async function fetchToken(rotate: boolean): Promise<TokenState> {
   return { token: body.token, canReplace: body.canReplace === true };
 }
 
+/** Built from apps/coles-extension by each deploy (#229); see its scripts/package.mjs. */
+const EXTENSION_ZIP = '/coles-extension.zip';
+const EXTENSION_INFO = '/coles-extension.json';
+
+/** The version in the downloadable zip, or null (e.g. a dev server, which doesn't build it). */
+async function fetchExtensionVersion(): Promise<string | null> {
+  const res = await fetch(EXTENSION_INFO).catch(() => null);
+  const body: unknown = res?.ok ? await res.json().catch(() => null) : null;
+  return body && typeof body === 'object' && 'version' in body && typeof body.version === 'string' ? body.version : null;
+}
+
+const INSTALL_STEPS = [
+  'Download the extension and unzip it. Keep the meal-agent-for-coles folder somewhere it won\u2019t be deleted: Chrome runs it from there.',
+  'In Chrome, go to chrome://extensions and turn on Developer mode (top right).',
+  'Click Load unpacked and choose the meal-agent-for-coles folder.',
+  'Copy the token below, then right-click the extension\u2019s icon, choose Options, paste it and click Save.',
+];
+
 /**
- * Settings section for the Coles side-panel extension (#184): the token to
- * paste into the extension's options, and a way to replace it.
+ * Settings section for the Coles side-panel extension (#184): how to
+ * install it (#229), the token to paste into its options, and a way to
+ * replace the token.
  */
 export default function ColesExtensionSettings() {
   const [state, setState] = useState<TokenState | null>(null);
   const token = state?.token ?? null;
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [version, setVersion] = useState<string | null>(null);
 
   const load = (rotate: boolean) =>
     fetchToken(rotate).then(
@@ -35,6 +55,7 @@ export default function ColesExtensionSettings() {
 
   useEffect(() => {
     fetchToken(false).then(setState, (e: Error) => setError(e.message));
+    void fetchExtensionVersion().then(setVersion);
   }, []);
 
   const copy = async () => {
@@ -55,12 +76,34 @@ export default function ColesExtensionSettings() {
       title="Coles extension"
       description={
         <>
-          Paste this token into the Meal Agent for Coles extension&apos;s options. It lets the extension read your
-          approved shopping list and remember the products you buy. Treat it like a password.
+          The Meal Agent for Coles extension puts your approved shopping list beside coles.com.au and fills your
+          trolley from it. It works in Chrome on a computer (and Edge or Brave), not on phones.
         </>
       }
     >
       <Stack direction="column" gap="2xl">
+        <Stack direction="column" gap="md">
+          <Stack direction="column" gap="sm">
+            {INSTALL_STEPS.map((step, i) => (
+              <Typography key={step} variant="body">{`${i + 1}. ${step}`}</Typography>
+            ))}
+          </Stack>
+          <Typography variant="small" color="subdued">
+            Chrome may warn about developer mode extensions when it starts; that&apos;s expected for an extension
+            installed this way. To update, download it again, replace the folder&apos;s contents and click the
+            extension&apos;s reload button in chrome://extensions.
+          </Typography>
+          <Stack direction="row" gap="md" alignItems="center">
+            <Button variant="secondary" size="medium" purpose="link" url={EXTENSION_ZIP} download iconName="export">
+              Download the extension
+            </Button>
+            {version && <Typography variant="small" color="subdued">{`Version ${version}`}</Typography>}
+          </Stack>
+        </Stack>
+        <Typography variant="body">
+          The token lets the extension read your approved shopping list and remember the products you buy. Treat it
+          like a password.
+        </Typography>
         {token ? (
           <>
             {/* Laid out like the calendar link's card; Replace token sits outside it (#196) */}
