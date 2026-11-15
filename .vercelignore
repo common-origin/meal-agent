@@ -44,8 +44,9 @@ Thumbs.db
 *.md
 !README.md
 
-# Scripts (not needed for deployment)
-scripts/
+# Repo scripts (not needed for deployment). Anchored to the root: the web
+# build runs apps/coles-extension/scripts/package.mjs (#229).
+/scripts/
 
 # Data files (recipes are compiled into the app)
 data/
