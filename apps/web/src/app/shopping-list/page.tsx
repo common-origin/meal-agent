@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Alert, Box, Button, Chip, Container, Icon, List, ListItem, Stack, Tag, Typography, Divider } from "@common-origin/design-system";
+import { Alert, Box, Button, Chip, Container, EmptyState, Icon, List, ListItem, Stack, Tag, Typography, Divider } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from "@/lib/shoppingListAggregator";
 import { toColesListItems } from "@/lib/coles/extensionList";
@@ -375,10 +375,26 @@ export default function ShoppingListPage() {
 
   const categories = Object.keys(groupedNeedToBuy).sort();
   const totalItems = needToBuy.length;
-  const estimatedTotal = needToBuy.reduce(
-    (sum, item) => sum + estimateIngredientCost(item.normalizedName, item.priceQty, item.priceUnit).estimatedCost,
-    0
-  );
+
+  // Each item's price, worked out once: the Coles price when there is one, else the static
+  // estimate. The rows show it and the header's total sums it, so the two always agree.
+  const priceFor = (item: AggregatedIngredient) => {
+    const apiPrice = apiPrices.get(item.normalizedName);
+    const staticPriceInfo = estimateIngredientCost(item.normalizedName, item.priceQty, item.priceUnit);
+    return apiPrice ? {
+      estimatedCost: apiPrice.cost,
+      priceSource: apiPrice.source,
+      livePrice: apiPrice.livePrice,
+      confidence: apiPrice.source === 'api' ? 'high' as const : staticPriceInfo.confidence
+    } : {
+      estimatedCost: staticPriceInfo.estimatedCost,
+      priceSource: staticPriceInfo.priceSource,
+      livePrice: undefined,
+      confidence: staticPriceInfo.confidence
+    };
+  };
+  const priceByItem = new Map(needToBuy.map((item) => [item, priceFor(item)]));
+  const estimatedTotal = [...priceByItem.values()].reduce((sum, price) => sum + price.estimatedCost, 0);
 
   return (
     <>
@@ -416,8 +432,20 @@ export default function ShoppingListPage() {
             {/* API Quota Warning */}
             <ApiQuotaWarning />
           
+            {/* Everything's already in the pantry: say so, rather than an empty page */}
+            {totalItems === 0 && (
+              <Box mt="2xl">
+                <EmptyState
+                  illustration="empty"
+                  title="Nothing to buy this week"
+                  description="Everything this plan needs is already in your pantry."
+                />
+              </Box>
+            )}
+
             {/* Items to buy, by aisle: straight on the page, no card. One gap between aisles (the
                 heading separates them, so no divider), compact rows to scan quickly. */}
+            {totalItems > 0 && (
             <Box mt="2xl" data-co-density="compact">
               <Stack direction="column" gap="xl">
                 {categories.map((category) => {
@@ -436,20 +464,7 @@ export default function ShoppingListPage() {
                         const itemKey = `${category}-${index}`;
                         const isExpanded = expandedItems.has(itemKey);
                         
-                        // Get price estimate - use API price if available, otherwise static
-                        const apiPrice = apiPrices.get(item.normalizedName);
-                        const staticPriceInfo = estimateIngredientCost(item.normalizedName, item.priceQty, item.priceUnit);
-                        
-                        const priceInfo = apiPrice ? {
-                          estimatedCost: apiPrice.cost,
-                          priceSource: apiPrice.source,
-                          livePrice: apiPrice.livePrice,
-                          confidence: apiPrice.source === 'api' ? 'high' as const : staticPriceInfo.confidence
-                        } : {
-                          estimatedCost: staticPriceInfo.estimatedCost,
-                          priceSource: staticPriceInfo.priceSource,
-                          confidence: staticPriceInfo.confidence
-                        };
+                        const priceInfo = priceByItem.get(item) ?? priceFor(item);
                         
                         const priceDisplay = priceInfo.estimatedCost > 0 
                           ? `$${priceInfo.estimatedCost.toFixed(2)}` 
@@ -487,8 +502,9 @@ export default function ShoppingListPage() {
                                     <Typography variant="small" color={priceInfo.confidence === 'high' ? 'default' : 'subdued'}>
                                       {priceDisplay}
                                     </Typography>
-                                    {/* Only a live Coles price is worth flagging; estimates read as the default */}
-                                    {priceInfo.priceSource === 'api' && priceInfo.livePrice && (
+                                    {/* Flag a live Coles price, and a rough (category or cached) estimate. A mapped
+                                        static price is the norm, so it goes untagged to keep rows quiet. */}
+                                    {priceInfo.priceSource && priceInfo.priceSource !== 'static' && (
                                       <PriceSourceBadge source={priceInfo.priceSource} livePrice={priceInfo.livePrice} />
                                     )}
                                     {showConfidenceIcon && !priceInfo.priceSource && <Icon name="checkRing" iconColor="success" size="sm" />}
@@ -536,6 +552,7 @@ export default function ShoppingListPage() {
               })}
               </Stack>
             </Box>
+            )}
 
             {/* Already Have Section */}
             {alreadyHave.length > 0 && (
@@ -553,14 +570,16 @@ export default function ShoppingListPage() {
                     iconName={showAlreadyHave ? 'arrowUp' : 'arrowDown'}
                     aria-expanded={showAlreadyHave}
                     aria-controls="already-have-list"
+                    // The visible "Show"/"Hide" alone doesn't say what it shows
+                    aria-label={`${showAlreadyHave ? 'Hide' : 'Show'} items already in your pantry`}
                     onClick={() => setShowAlreadyHave((shown) => !shown)}
                   >
                     {showAlreadyHave ? 'Hide' : 'Show'}
                   </Button>
                 </Stack>
 
-                {showAlreadyHave && (
-                <div id="already-have-list" data-co-density="compact">
+                {/* Always in the DOM, hidden when collapsed, so aria-controls has a target */}
+                <div id="already-have-list" data-co-density="compact" hidden={!showAlreadyHave}>
                 <Stack direction="column" gap="sm">
                   <Typography variant="small" color="subdued">
                     Left off your list because they&apos;re in your pantry or marked as always on hand. Add any you need more of.
@@ -591,7 +610,6 @@ export default function ShoppingListPage() {
                   </List>
                 </Stack>
                 </div>
-                )}
               </Stack>
             )}
 

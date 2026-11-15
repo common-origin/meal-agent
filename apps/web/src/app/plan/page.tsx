@@ -15,7 +15,7 @@ import { type MealCardProps } from "@/components/app/MealCard";
 import { type Recipe } from "@/lib/types/recipe";
 import { scheduleSundayToast, mondayOfWeekISO, shiftWeekISO, weekToOpen, defaultPlanningWeekISO, formatWeekRange, relativeWeekLabel, shouldPromptNextWeek } from "@/lib/schedule";
 import { planSummaryParts, summarisePlan } from "@/lib/planSummary";
-import { loadHousehold, getDefaultHousehold, getRecipeRatings, getBlockedRecipes, getFavorites } from "@/lib/storage";
+import { loadHousehold, getDefaultHousehold, getRecipeRatings, getBlockedRecipes, getFavorites, Storage, STORAGE_KEYS } from "@/lib/storage";
 import { getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan, hydrateRecencyFromSupabase, recordWeekHistory, listPlannedWeeks, getFamilySettingsAndSetup, hydrateFavoritesFromSupabase, hydrateRecipesFromSupabase } from "@/lib/hybridStorage";
 import { SETUP_PATH } from "@/lib/types/settings";
 import { getRecentRecipeIds } from "@/lib/recencyTracker";
@@ -103,8 +103,6 @@ async function loadTasteSignals(plan: (MealCardProps | null)[]): Promise<TasteSi
   });
 }
 
-const NEXT_WEEK_PROMPT_DISMISSED_KEY = 'meal-agent:next-week-prompt-dismissed';
-
 export default function PlanPage() {
   const { beginGeneration, endGeneration, isSignOutInProgress } = useGenerationActivity();
   const [showWizard, setShowWizard] = useState(false);
@@ -113,14 +111,11 @@ export default function PlanPage() {
   const [showPantrySheet, setShowPantrySheet] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   // The next week whose "not planned yet" prompt was dismissed in this browser: it stays hidden
-  // for that week only, and comes back the weekend after for the following one.
+  // for that week only, and comes back the weekend after for the following one. Household data:
+  // cleared on sign-out or a household switch, with the rest (clearHouseholdScopedCaches).
   const [dismissedNextWeek, setDismissedNextWeek] = useState<string | null>(null);
   useEffect(() => {
-    try {
-      setDismissedNextWeek(localStorage.getItem(NEXT_WEEK_PROMPT_DISMISSED_KEY));
-    } catch {
-      // Storage blocked: the prompt just shows again next visit
-    }
+    setDismissedNextWeek(Storage.get<string | null>(STORAGE_KEYS.NEXT_WEEK_PROMPT_DISMISSED, null));
   }, []);
   const router = useRouter();
   const [weekPlan, setWeekPlan] = useState<(MealCardProps | null)[]>([]);
@@ -1083,11 +1078,8 @@ export default function PlanPage() {
               onDismiss={() => {
                 const nextWeek = shiftWeekISO(weekStart, 1);
                 setDismissedNextWeek(nextWeek);
-                try {
-                  localStorage.setItem(NEXT_WEEK_PROMPT_DISMISSED_KEY, nextWeek);
-                } catch {
-                  // Storage blocked: hidden for this visit only
-                }
+                // If storage is blocked, it's hidden for this visit only
+                Storage.set(STORAGE_KEYS.NEXT_WEEK_PROMPT_DISMISSED, nextWeek);
               }}
               action={
                 <Button
