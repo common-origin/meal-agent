@@ -7,7 +7,7 @@ import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import { RecipeLibrary } from "@/lib/library";
 import { getFavorites } from "@/lib/storage";
-import { hydrateFavoritesFromSupabase, toggleFavorite } from "@/lib/hybridStorage";
+import { hydrateFavoritesFromSupabase, hydrateRecipesFromSupabase, toggleFavorite } from "@/lib/hybridStorage";
 import { Storage } from "@/lib/storage";
 import { type Recipe } from "@/lib/types/recipe";
 import { track } from "@/lib/analytics";
@@ -90,6 +90,12 @@ export default function RecipesPage() {
         hydrateFavoritesFromSupabase()
           .then(setFavorites)
           .catch((err) => console.warn('Could not load favourites:', err));
+        // And the household's recipes, saved on any device or by any member (#233)
+        hydrateRecipesFromSupabase()
+          .then((synced) => {
+            if (synced) setRecipes(RecipeLibrary.getCustomRecipes());
+          })
+          .catch((err) => console.warn('Could not load recipes:', err));
         
         track('page_view', { page: 'saved_recipes', count: customRecipes.length });
       } catch (error) {

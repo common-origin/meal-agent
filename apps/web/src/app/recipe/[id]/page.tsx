@@ -6,7 +6,7 @@ import { Stack, Typography, Box, Button, Checkbox, ChipGroup, IconButton, List, 
 import Main from "@/components/app/Main";
 import { tokens } from "@common-origin/design-system";
 import { isFavorite, getRecipeRating, saveRecipeRating, blockRecipe, isRecipeBlocked } from "@/lib/storage";
-import { hydrateFavoritesFromSupabase, toggleFavorite } from "@/lib/hybridStorage";
+import { hydrateFavoritesFromSupabase, hydrateRecipesFromSupabase, toggleFavorite } from "@/lib/hybridStorage";
 import { RecipeLibrary } from "@/lib/library";
 import { type Recipe } from "@/lib/types/recipe";
 import { track } from "@/lib/analytics";
@@ -73,10 +73,25 @@ export default function RecipePage({ params }: RecipePageProps) {
   const [blocked, setBlocked] = useState<boolean>(false);
 
   useEffect(() => {
-    setLoaded({ id, recipe: RecipeLibrary.getById(id) ?? null });
+    let cancelled = false;
     setFavorited(isFavorite(id));
     setRating(getRecipeRating(id) || 0);
     setBlocked(isRecipeBlocked(id));
+    const cached = RecipeLibrary.getById(id);
+    if (cached) {
+      setLoaded({ id, recipe: cached });
+    } else {
+      // Not in this browser yet: it may be the household's, saved on another
+      // device or by another member (#233). Check before saying "not found".
+      hydrateRecipesFromSupabase({ force: true })
+        .catch(() => false)
+        .then(() => {
+          if (!cancelled) setLoaded({ id, recipe: RecipeLibrary.getById(id) ?? null });
+        });
+    }
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   // The household's favourites, from any device or member (#222)

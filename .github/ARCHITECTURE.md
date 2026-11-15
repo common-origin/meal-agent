@@ -278,7 +278,12 @@ signup):
   semantic IDs like `ai-recipe-name-1a2b3c4d` alongside real UUIDs), plus
   `nutrition` JSONB (migration 005) and a nullable `cuisine` (migration
   009). `ingredients` is JSONB: `{ name, qty, unit, prep? }` with `unit`
-  one of `g | ml | tsp | tbsp | unit`
+  one of `g | ml | tsp | tbsp | unit`. Pages read recipes from the local
+  `RecipeLibrary` cache; `hydrateRecipesFromSupabase()` (plan, recipes and
+  shopping-list pages, and a recipe page whose recipe isn't cached) loads
+  the household's whole library into it, page by page, so recipes saved
+  on another device or by another member open everywhere (#233). A
+  failed read leaves the cache as it was
 - **`meal_plans`** — one row per household per week (`UNIQUE(household_id,
   week_start)`), `meals` is a JSONB object keyed by lowercase day name
   (`monday`..`sunday`); each day is `{ recipeId, servings?, reason? }`,

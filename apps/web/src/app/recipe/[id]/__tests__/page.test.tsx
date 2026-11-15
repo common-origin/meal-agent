@@ -3,7 +3,7 @@ import { renderToString } from 'react-dom/server';
 import { render, screen } from '@testing-library/react';
 import type { Recipe } from '@/lib/types/recipe';
 
-const fixtures = vi.hoisted(() => ({ SOUP: null as unknown as Recipe }));
+const fixtures = vi.hoisted(() => ({ SOUP: null as unknown as Recipe, hydrated: false, hydrations: 0 }));
 const SOUP = { id: 'soup-1', title: 'Pumpkin soup', ingredients: [], instructions: [], tags: [], timeMins: 30, serves: 4, source: { domain: 'ai-generated' } } as unknown as Recipe;
 
 // Every localStorage-backed read the page makes, so a read during render is caught (#200).
@@ -15,7 +15,13 @@ const mocks = vi.hoisted(() => {
   };
   return { reads, read };
 });
-vi.mock('@/lib/library', () => ({ RecipeLibrary: { getById: (id: string) => mocks.read('getById', id === 'soup-1' ? fixtures.SOUP : undefined)() } }));
+// 'soup-1' is in this browser; 'shared-1' only arrives once the household's recipes are loaded (#233).
+vi.mock('@/lib/library', () => ({
+  RecipeLibrary: {
+    getById: (id: string) =>
+      mocks.read('getById', id === 'soup-1' || (id === 'shared-1' && fixtures.hydrated) ? { ...fixtures.SOUP, id, title: id === 'shared-1' ? 'Shared stew' : fixtures.SOUP.title } : undefined)(),
+  },
+}));
 vi.mock('@/lib/storage', () => ({
   isFavorite: mocks.read('isFavorite', false),
   getRecipeRating: mocks.read('getRecipeRating', 0),
@@ -25,6 +31,11 @@ vi.mock('@/lib/storage', () => ({
 }));
 vi.mock('@/lib/hybridStorage', () => ({
   hydrateFavoritesFromSupabase: async () => [],
+  hydrateRecipesFromSupabase: async () => {
+    fixtures.hydrations++;
+    fixtures.hydrated = true;
+    return true;
+  },
   toggleFavorite: vi.fn(),
   getFamilySettings: async () => ({ recipeRecipients: [] }),
 }));
@@ -42,6 +53,8 @@ fixtures.SOUP = SOUP;
 
 beforeEach(() => {
   mocks.reads.length = 0;
+  fixtures.hydrated = false;
+  fixtures.hydrations = 0;
 });
 
 describe('/recipe/[id] hydration (#200)', () => {
@@ -59,5 +72,17 @@ describe('/recipe/[id] hydration (#200)', () => {
   it('shows "Recipe not found" only after loading finds nothing', async () => {
     render(<RecipePage params={params('missing')} />);
     expect(await screen.findByText('Recipe not found')).toBeInTheDocument();
+  });
+
+  it("opens a household recipe this browser hasn't seen, after loading the household's recipes (#233)", async () => {
+    render(<RecipePage params={params('shared-1')} />);
+    expect(await screen.findByRole('heading', { name: 'Shared stew' })).toBeInTheDocument();
+    expect(fixtures.hydrations).toBe(1);
+  });
+
+  it("doesn't reload the household's recipes for a recipe already here", async () => {
+    render(<RecipePage params={params('soup-1')} />);
+    await screen.findByRole('heading', { name: 'Pumpkin soup' });
+    expect(fixtures.hydrations).toBe(0);
   });
 });

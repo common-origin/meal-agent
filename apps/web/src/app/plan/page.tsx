@@ -16,7 +16,7 @@ import { type Recipe } from "@/lib/types/recipe";
 import { scheduleSundayToast, mondayOfWeekISO, shiftWeekISO, weekToOpen, defaultPlanningWeekISO, formatWeekRange, relativeWeekLabel, shouldPromptNextWeek } from "@/lib/schedule";
 import { formatPlanSummary, summarisePlan } from "@/lib/planSummary";
 import { loadHousehold, getDefaultHousehold, getRecipeRatings, getBlockedRecipes, getFavorites } from "@/lib/storage";
-import { getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan, hydrateRecencyFromSupabase, recordWeekHistory, listPlannedWeeks, getFamilySettingsAndSetup, hydrateFavoritesFromSupabase } from "@/lib/hybridStorage";
+import { getFamilySettings, saveCurrentWeekPlan, loadCurrentWeekPlan, hydrateRecencyFromSupabase, recordWeekHistory, listPlannedWeeks, getFamilySettingsAndSetup, hydrateFavoritesFromSupabase, hydrateRecipesFromSupabase } from "@/lib/hybridStorage";
 import { SETUP_PATH } from "@/lib/types/settings";
 import { getRecentRecipeIds } from "@/lib/recencyTracker";
 import { buildTasteSignals, type TasteSignals } from "@/lib/tasteSignals";
@@ -276,10 +276,9 @@ export default function PlanPage() {
       setIsLoadingInitial(true);
 
       // Load data in parallel for faster initial render
-      const { loadAllRecipes } = await import('@/lib/hybridStorage');
-
-      const [supabaseRecipes, { settings: familySettings, needsSetup }, weeks] = await Promise.all([
-        loadAllRecipes(),
+      const [, { settings: familySettings, needsSetup }, weeks] = await Promise.all([
+        // The household's recipes, so RecipeLibrary.getById() finds them on any device (#233)
+        hydrateRecipesFromSupabase().catch((err) => console.warn('Could not load recipes:', err)),
         getFamilySettingsAndSetup(),
         // From a week back: today here may still be yesterday in the household's zone, decided below.
         listPlannedWeeks(shiftWeekISO(mondayOfWeekISO(), -1)),
@@ -291,13 +290,6 @@ export default function PlanPage() {
       if (needsSetup) {
         router.replace(SETUP_PATH);
         return;
-      }
-
-      console.log(`📚 Loaded ${supabaseRecipes.length} recipes from Supabase`);
-
-      // Sync to localStorage so RecipeLibrary.getById() can find them
-      if (supabaseRecipes.length > 0) {
-        RecipeLibrary.syncSupabaseRecipes(supabaseRecipes);
       }
 
       setBudgetPerMeal(familySettings.budgetPerMeal.max);

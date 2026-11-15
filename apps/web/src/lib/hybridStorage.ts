@@ -555,6 +555,46 @@ export function toggleFavorite(recipeId: string): boolean {
   return nowFavorite;
 }
 
+/** The load in progress, so pages that ask at the same time share one read. */
+let recipesHydration: Promise<boolean> | null = null;
+/** When this page last loaded them, so moving between pages doesn't re-read the whole library each time. */
+let recipesHydratedAt = 0;
+const RECIPES_FRESH_MS = 2 * 60 * 1000;
+
+/** For tests: forget the last load. */
+export function resetRecipesHydrationForTests(): void {
+  recipesHydration = null;
+  recipesHydratedAt = 0;
+}
+
+/**
+ * Loads the household's recipes into the local library cache (#233), the way
+ * favourites are (#222), so a recipe saved or generated on another device or
+ * by another member opens here too. Resolves true once the cache holds the
+ * household's recipes; false when signed out or Supabase can't be read, in
+ * which case the cache is left as it was. Callers that ask while a load is
+ * running share it. A load in the last two minutes counts as fresh unless
+ * `force` (a recipe page whose recipe isn't cached).
+ */
+export function hydrateRecipesFromSupabase(options: { force?: boolean } = {}): Promise<boolean> {
+  if (recipesHydration) return recipesHydration;
+  // Fresh only if the cache hasn't been cleared since (sign-out, or a change of household).
+  const fresh = Date.now() - recipesHydratedAt < RECIPES_FRESH_MS && RecipeLibrary.clearedAt < recipesHydratedAt;
+  if (!options.force && fresh) return Promise.resolve(true);
+  recipesHydration = (async () => {
+    if (!(await isAuthenticated())) return false;
+    const recipes = await SupabaseStorage.loadAllRecipesFromDb();
+    if (!recipes) return false;
+    // Nothing on the server: keep what's cached rather than clearing it, as the plan page always has.
+    const synced = recipes.length === 0 ? true : RecipeLibrary.syncSupabaseRecipes(recipes);
+    if (synced) recipesHydratedAt = Date.now();
+    return synced;
+  })().finally(() => {
+    recipesHydration = null;
+  });
+  return recipesHydration;
+}
+
 /**
  * Loads the household's favourites into the local cache and returns them.
  * The first time this device syncs a household, favourites it has locally

@@ -10,6 +10,7 @@ import type { FamilySettings } from './types/settings';
 import type { Recipe } from './types/recipe';
 import type { Database, Json } from './supabase/database.types';
 import { rowToRecipe } from './recipeRow';
+import { readAllPages } from './supabase/paging';
 import { rememberCurrentHousehold } from './storage';
 
 export { rowToRecipe };
@@ -359,6 +360,27 @@ export async function loadRecipe(recipeId: string): Promise<Recipe | null> {
     return rowToRecipe(data);
   } catch (error) {
     console.error('Error in loadRecipe:', error);
+    return null;
+  }
+}
+
+/**
+ * Every recipe in the household's library, page by page (#233), or null if
+ * they couldn't be read, so a caller can tell a failed read from an empty
+ * library and never clear its cache on a failure.
+ */
+export async function loadAllRecipesFromDb(): Promise<Recipe[] | null> {
+  try {
+    const householdId = await getHouseholdId();
+    if (!householdId) return null;
+    const supabase = createBrowserClient();
+    const rows = await readAllPages((from, to) =>
+      // Oldest first, so a recipe added while the pages are read lands after them rather than shifting them.
+      supabase.from('recipes').select('*').eq('household_id', householdId).order('created_at', { ascending: true }).order('id').range(from, to),
+    );
+    return rows.map(rowToRecipe);
+  } catch (error) {
+    console.error('Could not load the household\'s recipes:', error);
     return null;
   }
 }
