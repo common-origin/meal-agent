@@ -7,8 +7,8 @@
 // Cache key prefix for localStorage
 const CACHE_PREFIX = 'coles-api-cache:';
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-const RATE_LIMIT_KEY = 'coles-api-usage';
-const MONTHLY_LIMIT = 1000; // Free tier limit
+/** Shown until the server has said otherwise; the real limit is counted on the server (#227). */
+const DEFAULT_MONTHLY_LIMIT = 1000;
 
 export interface ColesApiProduct {
   productName: string;
@@ -31,47 +31,71 @@ export interface CachedData<T> {
   timestamp: number;
 }
 
-export interface RateLimitData {
-  count: number;
-  month: string; // YYYY-MM format
+/** The shared monthly lookup quota, as /api/coles-search reports it (lib/coles/quota.ts). */
+export interface ColesQuotaStats {
+  used: number;
+  limit: number;
+  remaining: number;
+  month: string; // YYYY-MM, UTC
 }
 
 /**
- * Get current month string for rate limiting
+ * Current UTC month, matching the server's count
  */
 function getCurrentMonth(): string {
   const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
 /**
- * Check if we're within rate limit
+ * The quota the server last reported. Every household shares one RapidAPI
+ * key, so the count lives on the server (#227); this is only a copy, kept
+ * so the app stops asking once the month's lookups are used up.
+ */
+let lastKnownQuota: ColesQuotaStats | null = null;
+
+function isQuotaStats(value: unknown): value is ColesQuotaStats {
+  if (!value || typeof value !== 'object') return false;
+  const v = value as Record<string, unknown>;
+  return typeof v.used === 'number' && typeof v.limit === 'number' && typeof v.remaining === 'number' && typeof v.month === 'string';
+}
+
+function rememberQuota(value: unknown): void {
+  if (isQuotaStats(value)) lastKnownQuota = value;
+}
+
+/** For tests: forget the server's last report. */
+export function resetColesQuotaForTests(): void {
+  lastKnownQuota = null;
+}
+
+/**
+ * Asks the server for this month's lookups across every household. Keeps
+ * the last report if the server can't be reached.
+ */
+export async function refreshColesQuota(): Promise<ColesQuotaStats> {
+  try {
+    const response = await fetch('/api/coles-search', { method: 'GET' });
+    if (response.ok) rememberQuota(await response.json());
+  } catch (error) {
+    console.warn('Could not read the Coles lookup quota:', error);
+  }
+  return getRateLimitStats();
+}
+
+/**
+ * Check if we're within rate limit (as last reported by the server)
  */
 export function checkRateLimit(): { allowed: boolean; remaining: number } {
-  if (typeof window === 'undefined') return { allowed: true, remaining: MONTHLY_LIMIT };
-  
-  const data = localStorage.getItem(RATE_LIMIT_KEY);
-  if (!data) return { allowed: true, remaining: MONTHLY_LIMIT };
-  
-  const rateLimit: RateLimitData = JSON.parse(data);
-  const currentMonth = getCurrentMonth();
-  
-  // Reset count if new month
-  if (rateLimit.month !== currentMonth) {
-    return { allowed: true, remaining: MONTHLY_LIMIT };
-  }
-  
-  const remaining = MONTHLY_LIMIT - rateLimit.count;
-  return {
-    allowed: rateLimit.count < MONTHLY_LIMIT,
-    remaining: Math.max(0, remaining)
-  };
+  const { remaining } = getRateLimitStats();
+  return { allowed: remaining > 0, remaining };
 }
 
 /**
- * Increment rate limit counter and track usage details
+ * Track per-browser usage details for the /debug/api-usage page. Not the
+ * quota: that's counted on the server.
  */
-function incrementRateLimit(ingredientName?: string): void {
+function recordLocalUsage(ingredientName?: string): void {
   if (typeof window === 'undefined') return;
   
   const currentMonth = getCurrentMonth();
@@ -99,50 +123,18 @@ function incrementRateLimit(ingredientName?: string): void {
   }
   
   localStorage.setItem(usageKey, JSON.stringify(usage));
-  
-  // Also update the old rate limit key for compatibility
-  const data = localStorage.getItem(RATE_LIMIT_KEY);
-  let rateLimit: RateLimitData;
-  if (data) {
-    rateLimit = JSON.parse(data);
-    if (rateLimit.month !== currentMonth) {
-      rateLimit = { count: 0, month: currentMonth };
-    }
-  } else {
-    rateLimit = { count: 0, month: currentMonth };
-  }
-  rateLimit.count++;
-  localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(rateLimit));
 }
 
 /**
- * Get rate limit usage stats
+ * Shared quota usage, as the server last reported it. A report from an
+ * earlier month no longer applies (the count has reset).
  */
-export function getRateLimitStats(): { used: number; limit: number; remaining: number; month: string } {
-  if (typeof window === 'undefined') {
-    return { used: 0, limit: MONTHLY_LIMIT, remaining: MONTHLY_LIMIT, month: getCurrentMonth() };
+export function getRateLimitStats(): ColesQuotaStats {
+  const month = getCurrentMonth();
+  if (!lastKnownQuota || lastKnownQuota.month !== month) {
+    return { used: 0, limit: lastKnownQuota?.limit ?? DEFAULT_MONTHLY_LIMIT, remaining: lastKnownQuota?.limit ?? DEFAULT_MONTHLY_LIMIT, month };
   }
-  
-  const data = localStorage.getItem(RATE_LIMIT_KEY);
-  const currentMonth = getCurrentMonth();
-  
-  if (!data) {
-    return { used: 0, limit: MONTHLY_LIMIT, remaining: MONTHLY_LIMIT, month: currentMonth };
-  }
-  
-  const rateLimit: RateLimitData = JSON.parse(data);
-  
-  // Reset if new month
-  if (rateLimit.month !== currentMonth) {
-    return { used: 0, limit: MONTHLY_LIMIT, remaining: MONTHLY_LIMIT, month: currentMonth };
-  }
-  
-  return {
-    used: rateLimit.count,
-    limit: MONTHLY_LIMIT,
-    remaining: Math.max(0, MONTHLY_LIMIT - rateLimit.count),
-    month: currentMonth
-  };
+  return lastKnownQuota;
 }
 
 /**
@@ -249,17 +241,30 @@ export async function searchColesProducts(
     console.log(`📨 Response status: ${response.status}`);
     
     if (!response.ok) {
-      console.error(`❌ API error: ${response.status} ${response.statusText}`);
+      // The month's shared lookups are used up (#227): remember, so we stop asking.
       const errorText = await response.text();
+      if (response.status === 429) {
+        let body: unknown = null;
+        try {
+          body = JSON.parse(errorText);
+        } catch {
+          // Not JSON: reported below.
+        }
+        if (body && typeof body === 'object' && 'quota' in body) {
+          rememberQuota(body.quota);
+          console.warn('⚠️  Coles API quota used up for this month');
+          return null;
+        }
+      }
+      console.error(`❌ API error: ${response.status} ${response.statusText}`);
       console.error('📄 Response body:', errorText);
       console.error('🔗 Request URL:', response.url);
       return null;
     }
     
-    const data: ColesApiResponse = await response.json();
-    
-    // Increment rate limit counter with ingredient name for tracking
-    incrementRateLimit(ingredientName);
+    const { quota, ...data }: ColesApiResponse & { quota?: unknown } = await response.json();
+    rememberQuota(quota);
+    recordLocalUsage(ingredientName);
     
     // Cache the result
     setCachedData(cacheKey, data);

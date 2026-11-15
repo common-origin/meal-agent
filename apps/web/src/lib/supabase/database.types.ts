@@ -66,7 +66,7 @@ export type Database = {
         Row: {
           cost_usd: number | null
           endpoint: string
-          household_id: string
+          household_id: string | null
           id: string
           timestamp: string
           tokens_used: number | null
@@ -74,7 +74,7 @@ export type Database = {
         Insert: {
           cost_usd?: number | null
           endpoint: string
-          household_id: string
+          household_id: string | null
           id?: string
           timestamp?: string
           tokens_used?: number | null
@@ -82,7 +82,7 @@ export type Database = {
         Update: {
           cost_usd?: number | null
           endpoint?: string
-          household_id?: string
+          household_id?: string | null
           id?: string
           timestamp?: string
           tokens_used?: number | null
@@ -606,6 +606,11 @@ export type Database = {
     Functions: {
       get_user_household_id: { Args: never; Returns: string }
       ai_spend_since: { Args: { since: string }; Returns: number }
+      claim_api_call: {
+        Args: { p_household: string; p_endpoint: string; p_limit: number; p_since: string }
+        Returns: { granted: boolean; used: number }[]
+      }
+      api_calls_since: { Args: { p_endpoint: string; p_since: string }; Returns: number }
       create_household_invite: {
         Args: { p_email: string }
         Returns: { id: string; token: string; email: string; expires_at: string }[]

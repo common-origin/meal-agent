@@ -289,13 +289,13 @@ No existing files were modified in Step 1 - this is all new infrastructure.
 - **localStorage hit:** <5ms (instant)
 - **First API search:** ~500-1000ms (API call + both caches)
 - **Cache size:** ~1-2KB per ingredient
-- **Monthly API quota:** 1000 searches (resets on 1st of month)
+- **Monthly API quota:** 1000 searches across every household (counted on the server in `api_usage`, UTC month; override with `COLES_API_MONTHLY_LIMIT`, #227)
 
 ## Security
 
 - API key stored in `.env.local` (not committed to git)
 - Backend route proxies requests (key never exposed to frontend)
-- Rate limiting prevents quota exhaustion
+- The server counts every household's lookups against the shared monthly quota and refuses once it's used up; per-user burst limiting stops one account using it all at once
 - Dual cache system minimizes API calls
 
 ---

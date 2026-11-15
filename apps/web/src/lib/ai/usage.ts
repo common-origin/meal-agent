@@ -10,10 +10,8 @@
  * parsing, `invalid_output` isn't produced.
  */
 
-import { after } from 'next/server';
-import { Resend } from 'resend';
 import { createAdminClient, createClient } from '@/lib/supabase/server';
-import { adminEmails } from '@/lib/auth/admin';
+import { emailAdmins, runAfterResponse } from '@/lib/adminAlerts';
 import { estimateCostUsd, type TokenUsage } from './pricing';
 import type { AiTask } from './models';
 
@@ -141,42 +139,16 @@ function alertSpendCap(spentUsd: number, capUsd: number, now: Date): void {
   const summary = `Meal Agent paused AI for today: estimated spend $${spentUsd.toFixed(2)} reached the $${capUsd.toFixed(2)} daily ceiling.`;
   console.error(JSON.stringify({ type: 'ai_spend_cap', day, spentUsd, capUsd }));
 
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM_ADDRESS;
-  const to = adminEmails();
-  if (!apiKey || !from || to.length === 0) {
-    console.warn('ai_usage: spend ceiling reached, but RESEND_API_KEY, RESEND_FROM_ADDRESS or ADMIN_EMAILS is unset, so no email was sent');
-    return;
-  }
-  runAfterResponse(async () => {
-    const { error } = await new Resend(apiKey).emails.send({
-      from,
-      to,
-      subject: 'Meal Agent: AI paused for today (spend ceiling reached)',
-      text: `${summary}\n\nAI features say "paused for today" until UTC midnight. To change the ceiling, set AI_DAILY_SPEND_CAP_USD in Vercel. The ai_usage table shows what was spent.`,
-    });
-    if (error) {
-      // Let the next refusal try again rather than staying silent all day.
+  emailAdmins({
+    subject: 'Meal Agent: AI paused for today (spend ceiling reached)',
+    text: `${summary}\n\nAI features say "paused for today" until UTC midnight. To change the ceiling, set AI_DAILY_SPEND_CAP_USD in Vercel. The ai_usage table shows what was spent.`,
+    // Let the next refusal try again rather than staying silent all day.
+    onFailure: () => {
       lastSpendAlertDay = null;
-      throw new Error(error.message);
-    }
+    },
   });
 }
 
 export function startOfUtcDay(now: Date): string {
   return `${now.toISOString().slice(0, 10)}T00:00:00.000Z`;
-}
-
-/**
- * `after()` only works inside a request; elsewhere (scripts, tests) run the
- * work in the background instead. Failures are warned about, never thrown.
- */
-function runAfterResponse(work: () => Promise<void>): void {
-  const safeWork = () =>
-    work().catch((error) => console.warn('ai_usage: background work failed', error));
-  try {
-    after(safeWork);
-  } catch {
-    void safeWork();
-  }
 }

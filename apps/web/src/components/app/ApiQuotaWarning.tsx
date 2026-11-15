@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Box, Button, Icon, Stack, Typography } from "@common-origin/design-system";
+import { refreshColesQuota } from "@/lib/colesApi";
 import { getQuotaStatus, setApiEnabled, isApiEnabled, getDaysUntilReset, type QuotaStatus } from "@/lib/apiQuota";
 
 export default function ApiQuotaWarning() {
@@ -10,8 +11,11 @@ export default function ApiQuotaWarning() {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    const loadStatus = () => {
-      // Load quota status
+    let cancelled = false;
+    const loadStatus = async () => {
+      // The quota is shared by every household and counted on the server (#227).
+      await refreshColesQuota();
+      if (cancelled) return;
       const status = getQuotaStatus();
       setQuotaStatus(status);
       setApiEnabledState(isApiEnabled());
@@ -21,7 +25,10 @@ export default function ApiQuotaWarning() {
       setDismissed(sessionStorage.getItem(dismissedKey) === 'true');
     };
     
-    loadStatus();
+    void loadStatus();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleDismiss = () => {

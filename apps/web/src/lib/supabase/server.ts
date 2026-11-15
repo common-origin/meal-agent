@@ -66,9 +66,10 @@ export async function getCurrentUser() {
 /**
  * Get the user's household ID (server-side)
  */
-export async function getUserHousehold() {
+export async function getUserHousehold(knownUser?: { id: string }) {
   const supabase = await createClient();
-  const user = await getCurrentUser();
+  // A caller that has already resolved the user passes it, saving an auth round trip.
+  const user = knownUser ?? (await getCurrentUser());
 
   if (!user) {
     return null;

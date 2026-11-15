@@ -1,7 +1,8 @@
 // @vitest-environment node
 /**
  * The database functions behind household invites and membership (015),
- * favourites (016), account deletion (017) and the AI spend total (014),
+ * favourites (016), account deletion (017), the AI spend total (014) and
+ * the shared Coles lookup quota (018),
  * run against the real migrations (#67).
  */
 
@@ -193,5 +194,46 @@ describe('AI spend total (014)', () => {
     expect(Number(spent[0].total)).toBeCloseTo(0.25);
     expect(await t.refusal(u, `SELECT public.ai_spend_since(now())`)).toMatch(/permission denied/);
     expect(await t.refusal(null, `SELECT public.ai_spend_since(now())`, [], 'anon')).toMatch(/permission denied/);
+  });
+});
+
+describe('shared Coles lookup quota (018)', () => {
+  const claim = (household: string, limit: number, since = '2026-11-01T00:00:00Z', endpoint = 'quota-test') =>
+    t.as<{ granted: boolean; used: number }>(null, `SELECT * FROM public.claim_api_call($1, $2, $3, $4)`, [household, endpoint, limit, since], 'service_role');
+
+  it('counts every household toward one total, and refuses at the limit without counting', async () => {
+    const a = (await t.householdOf(await newUser('quota-a')))!.household_id;
+    const b = (await t.householdOf(await newUser('quota-b')))!.household_id;
+    expect(await claim(a, 3, '2000-01-01T00:00:00Z')).toEqual([{ granted: true, used: 1 }]);
+    expect(await claim(b, 3, '2000-01-01T00:00:00Z')).toEqual([{ granted: true, used: 2 }]);
+    expect(await claim(a, 3, '2000-01-01T00:00:00Z')).toEqual([{ granted: true, used: 3 }]);
+    expect(await claim(b, 3, '2000-01-01T00:00:00Z')).toEqual([{ granted: false, used: 3 }]);
+    expect(await count(`SELECT count(*)::int n FROM public.api_usage WHERE endpoint = 'quota-test'`)).toBe(3);
+    const total = await t.as<{ n: number }>(null, `SELECT public.api_calls_since('quota-test', '2000-01-01T00:00:00Z') n`, [], 'service_role');
+    expect(total[0].n).toBe(3);
+  });
+
+  it("doesn't count calls from before the month, or to other endpoints", async () => {
+    const h = (await t.householdOf(await newUser('quota-c')))!.household_id;
+    await t.db.query(`INSERT INTO public.api_usage (household_id, endpoint, "timestamp") VALUES ($1, 'quota-old', now() - interval '40 days')`, [h]);
+    await t.db.query(`INSERT INTO public.api_usage (household_id, endpoint) VALUES ($1, 'other-endpoint')`, [h]);
+    expect(await claim(h, 1, new Date(Date.now() - 86_400_000).toISOString(), 'quota-old')).toEqual([{ granted: true, used: 1 }]);
+  });
+
+  it("keeps counting a deleted household's lookups (they were still spent)", async () => {
+    const u = await newUser('quota-e');
+    const h = (await t.householdOf(u))!.household_id;
+    await claim(h, 1000, '2000-01-01T00:00:00Z', 'quota-deleted');
+    await t.as(u, `SELECT public.delete_my_account()`);
+    expect(await count(`SELECT count(*)::int n FROM public.api_usage WHERE endpoint = 'quota-deleted' AND household_id IS NULL`)).toBe(1);
+  });
+
+  it('only the service role can claim or count calls, and members can no longer log them directly', async () => {
+    const u = await newUser('quota-d');
+    const h = (await t.householdOf(u))!.household_id;
+    expect(await t.refusal(u, `SELECT * FROM public.claim_api_call($1, 'coles-search', 1000, now())`, [h])).toMatch(/permission denied/);
+    expect(await t.refusal(null, `SELECT * FROM public.claim_api_call($1, 'coles-search', 1000, now())`, [h], 'anon')).toMatch(/permission denied/);
+    expect(await t.refusal(u, `SELECT public.api_calls_since('coles-search', now())`)).toMatch(/permission denied/);
+    expect(await t.refusal(u, `INSERT INTO public.api_usage (household_id, endpoint) VALUES ($1, 'coles-search')`, [h])).toMatch(/row-level security/);
   });
 });

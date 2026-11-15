@@ -105,8 +105,9 @@ export function isApiEnabled(): boolean {
  * Get time until quota reset (in days)
  */
 export function getDaysUntilReset(): number {
+  // The shared quota is counted per UTC month (#227).
   const now = new Date();
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const nextMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
   const diff = nextMonth.getTime() - now.getTime();
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }

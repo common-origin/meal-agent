@@ -140,7 +140,15 @@
    - Verify success: Should see "Success. No rows returned"
    - This adds `delete_my_account()`, behind Settings → Your data → Delete account (#224). Run it after `015`. Until it's run, deleting an account says it couldn't be deleted
 
-19. **Verify Tables Created:**
+19. **Run Coles Quota Migration (Step 18):**
+   - Click "New Query"
+   - Copy entire contents of `supabase/migrations/018_coles_quota.sql`
+   - Paste into SQL Editor
+   - Click "Run" or press Cmd+Enter
+   - Verify success: Should see "Success. No rows returned"
+   - This adds `claim_api_call()` and `api_calls_since()`, which count every household's Coles lookups against the shared RapidAPI quota (#227). Until it's run, Coles lookups are refused and prices fall back to estimates
+
+20. **Verify Tables Created:**
    ```sql
    SELECT table_name 
    FROM information_schema.tables 
@@ -163,7 +171,7 @@
    - shopping_lists
    - signup_invites
 
-20. **Verify RLS Enabled:**
+21. **Verify RLS Enabled:**
    ```sql
    SELECT tablename, rowsecurity 
    FROM pg_tables 

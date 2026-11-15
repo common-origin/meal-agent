@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { refreshColesQuota, type ColesQuotaStats } from "@/lib/colesApi";
 import { Box, Button, Container, Icon, Stack, Typography, ProgressBar } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 
@@ -17,27 +18,17 @@ export default function ApiUsagePage() {
   const [stats, setStats] = useState<ApiUsageStats | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const loadStats = () => {
-    setLoading(true);
-    
-    // Load from localStorage
+  // `quota` is shared by every household and counted on the server, per UTC month (#227).
+  const showStats = ({ used, limit, remaining }: ColesQuotaStats) => {
+    // Per-browser breakdown (which ingredients this browser looked up)
     const usageData = localStorage.getItem('coles_api_usage');
     const usage = usageData ? JSON.parse(usageData) : {
       monthlyRequests: {},
       ingredientRequests: {}
     };
 
-    // Get current month key
     const now = new Date();
-    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    
-    // Calculate reset date (1st of next month)
-    const resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    
-    // Get monthly usage
-    const used = usage.monthlyRequests[monthKey] || 0;
-    const limit = 1000; // Free tier limit
-    const remaining = Math.max(0, limit - used);
+    const resetDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
 
     // Calculate daily usage for last 30 days
     const dailyUsage: Array<{ date: string; count: number }> = [];
@@ -60,6 +51,7 @@ export default function ApiUsagePage() {
       limit,
       remaining,
       resetDate: resetDate.toLocaleDateString('en-AU', { 
+        timeZone: 'UTC',
         year: 'numeric', 
         month: 'long', 
         day: 'numeric' 
@@ -71,10 +63,16 @@ export default function ApiUsagePage() {
     setLoading(false);
   };
 
+  const loadStats = () => refreshColesQuota().then(showStats);
+
+  useEffect(() => {
+    void refreshColesQuota().then(showStats);
+  }, []);
+
   const clearUsageData = () => {
-    if (confirm('Are you sure you want to clear all API usage data? This cannot be undone.')) {
+    if (confirm("Clear this browser's lookup breakdown? This cannot be undone.")) {
       localStorage.removeItem('coles_api_usage');
-      loadStats();
+      void loadStats();
     }
   };
 
@@ -110,7 +108,7 @@ export default function ApiUsagePage() {
               <Button 
                 variant="secondary" 
                 iconName="refresh" 
-                onClick={loadStats}
+                onClick={() => void loadStats()}
               >
                 Refresh
               </Button>
@@ -293,7 +291,7 @@ export default function ApiUsagePage() {
                   <Stack direction="column" gap="xs">
                     <Typography variant="body">Clear Usage Data</Typography>
                     <Typography variant="small" color="subdued">
-                      Remove all tracked API usage data. This will not affect your actual API quota.
+                      Remove this browser&apos;s lookup breakdown. The shared quota is counted on the server and isn&apos;t affected.
                     </Typography>
                   </Stack>
                   <Button 

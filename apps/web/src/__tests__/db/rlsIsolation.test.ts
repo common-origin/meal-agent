@@ -45,7 +45,8 @@ const TABLES: TableSpec[] = [
     insertable: true,
   },
   { table: 'household_favorites', householdColumn: 'household_id', row: (_h, _u, tag) => ({ recipe_id: `recipe-${tag}` }), insertable: true },
-  { table: 'api_usage', householdColumn: 'household_id', row: () => ({ endpoint: 'coles-search' }), insertable: true },
+  // Written only through claim_api_call (migration 018), so no member can use up the shared quota.
+  { table: 'api_usage', householdColumn: 'household_id', row: () => ({ endpoint: 'coles-search' }), insertable: false },
   {
     table: 'ai_usage',
     householdColumn: 'household_id',
