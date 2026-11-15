@@ -6,7 +6,12 @@
 -- 2. household_invites: an owner invites one email; the link /join/<token>
 --    accepts it. A new user whose email has a pending invite joins at signup.
 -- 3. Only an owner can update the household row (its name and its calendar
---    and extension tokens).
+--    and extension tokens), and household_members changes only through the
+--    functions below.
+-- 4. Invite-only signup also lets in an email with a pending household
+--    invite, for as long as the invite is pending. Nothing is added to
+--    signup_invites, so cancelling or expiring the invite closes the door,
+--    and the new account can only land in the inviting household.
 --
 -- Every write goes through the SECURITY DEFINER functions below, which check
 -- the caller; there are no INSERT/UPDATE/DELETE policies on the new table.
@@ -47,6 +52,11 @@ CREATE POLICY "Members can view their household's invites"
   ON public.household_invites FOR SELECT
   USING (household_id = public.get_user_household_id());
 
+-- Not the token, though: the link is for the invited person alone.
+REVOKE SELECT ON public.household_invites FROM anon, authenticated;
+GRANT SELECT (id, household_id, email, invited_by, created_at, expires_at, accepted_at)
+  ON public.household_invites TO authenticated;
+
 -- ---------------------------------------------------------------------------
 -- 3. Only owners update the household
 -- ---------------------------------------------------------------------------
@@ -60,6 +70,30 @@ CREATE POLICY "Owners can update their household"
       WHERE user_id = auth.uid() AND role = 'owner'
     )
   );
+
+-- Membership changes only through the functions below: a direct delete would
+-- leave the removed user with no household at all.
+DROP POLICY IF EXISTS "Owners can add members to their household" ON public.household_members;
+DROP POLICY IF EXISTS "Owners can remove members from their household" ON public.household_members;
+
+-- ---------------------------------------------------------------------------
+-- 4. Invite-only signup lets in a pending household invite
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.enforce_signup_invite()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.email IS NULL OR NOT (
+    EXISTS (SELECT 1 FROM public.signup_invites WHERE email = lower(NEW.email))
+    OR EXISTS (
+      SELECT 1 FROM public.household_invites
+      WHERE email = lower(NEW.email) AND accepted_at IS NULL AND expires_at > now()
+    )
+  ) THEN
+    RAISE EXCEPTION 'signup_not_invited';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- ---------------------------------------------------------------------------
 -- Helpers (not callable by users)
@@ -153,7 +187,8 @@ $$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp;
 REVOKE ALL ON FUNCTION public._household_headcount(UUID) FROM PUBLIC, anon, authenticated;
 
 -- The owner invites p_email. Replaces a pending invite to the same email (a
--- resend gets a fresh link), and lets the email past invite-only signup.
+-- resend gets a fresh link). While it's pending, enforce_signup_invite lets
+-- the email sign up, straight into this household.
 CREATE OR REPLACE FUNCTION public.create_household_invite(p_email TEXT)
 RETURNS TABLE (id UUID, token UUID, email TEXT, expires_at TIMESTAMPTZ) AS $$
 DECLARE
@@ -181,9 +216,6 @@ BEGIN
   IF public._household_headcount(my_household) >= 6 THEN
     RAISE EXCEPTION 'household:full';
   END IF;
-
-  INSERT INTO public.signup_invites (email, note) VALUES (clean_email, 'household invite')
-  ON CONFLICT ON CONSTRAINT signup_invites_pkey DO NOTHING;
 
   RETURN QUERY
   INSERT INTO public.household_invites (household_id, email, invited_by)

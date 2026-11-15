@@ -175,7 +175,7 @@
 - **signup_invites** - Emails allowed to create an account; any other signup is refused (013)
 
 ### Automatic Behaviors:
-- **New User Signup** → Refused unless the email is in `signup_invites` (013). With a pending household invite, the user joins that household as a member (015); otherwise a household is created with the user as owner, plus default settings
+- **New User Signup** → Refused unless the email is in `signup_invites` (013) or has a pending household invite (015). With a pending household invite, the user joins that household as a member; otherwise a household is created with the user as owner, plus default settings
 - **Updated Timestamps** → Auto-updated on every row modification
 - **Household ID Helper** → Function to get current user's household ID
 
