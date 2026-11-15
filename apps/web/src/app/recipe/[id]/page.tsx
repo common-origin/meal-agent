@@ -1,8 +1,8 @@
 "use client";
 
-import { use, useEffect, useState, useRef } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Stack, Typography, Box, Button, Checkbox, ChipGroup, IconButton, List, ListItem, Alert, Modal, ResponsiveGrid, TextField } from "@common-origin/design-system";
+import { Stack, Typography, Box, Button, Checkbox, ChipGroup, IconButton, Alert, Menu, MenuDivider, MenuItem, Modal, ResponsiveGrid, TextField } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import { tokens } from "@common-origin/design-system";
 import { isFavorite, getRecipeRating, saveRecipeRating, blockRecipe, isRecipeBlocked } from "@/lib/storage";
@@ -12,7 +12,7 @@ import { type Recipe } from "@/lib/types/recipe";
 import { track } from "@/lib/analytics";
 import { getRecipeSourceDisplay } from "@/lib/recipeDisplay";
 import { formatTagsForDisplay } from "@/lib/tagNormalizer";
-import StarRating from "@/components/app/StarRating";
+import RateRecipeModal from "@/components/app/RateRecipeModal";
 import { getFamilySettings } from "@/lib/hybridStorage";
 import type { RecipeRecipient } from "@/lib/types/settings";
 
@@ -107,8 +107,6 @@ export default function RecipePage({ params }: RecipePageProps) {
     };
   }, [id]);
   const [showBlockConfirm, setShowBlockConfirm] = useState<boolean>(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   // Email-recipe state
   const [savedRecipients, setSavedRecipients] = useState<RecipeRecipient[]>([]);
@@ -148,16 +146,19 @@ export default function RecipePage({ params }: RecipePageProps) {
     track(favorited ? 'favorite_removed' : 'favorite_added', { recipeId: id });
   };
   
-  const handleRatingChange = (newRating: number) => {
+  // Rating lives in a modal from the options menu (RateRecipeModal holds the draft)
+  const [showRatingModal, setShowRatingModal] = useState(false);
+
+  const handleSaveRating = (newRating: number) => {
     setRating(newRating);
     saveRecipeRating(id, newRating);
+    setShowRatingModal(false);
   };
   
   const handleBlockRecipe = () => {
     blockRecipe(id);
     setBlocked(true);
     setShowBlockConfirm(false);
-    setMenuOpen(false);
   };
 
   const openEmailModal = () => {
@@ -165,7 +166,6 @@ export default function RecipePage({ params }: RecipePageProps) {
     setEmailNote('');
     setSelectedEmails(new Set(savedRecipients.map((r) => r.email)));
     setShowEmailModal(true);
-    setMenuOpen(false);
   };
 
   const toggleRecipientSelected = (email: string) => {
@@ -221,18 +221,6 @@ export default function RecipePage({ params }: RecipePageProps) {
     }
   };
 
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-    if (menuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [menuOpen]);
   
   if (recipe === undefined) {
     return (
@@ -280,66 +268,52 @@ export default function RecipePage({ params }: RecipePageProps) {
             Back
           </Button>
           
-          <div ref={menuRef} style={{ position: 'relative' }}>
-            <IconButton
-              variant="secondary"
-              iconName="filter"
-              size="medium"
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="Recipe options"
-            />
-            {menuOpen && (
-              <Box
-                border="default"
-                borderRadius="lg"
-                bg="surface.raised"
-                p="none"
-                style={{
-                  position: 'absolute',
-                  overflow: 'hidden',
-                  right: 0,
-                  top: '100%',
-                  marginTop: 4,
-                  zIndex: 10,
-                  minWidth: 240,
-                  boxShadow: tokens.semantic.elevation.floating,
-                }}
-              >
-                <List dividers spacing="compact">
-                  <ListItem
-                    primary={favorited ? 'Remove from favourites' : 'Favourite this recipe'}
-                    interactive
-                    onClick={() => {
-                      handleFavoriteClick();
-                      setMenuOpen(false);
-                    }}
-                  />
-                  <ListItem
-                    primary="Email recipe…"
-                    secondary={
-                      savedRecipients.length === 0
-                        ? 'Add recipients in Settings first'
-                        : `${savedRecipients.length} recipient${savedRecipients.length === 1 ? '' : 's'} saved`
-                    }
-                    interactive
-                    disabled={savedRecipients.length === 0}
-                    onClick={openEmailModal}
-                  />
-                  <ListItem
-                    primary="Remove from plans"
-                    interactive
-                    destructive
-                    disabled={blocked}
-                    onClick={() => {
-                      setShowBlockConfirm(true);
-                      setMenuOpen(false);
-                    }}
-                  />
-                </List>
-              </Box>
-            )}
-          </div>
+          {/* The design system's Menu: keyboard navigation, Escape, menu roles and focus come with it */}
+          <Menu
+            align="end"
+            trigger={
+              <IconButton
+                variant="secondary"
+                // kebab: the "more options" icon, as on the plan's meal menu
+                iconName="kebab"
+                size="medium"
+                aria-label="Recipe options"
+              />
+            }
+          >
+            <MenuItem onSelect={handleFavoriteClick}>
+              {favorited ? 'Remove from favourites' : 'Favourite this recipe'}
+            </MenuItem>
+            <MenuItem
+              description={rating > 0 ? `Rated ${rating} of 5` : 'Not rated yet'}
+              onSelect={() => setShowRatingModal(true)}
+            >
+              Rate this recipe…
+            </MenuItem>
+            <MenuItem
+              description={
+                savedRecipients.length === 0
+                  ? 'Add recipients in Settings first'
+                  : `${savedRecipients.length} recipient${savedRecipients.length === 1 ? '' : 's'} saved`
+              }
+              disabled={savedRecipients.length === 0}
+              onSelect={openEmailModal}
+            >
+              Email recipe…
+            </MenuItem>
+            <MenuDivider />
+            <MenuItem destructive disabled={blocked} onSelect={() => setShowBlockConfirm(true)}>
+              Remove from plans
+            </MenuItem>
+          </Menu>
         </Stack>
+
+        {/* Page-level, at the top of the content, so the default outlined Alert */}
+        {blocked && (
+          <Alert variant="warning">
+            This recipe is blocked and will not appear in future AI meal plans.
+          </Alert>
+        )}
 
         {/* Recipe Header */}
         <Stack direction="column" gap="md">
@@ -451,18 +425,14 @@ export default function RecipePage({ params }: RecipePageProps) {
           </Box>
         )}
 
-        {/* Rating */}
-        <Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
-          <Stack direction="column" gap="md" alignItems="flex-start">
-            <Typography variant="h3">Rate this recipe</Typography>
-            <StarRating rating={rating} onChange={handleRatingChange} size="large" />
-            {blocked && (
-              <Alert variant="warning" appearance="borderless">
-                This recipe is blocked and will not appear in future AI meal plans.
-              </Alert>
-            )}
-          </Stack>
-        </Box>
+        {/* Rate recipe modal, from the options menu */}
+        <RateRecipeModal
+          isOpen={showRatingModal}
+          recipeTitle={recipe.title}
+          rating={rating}
+          onSave={handleSaveRating}
+          onClose={() => setShowRatingModal(false)}
+        />
 
         {/* Block recipe confirmation modal */}
         <Modal
