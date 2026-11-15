@@ -148,9 +148,21 @@ export default function RecipePage({ params }: RecipePageProps) {
     track(favorited ? 'favorite_removed' : 'favorite_added', { recipeId: id });
   };
   
-  const handleRatingChange = (newRating: number) => {
-    setRating(newRating);
-    saveRecipeRating(id, newRating);
+  // Rating lives in a modal from the options menu: stars set a draft, Save submits it
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [draftRating, setDraftRating] = useState(0);
+
+  const openRatingModal = () => {
+    setDraftRating(rating);
+    setShowRatingModal(true);
+    setMenuOpen(false);
+  };
+
+  const handleSaveRating = () => {
+    if (draftRating === 0) return;
+    setRating(draftRating);
+    saveRecipeRating(id, draftRating);
+    setShowRatingModal(false);
   };
   
   const handleBlockRecipe = () => {
@@ -283,10 +295,12 @@ export default function RecipePage({ params }: RecipePageProps) {
           <div ref={menuRef} style={{ position: 'relative' }}>
             <IconButton
               variant="secondary"
-              iconName="filter"
+              // kebab: the "more options" icon, as on the plan's meal menu
+              iconName="kebab"
               size="medium"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Recipe options"
+              aria-expanded={menuOpen}
             />
             {menuOpen && (
               <Box
@@ -315,6 +329,12 @@ export default function RecipePage({ params }: RecipePageProps) {
                     }}
                   />
                   <ListItem
+                    primary="Rate this recipe…"
+                    secondary={rating > 0 ? `Rated ${rating} of 5` : 'Not rated yet'}
+                    interactive
+                    onClick={openRatingModal}
+                  />
+                  <ListItem
                     primary="Email recipe…"
                     secondary={
                       savedRecipients.length === 0
@@ -340,6 +360,13 @@ export default function RecipePage({ params }: RecipePageProps) {
             )}
           </div>
         </Stack>
+
+        {/* Page-level, at the top of the content, so the default outlined Alert */}
+        {blocked && (
+          <Alert variant="warning">
+            This recipe is blocked and will not appear in future AI meal plans.
+          </Alert>
+        )}
 
         {/* Recipe Header */}
         <Stack direction="column" gap="md">
@@ -451,18 +478,33 @@ export default function RecipePage({ params }: RecipePageProps) {
           </Box>
         )}
 
-        {/* Rating */}
-        <Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
-          <Stack direction="column" gap="md" alignItems="flex-start">
-            <Typography variant="h3">Rate this recipe</Typography>
-            <StarRating rating={rating} onChange={handleRatingChange} size="large" />
-            {blocked && (
-              <Alert variant="warning" appearance="borderless">
-                This recipe is blocked and will not appear in future AI meal plans.
-              </Alert>
-            )}
+        {/* Rate recipe modal, from the options menu */}
+        <Modal
+          isOpen={showRatingModal}
+          onClose={() => setShowRatingModal(false)}
+          title="Rate this recipe"
+          size="small"
+          actions={[
+            {
+              label: 'Save rating',
+              onClick: handleSaveRating,
+              variant: 'primary',
+              disabled: draftRating === 0,
+            },
+            {
+              label: 'Cancel',
+              onClick: () => setShowRatingModal(false),
+              variant: 'secondary',
+            },
+          ]}
+        >
+          <Stack direction="column" gap="md">
+            <Typography variant="body" color="subdued">
+              How did {recipe.title} go down? Ratings shape which recipes we suggest.
+            </Typography>
+            <StarRating rating={draftRating} onChange={setDraftRating} size="large" />
           </Stack>
-        </Box>
+        </Modal>
 
         {/* Block recipe confirmation modal */}
         <Modal
