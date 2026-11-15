@@ -15,6 +15,9 @@ body {
 
 body {
   background: var(--background);
+  /* The design system's body font (Inter), so text outside its components doesn't fall back to
+     the browser default (Times) */
+  font-family: var(--co-semantic-font-family-body, 'Inter', sans-serif);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
