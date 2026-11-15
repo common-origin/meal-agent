@@ -409,7 +409,7 @@ export default function RecipePage({ params }: RecipePageProps) {
             <Typography variant="h3">Rate this recipe</Typography>
             <StarRating rating={rating} onChange={handleRatingChange} size="large" />
             {blocked && (
-              <Alert variant="warning">
+              <Alert variant="warning" appearance="borderless">
                 This recipe is blocked and will not appear in future AI meal plans.
               </Alert>
             )}
@@ -463,7 +463,7 @@ export default function RecipePage({ params }: RecipePageProps) {
         >
           <Stack direction="column" gap="md">
             {savedRecipients.length === 0 ? (
-              <Alert variant="info">
+              <Alert variant="info" appearance="borderless">
                 You haven&apos;t saved any recipients yet. Add one in Settings to email recipes.
               </Alert>
             ) : (
@@ -489,7 +489,7 @@ export default function RecipePage({ params }: RecipePageProps) {
                   helperText={`${emailNote.length}/280`}
                 />
                 {emailResult && (
-                  <Alert variant={emailResult.kind === 'success' ? 'success' : 'error'}>
+                  <Alert variant={emailResult.kind === 'success' ? 'success' : 'error'} appearance="borderless">
                     {emailResult.message}
                   </Alert>
                 )}
