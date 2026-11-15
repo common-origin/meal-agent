@@ -38,8 +38,8 @@ pnpm -C apps/coles-extension build
 ```
 
 Then **Load unpacked** `apps/coles-extension/dist` instead, and click the
-extension's reload button after each rebuild. `pnpm dev` doesn't build the
-zip; run `pnpm -C apps/web build:extension` to try the download locally.
+extension's reload button after each rebuild. `pnpm dev` builds the zip once
+as it starts, so the download works locally too.
 
 ## Each week
 

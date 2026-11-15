@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "pnpm run build:extension && next dev",
     "build": "pnpm run build:extension && next build",
     "build:extension": "pnpm -C ../coles-extension build && node ../coles-extension/scripts/package.mjs public",
     "start": "next start",
