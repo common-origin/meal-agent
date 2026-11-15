@@ -11,7 +11,7 @@
 import { createAdminClient } from '@/lib/supabase/server';
 import { INGREDIENT_CATALOGUE } from '@/lib/ingredients/catalogue';
 import { runAiTask } from '@/lib/ai/run';
-import { isOverDailyAiCap } from '@/lib/ai/usage';
+import { checkAiAllowance } from '@/lib/ai/usage';
 import { OrderMatches } from '@/lib/ai/schemas';
 import { aiRateLimiters } from '@/lib/api/rateLimit';
 import { buildOrderMatchPrompt, buildOrderMatchSystemPrompt } from '@/lib/prompts/orderMatch';
@@ -121,7 +121,7 @@ async function suggestKeys(supabase: Admin, householdId: string, products: Histo
   const decided = new Map<string, string | null>();
   if (products.length === 0) return decided;
   const userId = await householdUserId(supabase, householdId);
-  if (!userId || !aiRateLimiters.orderMatch.check(userId) || await isOverDailyAiCap(userId)) return decided;
+  if (!userId || !aiRateLimiters.orderMatch.check(userId) || (await checkAiAllowance(userId)) !== 'ok') return decided;
 
   // The household's list keys, plus the catalogue for ingredients not on a list yet.
   const ingredients = [
@@ -133,6 +133,7 @@ async function suggestKeys(supabase: Admin, householdId: string, products: Histo
   try {
     const result = await runAiTask('orderMatch', {
       userId,
+      householdId,
       system: buildOrderMatchSystemPrompt(),
       prompt: buildOrderMatchPrompt(
         products.map(row => ({ productId: row.product_id, name: productDisplayName(row.brand, row.name), size: row.size })),

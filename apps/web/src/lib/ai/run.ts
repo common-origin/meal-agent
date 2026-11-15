@@ -56,6 +56,12 @@ export type RunAiTaskOptions<SCHEMA extends z.ZodType> = {
   system?: string;
   /** The signed-in user, for usage logging and the daily cap. */
   userId: string;
+  /**
+   * The user's household, for a caller with no session (the Coles
+   * extension): usage is then logged with the service role, since the
+   * session client can't write it (#215).
+   */
+  householdId?: string;
   /** Aborts the call early (in addition to the task's deadline). */
   signal?: AbortSignal;
 } & ({ prompt: string; messages?: never } | { messages: ModelMessage[]; prompt?: never });
@@ -72,7 +78,7 @@ export async function runAiTask<SCHEMA extends z.ZodType>(
   const config = AI_TASKS[task];
   const deadline = AbortSignal.timeout(config.deadlineMs);
   const abortSignal = options.signal ? AbortSignal.any([deadline, options.signal]) : deadline;
-  const usageContext: AiCallContext = { task, model: config.model, userId: options.userId };
+  const usageContext: AiCallContext = { task, model: config.model, userId: options.userId, householdId: options.householdId };
   const google: GoogleLanguageModelOptions = { thinkingConfig: { thinkingLevel: config.thinkingLevel } };
 
   for (let attempt = 0; ; attempt++) {

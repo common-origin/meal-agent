@@ -535,6 +535,7 @@ export type Database = {
     }
     Functions: {
       get_user_household_id: { Args: never; Returns: string }
+      ai_spend_since: { Args: { since: string }; Returns: number }
     }
     Enums: {
       [_ in never]: never

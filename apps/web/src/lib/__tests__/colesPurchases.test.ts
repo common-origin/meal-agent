@@ -48,7 +48,8 @@ function query(table: string) {
 vi.mock('@/lib/supabase/server', () => ({ createAdminClient: () => ({ from: query }) }));
 const runAiTask = vi.fn();
 vi.mock('@/lib/ai/run', () => ({ runAiTask: (...args: unknown[]) => runAiTask(...args) }));
-vi.mock('@/lib/ai/usage', () => ({ isOverDailyAiCap: async () => false }));
+const checkAiAllowance = vi.fn(async () => 'ok');
+vi.mock('@/lib/ai/usage', () => ({ checkAiAllowance: () => checkAiAllowance() }));
 
 const { importOrders, confirmMatch } = await import('../coles/purchases');
 
@@ -68,6 +69,8 @@ beforeEach(() => {
   tables.household_members = [{ household_id: HOUSEHOLD, user_id: 'u1', role: 'owner', joined_at: '2026-01-01' }];
   runAiTask.mockReset();
   runAiTask.mockResolvedValue({ blocked: false, output: { matches: [] } });
+  checkAiAllowance.mockReset();
+  checkAiAllowance.mockResolvedValue('ok');
 });
 
 describe('importOrders (#185)', () => {
@@ -144,6 +147,18 @@ describe('importOrders (#185)', () => {
 
     expect(runAiTask.mock.calls[0][1].prompt).toContain('black pepper');
     expect(result.suggestions).toEqual([expect.objectContaining({ productId: '50', key: 'black pepper', ingredientName: 'Black pepper' })]);
+  });
+
+  it.each(['daily_cap', 'spend_cap', 'unavailable'])("doesn't ask AI when the allowance is %s, and leaves products for the next import (#215)", async (allowance) => {
+    checkAiAllowance.mockResolvedValue(allowance);
+    await importOrders(HOUSEHOLD, [order('1', '2026-10-01T00:00:00.000Z', [['30', 'Dairy Cheese Tasty']])], NOW);
+    expect(runAiTask).not.toHaveBeenCalled();
+    expect(tables.purchase_history[0].match_status).toBe('pending');
+  });
+
+  it('passes the household to runAiTask, so the session-less call is still logged (#215)', async () => {
+    await importOrders(HOUSEHOLD, [order('1', '2026-10-01T00:00:00.000Z', [['30', 'Dairy Cheese Tasty']])], NOW);
+    expect(runAiTask.mock.calls[0][1]).toMatchObject({ householdId: HOUSEHOLD });
   });
 
   it('leaves products undecided when AI fails, to retry next import', async () => {

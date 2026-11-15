@@ -282,8 +282,10 @@ signup):
 - **`ai_usage`** (migration 010) — one row per AI call: user, household,
   task, model, input/output/thinking tokens, estimated `cost_usd`,
   latency and outcome. Written after the response by
-  `lib/ai/usage.ts`, and counted for the per-user daily AI cap (see
-  `AI.md`)
+  `lib/ai/usage.ts`, and counted for the per-user daily AI cap and the
+  daily spend ceiling across all users (see `AI.md`). The ceiling sums
+  `cost_usd` through `ai_spend_since()` (migration 014), which only the
+  service role can run
 - **`signup_invites`** (migration 013) — the emails allowed to create an
   account. A `BEFORE INSERT` trigger on `auth.users`
   (`enforce_signup_invite`) refuses any other signup, so no user or
@@ -293,7 +295,7 @@ signup):
   login and signup pages show as "not invited"
   (`lib/auth/authErrorMessages.ts`, `app/auth/callback/route.ts`)
 
-Migrations run in numeric order, 001 through 013 (009 and 010 are
+Migrations run in numeric order, 001 through 014 (009 and 010 are
 independent of each other) — see `supabase/README.md` for the exact
 steps. There's no migration-runner in CI; each one is applied by
 hand in the Supabase SQL editor, same as every migration so far.

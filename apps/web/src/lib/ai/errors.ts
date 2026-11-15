@@ -15,6 +15,8 @@ export const AI_ERRORS = {
   unauthenticated: { status: 401, message: 'Please sign in to use this feature.' },
   rate_limited: { status: 429, message: "You've hit the limit for now. Try again in a few minutes." },
   daily_cap: { status: 429, message: "You've reached today's AI limit. It resets tomorrow." },
+  // The day's AI spend ceiling across all users is reached (#215); back at UTC midnight.
+  spend_cap: { status: 503, message: "AI features are paused for today. They'll be back tomorrow." },
   provider_busy: { status: 503, message: 'The AI service is busy right now. Please try again in a minute.' },
   // The AI account's credits or billing (#171): retrying won't help until the owner tops it up.
   ai_unavailable: { status: 503, message: "AI features aren't available right now. Please try again later." },
