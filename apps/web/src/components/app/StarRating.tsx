@@ -8,105 +8,69 @@ import styled from 'styled-components';
 import { Stack, IconButton } from '@common-origin/design-system';
 import { tokens } from '@common-origin/design-system/tokens';
 
-/**
- * A rating star the household can click: solid amber up to the rating (or the hovered star),
- * grey outline after it, matching the read-only stars. The design system's icons are line
- * icons since 3.3, so the selected ones fill in here.
- */
-const RatingStarButton = styled(IconButton)<{ $filled: boolean }>`
-  & svg {
-    color: ${({ $filled }) => ($filled ? tokens.semantic.color.icon.warning : tokens.semantic.color.icon.muted)};
-    fill: ${({ $filled }) => ($filled ? 'currentColor' : 'none')};
-  }
-`;
-
 export type StarRatingProps = {
   rating: number; // Current rating (0-5)
-  onChange?: (rating: number) => void; // Callback when rating changes
-  readonly?: boolean; // If true, not interactive
+  onChange: (rating: number) => void; // Called with the star clicked (1-5)
   size?: 'small' | 'medium' | 'large';
 };
 
-export default function StarRating({ rating, onChange, readonly = false, size = 'medium' }: StarRatingProps) {
-  const [hoverRating, setHoverRating] = useState<number | null>(null);
-  
-  const displayRating = hoverRating !== null ? hoverRating : rating;
-  
-  const iconSize = size === 'small' ? 16 : size === 'large' ? 32 : 24;
-  
-  const handleClick = (starRating: number) => {
-    if (!readonly && onChange) {
-      onChange(starRating);
-    }
-  };
-  
-  const handleMouseEnter = (starRating: number) => {
-    if (!readonly) {
-      setHoverRating(starRating);
-    }
-  };
-  
-  const handleMouseLeave = () => {
-    if (!readonly) {
-      setHoverRating(null);
-    }
-  };
-  
+/**
+ * A star the household can click: solid amber up to the rating (or the star being hovered or
+ * focused), grey outline after it. The design system's icons are line icons since 3.3, so the
+ * selected ones fill in here. Colours come from the theme variables, falling back to the light
+ * values, so they'd follow a dark theme. `data-filled` drives the style and lets tests check it.
+ */
+const RatingStarButton = styled(IconButton)`
+  & svg {
+    color: var(--co-semantic-color-icon-muted, ${tokens.semantic.color.icon.muted});
+    fill: none;
+  }
+
+  &[data-filled='true'] svg {
+    color: var(--co-semantic-color-icon-warning, ${tokens.semantic.color.icon.warning});
+    fill: currentColor;
+  }
+`;
+
+export default function StarRating({ rating, onChange, size = 'medium' }: StarRatingProps) {
+  // The star being previewed, by mouse hover or keyboard focus; null shows the saved rating
+  const [previewRating, setPreviewRating] = useState<number | null>(null);
+
+  const displayRating = previewRating ?? rating;
+
   return (
-    <div 
-      style={{ 
-        cursor: readonly ? 'default' : 'pointer',
-        userSelect: 'none'
-      }}
-      onMouseLeave={handleMouseLeave}
+    <div
+      // One labelled group that states the current rating; each star is a plain "Rate n stars" action
+      role="group"
+      aria-label={rating > 0 ? `Rating: ${rating} of 5` : 'Not rated yet'}
+      style={{ userSelect: 'none' }}
+      onMouseLeave={() => setPreviewRating(null)}
     >
-    <Stack 
-      direction="row" 
-      gap="xs" 
+    <Stack
+      direction="row"
+      gap="xs"
       alignItems="center"
     >
-      {[1, 2, 3, 4, 5].map((star) => {
-        const isFilled = star <= displayRating;
-        
-        return readonly ? (
-          <div 
-            key={star}
-            style={{
-              width: iconSize,
-              height: iconSize,
-              color: isFilled 
-                ? tokens.semantic.color.icon.warning 
-                : tokens.semantic.color.icon.muted
-            }}
-          >
-            <svg 
-              width={iconSize} 
-              height={iconSize} 
-              viewBox="0 0 24 24" 
-              fill="currentColor"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-            </svg>
-          </div>
-        ) : (
-          <RatingStarButton
-            key={star}
-            variant="naked"
-            iconName="star"
-            $filled={isFilled}
-            size={size}
-            onClick={() => handleClick(star)}
-            onMouseEnter={() => handleMouseEnter(star)}
-            aria-label={`Rate ${star} star${star !== 1 ? 's' : ''}`}
-            // Announces the current rating, which otherwise shows only as colour
-            aria-pressed={star === rating}
-          />
-        );
-      })}
+      {[1, 2, 3, 4, 5].map((star) => (
+        <RatingStarButton
+          key={star}
+          variant="naked"
+          iconName="star"
+          size={size}
+          data-filled={star <= displayRating}
+          onClick={() => onChange(star)}
+          onMouseEnter={() => setPreviewRating(star)}
+          // Keyboard users get the same preview as hovering
+          onFocus={() => setPreviewRating(star)}
+          onBlur={() => setPreviewRating(null)}
+          aria-label={`Rate ${star} star${star !== 1 ? 's' : ''}`}
+        />
+      ))}
       {rating > 0 && (
-        <span 
-          style={{ 
+        <span
+          // The group's label already says the rating
+          aria-hidden="true"
+          style={{
             fontSize: size === 'small' ? '12px' : size === 'large' ? '18px' : '14px',
             color: tokens.semantic.color.text.muted,
             marginLeft: '4px'
