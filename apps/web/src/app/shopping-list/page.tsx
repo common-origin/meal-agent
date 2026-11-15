@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Alert, Box, Button, Chip, Container, Icon, IconButton, List, ListItem, ResponsiveGrid, Stack, Typography, Divider } from "@common-origin/design-system";
+import { Alert, Box, Button, Chip, Container, EmptyState, Icon, List, ListItem, Stack, Tag, Typography, Divider } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import { aggregateShoppingList, toLegacyFormat, type AggregatedIngredient } from "@/lib/shoppingListAggregator";
 import { toColesListItems } from "@/lib/coles/extensionList";
@@ -20,16 +20,6 @@ import { RecipeLibrary } from "@/lib/library";
 import PriceSourceBadge from "@/components/app/PriceSourceBadge";
 import ApiQuotaWarning from "@/components/app/ApiQuotaWarning";
 
-// Weekly nutrition totals
-type WeeklyNutrition = {
-  totalCalories: number;
-  totalProtein: number;
-  totalCarbs: number;
-  totalFat: number;
-  mealCount: number;
-  mealsWithNutrition: number;
-};
-
 export default function ShoppingListPage() {
   const [aggregatedItems, setAggregatedItems] = useState<AggregatedIngredient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +28,8 @@ export default function ShoppingListPage() {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [apiPrices, setApiPrices] = useState<Map<string, { cost: number; source: 'api' | 'static' | 'category'; livePrice?: boolean }>>(new Map());
   const [isShoppingComplete, setIsShoppingComplete] = useState(false);
-  const [weeklyNutrition, setWeeklyNutrition] = useState<WeeklyNutrition | null>(null);
+  // "Already in your pantry" starts collapsed: it's secondary to what to buy
+  const [showAlreadyHave, setShowAlreadyHave] = useState(false);
   // The Monday of the plan this list is for (#194): the link's ?week=, else the week the plan page
   // would open (weekToOpen: the week ahead at the weekend, else today's), else the week you'd plan next.
   const [weekStart, setWeekStart] = useState<string | null>(null);
@@ -140,28 +131,6 @@ export default function ShoppingListPage() {
         const recipe = RecipeLibrary.getById(day.recipeId);
         return sum + ((recipe?.costPerServeEst || 0) * day.scaledServings);
       }, 0);
-      
-      // Calculate weekly nutrition totals
-      const nutritionTotals = days.reduce(
-        (totals, day) => {
-          const recipe = RecipeLibrary.getById(day.recipeId);
-          if (recipe?.nutrition) {
-            const servings = day.scaledServings;
-            totals.totalCalories += recipe.nutrition.calories * servings;
-            totals.totalProtein += recipe.nutrition.protein * servings;
-            totals.totalCarbs += recipe.nutrition.carbs * servings;
-            totals.totalFat += recipe.nutrition.fat * servings;
-            totals.mealsWithNutrition += 1;
-          }
-          totals.mealCount += 1;
-          return totals;
-        },
-        { totalCalories: 0, totalProtein: 0, totalCarbs: 0, totalFat: 0, mealCount: 0, mealsWithNutrition: 0 }
-      );
-      
-      if (nutritionTotals.mealsWithNutrition > 0) {
-        setWeeklyNutrition(nutritionTotals);
-      }
       
       plan = {
         startISO: nextWeekISO,
@@ -407,19 +376,45 @@ export default function ShoppingListPage() {
   const categories = Object.keys(groupedNeedToBuy).sort();
   const totalItems = needToBuy.length;
 
+  // Each item's price, worked out once: the Coles price when there is one, else the static
+  // estimate. The rows show it and the header's total sums it, so the two always agree.
+  const priceFor = (item: AggregatedIngredient) => {
+    const apiPrice = apiPrices.get(item.normalizedName);
+    const staticPriceInfo = estimateIngredientCost(item.normalizedName, item.priceQty, item.priceUnit);
+    return apiPrice ? {
+      estimatedCost: apiPrice.cost,
+      priceSource: apiPrice.source,
+      livePrice: apiPrice.livePrice,
+      confidence: apiPrice.source === 'api' ? 'high' as const : staticPriceInfo.confidence
+    } : {
+      estimatedCost: staticPriceInfo.estimatedCost,
+      priceSource: staticPriceInfo.priceSource,
+      livePrice: undefined,
+      confidence: staticPriceInfo.confidence
+    };
+  };
+  const priceByItem = new Map(needToBuy.map((item) => [item, priceFor(item)]));
+  const estimatedTotal = [...priceByItem.values()].reduce((sum, price) => sum + price.estimatedCost, 0);
+
   return (
     <>
       <Main maxWidth="md">
         <Container>
           <Stack direction="column" gap="lg">
-            {/* Header */}
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
+            {/* Header: title, then the week and the figures a shopper needs as tags, like the plan page */}
+            <Stack direction="row" justifyContent="space-between" alignItems="center" gap="md" wrap>
               <Stack direction="column" gap="xs">
                 <Typography variant="h1">Shopping list</Typography>
-                {weekStart && <Typography variant="small" color="subdued">{formatWeekRange(weekStart)}</Typography>}
+                <Stack direction="row" gap="xs" alignItems="center" wrap>
+                  {weekStart && <Typography variant="small" color="subdued">{formatWeekRange(weekStart)}</Typography>}
+                  <Tag size="small">{`${totalItems} ${totalItems === 1 ? 'item' : 'items'}`}</Tag>
+                  {estimatedTotal > 0 && <Tag size="small">{`~$${estimatedTotal.toFixed(2)}`}</Tag>}
+                  <Tag size="small">{`${categories.length} ${categories.length === 1 ? 'aisle' : 'aisles'}`}</Tag>
+                </Stack>
               </Stack>
-              <Stack direction="row" gap="md">
-                <Button variant="secondary" size="large" onClick={handleExportCSV}>
+              <Stack direction="row" gap="sm">
+                {/* Naked: Shop at Coles is the page's one main action */}
+                <Button variant="naked" size="large" iconName="export" onClick={handleExportCSV}>
                   Export CSV
                 </Button>
                 <Button variant="primary" size="large" onClick={handleShopAtColes} disabled={sendingToColes}>
@@ -437,138 +432,39 @@ export default function ShoppingListPage() {
             {/* API Quota Warning */}
             <ApiQuotaWarning />
           
-            <Typography variant="body">
-              Aggregated from your meal plan with de-duplicated ingredients.
-            </Typography>
-
-            {/* Summary Stats */}
-            <ResponsiveGrid 
-              cols={1} 
-              colsSm={2} 
-              colsMd={4} 
-              gap="2"
-            >
-              <Box bg="color.fill.emphasis" borderRadius="lg" p="md">
-                <Typography variant="subtitle" color="inverse">Items to buy</Typography>
-                <Typography variant="h2" color="inverse">{totalItems}</Typography>
-              </Box>
-              <Box bg="color.fill.emphasis" borderRadius="lg" p="md">
-                <Typography variant="subtitle" color="inverse">Already have</Typography>
-                <Typography variant="h2" color="inverse">{alreadyHave.length}</Typography>
-              </Box>
-              <Box bg="color.fill.emphasis" borderRadius="lg" p="md">
-                <Typography variant="subtitle" color="inverse">Categories</Typography>
-                <Typography variant="h2" color="inverse">{categories.length}</Typography>
-              </Box>
-              <Box bg="color.fill.emphasis" borderRadius="lg" p="md">
-                <Typography variant="subtitle" color="inverse">Estimated total</Typography>
-                <Typography variant="h2" color="inverse">
-                  ${needToBuy.reduce((sum, item) => {
-                    const priceInfo = estimateIngredientCost(item.normalizedName, item.priceQty, item.priceUnit);
-                    // Debug logging to find the issue
-                    if (priceInfo.estimatedCost > 100) {
-                      console.log('⚠️ High price detected:', {
-                        item: item.name,
-                        normalized: item.normalizedName,
-                        qty: item.totalQty,
-                        unit: item.unit,
-                        price: priceInfo.estimatedCost,
-                        priceInfo
-                      });
-                    }
-                    return sum + priceInfo.estimatedCost;
-                  }, 0).toFixed(2)}
-                </Typography>
-              </Box>
-            </ResponsiveGrid>
-
-            {/* Weekly Nutrition Summary */}
-            {weeklyNutrition && weeklyNutrition.mealsWithNutrition > 0 && (
-              <Box border="default" borderRadius="lg" p="lg" bg="surface.raised">
-                <Stack direction="column" gap="md">
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Typography variant="h3">Weekly nutrition summary</Typography>
-                    <Typography variant="small" color="subdued">
-                      {weeklyNutrition.mealsWithNutrition} of {weeklyNutrition.mealCount} meals
-                    </Typography>
-                  </Stack>
-                  <ResponsiveGrid cols={2} colsMd={4} gap="2">
-                    <Box bg="color.fill.muted" borderRadius="md" p="md">
-                      <Stack direction="column" gap="xs">
-                        <Typography variant="small" color="subdued">Total calories</Typography>
-                        <Typography variant="h3">{Math.round(weeklyNutrition.totalCalories).toLocaleString()}</Typography>
-                        <Typography variant="small" color="subdued">kcal</Typography>
-                      </Stack>
-                    </Box>
-                    <Box bg="color.fill.muted" borderRadius="md" p="md">
-                      <Stack direction="column" gap="xs">
-                        <Typography variant="small" color="subdued">Total protein</Typography>
-                        <Typography variant="h3">{Math.round(weeklyNutrition.totalProtein)}</Typography>
-                        <Typography variant="small" color="subdued">grams</Typography>
-                      </Stack>
-                    </Box>
-                    <Box bg="color.fill.muted" borderRadius="md" p="md">
-                      <Stack direction="column" gap="xs">
-                        <Typography variant="small" color="subdued">Total carbs</Typography>
-                        <Typography variant="h3">{Math.round(weeklyNutrition.totalCarbs)}</Typography>
-                        <Typography variant="small" color="subdued">grams</Typography>
-                      </Stack>
-                    </Box>
-                    <Box bg="color.fill.muted" borderRadius="md" p="md">
-                      <Stack direction="column" gap="xs">
-                        <Typography variant="small" color="subdued">Total fat</Typography>
-                        <Typography variant="h3">{Math.round(weeklyNutrition.totalFat)}</Typography>
-                        <Typography variant="small" color="subdued">grams</Typography>
-                      </Stack>
-                    </Box>
-                  </ResponsiveGrid>
-                </Stack>
+            {/* Everything's already in the pantry: say so, rather than an empty page */}
+            {totalItems === 0 && (
+              <Box mt="2xl">
+                <EmptyState
+                  illustration="empty"
+                  title="Nothing to buy this week"
+                  description="Everything this plan needs is already in your pantry."
+                />
               </Box>
             )}
 
-            {/* Items to Buy - Grouped by Category */}
-            <Box 
-              border="default"
-              borderRadius="lg"
-              p="lg"
-              bg="surface.raised"
-            >
-              <Stack direction="column" gap="lg">
-                {categories.map((category, categoryIndex) => {
+            {/* Items to buy, by aisle: straight on the page, no card. One gap between aisles (the
+                heading separates them, so no divider), compact rows to scan quickly. */}
+            {totalItems > 0 && (
+            <Box mt="2xl" data-co-density="compact">
+              <Stack direction="column" gap="xl">
+                {categories.map((category) => {
                   const items = groupedNeedToBuy[category];
-                  
+
                   return (
-                    <Stack key={category} direction="column" gap="md">
-                      {categoryIndex > 0 && (
-                        <Divider />
-                      )}
-                      <Box px="lg">
-                        <Stack direction="row" alignItems="center" gap="sm">
-                          <Typography variant="h4">{category}</Typography>
-                          <Chip>{items.length}</Chip>
-                        </Stack>
-                      </Box>
-                      
-                      <List dividers spacing="comfortable">
+                    <Stack key={category} direction="column" gap="sm">
+                      <Stack direction="row" alignItems="center" gap="sm">
+                        <Typography variant="h4" as="h2">{category}</Typography>
+                        <Tag size="small">{items.length}</Tag>
+                      </Stack>
+
+                      <List dividers>
                         {items.map((item, index) => {
                         const hasMultipleRecipes = item.sourceRecipes.length > 1;
                         const itemKey = `${category}-${index}`;
                         const isExpanded = expandedItems.has(itemKey);
                         
-                        // Get price estimate - use API price if available, otherwise static
-                        const apiPrice = apiPrices.get(item.normalizedName);
-                        const staticPriceInfo = estimateIngredientCost(item.normalizedName, item.priceQty, item.priceUnit);
-                        
-                        const priceInfo = apiPrice ? {
-                          estimatedCost: apiPrice.cost,
-                          priceSource: apiPrice.source,
-                          livePrice: apiPrice.livePrice,
-                          confidence: apiPrice.source === 'api' ? 'high' as const : staticPriceInfo.confidence
-                        } : {
-                          estimatedCost: staticPriceInfo.estimatedCost,
-                          priceSource: staticPriceInfo.priceSource,
-                          confidence: staticPriceInfo.confidence
-                        };
+                        const priceInfo = priceByItem.get(item) ?? priceFor(item);
                         
                         const priceDisplay = priceInfo.estimatedCost > 0 
                           ? `$${priceInfo.estimatedCost.toFixed(2)}` 
@@ -606,7 +502,9 @@ export default function ShoppingListPage() {
                                     <Typography variant="small" color={priceInfo.confidence === 'high' ? 'default' : 'subdued'}>
                                       {priceDisplay}
                                     </Typography>
-                                    {priceInfo.priceSource && (
+                                    {/* Flag a live Coles price, and a rough (category or cached) estimate. A mapped
+                                        static price is the norm, so it goes untagged to keep rows quiet. */}
+                                    {priceInfo.priceSource && priceInfo.priceSource !== 'static' && (
                                       <PriceSourceBadge source={priceInfo.priceSource} livePrice={priceInfo.livePrice} />
                                     )}
                                     {showConfidenceIcon && !priceInfo.priceSource && <Icon name="checkRing" iconColor="success" size="sm" />}
@@ -652,28 +550,42 @@ export default function ShoppingListPage() {
                   </Stack>
                 );
               })}
-            </Stack>
-          </Box>
+              </Stack>
+            </Box>
+            )}
 
             {/* Already Have Section */}
             {alreadyHave.length > 0 && (
-              <Box 
-                border="default"
-                borderRadius="lg"
-                p="lg"
-                bg="surface.raised"
-              >
-                <Stack direction="column" gap="md">
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Typography variant="h3">Already in your pantry</Typography>
-                    <Chip>{alreadyHave.length} items</Chip>
+              // Collapsed by default, under a divider: secondary to the list above
+              <Stack direction="column" gap="sm">
+                <Divider size="small" />
+                <Stack direction="row" justifyContent="space-between" alignItems="center" gap="sm">
+                  <Stack direction="row" alignItems="center" gap="sm">
+                    <Typography variant="h4" as="h2">Already in your pantry</Typography>
+                    <Tag size="small">{alreadyHave.length}</Tag>
                   </Stack>
-                  
+                  <Button
+                    variant="naked"
+                    size="small"
+                    iconName={showAlreadyHave ? 'arrowUp' : 'arrowDown'}
+                    aria-expanded={showAlreadyHave}
+                    aria-controls="already-have-list"
+                    // The visible "Show"/"Hide" alone doesn't say what it shows
+                    aria-label={`${showAlreadyHave ? 'Hide' : 'Show'} items already in your pantry`}
+                    onClick={() => setShowAlreadyHave((shown) => !shown)}
+                  >
+                    {showAlreadyHave ? 'Hide' : 'Show'}
+                  </Button>
+                </Stack>
+
+                {/* Always in the DOM, hidden when collapsed, so aria-controls has a target */}
+                <div id="already-have-list" data-co-density="compact" hidden={!showAlreadyHave}>
+                <Stack direction="column" gap="sm">
                   <Typography variant="small" color="subdued">
-                    These ingredients are in your pantry inventory or marked as items you always have. They&apos;re excluded from your shopping list. Click ✕ to move back to the shopping list.
+                    Left off your list because they&apos;re in your pantry or marked as always on hand. Add any you need more of.
                   </Typography>
-                  
-                  <List dividers spacing="compact">
+
+                  <List dividers>
                     {alreadyHave.map((item, index) => (
                       <ListItem
                         key={index}
@@ -697,7 +609,8 @@ export default function ShoppingListPage() {
                     ))}
                   </List>
                 </Stack>
-              </Box>
+                </div>
+              </Stack>
             )}
 
             {/* Once the trolley is checked out on coles.com.au */}

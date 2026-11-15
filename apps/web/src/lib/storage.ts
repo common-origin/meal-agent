@@ -90,6 +90,8 @@ export const STORAGE_KEYS = {
   // Old keys may still exist on devices, so sign-out still clears them.
   OVERRIDES_PREFIX: "ma_overrides:", // followed by weekOfISO
   SHOPPING_COMPLETE_PREFIX: "shopping-complete-", // followed by weekOfISO, see shopping-list/page.tsx
+  // The next week whose "not planned yet" prompt was dismissed on the plan page (a week's Monday ISO)
+  NEXT_WEEK_PROMPT_DISMISSED: "meal-agent:next-week-prompt-dismissed",
 } as const;
 
 // Type imports
@@ -428,6 +430,7 @@ export function clearHouseholdScopedCaches(): void {
     Storage.remove(CURRENT_WEEK_PLAN_KEY);
     Storage.remove(RECIPE_RATINGS_KEY);
     Storage.remove(BLOCKED_RECIPES_KEY);
+    Storage.remove(STORAGE_KEYS.NEXT_WEEK_PROMPT_DISMISSED);
     localStorage.removeItem(FAVORITES_PENDING_KEY);
 
     // Weekly overrides and shopping-completion state are each one key per
