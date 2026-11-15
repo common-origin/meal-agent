@@ -11,6 +11,7 @@ vi.mock('@/lib/hybridStorage', () => ({
   listPlannedWeeks: vi.fn(async () => []),
   // No saved time zone: the browser's day decides the week (#232)
   getFamilySettings: vi.fn(async () => ({ location: {} })),
+  hydrateRecipesFromSupabase: vi.fn(async () => true),
 }));
 vi.mock('@/lib/compose', () => ({ composeWeek: () => ({ startISO: '2026-10-26', days: [], costEstimate: 0, conflicts: [] }) }));
 vi.mock('@/lib/shoppingListAggregator', () => ({ aggregateShoppingList: () => [], toLegacyFormat: () => [] }));

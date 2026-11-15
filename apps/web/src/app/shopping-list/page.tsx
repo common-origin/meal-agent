@@ -10,7 +10,7 @@ import { ingredientKey } from "@/lib/ingredients/resolve";
 import { generateShoppingListCSV, downloadCSV } from "@/lib/csv";
 import { loadHousehold, getDefaultHousehold } from "@/lib/storage";
 import { clearShoppingComplete, isShoppingComplete as isWeekShoppingComplete, markShoppingComplete } from "@/lib/shoppingCompletion";
-import { loadCurrentWeekPlan, savePantryItems, loadPantryItems, hydrateRecencyFromSupabase, syncRecencyToSupabase, listPlannedWeeks, getFamilySettings } from "@/lib/hybridStorage";
+import { loadCurrentWeekPlan, savePantryItems, loadPantryItems, hydrateRecencyFromSupabase, syncRecencyToSupabase, listPlannedWeeks, getFamilySettings, hydrateRecipesFromSupabase } from "@/lib/hybridStorage";
 import { householdTimeZone, todayInTimeZone } from "@/lib/timeZones";
 import { composeWeek } from "@/lib/compose";
 import { defaultPlanningWeekISO, formatWeekRange, mondayOfWeekISO, parseWeekParam, shiftWeekISO, weekToOpen } from "@/lib/schedule";
@@ -95,6 +95,11 @@ export default function ShoppingListPage() {
     let plan;
     let weeklyPantryItems: Array<{ name: string; qty: number; unit: string }> = [];
     
+    // The plan's recipes may not be in this browser yet: another device or member planned them (#233).
+    if (savedPlan?.recipeIds.some((recipeId) => recipeId && !RecipeLibrary.getById(recipeId))) {
+      await hydrateRecipesFromSupabase().catch(() => false);
+    }
+
     if (savedPlan) {
       // Use the saved plan - build PlanWeek from saved recipe IDs
       console.log('📋 Using saved week plan:', savedPlan.recipeIds);

@@ -555,6 +555,30 @@ export function toggleFavorite(recipeId: string): boolean {
   return nowFavorite;
 }
 
+/** The load in progress, so pages that ask at the same time share one read. */
+let recipesHydration: Promise<boolean> | null = null;
+
+/**
+ * Loads the household's recipes into the local library cache (#233), the way
+ * favourites are (#222), so a recipe saved or generated on another device or
+ * by another member opens here too. Resolves true once the cache holds the
+ * household's recipes; false when signed out or Supabase can't be read, in
+ * which case the cache is left as it was. Callers that ask while a load is
+ * running share it.
+ */
+export function hydrateRecipesFromSupabase(): Promise<boolean> {
+  recipesHydration ??= (async () => {
+    if (!(await isAuthenticated())) return false;
+    const recipes = await SupabaseStorage.loadAllRecipesFromDb();
+    if (!recipes) return false;
+    // Nothing on the server: keep what's cached rather than clearing it, as the plan page always has.
+    return recipes.length === 0 ? true : RecipeLibrary.syncSupabaseRecipes(recipes);
+  })().finally(() => {
+    recipesHydration = null;
+  });
+  return recipesHydration;
+}
+
 /**
  * Loads the household's favourites into the local cache and returns them.
  * The first time this device syncs a household, favourites it has locally
