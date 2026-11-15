@@ -49,6 +49,11 @@ export function timeZoneOptions(current: string | undefined): { id: string; labe
   return options;
 }
 
+/** The zone a household's days follow: its saved zone, else the browser's, else the default (#232). */
+export function householdTimeZone(saved: string | undefined): string {
+  return pickTimeZone(saved, Intl.DateTimeFormat().resolvedOptions().timeZone);
+}
+
 /**
  * Today's date in `timeZone`, as YYYY-MM-DD (#232). Week logic (which week
  * to plan, "This week") goes by the household's day, not the server's or

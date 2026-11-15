@@ -31,7 +31,7 @@ import { RecipeLibrary } from "@/lib/library";
 import { track } from "@/lib/analytics";
 import { recipeSourceLabel } from "@/lib/recipeDisplay";
 import { weekDateLabels } from "@/lib/dayCard";
-import { pickTimeZone, todayInTimeZone } from "@/lib/timeZones";
+import { householdTimeZone, todayInTimeZone } from "@/lib/timeZones";
 import { trackIngredientUsage } from "@/lib/ingredientAnalytics";
 import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
 import { apiErrorMessage, redirectToLoginIfUnauthenticated } from "@/lib/api/client";
@@ -141,14 +141,18 @@ export default function PlanPage() {
   // in the household's time zone, to avoid a hydration mismatch (#232).
   const [weekStart, setWeekStart] = useState<string>('');
   const weekStartRef = useRef(weekStart);
-  // Today in the household's time zone (#220), once settings have loaded.
-  const [today, setToday] = useState<string | null>(null);
+  // The household's time zone (#220), once settings have loaded; "today" is
+  // read from it on each render, so it doesn't go stale if the page stays open.
+  const [timeZone, setTimeZone] = useState<string | null>(null);
+  const today = timeZone ? todayInTimeZone(timeZone) : null;
   // Weeks from this one on that have a saved plan, so the wizard can say which it would replace.
   const [plannedWeeks, setPlannedWeeks] = useState<string[]>([]);
   const persistPlan = (pantry: string[]): Promise<boolean> => {
     // The week and plan as they are now: if the user has moved to another week by the time this
     // runs, this save still writes the plan it was made for, to that plan's week.
     const week = weekStartRef.current;
+    // No week until the initial load has chosen one (#232): nothing to save yet.
+    if (!week) return Promise.resolve(false);
     const snapshot = weekPlanRef.current;
     const run = saveChainRef.current.then(async () => {
       const plan = weekStartRef.current === week ? weekPlanRef.current : snapshot;
@@ -300,9 +304,9 @@ export default function PlanPage() {
       setPlannedWeeks(weeks);
 
       // The household's day decides the weeks (#232), else the browser's.
-      const browserZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const householdToday = todayInTimeZone(pickTimeZone(familySettings.location?.timeZone, browserZone));
-      setToday(householdToday);
+      const zone = householdTimeZone(familySettings.location?.timeZone);
+      const householdToday = todayInTimeZone(zone);
+      setTimeZone(zone);
       const defaultWeek = defaultPlanningWeekISO(householdToday);
       weekStartRef.current = defaultWeek;
       setWeekStart(defaultWeek);
@@ -994,6 +998,7 @@ export default function PlanPage() {
           // generate a plan, which would now land on whichever week was showing.
           onCancel={() => setShowWizard(false)}
           initialWeek={wizardWeek}
+          today={today ?? undefined}
           plannedWeeks={plannedWeeks}
         />
       ) : (

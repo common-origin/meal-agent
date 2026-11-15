@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { DEFAULT_HOUSEHOLD_TIME_ZONE, isValidTimeZone, pickTimeZone, suggestedTimeZone, timeZoneOptions, todayInTimeZone, AUSTRALIAN_TIME_ZONES } from '../timeZones';
+import { DEFAULT_HOUSEHOLD_TIME_ZONE, isValidTimeZone, pickTimeZone, suggestedTimeZone, timeZoneOptions, todayInTimeZone, householdTimeZone, AUSTRALIAN_TIME_ZONES } from '../timeZones';
 import { defaultPlanningWeekISO } from '../schedule';
 import { DEFAULT_FAMILY_SETTINGS, validateFamilySettings } from '../types/settings';
 
@@ -49,5 +49,13 @@ describe('todayInTimeZone (#232)', () => {
   it("picks the week ahead once it's Friday in the household's zone", () => {
     expect(defaultPlanningWeekISO(todayInTimeZone('Australia/Sydney', now))).toBe('2026-11-23');
     expect(defaultPlanningWeekISO(todayInTimeZone('Australia/Perth', now))).toBe('2026-11-16');
+  });
+});
+
+describe('householdTimeZone (#232)', () => {
+  it("uses the household's saved zone, else the browser's", () => {
+    expect(householdTimeZone('Australia/Perth')).toBe('Australia/Perth');
+    expect(householdTimeZone(undefined)).toBe(pickTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone));
+    expect(householdTimeZone('Not/AZone')).toBe(pickTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone));
   });
 });

@@ -10,9 +10,10 @@ import { ingredientKey } from "@/lib/ingredients/resolve";
 import { generateShoppingListCSV, downloadCSV } from "@/lib/csv";
 import { loadHousehold, getDefaultHousehold } from "@/lib/storage";
 import { clearShoppingComplete, isShoppingComplete as isWeekShoppingComplete, markShoppingComplete } from "@/lib/shoppingCompletion";
-import { loadCurrentWeekPlan, savePantryItems, loadPantryItems, hydrateRecencyFromSupabase, syncRecencyToSupabase, listPlannedWeeks } from "@/lib/hybridStorage";
+import { loadCurrentWeekPlan, savePantryItems, loadPantryItems, hydrateRecencyFromSupabase, syncRecencyToSupabase, listPlannedWeeks, getFamilySettings } from "@/lib/hybridStorage";
+import { householdTimeZone, todayInTimeZone } from "@/lib/timeZones";
 import { composeWeek } from "@/lib/compose";
-import { defaultPlanningWeekISO, formatWeekRange, parseWeekParam, thisWeekMondayISO, weekToOpen } from "@/lib/schedule";
+import { defaultPlanningWeekISO, formatWeekRange, mondayOfWeekISO, parseWeekParam, shiftWeekISO, weekToOpen } from "@/lib/schedule";
 import { track, type CostOptimizedMeta } from "@/lib/analytics";
 import { estimateIngredientCost } from "@/lib/colesMapping";
 import { RecipeLibrary } from "@/lib/library";
@@ -232,8 +233,17 @@ export default function ShoppingListPage() {
     
     (async () => {
       const fromLink = parseWeekParam(new URLSearchParams(window.location.search).get('week'));
-      const week =
-        fromLink ?? weekToOpen(await listPlannedWeeks(thisWeekMondayISO()).catch(() => [])) ?? defaultPlanningWeekISO();
+      // With no link, the same week the plan page opens: by the household's day (#232).
+      const pickWeek = async () => {
+        const [settings, weeks] = await Promise.all([
+          getFamilySettings().catch(() => null),
+          // From a week back: today here may still be yesterday in the household's zone.
+          listPlannedWeeks(shiftWeekISO(mondayOfWeekISO(), -1)).catch(() => []),
+        ]);
+        const today = todayInTimeZone(householdTimeZone(settings?.location?.timeZone));
+        return weekToOpen(weeks, today) ?? defaultPlanningWeekISO(today);
+      };
+      const week = fromLink ?? (await pickWeek());
       weekRef.current = week;
       setWeekStart(week);
 
