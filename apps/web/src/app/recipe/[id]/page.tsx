@@ -62,8 +62,22 @@ const metadataContainerStyle: React.CSSProperties = {
 export default function RecipePage({ params }: RecipePageProps) {
   const router = useRouter();
   const { id } = use(params);
-  const [recipe] = useState<Recipe | null>(() => RecipeLibrary.getById(id) || null);
-  const [favorited, setFavorited] = useState(() => isFavorite(id));
+  // The recipe and its per-recipe flags live in localStorage, which only the
+  // browser has. Reading them during render made the server render "not
+  // found" and the browser the recipe, a hydration mismatch (#200), so
+  // they're read after mount. `undefined` means not loaded yet.
+  const [loaded, setLoaded] = useState<{ id: string; recipe: Recipe | null } | null>(null);
+  const recipe = loaded?.id === id ? loaded.recipe : undefined;
+  const [favorited, setFavorited] = useState(false);
+  const [rating, setRating] = useState<number>(0);
+  const [blocked, setBlocked] = useState<boolean>(false);
+
+  useEffect(() => {
+    setLoaded({ id, recipe: RecipeLibrary.getById(id) ?? null });
+    setFavorited(isFavorite(id));
+    setRating(getRecipeRating(id) || 0);
+    setBlocked(isRecipeBlocked(id));
+  }, [id]);
 
   // The household's favourites, from any device or member (#222)
   useEffect(() => {
@@ -77,8 +91,6 @@ export default function RecipePage({ params }: RecipePageProps) {
       cancelled = true;
     };
   }, [id]);
-  const [rating, setRating] = useState<number>(() => getRecipeRating(id) || 0);
-  const [blocked, setBlocked] = useState<boolean>(() => isRecipeBlocked(id));
   const [showBlockConfirm, setShowBlockConfirm] = useState<boolean>(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -207,6 +219,14 @@ export default function RecipePage({ params }: RecipePageProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [menuOpen]);
   
+  if (recipe === undefined) {
+    return (
+      <Main>
+        <Typography variant="body" color="subdued">Loading recipe…</Typography>
+      </Main>
+    );
+  }
+
   if (!recipe) {
     return (
       <Main>
