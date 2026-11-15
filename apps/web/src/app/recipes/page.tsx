@@ -6,7 +6,8 @@ import { Stack, Typography, Box, Button, TextField, Dropdown, ResponsiveGrid, Em
 import Main from "@/components/app/Main";
 import ButtonGroup from "@/components/app/ButtonGroup";
 import { RecipeLibrary } from "@/lib/library";
-import { getFavorites, toggleFavorite } from "@/lib/storage";
+import { getFavorites } from "@/lib/storage";
+import { hydrateFavoritesFromSupabase, toggleFavorite } from "@/lib/hybridStorage";
 import { Storage } from "@/lib/storage";
 import { type Recipe } from "@/lib/types/recipe";
 import { track } from "@/lib/analytics";
@@ -85,6 +86,10 @@ export default function RecipesPage() {
         const customRecipes = RecipeLibrary.getCustomRecipes();
         setRecipes(customRecipes);
         setFavorites(getFavorites());
+        // Then the household's, from any device or member (#222)
+        hydrateFavoritesFromSupabase()
+          .then(setFavorites)
+          .catch((err) => console.warn('Could not load favourites:', err));
         
         track('page_view', { page: 'saved_recipes', count: customRecipes.length });
       } catch (error) {

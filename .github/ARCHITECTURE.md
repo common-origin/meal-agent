@@ -247,6 +247,14 @@ signup):
   (`create_household_invite`, `accept_household_invite`,
   `remove_household_member` and so on) that check the caller; only an owner
   can update the `households` row, including its tokens (#217)
+- **`household_favorites`** (migration 016) — the household's favourite
+  recipe IDs, shared by members and devices (#222). No foreign key to
+  `recipes`, since built-in library recipes aren't in it. localStorage stays
+  the synchronous cache everything reads: `toggleFavorite` in
+  `hybridStorage.ts` writes locally then here, and
+  `hydrateFavoritesFromSupabase` (plan, recipes and recipe pages) loads it
+  back, uploading a device's local favourites the first time it syncs a
+  household
 - **`family_settings`** — meal-planning preferences; `full_settings` is a
   JSONB column (migration 004) holding the complete settings object, with
   a handful of columns duplicated out of it for querying. A new household's
@@ -302,7 +310,7 @@ signup):
   login and signup pages show as "not invited"
   (`lib/auth/authErrorMessages.ts`, `app/auth/callback/route.ts`)
 
-Migrations run in numeric order, 001 through 015 (009 and 010 are
+Migrations run in numeric order, 001 through 016 (009 and 010 are
 independent of each other) — see `supabase/README.md` for the exact
 steps. There's no migration-runner in CI; each one is applied by
 hand in the Supabase SQL editor, same as every migration so far.

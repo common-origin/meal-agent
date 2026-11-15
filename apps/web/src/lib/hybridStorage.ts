@@ -485,3 +485,74 @@ export async function migrateLocalStorageToSupabase(): Promise<{
     return { success: false, errors };
   }
 }
+
+/**
+ * Favourites (#222)
+ *
+ * household_favorites in Supabase is the source of truth; localStorage
+ * (lib/storage.ts) is the synchronous cache everything reads.
+ */
+
+const FAVORITES_SYNCED_PREFIX = 'meal-agent:favorites-synced:';
+
+/**
+ * Toggles a favourite: in the local cache now (as before), then in Supabase
+ * in the background. Returns whether it's now a favourite. A failed remote
+ * write is only warned about; the next hydrate brings the cache back in
+ * line with the server.
+ */
+export function toggleFavorite(recipeId: string): boolean {
+  LocalStorage.toggleFavorite(recipeId);
+  const nowFavorite = LocalStorage.isFavorite(recipeId);
+  void (async () => {
+    if (!(await isAuthenticated())) return;
+    const ok = nowFavorite
+      ? await SupabaseStorage.addFavoritesToDb([recipeId])
+      : await SupabaseStorage.removeFavoriteFromDb(recipeId);
+    if (!ok) console.warn(`Could not ${nowFavorite ? 'save' : 'remove'} favourite ${recipeId} for the household`);
+  })();
+  return nowFavorite;
+}
+
+/**
+ * Loads the household's favourites into the local cache and returns them.
+ * The first time this device syncs a household, favourites it has locally
+ * but the server doesn't are uploaded and kept; after that the server wins,
+ * so removals elsewhere carry over. Signed out, or when Supabase can't be
+ * read, the local list is returned unchanged.
+ */
+export async function hydrateFavoritesFromSupabase(): Promise<string[]> {
+  if (!(await isAuthenticated())) return LocalStorage.getFavorites();
+
+  // Reading the server first also clears a cache left from another household (#217).
+  const remote = await SupabaseStorage.loadFavoritesFromDb();
+  if (!remote) return LocalStorage.getFavorites();
+
+  const syncedKey = `${FAVORITES_SYNCED_PREFIX}${remote.householdId}`;
+  let firstSync = false;
+  try {
+    firstSync = localStorage.getItem(syncedKey) === null;
+  } catch {
+    firstSync = false;
+  }
+
+  let favorites = remote.recipeIds;
+  if (firstSync) {
+    const localOnly = LocalStorage.getFavorites().filter(id => !remote.recipeIds.includes(id));
+    if (localOnly.length > 0) {
+      if (!(await SupabaseStorage.addFavoritesToDb(localOnly))) {
+        // Keep them locally and try the upload again next time.
+        return [...new Set([...remote.recipeIds, ...LocalStorage.getFavorites()])];
+      }
+      favorites = [...remote.recipeIds, ...localOnly];
+    }
+    try {
+      localStorage.setItem(syncedKey, new Date().toISOString());
+    } catch {
+      // Storage blocked: the upload just runs again next time, harmlessly.
+    }
+  }
+
+  LocalStorage.setFavorites(favorites);
+  return favorites;
+}

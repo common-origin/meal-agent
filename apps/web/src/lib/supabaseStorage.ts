@@ -633,3 +633,83 @@ export async function loadRecipeHistory(sinceISO: string): Promise<RecipeHistory
     return [];
   }
 }
+
+/**
+ * Favourites (#222): the household_favorites table is the source of truth,
+ * shared by the household's members and devices.
+ */
+export interface HouseholdFavorites {
+  householdId: string;
+  recipeIds: string[];
+}
+
+/** The household's favourites, or null when they couldn't be read (as distinct from none). */
+export async function loadFavoritesFromDb(): Promise<HouseholdFavorites | null> {
+  try {
+    const householdId = await getHouseholdId();
+    if (!householdId) return null;
+
+    const supabase = createBrowserClient();
+    const { data, error } = await supabase
+      .from('household_favorites')
+      .select('recipe_id')
+      .eq('household_id', householdId)
+      .order('created_at', { ascending: true });
+
+    if (error || !data) {
+      if (error) console.error('Error loading favourites:', error);
+      return null;
+    }
+    return { householdId, recipeIds: data.map(row => row.recipe_id) };
+  } catch (error) {
+    console.error('Error in loadFavoritesFromDb:', error);
+    return null;
+  }
+}
+
+/** Adds favourites to the household (already-present ones are left as they are). */
+export async function addFavoritesToDb(recipeIds: string[]): Promise<boolean> {
+  if (recipeIds.length === 0) return true;
+  try {
+    const householdId = await getHouseholdId();
+    if (!householdId) return false;
+
+    const supabase = createBrowserClient();
+    const { error } = await supabase
+      .from('household_favorites')
+      .upsert(recipeIds.map(recipe_id => ({ household_id: householdId, recipe_id })), {
+        onConflict: 'household_id,recipe_id',
+        ignoreDuplicates: true,
+      });
+    if (error) {
+      console.error('Error adding favourites:', error);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('Error in addFavoritesToDb:', error);
+    return false;
+  }
+}
+
+export async function removeFavoriteFromDb(recipeId: string): Promise<boolean> {
+  try {
+    const householdId = await getHouseholdId();
+    if (!householdId) return false;
+
+    const supabase = createBrowserClient();
+    const { error } = await supabase
+      .from('household_favorites')
+      .delete()
+      .eq('household_id', householdId)
+      .eq('recipe_id', recipeId);
+    if (error) {
+      console.error('Error removing favourite:', error);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('Error in removeFavoriteFromDb:', error);
+    return false;
+  }
+}

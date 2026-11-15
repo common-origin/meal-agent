@@ -148,6 +148,12 @@ export function toggleFavorite(recipeId: string): boolean {
   return success;
 }
 
+/** Replaces the cached favourites, e.g. with the household's from Supabase (#222). */
+export function setFavorites(recipeIds: string[]): boolean {
+  const household = loadHousehold() || getDefaultHousehold();
+  return saveHousehold({ ...household, favorites: [...new Set(recipeIds)] });
+}
+
 export function isFavorite(recipeId: string): boolean {
   const household = loadHousehold() || getDefaultHousehold();
   return household.favorites.includes(recipeId);

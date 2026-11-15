@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import styled from "styled-components";
 import { Box, IconButton, List, ListItem, tokens } from "@common-origin/design-system";
-import { toggleFavorite, isFavorite } from "@/lib/storage";
+import { isFavorite } from "@/lib/storage";
+import { toggleFavorite } from "@/lib/hybridStorage";
 import { track } from "@/lib/analytics";
 
 export type MealMenuProps = {
@@ -57,8 +58,7 @@ export default function MealMenu({ recipeId, title, onSwapClick, onMoveClick, on
   };
 
   const handleFavorite = () => {
-    const next = !favorited;
-    toggleFavorite(recipeId);
+    const next = toggleFavorite(recipeId);
     setFavorited(next);
     track(next ? "favorite_added" : "favorite_removed", { recipeId });
   };

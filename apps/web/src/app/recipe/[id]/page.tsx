@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { Stack, Typography, Box, Button, Checkbox, ChipGroup, IconButton, List, ListItem, Alert, Modal, ResponsiveGrid, TextField } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import { tokens } from "@common-origin/design-system";
-import { toggleFavorite, isFavorite, getRecipeRating, saveRecipeRating, blockRecipe, isRecipeBlocked } from "@/lib/storage";
+import { isFavorite, getRecipeRating, saveRecipeRating, blockRecipe, isRecipeBlocked } from "@/lib/storage";
+import { hydrateFavoritesFromSupabase, toggleFavorite } from "@/lib/hybridStorage";
 import { RecipeLibrary } from "@/lib/library";
 import { type Recipe } from "@/lib/types/recipe";
 import { track } from "@/lib/analytics";
@@ -63,6 +64,19 @@ export default function RecipePage({ params }: RecipePageProps) {
   const { id } = use(params);
   const [recipe] = useState<Recipe | null>(() => RecipeLibrary.getById(id) || null);
   const [favorited, setFavorited] = useState(() => isFavorite(id));
+
+  // The household's favourites, from any device or member (#222)
+  useEffect(() => {
+    let cancelled = false;
+    hydrateFavoritesFromSupabase()
+      .then((favorites) => {
+        if (!cancelled) setFavorited(favorites.includes(id));
+      })
+      .catch((err) => console.warn('Could not load favourites:', err));
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
   const [rating, setRating] = useState<number>(() => getRecipeRating(id) || 0);
   const [blocked, setBlocked] = useState<boolean>(() => isRecipeBlocked(id));
   const [showBlockConfirm, setShowBlockConfirm] = useState<boolean>(false);
@@ -103,8 +117,7 @@ export default function RecipePage({ params }: RecipePageProps) {
   }, [id, recipe]);
 
   const handleFavoriteClick = () => {
-    toggleFavorite(id);
-    setFavorited(!favorited);
+    setFavorited(toggleFavorite(id));
     track(favorited ? 'favorite_removed' : 'favorite_added', { recipeId: id });
   };
   
