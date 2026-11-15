@@ -106,10 +106,18 @@ describe('time zone', () => {
     expect(monthInTimeZone('Europe/London', now)).toEqual({ index: 8, name: 'September' });
   });
 
-  it('falls back to Australia/Melbourne for a missing or unknown zone', () => {
-    expect(resolveTimeZone(undefined)).toBe('Australia/Melbourne');
-    expect(resolveTimeZone('Not/AZone')).toBe('Australia/Melbourne');
+  it('falls back to Australia/Sydney for a missing or unknown zone (#220)', () => {
+    expect(resolveTimeZone(undefined)).toBe('Australia/Sydney');
+    expect(resolveTimeZone('Not/AZone')).toBe('Australia/Sydney');
     expect(resolveTimeZone('Europe/London')).toBe('Europe/London');
+  });
+
+  it("prefers the household's own zone to the browser's (#220)", () => {
+    // 14:30 UTC on 30 September: still September in Perth (22:30), already October in Sydney (00:30).
+    vi.setSystemTime(new Date('2026-09-30T14:30:00Z'));
+    const perth = { ...reference.familySettings, location: { ...reference.familySettings.location, timeZone: 'Australia/Perth' } };
+    expect(buildRecipeGenerationPrompt({ ...reference, familySettings: perth, timeZone: 'Australia/Sydney' })).toContain('It is September');
+    expect(buildRecipeGenerationPrompt({ ...reference, timeZone: 'Australia/Sydney' })).toContain('It is October');
   });
 
   it('computes the prompt month in the request time zone', () => {

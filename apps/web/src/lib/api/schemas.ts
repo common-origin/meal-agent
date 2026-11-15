@@ -43,6 +43,7 @@ export const familySettingsSchema = z.object({
     city: text,
     country: text,
     hemisphere: z.enum(['northern', 'southern']),
+    timeZone: z.string().max(64).optional(),
   }),
 
   budgetPerMeal: z.object({ min: z.number(), max: z.number() }),
@@ -97,7 +98,7 @@ export const generateRecipesSchema = z.object({
   slot: daySlotSchema.optional(),
   /** Pantry items flagged to use this week (#91). */
   useSoonItems: z.array(z.string().max(60)).max(60).default([]),
-  /** IANA zone from the browser (#87); unknown zones fall back to Australia/Melbourne. */
+  /** IANA zone from the browser (#87); the household's own zone wins, and unknown zones fall back to Australia/Sydney (#220). */
   timeZone: z.string().max(64).optional(),
 });
 

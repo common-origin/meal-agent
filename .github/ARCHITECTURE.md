@@ -313,7 +313,9 @@ hand in the Supabase SQL editor, same as every migration so far.
 current-week-onward `meal_plans` rows into an ICS feed, meant to be polled
 by something like [GAS-ICS-Sync](https://github.com/derekantrican/GAS-ICS-Sync)
 to push meals into a shared Google Calendar automatically. Every meal
-exports at a fixed 6–7pm slot (`Australia/Sydney`) — there's no per-meal
+exports at a fixed 6–7pm slot in the household's Settings timezone
+(`location.timeZone` in `family_settings.full_settings`, #220; unset falls
+back to `Australia/Sydney`) — there's no per-meal
 time field, by deliberate choice to avoid a schema change for a feature
 whose goal was to be low-effort (see issue #3's history). The route uses
 the Supabase service-role client (bypasses RLS) since an external poller

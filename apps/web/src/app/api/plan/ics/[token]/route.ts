@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dayjs from 'dayjs';
 import { createAdminClient } from '@/lib/supabase/server';
 import { mondayOfWeekISO } from '@/lib/schedule';
+import { pickTimeZone } from '@/lib/timeZones';
 
 export const runtime = 'nodejs';
 
@@ -20,12 +21,17 @@ export const runtime = 'nodejs';
 // exists yet (decided as out of scope when this was built; see issue #3).
 const MEAL_TIME_LOCAL = '18:00:00';
 const MEAL_DURATION_HOURS = 1;
-// No per-household timezone setting exists yet (FamilySettings only has
-// city/country/hemisphere, used for seasonal logic, not a real IANA zone).
-// Defaulting to the household's actual home timezone rather than UTC.
-const TZID = 'Australia/Sydney';
 
 const DAY_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+
+/** location.timeZone from a family_settings.full_settings value, if it has one. */
+function householdTimeZone(fullSettings: unknown): string | undefined {
+  if (!fullSettings || typeof fullSettings !== 'object') return undefined;
+  const location = (fullSettings as { location?: unknown }).location;
+  if (!location || typeof location !== 'object') return undefined;
+  const zone = (location as { timeZone?: unknown }).timeZone;
+  return typeof zone === 'string' ? zone : undefined;
+}
 
 function icsEscape(text: string): string {
   return text
@@ -68,6 +74,15 @@ export async function GET(
   if (householdError || !household) {
     return new NextResponse('Not found', { status: 404 });
   }
+
+  // Dinner is at 18:00 in the household's own zone (#220); unset or unknown
+  // falls back to Australia/Sydney, the feed's zone before there was a setting.
+  const { data: settingsRow } = await supabase
+    .from('family_settings')
+    .select('full_settings')
+    .eq('household_id', household.id)
+    .maybeSingle();
+  const TZID = pickTimeZone(householdTimeZone(settingsRow?.full_settings));
 
   // Only current-week-onward plans — a feed of past dinners isn't useful,
   // and old weeks would otherwise accumulate indefinitely.

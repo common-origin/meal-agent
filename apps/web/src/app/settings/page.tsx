@@ -16,6 +16,8 @@ import SettingsSection, { SettingsField, SettingsForm } from "@/components/app/S
 import ColesExtensionSettings from "@/components/app/ColesExtensionSettings";
 import HouseholdMembersSettings from "@/components/app/HouseholdMembersSettings";
 import TextListField from "@/components/app/TextListField";
+import { suggestedTimeZone, timeZoneOptions } from "@/lib/timeZones";
+import { clientTimeZone } from "@/lib/api/client";
 
 /**
  * Adults is a choice of 1 to 4 (#196). A household saved with more (validation
@@ -24,6 +26,16 @@ import TextListField from "@/components/app/TextListField";
 function adultOptions(current: number): { id: string; label: string }[] {
   const counts = current > 4 ? [1, 2, 3, 4, current] : [1, 2, 3, 4];
   return counts.map((n) => ({ id: String(n), label: String(n) }));
+}
+
+/**
+ * A household with no timezone yet (#220) gets the browser's (if Australian)
+ * or Sydney, so what Settings shows is what it saves.
+ */
+function withSuggestedTimeZone(settings: FamilySettings): FamilySettings {
+  return settings.location.timeZone
+    ? settings
+    : { ...settings, location: { ...settings.location, timeZone: suggestedTimeZone(clientTimeZone()) } };
 }
 
 /** The weekly planning reminder's fixed time (#196). */
@@ -47,7 +59,7 @@ function SettingsPageContent({ welcome }: { welcome: boolean }) {
     // Load settings from Supabase
     const loadSettings = async () => {
       const loadedSettings = await getFamilySettings();
-      setSettings(loadedSettings);
+      setSettings(withSuggestedTimeZone(loadedSettings));
     };
     loadSettings();
 
@@ -123,7 +135,7 @@ function SettingsPageContent({ welcome }: { welcome: boolean }) {
     if (confirm('Are you sure you want to reset all settings to defaults?')) {
       await resetFamilySettings();
       const resetSettings = await getFamilySettings();
-      setSettings(resetSettings);
+      setSettings(withSuggestedTimeZone(resetSettings));
       track('override_saved', { reset: true });
     }
   };
@@ -539,6 +551,19 @@ function SettingsPageContent({ welcome }: { welcome: boolean }) {
 												}
 											}))}
 											placeholder="e.g., Australia"
+										/>
+									</SettingsField>
+
+									<SettingsField>
+										<Dropdown
+											label="Timezone"
+											helperText="When dinner shows in your calendar, and which month it is for seasonal produce"
+											value={settings.location.timeZone ?? ''}
+											onChange={(value) => setSettings(prev => ({
+												...prev,
+												location: { ...prev.location, timeZone: value }
+											}))}
+											options={timeZoneOptions(settings.location.timeZone)}
 										/>
 									</SettingsField>
 
