@@ -6,18 +6,25 @@ const mocks = vi.hoisted(() => ({
   addOk: true,
   added: [] as string[][],
   removed: [] as string[],
+  /** While set, writes wait for it: a write still in flight. */
+  gate: null as Promise<void> | null,
 }));
 
 vi.mock('../supabase/client', () => ({ getCurrentUser: async () => mocks.user }));
 vi.mock('../supabaseStorage', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../supabaseStorage')>()),
   loadFavoritesFromDb: vi.fn(async () => mocks.remote && { ...mocks.remote, recipeIds: [...mocks.remote.recipeIds] }),
+  // Like the server: a successful write changes what the next load returns.
   addFavoritesToDb: vi.fn(async (ids: string[]) => {
+    if (mocks.gate) await mocks.gate;
     mocks.added.push(ids);
+    if (mocks.addOk && mocks.remote) mocks.remote.recipeIds = [...new Set([...mocks.remote.recipeIds, ...ids])];
     return mocks.addOk;
   }),
   removeFavoriteFromDb: vi.fn(async (id: string) => {
+    if (mocks.gate) await mocks.gate;
     mocks.removed.push(id);
+    if (mocks.remote) mocks.remote.recipeIds = mocks.remote.recipeIds.filter((r) => r !== id);
     return true;
   }),
 }));
@@ -34,6 +41,7 @@ beforeEach(() => {
   mocks.addOk = true;
   mocks.added = [];
   mocks.removed = [];
+  mocks.gate = null;
   vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
@@ -86,11 +94,42 @@ describe('favourites sync (#222)', () => {
     expect(mocks.removed).toEqual(['r1']);
   });
 
-  it('toggles only locally when signed out', async () => {
+  it("keeps a toggle whose write is still in flight when a refresh lands first", async () => {
+    mocks.remote = { householdId: 'h1', recipeIds: [] };
+    await hydrateFavoritesFromSupabase(); // first sync done
+    let land = () => {};
+    mocks.gate = new Promise((resolve) => { land = resolve; });
+    toggleFavorite('r1'); // its insert hasn't reached the server yet
+    const refreshed = hydrateFavoritesFromSupabase();
+    land();
+    expect(await refreshed).toEqual(['r1']);
+    expect(getFavorites()).toEqual(['r1']);
+  });
+
+  it('retries a failed toggle on the next refresh, and stops once it lands', async () => {
+    await hydrateFavoritesFromSupabase();
+    mocks.addOk = false;
+    toggleFavorite('r1');
+    await flush();
+    expect(await hydrateFavoritesFromSupabase()).toEqual(['r1']); // still failing, still shown
+    mocks.addOk = true;
+    mocks.added = [];
+    expect(await hydrateFavoritesFromSupabase()).toEqual(['r1']);
+    expect(mocks.added).toEqual([['r1']]);
+    mocks.added = [];
+    expect(await hydrateFavoritesFromSupabase()).toEqual(['r1']);
+    expect(mocks.added).toEqual([]); // nothing pending any more
+  });
+
+  it('toggles only locally when signed out, and sends it with the next signed-in refresh', async () => {
     mocks.user = null;
     toggleFavorite('r1');
     await flush();
     expect(getFavorites()).toEqual(['r1']);
     expect(mocks.added).toEqual([]);
+    mocks.user = { id: 'user-1' };
+    localStorage.setItem('meal-agent:favorites-synced:h1', 'x'); // not a first sync
+    expect(await hydrateFavoritesFromSupabase()).toEqual(['r1']);
+    expect(mocks.added).toEqual([['r1']]);
   });
 });

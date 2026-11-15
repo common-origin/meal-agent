@@ -91,11 +91,7 @@ function planReasons(plan: (MealCardProps | null)[]): string[] {
  */
 async function loadTasteSignals(plan: (MealCardProps | null)[]): Promise<TasteSignals> {
   // Pull other devices' history first so "recent" covers the whole household.
-  await Promise.all([
-    hydrateRecencyFromSupabase().catch((err) => console.warn('Could not load recipe history:', err)),
-    // The household's favourites from any device or member (#222)
-    hydrateFavoritesFromSupabase().catch((err) => console.warn('Could not load favourites:', err)),
-  ]);
+  await hydrateRecencyFromSupabase().catch((err) => console.warn('Could not load recipe history:', err));
   return buildTasteSignals({
     plan: plan.filter((meal): meal is MealCardProps => meal !== null).map((meal) => meal.recipeId),
     recentIds: getRecentRecipeIds(),
