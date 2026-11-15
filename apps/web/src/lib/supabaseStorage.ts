@@ -375,7 +375,8 @@ export async function loadAllRecipesFromDb(): Promise<Recipe[] | null> {
     if (!householdId) return null;
     const supabase = createBrowserClient();
     const rows = await readAllPages((from, to) =>
-      supabase.from('recipes').select('*').eq('household_id', householdId).order('created_at', { ascending: false }).range(from, to),
+      // Oldest first, so a recipe added while the pages are read lands after them rather than shifting them.
+      supabase.from('recipes').select('*').eq('household_id', householdId).order('created_at', { ascending: true }).order('id').range(from, to),
     );
     return rows.map(rowToRecipe);
   } catch (error) {

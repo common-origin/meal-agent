@@ -83,7 +83,7 @@ export default function RecipePage({ params }: RecipePageProps) {
     } else {
       // Not in this browser yet: it may be the household's, saved on another
       // device or by another member (#233). Check before saying "not found".
-      hydrateRecipesFromSupabase()
+      hydrateRecipesFromSupabase({ force: true })
         .catch(() => false)
         .then(() => {
           if (!cancelled) setLoaded({ id, recipe: RecipeLibrary.getById(id) ?? null });

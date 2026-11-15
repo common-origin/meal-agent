@@ -256,8 +256,10 @@ export class RecipeLibrary {
    * auto-cleaned by cleanupOldTempRecipes as if it were a stale AI
    * suggestion. See issue #32.
    */
-  static syncSupabaseRecipes(supabaseRecipes: Recipe[]): boolean {
+  static syncSupabaseRecipes(fromServer: Recipe[]): boolean {
     try {
+      // A recipe deleted while this list was being read must not come back (#233).
+      const supabaseRecipes = fromServer.filter(r => !this.deletedThisSession.has(r.id));
       const customFromSupabase = supabaseRecipes.filter(r => r.source.domain !== 'ai-generated');
       const aiFromSupabase = supabaseRecipes.filter(r => r.source.domain === 'ai-generated');
 
@@ -329,8 +331,15 @@ export class RecipeLibrary {
    * Remove custom recipe by ID
    * Removes from custom recipes, temp AI recipes, and Supabase
    */
+  /** When the recipe caches were last cleared (sign-out, household change), so a sync before then is stale (#233). */
+  static clearedAt = 0;
+
+  /** Recipes deleted since this page loaded, which a sync started before the delete may still return (#233). */
+  private static deletedThisSession = new Set<string>();
+
   static async removeCustomRecipe(id: string): Promise<boolean> {
     let removed = false;
+    this.deletedThisSession.add(id);
     
     // Remove from custom recipes
     const existingCustom = this.loadCustomRecipes();
@@ -386,6 +395,7 @@ export class RecipeLibrary {
    * memory even after localStorage is cleared underneath it.
    */
   static clearAllRecipeData(): void {
+    this.clearedAt = Date.now();
     this.customRecipes = null;
     this.hasCleanedThisSession = false;
     Storage.remove(CUSTOM_RECIPES_KEY);
