@@ -3,6 +3,8 @@
  * Used for AI-powered meal plan generation
  */
 
+import { isValidTimeZone } from '../timeZones';
+
 export interface Child {
   age: number;
 }
@@ -60,6 +62,12 @@ export interface LocationSettings {
   city: string;
   country: string;
   hemisphere: 'northern' | 'southern';
+  /**
+   * IANA zone the household lives in (#220): the calendar feed's dinner
+   * time and the prompt's month and season. Unset falls back to
+   * DEFAULT_HOUSEHOLD_TIME_ZONE (lib/timeZones.ts).
+   */
+  timeZone?: string;
 }
 
 export interface FamilySettings {
@@ -245,6 +253,9 @@ export function validateFamilySettings(settings: Partial<FamilySettings>): strin
   }
 
   if (settings.location) {
+    if (settings.location.timeZone !== undefined && !isValidTimeZone(settings.location.timeZone)) {
+      errors.push('Choose a valid timezone');
+    }
     if (!settings.location.city.trim()) {
       errors.push('Enter your city');
     }

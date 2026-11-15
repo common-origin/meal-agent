@@ -16,6 +16,8 @@ import SettingsSection, { SettingsField, SettingsForm } from "@/components/app/S
 import ColesExtensionSettings from "@/components/app/ColesExtensionSettings";
 import HouseholdMembersSettings from "@/components/app/HouseholdMembersSettings";
 import TextListField from "@/components/app/TextListField";
+import { suggestedTimeZone, timeZoneOptions } from "@/lib/timeZones";
+import { clientTimeZone } from "@/lib/api/client";
 
 /**
  * Adults is a choice of 1 to 4 (#196). A household saved with more (validation
@@ -47,7 +49,11 @@ function SettingsPageContent({ welcome }: { welcome: boolean }) {
     // Load settings from Supabase
     const loadSettings = async () => {
       const loadedSettings = await getFamilySettings();
-      setSettings(loadedSettings);
+      // No timezone yet (#220): show the browser's (if Australian) or Sydney, so what's shown is what's saved.
+      setSettings(loadedSettings.location.timeZone ? loadedSettings : {
+        ...loadedSettings,
+        location: { ...loadedSettings.location, timeZone: suggestedTimeZone(clientTimeZone()) },
+      });
     };
     loadSettings();
 
@@ -539,6 +545,19 @@ function SettingsPageContent({ welcome }: { welcome: boolean }) {
 												}
 											}))}
 											placeholder="e.g., Australia"
+										/>
+									</SettingsField>
+
+									<SettingsField>
+										<Dropdown
+											label="Timezone"
+											helperText="When dinner shows in your calendar, and which month it is for seasonal produce"
+											value={settings.location.timeZone ?? ''}
+											onChange={(value) => setSettings(prev => ({
+												...prev,
+												location: { ...prev.location, timeZone: value }
+											}))}
+											options={timeZoneOptions(settings.location.timeZone)}
 										/>
 									</SettingsField>
 

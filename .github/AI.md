@@ -84,11 +84,11 @@ on the meal card and saves it as each day's `reason` in `meal_plans.meals`.
 
 The prompt itself (#87) is split in two: `buildSystemPrompt()` holds the
 stable rules, each stated once, and `buildRecipeGenerationPrompt()` holds
-only the household's facts and the request's constraints. The plan page
-sends the browser's `timeZone` with each request, so the month, season and
-in-season produce (`getInSeasonIngredients` in `lib/seasonal.ts`) are the
-household's own; an unknown or missing zone falls back to
-`Australia/Melbourne`.
+only the household's facts and the request's constraints. The month, season
+and in-season produce (`getInSeasonIngredients` in `lib/seasonal.ts`) are
+computed in the household's own zone: its Settings timezone
+(`location.timeZone`, #220), else the `timeZone` the browser sends with each
+request, else `Australia/Sydney` (`lib/timeZones.ts`).
 
 The plan page also sends three title lists (#88), built client-side by
 `buildTasteSignals()` in `lib/tasteSignals.ts`: `recentMealTitles` (this

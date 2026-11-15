@@ -8,6 +8,7 @@
  * (lib/ai/schemas.ts, #84).
  */
 
+import { DEFAULT_HOUSEHOLD_TIME_ZONE, pickTimeZone } from '../timeZones';
 import { CUISINE_FORMAT_RULE, INGREDIENT_FORMAT_RULES } from './recipeFormat';
 import { VALID_TAGS } from '../tagNormalizer';
 import type { FamilySettings } from '../types/settings';
@@ -33,18 +34,12 @@ export interface RecipeGenerationRequest {
   timeZone?: string;
 }
 
-/** Used when the client sends no time zone, or one the runtime doesn't know. */
-export const DEFAULT_TIME_ZONE = 'Australia/Melbourne';
+/** Used when neither the household nor the client gives a zone the runtime knows (#220). */
+export const DEFAULT_TIME_ZONE = DEFAULT_HOUSEHOLD_TIME_ZONE;
 
 /** `timeZone` if the runtime accepts it, otherwise the default. */
 export function resolveTimeZone(timeZone: string | undefined): string {
-  if (!timeZone) return DEFAULT_TIME_ZONE;
-  try {
-    new Intl.DateTimeFormat('en-AU', { timeZone });
-    return timeZone;
-  } catch {
-    return DEFAULT_TIME_ZONE;
-  }
+  return pickTimeZone(timeZone);
 }
 
 /** The current month in `timeZone`: index 0-11 and its English name. */
@@ -221,8 +216,8 @@ export function buildRecipeGenerationPrompt(request: RecipeGenerationRequest): s
     );
   }
 
-  // Season, in the household's own time zone
-  const month = monthInTimeZone(request.timeZone ?? DEFAULT_TIME_ZONE);
+  // Season, in the household's own time zone: its setting, else the browser's (#220)
+  const month = monthInTimeZone(pickTimeZone(familySettings.location?.timeZone, request.timeZone));
   const season = getCurrentSeason(hemisphere, month.index);
   const inSeason = getInSeasonIngredients(hemisphere, month.index);
   section('SEASON', [
