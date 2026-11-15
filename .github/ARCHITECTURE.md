@@ -412,8 +412,11 @@ signal now, but it was never actually gating what reached production.
   `pnpm test` passes in full (fixed in issue #5), and covers the local
   `storage.ts` layer, the AI routes, and `share-recipe-email`'s auth and
   rate limit. The Supabase-backed storage (`supabaseStorage.ts`,
-  `hybridStorage.ts`) and the other API routes are still untested, and
-  RLS-level tests need local Supabase infrastructure (#67).
+  `hybridStorage.ts`) and many other API routes are still largely untested.
+  RLS and the database functions are tested against the real migrations
+  in PGlite (`apps/web/src/__tests__/db/`, #67); what that can't cover is
+  Supabase itself (GoTrue, PostgREST) and grants that differ from its
+  defaults.
 - **Editing an existing plan is more effort than it should be** — swapping
   out one night's meal isn't as seamless as the rest of the product aims
   for. Flagged in issue #38 as needing real UX research, not a quick fix.

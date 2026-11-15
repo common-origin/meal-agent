@@ -145,8 +145,17 @@ fixed (issue #5): the root scripts now pass `--root apps/web`, and
 Remaining gaps: the Supabase-backed storage (`supabaseStorage.ts`, and
 `hybridStorage.ts`'s routing between it and local storage) has no tests (the
 local `storage.ts` layer does), and of the API routes only the AI routes and
-`share-recipe-email`'s auth and rate limit are tested. RLS-level tests are
-tracked in #67.
+`share-recipe-email`'s auth and rate limit are tested.
+
+**Database tests** (`apps/web/src/__tests__/db/`, #67) run every migration
+in `supabase/migrations/` in PGlite (Postgres in WASM) as part of
+`pnpm test`, with a stand-in `auth` schema and Supabase's `anon` /
+`authenticated` / `service_role` roles (`harness.ts`). They check that two
+households can't reach each other's rows in any table, and the household,
+favourites, delete-account and spend functions. **When you add a table,
+add it to `TABLES` in `rlsIsolation.test.ts`**; a test fails if any public
+table has RLS off. A migration that doesn't run in plain Postgres fails
+the suite too.
 
 Manual testing checklist for planning changes:
 - [ ] `/plan` loads a weekly grid
