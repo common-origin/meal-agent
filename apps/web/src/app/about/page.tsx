@@ -228,7 +228,7 @@ export default function AboutPage() {
               <Box>
                 <Typography variant="h4">📊 Current: Basic Analytics</Typography>
                 <Typography variant="body" color="subdued">
-                  <strong>Now:</strong> Simple event tracking with Hotjar<br/>
+                  <strong>Now:</strong> Simple event tracking, kept in your own browser<br/>
                   <strong>Future:</strong> Detailed nutritional analytics, cost trends over time, waste 
                   tracking (ingredients bought but not used), cooking time vs. actual time analysis, 
                   recipe success ratings, and personalized insights on your eating patterns.
@@ -286,7 +286,7 @@ export default function AboutPage() {
                   • <strong>Authentication:</strong> Supabase Auth (Google OAuth + Magic Link)<br/>
                   • <strong>Storage:</strong> 4-layer hybrid architecture (PostgreSQL + localStorage)<br/>
                   • <strong>Pricing Data:</strong> 179 manually-mapped Coles products with SKUs<br/>
-                  • <strong>Analytics:</strong> Privacy-first local tracking (Hotjar for behavior insights)<br/>
+                  • <strong>Analytics:</strong> Privacy-first local tracking, kept in the browser<br/>
                   • <strong>Deployment:</strong> Vercel (auto-deploy from GitHub)
                 </Typography>
               </Box>
