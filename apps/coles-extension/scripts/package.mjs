@@ -9,7 +9,7 @@
 // Vercel's build image isn't guaranteed to have one. Timestamps are fixed,
 // so the same build gives the same zip.
 
-import { deflateRawSync, crc32 } from 'node:zlib';
+import { deflateRawSync } from 'node:zlib';
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25,6 +25,20 @@ const distDir = resolve(process.argv[3] ?? join(dirname(fileURLToPath(import.met
 if (!outDir) {
   console.error('usage: node scripts/package.mjs <out-dir> [dist-dir]');
   process.exit(1);
+}
+
+// CRC-32 (the zip polynomial). zlib.crc32 would do, but only from Node 22.2,
+// and the build image's Node version isn't pinned.
+const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
+  let c = n;
+  for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+  return c >>> 0;
+});
+
+function crc32(data) {
+  let crc = 0xffffffff;
+  for (const byte of data) crc = CRC_TABLE[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+  return (crc ^ 0xffffffff) >>> 0;
 }
 
 function filesIn(dir) {
