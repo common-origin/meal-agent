@@ -28,6 +28,16 @@ function adultOptions(current: number): { id: string; label: string }[] {
   return counts.map((n) => ({ id: String(n), label: String(n) }));
 }
 
+/**
+ * A household with no timezone yet (#220) gets the browser's (if Australian)
+ * or Sydney, so what Settings shows is what it saves.
+ */
+function withSuggestedTimeZone(settings: FamilySettings): FamilySettings {
+  return settings.location.timeZone
+    ? settings
+    : { ...settings, location: { ...settings.location, timeZone: suggestedTimeZone(clientTimeZone()) } };
+}
+
 /** The weekly planning reminder's fixed time (#196). */
 const REMINDER_TIME = '09:00';
 
@@ -49,11 +59,7 @@ function SettingsPageContent({ welcome }: { welcome: boolean }) {
     // Load settings from Supabase
     const loadSettings = async () => {
       const loadedSettings = await getFamilySettings();
-      // No timezone yet (#220): show the browser's (if Australian) or Sydney, so what's shown is what's saved.
-      setSettings(loadedSettings.location.timeZone ? loadedSettings : {
-        ...loadedSettings,
-        location: { ...loadedSettings.location, timeZone: suggestedTimeZone(clientTimeZone()) },
-      });
+      setSettings(withSuggestedTimeZone(loadedSettings));
     };
     loadSettings();
 
@@ -129,7 +135,7 @@ function SettingsPageContent({ welcome }: { welcome: boolean }) {
     if (confirm('Are you sure you want to reset all settings to defaults?')) {
       await resetFamilySettings();
       const resetSettings = await getFamilySettings();
-      setSettings(resetSettings);
+      setSettings(withSuggestedTimeZone(resetSettings));
       track('override_saved', { reset: true });
     }
   };

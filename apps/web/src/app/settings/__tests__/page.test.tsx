@@ -30,6 +30,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe('first-run setup: Settings with ?welcome=1 (#211)', () => {
@@ -69,6 +70,20 @@ describe('first-run setup: Settings with ?welcome=1 (#211)', () => {
 
     expect(await screen.findByText(/couldn't be saved/)).toBeInTheDocument();
     expect(replace).not.toHaveBeenCalled();
+  });
+
+  it('pre-fills an unset timezone from an Australian browser zone, and saves it (#220)', async () => {
+    params = new URLSearchParams({ welcome: '1' });
+    const resolved = Intl.DateTimeFormat.prototype.resolvedOptions;
+    vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockImplementation(function (this: Intl.DateTimeFormat) {
+      return { ...resolved.call(this), timeZone: 'Australia/Perth' };
+    });
+    render(<SettingsPage />);
+    expect(await screen.findByText('Western Australia (Perth)')).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText('e.g., Melbourne'), { target: { value: 'Perth' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save and start planning' }));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/plan'));
+    expect(saveFamilySettings.mock.calls[0][0].location).toMatchObject({ city: 'Perth', timeZone: 'Australia/Perth' });
   });
 
   it('is the full Settings page without it', async () => {
