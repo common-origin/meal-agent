@@ -135,7 +135,7 @@ export default function HouseholdMembersSettings() {
                     </Stack>
                   </div>
                   {members.length > 1 && (m.isMe || (isOwner && !m.isMe)) && (
-                    <Button variant="secondary" size="small" disabled={busy} onClick={() => removeMember(m.userId, m.email, m.isMe)}>
+                    <Button variant="danger" size="small" disabled={busy} onClick={() => removeMember(m.userId, m.email, m.isMe)}>
                       {m.isMe ? 'Leave' : 'Remove'}
                     </Button>
                   )}

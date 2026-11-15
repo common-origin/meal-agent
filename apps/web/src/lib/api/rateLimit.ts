@@ -63,6 +63,9 @@ const TEN_MINUTES_MS = 10 * 60 * 1000;
  */
 export const colesSearchRateLimiter = createRateLimiter({ limit: 150, windowMs: TEN_MINUTES_MS });
 
+/** Account export (#224): each one reads every household table. */
+export const accountExportRateLimiter = createRateLimiter({ limit: 5, windowMs: TEN_MINUTES_MS });
+
 /** Sending and cancelling household invites (#217): each send is an email. */
 export const householdInviteRateLimiter = createRateLimiter({ limit: 10, windowMs: TEN_MINUTES_MS });
 

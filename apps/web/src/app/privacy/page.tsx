@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Typography } from "@common-origin/design-system";
 import LegalPage, { ContactLink, LegalList, LegalSection } from "@/components/app/LegalPage";
 
@@ -52,8 +53,10 @@ export default function PrivacyPage() {
 
       <LegalSection title="Keeping and deleting it">
         <Typography variant="body">
-          We keep your data while you have an account. To delete your account and your household&apos;s data, or to get a
-          copy of it, email <ContactLink />. We&apos;ll do it within 30 days.
+          We keep your data while you have an account. You can download a copy of it, or delete your account, at any time
+          in Settings → <Link href="/settings/data-export">Your data</Link>. Deleting removes your account straight away; if
+          you&apos;re the only person in your household, its data goes too. If you can&apos;t sign in, email <ContactLink /> and
+          we&apos;ll do it within 30 days.
         </Typography>
       </LegalSection>
 

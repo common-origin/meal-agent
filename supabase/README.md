@@ -132,7 +132,15 @@
    - Verify success: Should see "Success. No rows returned"
    - This adds `household_favorites`, so favourites follow a household across devices and members (#222). Until it's run, favourites keep working on each device, but don't sync
 
-18. **Verify Tables Created:**
+18. **Run Delete-My-Account Migration (Step 17):**
+   - Click "New Query"
+   - Copy entire contents of `supabase/migrations/017_delete_my_account.sql`
+   - Paste into SQL Editor
+   - Click "Run" or press Cmd+Enter
+   - Verify success: Should see "Success. No rows returned"
+   - This adds `delete_my_account()`, behind Settings → Your data → Delete account (#224). Run it after `015`. Until it's run, deleting an account says it couldn't be deleted
+
+19. **Verify Tables Created:**
    ```sql
    SELECT table_name 
    FROM information_schema.tables 
@@ -155,7 +163,7 @@
    - shopping_lists
    - signup_invites
 
-19. **Verify RLS Enabled:**
+20. **Verify RLS Enabled:**
    ```sql
    SELECT tablename, rowsecurity 
    FROM pg_tables 
@@ -196,8 +204,9 @@
 
 ## Deleting an account on request
 
-The privacy policy (`/privacy`) promises to delete an account and its
-household's data within 30 days of an emailed request. Deleting the user
+Users delete their own account in Settings → Your data (`delete_my_account()`, migration 017, #224), which also removes their household if they're its only member. The SQL below is for when someone can't sign in and emails instead.
+
+The privacy policy (`/privacy`) promises to do it within 30 days of an emailed request. Deleting the user
 under Authentication → Users is **not enough**: it removes their membership,
 but `households` has no link to `auth.users`, so the household and all its
 data stay. In the SQL editor, with their email:

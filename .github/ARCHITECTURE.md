@@ -255,6 +255,14 @@ signup):
   `hydrateFavoritesFromSupabase` (plan, recipes and recipe pages) loads it
   back, uploading a device's local favourites the first time it syncs a
   household
+- **Account deletion and export** (#224): Settings → Your data
+  (`/settings/data-export`). `GET /api/account/export` returns the
+  household's data read with the user's session (`lib/account/export.ts`;
+  no tokens or invite links). `POST /api/account/delete` calls
+  `delete_my_account()` (migration 017), which leaves the household as
+  `_leave_household` does (deleting it if they were its only member),
+  removes their AI usage log and invites, and deletes their `auth.users`
+  row in one transaction
 - **`family_settings`** — meal-planning preferences; `full_settings` is a
   JSONB column (migration 004) holding the complete settings object, with
   a handful of columns duplicated out of it for querying. A new household's
@@ -310,7 +318,7 @@ signup):
   login and signup pages show as "not invited"
   (`lib/auth/authErrorMessages.ts`, `app/auth/callback/route.ts`)
 
-Migrations run in numeric order, 001 through 016 (009 and 010 are
+Migrations run in numeric order, 001 through 017 (009 and 010 are
 independent of each other) — see `supabase/README.md` for the exact
 steps. There's no migration-runner in CI; each one is applied by
 hand in the Supabase SQL editor, same as every migration so far.

@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Alert, Box, Button, Checkbox, Chip, Container, Dropdown, FilterChip, Modal, NumberInput, Slider, Stack, TextField, Typography } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
@@ -881,6 +882,17 @@ function SettingsPageContent({ welcome }: { welcome: boolean }) {
 							</SettingsSection>
 
 							<ColesExtensionSettings />
+
+							<SettingsSection
+								title="Your data"
+								description="Download everything Meal Agent keeps about your household, or delete your account ."
+							>
+								<Stack direction="row">
+									<Link href="/settings/data-export">
+										<Button variant="secondary" size="medium">Manage your data</Button>
+									</Link>
+								</Stack>
+							</SettingsSection>
 							</>)}
 						</SettingsForm>
 

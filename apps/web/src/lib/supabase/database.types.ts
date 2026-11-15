@@ -628,6 +628,7 @@ export type Database = {
         Returns: { user_id: string; email: string; role: string; joined_at: string; is_me: boolean }[]
       }
       remove_household_member: { Args: { p_user: string }; Returns: undefined }
+      delete_my_account: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
