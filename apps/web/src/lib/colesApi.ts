@@ -242,8 +242,14 @@ export async function searchColesProducts(
     
     if (!response.ok) {
       // The month's shared lookups are used up (#227): remember, so we stop asking.
+      const errorText = await response.text();
       if (response.status === 429) {
-        const body: unknown = await response.json().catch(() => null);
+        let body: unknown = null;
+        try {
+          body = JSON.parse(errorText);
+        } catch {
+          // Not JSON: reported below.
+        }
         if (body && typeof body === 'object' && 'quota' in body) {
           rememberQuota(body.quota);
           console.warn('⚠️  Coles API quota used up for this month');
@@ -251,7 +257,6 @@ export async function searchColesProducts(
         }
       }
       console.error(`❌ API error: ${response.status} ${response.statusText}`);
-      const errorText = await response.text();
       console.error('📄 Response body:', errorText);
       console.error('🔗 Request URL:', response.url);
       return null;

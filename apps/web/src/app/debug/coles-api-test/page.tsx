@@ -107,7 +107,7 @@ export default function ColesApiTestPage() {
                 }}
               >
                 <Box 
-                  bg={rateLimitStats.used > 900 ? 'color.fill.danger' : 'color.fill.success'}
+                  bg={rateLimitStats.used > rateLimitStats.limit * 0.9 ? 'color.fill.danger' : 'color.fill.success'}
                   style={{ 
                     height: '100%', 
                     width: `${(rateLimitStats.used / rateLimitStats.limit) * 100}%`,

@@ -220,6 +220,14 @@ describe('shared Coles lookup quota (018)', () => {
     expect(await claim(h, 1, new Date(Date.now() - 86_400_000).toISOString(), 'quota-old')).toEqual([{ granted: true, used: 1 }]);
   });
 
+  it("keeps counting a deleted household's lookups (they were still spent)", async () => {
+    const u = await newUser('quota-e');
+    const h = (await t.householdOf(u))!.household_id;
+    await claim(h, 1000, '2000-01-01T00:00:00Z', 'quota-deleted');
+    await t.as(u, `SELECT public.delete_my_account()`);
+    expect(await count(`SELECT count(*)::int n FROM public.api_usage WHERE endpoint = 'quota-deleted' AND household_id IS NULL`)).toBe(1);
+  });
+
   it('only the service role can claim or count calls, and members can no longer log them directly', async () => {
     const u = await newUser('quota-d');
     const h = (await t.householdOf(u))!.household_id;

@@ -7,6 +7,7 @@
  */
 
 import { createAdminClient } from '@/lib/supabase/server';
+import { emailAdmins } from '@/lib/adminAlerts';
 
 export const COLES_SEARCH_ENDPOINT = 'coles-search';
 
@@ -59,12 +60,35 @@ export async function claimColesLookup(householdId: string, now: Date = new Date
     if (error) throw error;
     const row = data?.[0];
     if (!row) throw new Error('claim_api_call returned no row');
-    if (!row.granted) console.warn(JSON.stringify({ type: 'coles_quota_exceeded', used: row.used, limit }));
-    return { status: row.granted ? 'granted' : 'exceeded', quota: quota(row.used, limit, now) };
+    const counted = quota(row.used, limit, now);
+    if (!row.granted) alertQuotaUsedUp(counted);
+    return { status: row.granted ? 'granted' : 'exceeded', quota: counted };
   } catch (error) {
     console.error('coles quota: could not claim a lookup, refusing it (is migration 018 applied?)', error);
     return { status: 'unavailable' };
   }
+}
+
+/** The month this server instance last alerted on, so the owner gets one email a month, not one per lookup. */
+let lastAlertMonth: string | null = null;
+
+/** For tests: forget that this month's alert was sent. */
+export function resetQuotaAlertForTests(): void {
+  lastAlertMonth = null;
+}
+
+/** Logs the quota running out and emails ADMIN_EMAILS, once per instance per month. */
+function alertQuotaUsedUp(counted: ColesQuota): void {
+  if (lastAlertMonth === counted.month) return;
+  lastAlertMonth = counted.month;
+  console.error(JSON.stringify({ type: 'coles_quota_exceeded', ...counted }));
+  emailAdmins({
+    subject: "Meal Agent: this month's Coles lookups are used up",
+    text: `Every household's Coles price lookups this month (${counted.used} of ${counted.limit}) have used up the shared RapidAPI quota, so prices are estimates until the 1st (UTC). To change the limit, set COLES_API_MONTHLY_LIMIT in Vercel; it should match your RapidAPI plan. The api_usage table shows which households made them.`,
+    onFailure: () => {
+      lastAlertMonth = null;
+    },
+  });
 }
 
 /** This month's lookups across every household, or null if they can't be read. */

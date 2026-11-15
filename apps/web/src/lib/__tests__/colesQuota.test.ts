@@ -1,16 +1,19 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const rpc = vi.hoisted(() => vi.fn());
+const { rpc, emailAdmins } = vi.hoisted(() => ({ rpc: vi.fn(), emailAdmins: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createAdminClient: () => ({ rpc }) }));
+vi.mock('@/lib/adminAlerts', () => ({ emailAdmins }));
 
-import { claimColesLookup, colesMonthlyLimit, readColesQuota, startOfUtcMonth } from '../coles/quota';
+import { claimColesLookup, colesMonthlyLimit, readColesQuota, resetQuotaAlertForTests, startOfUtcMonth } from '../coles/quota';
 
 // 9:30am on 1 December in Sydney, but still November in UTC, which is what's counted.
 const now = new Date('2026-12-01T09:30:00+10:00');
 
 beforeEach(() => {
   rpc.mockReset();
+  emailAdmins.mockReset();
+  resetQuotaAlertForTests();
   vi.spyOn(console, 'error').mockImplementation(() => {});
   vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
@@ -41,6 +44,19 @@ describe('Coles lookup quota (#227)', () => {
   it('reports a refused claim as exceeded', async () => {
     rpc.mockResolvedValue({ data: [{ granted: false, used: 1000 }], error: null });
     expect(await claimColesLookup('h1', now)).toMatchObject({ status: 'exceeded', quota: { remaining: 0 } });
+  });
+
+  it('emails the owner once a month when the quota runs out, again if the email fails', async () => {
+    rpc.mockResolvedValue({ data: [{ granted: false, used: 1000 }], error: null });
+    await claimColesLookup('h1', now);
+    await claimColesLookup('h2', now);
+    expect(emailAdmins).toHaveBeenCalledTimes(1);
+    expect(emailAdmins.mock.calls[0][0].subject).toMatch(/Coles lookups are used up/);
+    emailAdmins.mock.calls[0][0].onFailure();
+    await claimColesLookup('h1', now);
+    expect(emailAdmins).toHaveBeenCalledTimes(2);
+    await claimColesLookup('h1', new Date('2026-12-02T00:00:00Z'));
+    expect(emailAdmins).toHaveBeenCalledTimes(3);
   });
 
   it('fails closed when the count can\'t be read', async () => {

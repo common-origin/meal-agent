@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     // Every household shares the key's monthly quota (#227): claim a call
     // before making it, since RapidAPI counts failed calls too.
-    const household = await getUserHousehold();
+    const household = await getUserHousehold(auth.value);
     if (!household) {
       return NextResponse.json({ error: QUOTA_UNAVAILABLE, code: 'quota_unavailable' }, { status: 503 });
     }

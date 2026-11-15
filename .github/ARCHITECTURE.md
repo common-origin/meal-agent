@@ -304,9 +304,12 @@ signup):
   (`endpoint = 'coles-search'`), written only by `claim_api_call()`
   (migration 018) with the service role, which refuses once the UTC
   month's total across every household reaches the limit (1,000, or
-  `COLES_API_MONTHLY_LIMIT`). Members can read their household's rows
-  but not insert them (#227). Its AI-cost columns are unused; AI calls
-  are in `ai_usage`
+  `COLES_API_MONTHLY_LIMIT`, which should match the RapidAPI plan; the
+  owner is emailed once a month when it runs out). Members can read their
+  household's rows but not insert them. A deleted household's rows stay
+  (household_id set to NULL; just an endpoint and a time), since those
+  lookups were still spent (#227). Its AI-cost columns are unused; AI
+  calls are in `ai_usage`
 - **`recipe_history`** (migration 007) — one row per recipe used in a
   composed or AI-generated week, `UNIQUE(household_id, recipe_id, week_start)`; backs
   cross-device recency/variety-enforcement sync (see [Storage](#storage))

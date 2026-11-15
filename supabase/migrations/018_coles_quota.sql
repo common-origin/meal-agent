@@ -58,5 +58,14 @@ GRANT EXECUTE ON FUNCTION public.api_calls_since(TEXT, TIMESTAMPTZ) TO service_r
 -- Rows are written only through claim_api_call; members can still read theirs.
 DROP POLICY IF EXISTS "Users can log API usage for their household" ON public.api_usage;
 
+-- A deleted household's lookups were still spent at RapidAPI, so they keep
+-- counting: the rows outlive the household (household_id set to NULL)
+-- instead of being deleted with it.
+ALTER TABLE public.api_usage ALTER COLUMN household_id DROP NOT NULL;
+ALTER TABLE public.api_usage DROP CONSTRAINT IF EXISTS api_usage_household_id_fkey;
+ALTER TABLE public.api_usage
+  ADD CONSTRAINT api_usage_household_id_fkey
+  FOREIGN KEY (household_id) REFERENCES public.households(id) ON DELETE SET NULL;
+
 -- The existing indexes lead with household_id or endpoint alone; this one serves the monthly count.
 CREATE INDEX IF NOT EXISTS idx_api_usage_endpoint_timestamp ON public.api_usage(endpoint, "timestamp");

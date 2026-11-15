@@ -30,6 +30,13 @@ describe('Coles lookups in the browser follow the shared quota (#227)', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it('treats a 429 without a quota (the per-user burst limit) as a plain failure, not the month used up', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ error: 'slow down', code: 'rate_limited' }, { status: 429 })));
+    expect(await searchColesProducts('milk')).toBeNull();
+    expect(checkRateLimit().allowed).toBe(true);
+    expect(console.error).not.toHaveBeenCalledWith('Coles API search error:', expect.anything());
+  });
+
   it('keeps the quota out of the cached search result', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => Response.json({ query: 'milk', totalResults: 0, totalPages: 1, currentPage: 1, results: [], quota: quota(5) })));
     const result = await searchColesProducts('milk');

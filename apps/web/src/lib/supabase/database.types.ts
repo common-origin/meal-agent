@@ -66,7 +66,7 @@ export type Database = {
         Row: {
           cost_usd: number | null
           endpoint: string
-          household_id: string
+          household_id: string | null
           id: string
           timestamp: string
           tokens_used: number | null
@@ -74,7 +74,7 @@ export type Database = {
         Insert: {
           cost_usd?: number | null
           endpoint: string
-          household_id: string
+          household_id: string | null
           id?: string
           timestamp?: string
           tokens_used?: number | null
@@ -82,7 +82,7 @@ export type Database = {
         Update: {
           cost_usd?: number | null
           endpoint?: string
-          household_id?: string
+          household_id?: string | null
           id?: string
           timestamp?: string
           tokens_used?: number | null
