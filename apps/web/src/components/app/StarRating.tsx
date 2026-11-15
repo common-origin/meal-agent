@@ -4,8 +4,21 @@
  */
 
 import { useState } from 'react';
+import styled from 'styled-components';
 import { Stack, IconButton } from '@common-origin/design-system';
 import { tokens } from '@common-origin/design-system/tokens';
+
+/**
+ * A rating star the household can click: solid amber up to the rating (or the hovered star),
+ * grey outline after it, matching the read-only stars. The design system's icons are line
+ * icons since 3.3, so the selected ones fill in here.
+ */
+const RatingStarButton = styled(IconButton)<{ $filled: boolean }>`
+  & svg {
+    color: ${({ $filled }) => ($filled ? tokens.semantic.color.icon.warning : tokens.semantic.color.icon.muted)};
+    fill: ${({ $filled }) => ($filled ? 'currentColor' : 'none')};
+  }
+`;
 
 export type StarRatingProps = {
   rating: number; // Current rating (0-5)
@@ -77,14 +90,17 @@ export default function StarRating({ rating, onChange, readonly = false, size = 
             </svg>
           </div>
         ) : (
-          <IconButton
+          <RatingStarButton
             key={star}
             variant="naked"
-            iconName={isFilled ? 'star' : 'star'}
+            iconName="star"
+            $filled={isFilled}
             size={size}
             onClick={() => handleClick(star)}
             onMouseEnter={() => handleMouseEnter(star)}
             aria-label={`Rate ${star} star${star !== 1 ? 's' : ''}`}
+            // Announces the current rating, which otherwise shows only as colour
+            aria-pressed={star === rating}
           />
         );
       })}
