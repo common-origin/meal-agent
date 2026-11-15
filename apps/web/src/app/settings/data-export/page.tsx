@@ -1,166 +1,166 @@
 'use client';
 
 import { useState } from 'react';
-import { Box, Stack, Typography, Button, Alert, tokens } from '@common-origin/design-system';
+import Link from 'next/link';
+import { Alert, Button, Container, Modal, Stack, TextField, Typography } from '@common-origin/design-system';
+import Main from '@/components/app/Main';
+import SettingsSection, { SettingsForm } from '@/components/app/SettingsSection';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { createClient } from '@/lib/supabase/client';
 import * as LocalStorage from '@/lib/storage';
 import { loadPantryPreferences } from '@/lib/pantryPreferences';
 
-export default function DataExportPage() {
-  const [exported, setExported] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+/** What only this browser keeps: added to the household's data from Supabase. */
+function thisBrowsersData() {
+  return {
+    recipeRatings: LocalStorage.getRecipeRatings(),
+    blockedRecipes: Array.from(LocalStorage.getBlockedRecipes()),
+    pantryPreferences: Array.from(loadPantryPreferences()),
+    cachedSettings: LocalStorage.loadFamilySettings(),
+  };
+}
 
-  const exportData = () => {
+function download(filename: string, data: unknown) {
+  const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Settings → Your data (#224): download everything, or delete the account.
+ * The household's data comes from /api/account/export; deletion goes
+ * through /api/account/delete (migration 017's delete_my_account()).
+ */
+export default function YourDataPage() {
+  const { user } = useAuth();
+  const [exporting, setExporting] = useState(false);
+  const [exportResult, setExportResult] = useState<{ variant: 'success' | 'error'; text: string } | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [confirmEmail, setConfirmEmail] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const exportData = async () => {
+    setExporting(true);
+    setExportResult(null);
     try {
-      // Gather all localStorage data
-      const data = {
-        exportedAt: new Date().toISOString(),
-        version: '1.0',
-        familySettings: LocalStorage.loadFamilySettings(),
-        household: LocalStorage.loadHousehold(),
-        pantryPreferences: Array.from(loadPantryPreferences()),
-        recipeRatings: LocalStorage.getRecipeRatings(),
-        blockedRecipes: Array.from(LocalStorage.getBlockedRecipes()),
-        // Note: Recipes are stored in a separate RecipeLibrary system
-        // and would need special handling
-      };
-
-      // Create download link
-      const dataStr = JSON.stringify(data, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(dataBlob);
-      
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `meal-agent-data-${new Date().toISOString().split('T')[0]}.json`;
-      link.click();
-      
-      URL.revokeObjectURL(url);
-      setExported(true);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to export data');
-      console.error('Export error:', err);
+      const res = await fetch('/api/account/export');
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.error ?? "Your data couldn't be exported. Please try again.");
+      download(`meal-agent-data-${new Date().toISOString().slice(0, 10)}.json`, { ...body, thisBrowser: thisBrowsersData() });
+      setExportResult({ variant: 'success', text: 'Downloaded. Check your downloads folder.' });
+    } catch (e) {
+      setExportResult({ variant: 'error', text: e instanceof Error ? e.message : "Your data couldn't be exported. Please try again." });
+    } finally {
+      setExporting(false);
     }
   };
 
-  const clearData = () => {
-    if (!confirm('Are you sure you want to clear all local data? This cannot be undone!')) {
+  const emailMatches = !!user?.email && confirmEmail.trim().toLowerCase() === user.email.toLowerCase();
+
+  const deleteAccount = async () => {
+    if (!emailMatches) return;
+    setDeleting(true);
+    setDeleteError(null);
+    const res = await fetch('/api/account/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirmEmail }),
+    }).catch(() => null);
+    const body = await res?.json().catch(() => ({}));
+    if (!res?.ok) {
+      setDeleteError(body?.error ?? "Your account couldn't be deleted. Please try again.");
+      setDeleting(false);
       return;
     }
-
-    try {
-      LocalStorage.Storage.clear();
-      setError(null);
-      alert('All local data cleared successfully');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to clear data');
-      console.error('Clear error:', err);
-    }
+    // The account is gone: drop this browser's session (locally; there's no
+    // user left to sign out on the server) and everything it cached.
+    await createClient().auth.signOut({ scope: 'local' }).catch(() => {});
+    LocalStorage.clearHouseholdScopedCaches();
+    window.location.assign('/');
   };
 
   return (
-    <Box p="2xl" style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <Stack direction="column" gap="xl">
-        <Stack direction="column" gap="sm">
-          <Typography variant="h1">Data Export & Management</Typography>
-          <Typography color="subdued">
-            Export your meal planning data as a backup or to transfer to another device.
-          </Typography>
-        </Stack>
-
-        {error && (
-          <Alert variant="error">
-            <Typography>{error}</Typography>
-          </Alert>
-        )}
-
-        {exported && (
-          <Alert variant="success">
-            <Typography>
-              Data exported successfully! Check your downloads folder.
+    <Main maxWidth="960px">
+      <Container>
+        <Stack direction="column" gap="xl">
+          <Stack direction="column" gap="sm">
+            <Typography variant="h1">Your data</Typography>
+            <Typography variant="body">
+              Download everything Meal Agent keeps about your household, or delete your account. See the{' '}
+              <Link href="/privacy">privacy policy</Link> for what&apos;s stored and why.
             </Typography>
-          </Alert>
-        )}
-
-        <Box
-          bg="surface.raised"
-          p="xl"
-          borderRadius="md"
-          style={{ border: tokens.semantic.border.default }}
-        >
-          <Stack direction="column" gap="lg">
-            <Stack direction="column" gap="sm">
-              <Typography variant="h3">Export Your Data</Typography>
-              <Typography color="subdued">
-                Download a JSON file containing all your family settings, pantry preferences,
-                recipe ratings, and other saved data.
-              </Typography>
-            </Stack>
-
-            <Button onClick={exportData} style={{ alignSelf: 'flex-start' }}>
-              Export Data as JSON
-            </Button>
           </Stack>
-        </Box>
 
-        <Box
-          bg="surface.raised"
-          p="xl"
-          borderRadius="md"
-          style={{ border: tokens.semantic.border.default }}
-        >
-          <Stack direction="column" gap="lg">
-            <Stack direction="column" gap="sm">
-              <Typography variant="h3">Clear Local Data</Typography>
-              <Typography color="subdued">
-                Warning: This will permanently delete all locally stored data including meal plans,
-                family settings, and preferences. Make sure you&apos;ve exported your data first!
+          <SettingsForm>
+            <SettingsSection
+              title="Export your data"
+              description="A JSON file of your household's settings, recipes, meal plans, shopping lists, pantry, favourites, Coles orders and members, plus what this browser keeps (ratings and blocked recipes)."
+            >
+              <Stack direction="column" gap="md">
+                {exportResult && (
+                  <Alert variant={exportResult.variant} appearance="borderless" dismissible onDismiss={() => setExportResult(null)}>
+                    {exportResult.text}
+                  </Alert>
+                )}
+                <Stack direction="row">
+                  <Button variant="secondary" size="medium" iconName="export" onClick={exportData} disabled={exporting}>
+                    {exporting ? 'Preparing…' : 'Download my data'}
+                  </Button>
+                </Stack>
+              </Stack>
+            </SettingsSection>
+
+            <SettingsSection
+              title="Delete your account"
+              description="Deletes your account and sign-in. If you're the only person in your household, its plans, recipes, shopping lists, settings and Coles data are deleted too. Otherwise the household stays with its other members. This can't be undone."
+            >
+              <Stack direction="row">
+                <Button
+                  variant="secondary"
+                  size="medium"
+                  onClick={() => {
+                    setConfirmEmail('');
+                    setDeleteError(null);
+                    setDeleteOpen(true);
+                  }}
+                >
+                  Delete my account
+                </Button>
+              </Stack>
+            </SettingsSection>
+          </SettingsForm>
+
+          <Modal
+            isOpen={deleteOpen}
+            onClose={() => !deleting && setDeleteOpen(false)}
+            title="Delete your account?"
+            size="small"
+            actions={[
+              { label: 'Cancel', onClick: () => setDeleteOpen(false), variant: 'secondary', disabled: deleting },
+              { label: deleting ? 'Deleting…' : 'Delete account', onClick: deleteAccount, variant: 'primary', disabled: deleting || !emailMatches },
+            ]}
+          >
+            <Stack direction="column" gap="md">
+              <Typography variant="body">
+                This deletes your account straight away and can&apos;t be undone. Download your data first if you want a copy.
               </Typography>
+              {deleteError && <Alert variant="error" appearance="borderless">{deleteError}</Alert>}
+              <TextField
+                label="Type your email to confirm"
+                type="email"
+                value={confirmEmail}
+                onChange={(e) => setConfirmEmail(e.target.value)}
+                placeholder={user?.email ?? 'you@example.com'}
+                disabled={deleting}
+              />
             </Stack>
-
-            <Button variant="secondary" onClick={clearData} style={{ alignSelf: 'flex-start' }}>
-              Clear All Local Data
-            </Button>
-          </Stack>
-        </Box>
-
-        <Box
-          bg="surface.raised"
-          p="xl"
-          borderRadius="md"
-          style={{ border: tokens.semantic.border.default }}
-        >
-          <Stack direction="column" gap="md">
-            <Typography variant="h3">About Your Data</Typography>
-            <Stack direction="column" gap="sm">
-              <Typography>
-                <strong>Currently Stored Locally:</strong>
-              </Typography>
-              <Typography color="subdued">
-                • Family settings (servings, dietary preferences)
-                <br />
-                • Pantry preferences (items you always have)
-                <br />
-                • Recipe ratings and blocked recipes
-                <br />
-                • Current week meal plan
-                <br />
-                • Household information
-              </Typography>
-            </Stack>
-
-            <Stack direction="column" gap="sm">
-              <Typography>
-                <strong>Future: Cloud Sync</strong>
-              </Typography>
-              <Typography color="subdued">
-                Once you sign in with an account, your data will be automatically synced to the cloud
-                and accessible across all your devices.
-              </Typography>
-            </Stack>
-          </Stack>
-        </Box>
-      </Stack>
-    </Box>
+          </Modal>
+        </Stack>
+      </Container>
+    </Main>
   );
 }
