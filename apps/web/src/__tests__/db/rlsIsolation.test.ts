@@ -54,7 +54,7 @@ const TABLES: TableSpec[] = [
   },
   // Written only through the SECURITY DEFINER functions (migration 015).
   { table: 'household_invites', householdColumn: 'household_id', row: (_h, _u, tag) => ({ email: `invitee-${tag}@example.com` }), insertable: false },
-  { table: 'household_members', householdColumn: 'household_id', row: () => ({}), insertable: false },
+  { table: 'household_members', householdColumn: 'household_id', row: (_h, uid) => ({ user_id: uid }), insertable: false },
 ];
 
 let t: TestDb;
@@ -89,12 +89,23 @@ beforeAll(async () => {
   }
 }, 60_000);
 
-describe('every household table has RLS on', () => {
+/** Tables checked by their own describe blocks below, not TABLES. */
+const CHECKED_SEPARATELY = ['households', 'signup_invites'];
+
+describe('every table is covered', () => {
   it('no public table is missing row level security', async () => {
     const { rows } = await t.db.query<{ relname: string }>(
       `SELECT relname FROM pg_class WHERE relnamespace = 'public'::regnamespace AND relkind = 'r' AND NOT relrowsecurity`,
     );
     expect(rows.map((r) => r.relname)).toEqual([]);
+  });
+
+  it('every public table is in these isolation tests (add a new one to TABLES)', async () => {
+    const { rows } = await t.db.query<{ relname: string }>(
+      `SELECT relname FROM pg_class WHERE relnamespace = 'public'::regnamespace AND relkind = 'r' ORDER BY relname`,
+    );
+    const covered = new Set([...TABLES.map((spec) => spec.table), ...CHECKED_SEPARATELY]);
+    expect(rows.map((r) => r.relname).filter((name) => !covered.has(name))).toEqual([]);
   });
 });
 
@@ -125,6 +136,18 @@ describe.each(TABLES)('$table: a member only reaches their own household', (spec
     expect(deleted).toHaveLength(0);
     const after = (await t.db.query<{ n: number }>(`SELECT count(*)::int n FROM public.${spec.table} WHERE ${col} = $1`, [householdB])).rows[0].n;
     expect(after).toBe(before);
+  });
+
+  it("can't move their own row into the other household", async () => {
+    const col = spec.householdColumn;
+    const inA = async () => (await t.db.query<{ n: number }>(`SELECT count(*)::int n FROM public.${spec.table} WHERE ${col} = $1`, [householdA])).rows[0].n;
+    const before = await inA();
+    // No WHERE and no RETURNING: either would make Postgres also check the SELECT policy against the
+    // moved row, which hides a loosened UPDATE ... WITH CHECK. RLS limits this to Alice's own rows.
+    const refused = await t.refusal(alice, `UPDATE public.${spec.table} SET ${col} = $1`, [householdB]);
+    // Refused by the UPDATE policy's check, or no UPDATE policy at all (nothing updated); either way nothing moved.
+    if (refused) expect(refused).toMatch(/row-level security|duplicate key/);
+    expect(await inA()).toBe(before);
   });
 
   it.runIf(spec.insertable)('can add a row to their own household', async () => {
