@@ -10,6 +10,7 @@ import type { FamilySettings } from './types/settings';
 import type { Recipe } from './types/recipe';
 import type { Database, Json } from './supabase/database.types';
 import { rowToRecipe } from './recipeRow';
+import { rememberCurrentHousehold } from './storage';
 
 export { rowToRecipe };
 
@@ -28,7 +29,10 @@ async function getHouseholdId(): Promise<string | null> {
     .eq('user_id', user.id)
     .single();
 
-  return data?.household_id || null;
+  const householdId = data?.household_id || null;
+  // Joined, left or removed since last time: drop the old household's cache (#217).
+  if (householdId) rememberCurrentHousehold(householdId);
+  return householdId;
 }
 
 /**

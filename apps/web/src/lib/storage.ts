@@ -392,6 +392,24 @@ export function isRecipeBlocked(recipeId: string): boolean {
  * blocking storage in some contexts) shouldn't leave the user signed out
  * server-side but stuck on the page with no redirect.
  */
+const CURRENT_HOUSEHOLD_KEY = "meal-agent:current-household-id";
+
+/**
+ * Notes which household this browser's cached data belongs to (#217). If it
+ * was another household (the user joined one, left one, or was removed),
+ * that household's cached plans and recipes are cleared first.
+ */
+export function rememberCurrentHousehold(householdId: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const previous = localStorage.getItem(CURRENT_HOUSEHOLD_KEY);
+    if (previous && previous !== householdId) clearHouseholdScopedCaches();
+    if (previous !== householdId) localStorage.setItem(CURRENT_HOUSEHOLD_KEY, householdId);
+  } catch {
+    // Storage blocked: nothing cached to clear, either.
+  }
+}
+
 export function clearHouseholdScopedCaches(): void {
   if (typeof window === "undefined") return;
 

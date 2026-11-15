@@ -116,7 +116,15 @@
    - Verify success: Should see "Success. No rows returned"
    - This adds `ai_spend_since()`, the day's AI spend across all users, for the daily spend ceiling (#215). **Run it before deploying #215**: the app refuses AI calls while it can't read usage
 
-16. **Verify Tables Created:**
+16. **Run Household Invites Migration (Step 15):**
+   - Click "New Query"
+   - Copy entire contents of `supabase/migrations/015_household_invites.sql`
+   - Paste into SQL Editor
+   - Click "Run" or press Cmd+Enter
+   - Verify success: Should see "Success. No rows returned"
+   - This adds `household_invites` and the functions behind Settings → Household members and `/join/<token>` (#217), makes one household per user a rule, and limits updating a household (and its tokens) to its owner. If it fails with a duplicate key, someone is in two households: the comment at the top of the file shows how to find them
+
+17. **Verify Tables Created:**
    ```sql
    SELECT table_name 
    FROM information_schema.tables 
@@ -139,7 +147,7 @@
    - shopping_lists
    - signup_invites
 
-16. **Verify RLS Enabled:**
+18. **Verify RLS Enabled:**
    ```sql
    SELECT tablename, rowsecurity 
    FROM pg_tables 
@@ -152,7 +160,8 @@
 
 ### Tables:
 - **households** - Family units that share meal plans
-- **household_members** - Links users to households with owner/member roles
+- **household_members** - Links users to households with owner/member roles; one household per user (015)
+- **household_invites** - An owner's invite to one email, accepted at `/join/<token>` or at signup (015)
 - **family_settings** - Preferences for meal generation (servings, cuisines, etc.)
 - **recipes** - AI-generated or user-added recipes
 - **meal_plans** - Weekly meal schedules (JSONB format)
@@ -166,7 +175,7 @@
 - **signup_invites** - Emails allowed to create an account; any other signup is refused (013)
 
 ### Automatic Behaviors:
-- **New User Signup** → Refused unless the email is in `signup_invites` (013); otherwise auto-creates household, adds user as owner, creates default settings
+- **New User Signup** → Refused unless the email is in `signup_invites` (013) or has a pending household invite (015). With a pending household invite, the user joins that household as a member; otherwise a household is created with the user as owner, plus default settings
 - **Updated Timestamps** → Auto-updated on every row modification
 - **Household ID Helper** → Function to get current user's household ID
 

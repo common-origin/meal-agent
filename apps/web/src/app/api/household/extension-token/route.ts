@@ -1,7 +1,8 @@
 /**
  * The signed-in household's Coles extension token (#184), for Settings.
  * GET returns it; POST replaces it, so a lost or shared token stops working.
- * Session-authenticated; RLS scopes both to the user's own household.
+ * Session-authenticated; RLS scopes both to the user's own household, and
+ * only its owner may replace the token (#217).
  */
 
 import { NextResponse } from 'next/server';
@@ -11,6 +12,10 @@ async function respond(rotate: boolean) {
   const household = await getUserHousehold();
   if (!household) {
     return NextResponse.json({ error: 'Sign in with a household to connect the Coles extension.' }, { status: 401 });
+  }
+
+  if (rotate && household.role !== 'owner') {
+    return NextResponse.json({ error: 'Only the household owner can replace the token.' }, { status: 403 });
   }
 
   const supabase = await createClient();
@@ -30,7 +35,10 @@ async function respond(rotate: boolean) {
   if (error || !data) {
     return NextResponse.json({ error: 'Could not load the extension token.' }, { status: 500 });
   }
-  return NextResponse.json({ token: data.extension_token }, { headers: { 'Cache-Control': 'no-store' } });
+  return NextResponse.json(
+    { token: data.extension_token, canReplace: household.role === 'owner' },
+    { headers: { 'Cache-Control': 'no-store' } },
+  );
 }
 
 export async function GET() {

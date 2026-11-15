@@ -239,7 +239,14 @@ signup):
   separate from `id`, used only to authorize the unauthenticated ICS feed),
   `extension_token` (migration 011 — the same idea, for the Coles extension)
 - **`household_members`** — links `auth.users` to `households`, with an
-  `owner`/`member` role
+  `owner`/`member` role. One household per user (a unique index on
+  `user_id`, migration 015); joining another household moves you
+- **`household_invites`** (migration 015) — an owner's invite to one email,
+  valid 14 days, accepted at `/join/<token>` or automatically at signup
+  (`handle_new_user`). Every write goes through SECURITY DEFINER functions
+  (`create_household_invite`, `accept_household_invite`,
+  `remove_household_member` and so on) that check the caller; only an owner
+  can update the `households` row, including its tokens (#217)
 - **`family_settings`** — meal-planning preferences; `full_settings` is a
   JSONB column (migration 004) holding the complete settings object, with
   a handful of columns duplicated out of it for querying. A new household's
@@ -295,7 +302,7 @@ signup):
   login and signup pages show as "not invited"
   (`lib/auth/authErrorMessages.ts`, `app/auth/callback/route.ts`)
 
-Migrations run in numeric order, 001 through 014 (009 and 010 are
+Migrations run in numeric order, 001 through 015 (009 and 010 are
 independent of each other) — see `supabase/README.md` for the exact
 steps. There's no migration-runner in CI; each one is applied by
 hand in the Supabase SQL editor, same as every migration so far.

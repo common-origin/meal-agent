@@ -63,6 +63,9 @@ const TEN_MINUTES_MS = 10 * 60 * 1000;
  */
 export const colesSearchRateLimiter = createRateLimiter({ limit: 150, windowMs: TEN_MINUTES_MS });
 
+/** Sending and cancelling household invites (#217): each send is an email. */
+export const householdInviteRateLimiter = createRateLimiter({ limit: 10, windowMs: TEN_MINUTES_MS });
+
 export const aiRateLimiters = {
   // A week is 7 parallel requests (#95) and each typed edit regenerates its nights (#38).
   generateRecipes: createRateLimiter({ limit: 40, windowMs: TEN_MINUTES_MS }),

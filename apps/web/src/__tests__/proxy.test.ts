@@ -76,7 +76,7 @@ describe('proxy', () => {
   });
 
   describe('protected paths', () => {
-    it.each(['/plan', '/shopping-list', '/recipes', '/settings', '/debug', '/admin/debug'])(
+    it.each(['/plan', '/shopping-list', '/recipes', '/settings', '/debug', '/admin/debug', '/join/abc'])(
       'redirects an unauthenticated request to %s to /login with a redirectTo param',
       async (path) => {
         getUserMock.mockResolvedValue({ data: { user: null } });
@@ -111,7 +111,7 @@ describe('proxy', () => {
     });
 
     it("config.matcher covers every path in protectedPaths (including nested routes), so a regression here can't silently stop Next.js from invoking this proxy on a protected route", () => {
-      const protectedPaths = ['/plan', '/shopping-list', '/recipes', '/settings', '/debug', '/admin'];
+      const protectedPaths = ['/plan', '/shopping-list', '/recipes', '/settings', '/debug', '/admin', '/join'];
 
       for (const path of protectedPaths) {
         // Next.js's `:path*` matches zero or more segments, so
