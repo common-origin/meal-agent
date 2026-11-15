@@ -113,8 +113,9 @@ and counts AI use against the household owner), then applies a per-user rate lim
 in `AI.md`). `share-recipe-email` uses the same rate limiter.
 
 **Pricing/shopping**: `coles-search` (product lookup; needs a session and
-is rate limited to 150 a user per 10 minutes, since each call spends the
-shared RapidAPI quota), `ingredient-analytics`
+is rate limited to 150 a user per 10 minutes, and counted against the
+RapidAPI key's monthly quota, which every household shares: see
+`api_usage` below; `GET` returns the month's total), `ingredient-analytics`
 (client-side analytics metadata)
 
 **Coles extension** (#184, see [Coles extension](#coles-extension) below):
@@ -158,7 +159,9 @@ feed URL for display in Settings
   size rather than trusting a specific count here) and
   `ingredientPricing.ts` (category-based fallback pricing when nothing
   matches). `colesApi.ts` wraps a third-party RapidAPI product-price
-  endpoint (free tier, rate-limited, 24h cache) — Coles has no public API
+  endpoint (free tier, 24h cache; the monthly quota is counted on the
+  server by `lib/coles/quota.ts`, #227, and the browser only keeps the
+  last count the server reported) — Coles has no public API
   or partner program, so this is a workaround, not an official
   integration (see issue #36)
 - **Recipes**: `library.ts` (`RecipeLibrary`) manages custom recipes,
@@ -215,8 +218,8 @@ household-scoped cache above (including `RecipeLibrary`'s in-memory
 cache, not just localStorage — necessary since sign-out redirects via
 client-side navigation, no full page reload) so a browser switching
 between households doesn't inherit stale data. Deliberately leaves
-`ingredientAnalytics.ts` and the device-level `apiQuota.ts`/`colesApi.ts`
-caches untouched, since those are meant to persist regardless of who's
+`ingredientAnalytics.ts` and the device-level `colesApi.ts` lookup cache
+and `apiQuota.ts` on/off switch untouched, since those are meant to persist regardless of who's
 signed in.
 
 A related, earlier instance of the same class of problem: `library.ts`'s
@@ -297,8 +300,13 @@ signup):
   Coles online order, with the price paid and the matched ingredient key
   (`match_status` says how it was matched); kept for 12 months (#185)
 - **`pantry_preferences`**
-- **`api_usage`** (001) — an early AI-cost table that nothing writes to;
-  superseded by `ai_usage`
+- **`api_usage`** (001) — one row per Coles lookup through RapidAPI
+  (`endpoint = 'coles-search'`), written only by `claim_api_call()`
+  (migration 018) with the service role, which refuses once the UTC
+  month's total across every household reaches the limit (1,000, or
+  `COLES_API_MONTHLY_LIMIT`). Members can read their household's rows
+  but not insert them (#227). Its AI-cost columns are unused; AI calls
+  are in `ai_usage`
 - **`recipe_history`** (migration 007) — one row per recipe used in a
   composed or AI-generated week, `UNIQUE(household_id, recipe_id, week_start)`; backs
   cross-device recency/variety-enforcement sync (see [Storage](#storage))
@@ -318,7 +326,7 @@ signup):
   login and signup pages show as "not invited"
   (`lib/auth/authErrorMessages.ts`, `app/auth/callback/route.ts`)
 
-Migrations run in numeric order, 001 through 017 (009 and 010 are
+Migrations run in numeric order, 001 through 018 (009 and 010 are
 independent of each other) — see `supabase/README.md` for the exact
 steps. There's no migration-runner in CI; each one is applied by
 hand in the Supabase SQL editor, same as every migration so far.

@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Button, Stack, Typography, Alert, Divider, ResponsiveGrid } from '@common-origin/design-system';
 import Main from '@/components/app/Main';
 import { 
   searchColesProducts, 
   getRateLimitStats, 
+  refreshColesQuota,
   getCacheStats,
   parsePrice,
   calculatePricePerUnit,
@@ -21,6 +22,11 @@ export default function ColesApiTestPage() {
   const [searchTime, setSearchTime] = useState<number | null>(null);
   const [rateLimitStats, setRateLimitStats] = useState(getRateLimitStats());
   const [cacheStats, setCacheStats] = useState(getCacheStats());
+
+  // The quota is shared by every household and counted on the server (#227).
+  useEffect(() => {
+    void refreshColesQuota().then(setRateLimitStats);
+  }, []);
 
   const refreshStats = () => {
     setRateLimitStats(getRateLimitStats());

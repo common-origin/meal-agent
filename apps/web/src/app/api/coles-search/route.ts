@@ -7,6 +7,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { colesSearchRateLimiter } from '@/lib/api/rateLimit';
 import { requireUserWithinBurst } from '@/lib/api/guard';
+import { getUserHousehold } from '@/lib/supabase/server';
+import { claimColesLookup, readColesQuota } from '@/lib/coles/quota';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,6 +25,18 @@ interface RawProduct {
   url?: string;
   link?: string;
   [key: string]: unknown;
+}
+
+const QUOTA_EXCEEDED = "This month's Coles price lookups are used up, so prices are estimates until next month.";
+const QUOTA_UNAVAILABLE = "Coles price lookups aren't available right now, so prices are estimates.";
+
+/** This month's lookups across every household (#227), for the shopping list's quota banner. */
+export async function GET() {
+  const auth = await requireUserWithinBurst(colesSearchRateLimiter);
+  if (!auth.ok) return auth.response;
+  const quota = await readColesQuota();
+  if (!quota) return NextResponse.json({ error: QUOTA_UNAVAILABLE, code: 'quota_unavailable' }, { status: 503 });
+  return NextResponse.json(quota);
 }
 
 export async function POST(request: NextRequest) {
@@ -48,6 +62,20 @@ export async function POST(request: NextRequest) {
         { error: 'API key not configured' },
         { status: 500 }
       );
+    }
+
+    // Every household shares the key's monthly quota (#227): claim a call
+    // before making it, since RapidAPI counts failed calls too.
+    const household = await getUserHousehold();
+    if (!household) {
+      return NextResponse.json({ error: QUOTA_UNAVAILABLE, code: 'quota_unavailable' }, { status: 503 });
+    }
+    const claim = await claimColesLookup(household.household_id);
+    if (claim.status === 'unavailable') {
+      return NextResponse.json({ error: QUOTA_UNAVAILABLE, code: 'quota_unavailable' }, { status: 503 });
+    }
+    if (claim.status === 'exceeded') {
+      return NextResponse.json({ error: QUOTA_EXCEEDED, code: 'quota_exceeded', quota: claim.quota }, { status: 429 });
     }
     
     // Normalize query
@@ -107,7 +135,7 @@ export async function POST(request: NextRequest) {
     console.log(`✅ Found ${transformedResponse.results.length} products`);
     console.log('📋 First product:', JSON.stringify(transformedResponse.results[0], null, 2));
     
-    return NextResponse.json(transformedResponse);
+    return NextResponse.json({ ...transformedResponse, quota: claim.quota });
     
   } catch (error) {
     console.error('Coles API route error:', error);
