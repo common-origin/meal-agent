@@ -76,7 +76,7 @@ export async function getUserHousehold() {
 
   const { data, error } = await supabase
     .from('household_members')
-    .select('household_id, households(name)')
+    .select('household_id, role, households(name)')
     .eq('user_id', user.id)
     .single();
 

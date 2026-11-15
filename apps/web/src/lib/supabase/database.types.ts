@@ -153,6 +153,47 @@ export type Database = {
           },
         ]
       }
+      household_invites: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          household_id: string
+          id: string
+          invited_by: string | null
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          household_id: string
+          id?: string
+          invited_by?: string | null
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          household_id?: string
+          id?: string
+          invited_by?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_invites_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       household_members: {
         Row: {
           household_id: string
@@ -536,6 +577,28 @@ export type Database = {
     Functions: {
       get_user_household_id: { Args: never; Returns: string }
       ai_spend_since: { Args: { since: string }; Returns: number }
+      create_household_invite: {
+        Args: { p_email: string }
+        Returns: { id: string; token: string; email: string; expires_at: string }[]
+      }
+      cancel_household_invite: { Args: { p_invite: string }; Returns: undefined }
+      household_invite_preview: {
+        Args: { p_token: string }
+        Returns: {
+          status: string
+          invite_email: string | null
+          inviter_email: string | null
+          email_matches: boolean
+          already_member: boolean
+          sole_member: boolean
+        }[]
+      }
+      accept_household_invite: { Args: { p_token: string }; Returns: string }
+      household_member_list: {
+        Args: never
+        Returns: { user_id: string; email: string; role: string; joined_at: string; is_me: boolean }[]
+      }
+      remove_household_member: { Args: { p_user: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

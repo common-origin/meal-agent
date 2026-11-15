@@ -14,6 +14,7 @@ import { validateFamilySettings, CUISINE_OPTIONS, DEFAULT_FAMILY_SETTINGS, DIETA
 import { track } from "@/lib/analytics";
 import SettingsSection, { SettingsField, SettingsForm } from "@/components/app/SettingsSection";
 import ColesExtensionSettings from "@/components/app/ColesExtensionSettings";
+import HouseholdMembersSettings from "@/components/app/HouseholdMembersSettings";
 import TextListField from "@/components/app/TextListField";
 
 /**
@@ -631,6 +632,8 @@ function SettingsPageContent({ welcome }: { welcome: boolean }) {
 
 							{/* Setup stops here; the rest keeps its defaults until Settings (#211). */}
 							{!welcome && (<>
+							<HouseholdMembersSettings />
+
 							<SettingsSection
 								title="Batch cooking"
 								description="Cook in bulk on one day and eat from it across the week."

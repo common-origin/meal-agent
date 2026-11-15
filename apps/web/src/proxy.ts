@@ -80,6 +80,7 @@ export async function proxy(request: NextRequest) {
     '/settings',
     '/debug',
     '/admin',
+    '/join',
   ];
 
   const isProtectedPath = protectedPaths.some((path) =>
@@ -128,6 +129,7 @@ export const config = {
     '/settings/:path*',
     '/debug/:path*',
     '/admin/:path*',
+    '/join/:path*',
     '/login',
     '/signup',
   ],

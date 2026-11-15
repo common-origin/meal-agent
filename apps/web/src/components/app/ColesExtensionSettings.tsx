@@ -4,11 +4,17 @@ import { useEffect, useState } from "react";
 import { Box, Button, Stack, Typography } from "@common-origin/design-system";
 import SettingsSection from "./SettingsSection";
 
-async function fetchToken(rotate: boolean): Promise<string> {
+interface TokenState {
+  token: string;
+  /** Only the household owner can replace it (#217). */
+  canReplace: boolean;
+}
+
+async function fetchToken(rotate: boolean): Promise<TokenState> {
   const res = await fetch('/api/household/extension-token', { method: rotate ? 'POST' : 'GET' }).catch(() => null);
   const body = await res?.json().catch(() => ({}));
   if (!res?.ok || !body?.token) throw new Error(body?.error ?? (rotate ? 'Could not replace the token.' : 'Could not load the extension token.'));
-  return body.token;
+  return { token: body.token, canReplace: body.canReplace === true };
 }
 
 /**
@@ -16,18 +22,19 @@ async function fetchToken(rotate: boolean): Promise<string> {
  * paste into the extension's options, and a way to replace it.
  */
 export default function ColesExtensionSettings() {
-  const [token, setToken] = useState<string | null>(null);
+  const [state, setState] = useState<TokenState | null>(null);
+  const token = state?.token ?? null;
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const load = (rotate: boolean) =>
     fetchToken(rotate).then(
-      token => { setToken(token); setError(null); },
+      next => { setState(next); setError(null); },
       (e: Error) => setError(e.message),
     );
 
   useEffect(() => {
-    fetchToken(false).then(setToken, (e: Error) => setError(e.message));
+    fetchToken(false).then(setState, (e: Error) => setError(e.message));
   }, []);
 
   const copy = async () => {
@@ -70,11 +77,13 @@ export default function ColesExtensionSettings() {
                 </Button>
               </Stack>
             </Box>
-            <Stack direction="row">
-              <Button variant="secondary" size="medium" onClick={replace}>
-                Replace token
-              </Button>
-            </Stack>
+            {state?.canReplace && (
+              <Stack direction="row">
+                <Button variant="secondary" size="medium" onClick={replace}>
+                  Replace token
+                </Button>
+              </Stack>
+            )}
           </>
         ) : (
           !error && <Typography color="subdued">Loading your extension token…</Typography>
