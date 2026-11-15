@@ -9,6 +9,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { createClient } from '@/lib/supabase/client';
 import * as LocalStorage from '@/lib/storage';
 import { loadPantryPreferences } from '@/lib/pantryPreferences';
+import { deleteConfirmation } from '@/lib/account/deleteConfirmation';
 
 /** What only this browser keeps: added to the household's data from Supabase. */
 function thisBrowsersData() {
@@ -59,7 +60,8 @@ export default function YourDataPage() {
     }
   };
 
-  const emailMatches = !!user?.email && confirmEmail.trim().toLowerCase() === user.email.toLowerCase();
+  const confirmation = deleteConfirmation(user?.email);
+  const emailMatches = !!user && confirmEmail.trim().toLowerCase() === confirmation.toLowerCase();
 
   const deleteAccount = async () => {
     if (!emailMatches) return;
@@ -141,7 +143,7 @@ export default function YourDataPage() {
             size="small"
             actions={[
               { label: 'Cancel', onClick: () => setDeleteOpen(false), variant: 'secondary', disabled: deleting },
-              { label: deleting ? 'Deleting…' : 'Delete account', onClick: deleteAccount, variant: 'primary', disabled: deleting || !emailMatches },
+              { label: deleting ? 'Deleting…' : 'Delete account', onClick: deleteAccount, variant: 'danger', disabled: deleting || !emailMatches },
             ]}
           >
             <Stack direction="column" gap="md">
@@ -150,11 +152,11 @@ export default function YourDataPage() {
               </Typography>
               {deleteError && <Alert variant="error" appearance="borderless">{deleteError}</Alert>}
               <TextField
-                label="Type your email to confirm"
-                type="email"
+                label={user?.email ? 'Type your email to confirm' : 'Type DELETE to confirm'}
+                type={user?.email ? 'email' : 'text'}
                 value={confirmEmail}
                 onChange={(e) => setConfirmEmail(e.target.value)}
-                placeholder={user?.email ?? 'you@example.com'}
+                placeholder={confirmation}
                 disabled={deleting}
               />
             </Stack>

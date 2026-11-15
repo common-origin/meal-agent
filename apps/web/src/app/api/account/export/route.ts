@@ -5,12 +5,16 @@
  */
 
 import { NextResponse } from 'next/server';
-import { createClient, getCurrentUser, getUserHousehold } from '@/lib/supabase/server';
+import { createClient, getUserHousehold } from '@/lib/supabase/server';
+import { requireUserWithinBurst } from '@/lib/api/guard';
+import { accountExportRateLimiter } from '@/lib/api/rateLimit';
 import { buildAccountExport } from '@/lib/account/export';
 
 export async function GET() {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: 'Please sign in.' }, { status: 401 });
+  // Each export reads every household table, so it's rate limited.
+  const guarded = await requireUserWithinBurst(accountExportRateLimiter);
+  if (!guarded.ok) return guarded.response;
+  const user = guarded.value;
   const household = await getUserHousehold();
   if (!household) return NextResponse.json({ error: "We couldn't find your household." }, { status: 404 });
 

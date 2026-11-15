@@ -88,6 +88,12 @@ describe('GET /api/account/export (#224)', () => {
     mocks.getCurrentUser.mockResolvedValue(null);
     expect((await exportGET()).status).toBe(401);
   });
+
+  it('is rate limited: a 6th export within 10 minutes gets 429', async () => {
+    mocks.getCurrentUser.mockResolvedValue({ id: 'u-rate', email: 'r@x.com' });
+    for (let i = 0; i < 5; i++) expect((await exportGET()).status).toBe(200);
+    expect((await exportGET()).status).toBe(429);
+  });
 });
 
 describe('POST /api/account/delete (#224)', () => {
@@ -102,6 +108,13 @@ describe('POST /api/account/delete (#224)', () => {
     expect((await deletePOST(deleteRequest('someone@else.com'))).status).toBe(400);
     expect((await deletePOST(deleteRequest(undefined))).status).toBe(400);
     expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+
+  it('asks an account with no email to type DELETE instead', async () => {
+    mocks.getCurrentUser.mockResolvedValue({ id: 'u2', email: undefined });
+    mocks.rpc.mockResolvedValue({ data: null, error: null });
+    expect((await deletePOST(deleteRequest(''))).status).toBe(400);
+    expect((await deletePOST(deleteRequest('delete'))).status).toBe(200);
   });
 
   it('reports a database failure', async () => {

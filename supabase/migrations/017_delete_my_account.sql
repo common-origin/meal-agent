@@ -14,6 +14,16 @@
 --
 -- Needs migration 015 (for _leave_household).
 
+-- The function runs as whoever runs this migration, so that role must be
+-- able to delete from auth.users. Say so now rather than when a user tries.
+DO $$
+BEGIN
+  IF NOT has_table_privilege(current_user, 'auth.users', 'DELETE') THEN
+    RAISE EXCEPTION 'Role % cannot delete from auth.users, so delete_my_account() would fail. Run this migration as postgres in the Supabase SQL editor.', current_user;
+  END IF;
+END
+$$;
+
 CREATE OR REPLACE FUNCTION public.delete_my_account()
 RETURNS VOID AS $$
 DECLARE

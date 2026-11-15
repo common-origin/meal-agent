@@ -1,12 +1,14 @@
 /**
  * POST /api/account/delete { confirmEmail } (#224): deletes the signed-in
  * user's account and data through delete_my_account() (migration 017). The
- * typed email must match theirs, so it can't happen by a stray request.
+ * typed confirmation must match their email (or DELETE, for an account with
+ * no email), so it can't happen by a stray request.
  * The browser then signs out and clears its cached household data.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient, getCurrentUser } from '@/lib/supabase/server';
+import { deleteConfirmation } from '@/lib/account/deleteConfirmation';
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
@@ -14,7 +16,7 @@ export async function POST(request: NextRequest) {
 
   const body = (await request.json().catch(() => null)) as { confirmEmail?: unknown } | null;
   const typed = typeof body?.confirmEmail === 'string' ? body.confirmEmail.trim().toLowerCase() : '';
-  if (!user.email || typed !== user.email.toLowerCase()) {
+  if (typed !== deleteConfirmation(user.email).toLowerCase()) {
     return NextResponse.json({ error: "That email doesn't match your account." }, { status: 400 });
   }
 
