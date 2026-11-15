@@ -133,6 +133,7 @@ async function suggestKeys(supabase: Admin, householdId: string, products: Histo
   try {
     const result = await runAiTask('orderMatch', {
       userId,
+      householdId,
       system: buildOrderMatchSystemPrompt(),
       prompt: buildOrderMatchPrompt(
         products.map(row => ({ productId: row.product_id, name: productDisplayName(row.brand, row.name), size: row.size })),

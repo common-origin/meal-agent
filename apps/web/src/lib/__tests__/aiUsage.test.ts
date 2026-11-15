@@ -172,6 +172,16 @@ describe('spend ceiling alert (#215)', () => {
     expect(mocks.sendEmail).toHaveBeenCalledTimes(2);
   });
 
+  it('tries again on the next refusal when the email fails', async () => {
+    const day = new Date('2026-10-11T05:00:00Z');
+    mocks.sendEmail.mockResolvedValueOnce({ error: { message: 'Resend is down' } } as never);
+    await checkAiAllowance('user-1', day);
+    await flushAfter();
+    await checkAiAllowance('user-1', day);
+    await flushAfter();
+    expect(mocks.sendEmail).toHaveBeenCalledTimes(2);
+  });
+
   it('only logs when email is not configured', async () => {
     vi.stubEnv('ADMIN_EMAILS', '');
     await checkAiAllowance('user-1', new Date('2026-10-10T05:00:00Z'));
@@ -188,6 +198,15 @@ describe('startOfUtcDay', () => {
 });
 
 describe('recordAiUsage', () => {
+  it('writes with the service role and an explicit household when the caller has no session (#215)', async () => {
+    const insert = vi.fn().mockResolvedValue({ error: null });
+    mocks.createAdminClient.mockReturnValue({ from: vi.fn(() => ({ insert })) });
+    recordAiUsage({ ...context, householdId: 'household-9' }, okOutcome);
+    await flushAfter();
+    expect(mocks.createClient).not.toHaveBeenCalled();
+    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ user_id: 'user-1', household_id: 'household-9' }));
+  });
+
   it('logs one ai_call line now and writes the row only after the response', async () => {
     const supabase = fakeSupabase();
     mocks.createClient.mockResolvedValue(supabase.client);

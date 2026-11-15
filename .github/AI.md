@@ -297,7 +297,11 @@ Both limits are read with the service role (`checkAiAllowance` in
 matching, which has no session. They **fail closed**: if usage can't be
 read (migration 014 not run, Supabase down), the call is refused with
 `ai_unavailable`. Both are approximate, because rows are written after each
-response.
+response. Reading usage needs `SUPABASE_SERVICE_ROLE_KEY`, so every
+environment that should run AI (Production, Preview, local `.env.local`)
+must have it, or its AI features all say "aren't available". A model in
+`AI_TASKS` with no `MODEL_PRICING` rate would record a null cost and slip
+past the ceiling; a test checks every configured model has one.
 
 Monthly cost by task (run in the Supabase SQL editor):
 

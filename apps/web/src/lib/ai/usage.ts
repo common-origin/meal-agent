@@ -26,6 +26,8 @@ export interface AiCallContext {
   task: AiTask;
   model: string;
   userId: string;
+  /** Set by session-less callers: the row is then written with the service role (#215). */
+  householdId?: string;
 }
 
 export interface AiCallOutcome {
@@ -57,8 +59,12 @@ export function recordAiUsage(context: AiCallContext, outcome: AiCallOutcome): v
   console.info(JSON.stringify({ type: 'ai_call', ...row }));
 
   runAfterResponse(async () => {
-    const supabase = await createClient();
-    const { error } = await supabase.from('ai_usage').insert(row);
+    // With no session (the Coles extension) RLS would refuse the insert, and
+    // the call would be missing from both limits; the service role writes
+    // it, with the household given explicitly (#215).
+    const { error } = context.householdId
+      ? await createAdminClient().from('ai_usage').insert({ ...row, household_id: context.householdId })
+      : await (await createClient()).from('ai_usage').insert(row);
     if (error) console.warn('ai_usage: could not record AI call (is migration 010 applied?)', error.message);
   });
 }
@@ -149,7 +155,11 @@ function alertSpendCap(spentUsd: number, capUsd: number, now: Date): void {
       subject: 'Meal Agent: AI paused for today (spend ceiling reached)',
       text: `${summary}\n\nAI features say "paused for today" until UTC midnight. To change the ceiling, set AI_DAILY_SPEND_CAP_USD in Vercel. The ai_usage table shows what was spent.`,
     });
-    if (error) throw new Error(error.message);
+    if (error) {
+      // Let the next refusal try again rather than staying silent all day.
+      lastSpendAlertDay = null;
+      throw new Error(error.message);
+    }
   });
 }
 
