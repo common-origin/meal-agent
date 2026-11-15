@@ -166,7 +166,7 @@ export default function ColesApiTestPage() {
             )}
 
             {error && (
-              <Alert variant="error">{error}</Alert>
+              <Alert variant="error" appearance="borderless">{error}</Alert>
             )}
 
             {results.length > 0 && (

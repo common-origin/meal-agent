@@ -208,7 +208,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel, initialWeek, pl
                 </Stack>
               </Stack>
               {scanError && (
-                <Alert variant="error" dismissible onDismiss={() => setScanError(null)}>
+                <Alert variant="error" appearance="borderless" dismissible onDismiss={() => setScanError(null)}>
                   {scanError}
                 </Alert>
               )}

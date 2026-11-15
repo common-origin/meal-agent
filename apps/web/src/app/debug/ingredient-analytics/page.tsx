@@ -246,7 +246,7 @@ export default function IngredientAnalyticsPage() {
         {analytics.totalIngredients === 0 && (
           <>
             <Divider size="small" />
-            <Alert variant="info">
+            <Alert variant="info" appearance="borderless">
               <Stack direction="column" gap="xs">
                 <Typography variant="h3">No data yet</Typography>
                 <Typography variant="body">
