@@ -40,8 +40,14 @@ describe('recipe card content (#181)', () => {
     expect(container.textContent).toContain('45 min\u00a0· Jamie Oliver');
     // Tags after the text, not part of the "·" line
     expect(container.textContent).not.toMatch(/520 cal\s*·/);
-    expect(screen.getByText('520 cal').className).toMatch(/Tag/);
-    expect(screen.getByText('24g protein').className).toMatch(/Tag/);
+    expect(screen.getByTestId('meal-calories')).toHaveTextContent('520 cal');
+    expect(screen.getByTestId('meal-protein')).toHaveTextContent('24g protein');
+  });
+
+  it('shows no calorie or protein tag for zero (unknown) nutrition', () => {
+    render(<MealCard {...base} nutrition={{ calories: 0, protein: 0, carbs: 0, fat: 0 }} />);
+    expect(screen.queryByTestId('meal-calories')).toBeNull();
+    expect(screen.queryByTestId('meal-protein')).toBeNull();
   });
 
   it('flags a long cook', () => {
