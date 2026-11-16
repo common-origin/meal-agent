@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Alert, Box, Button, Checkbox, Chip, Container, Dropdown, FilterChip, Modal, NumberInput, Slider, Stack, TextField, Typography } from "@common-origin/design-system";
+import { Alert, Box, Button, Checkbox, Chip, Container, Dropdown, FilterChip, Icon, Modal, NumberInput, Slider, Stack, TextField, Typography } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import {
   getFamilySettings,
@@ -867,7 +867,11 @@ function SettingsPageContent({ welcome }: { welcome: boolean }) {
 										<Stack direction="row" gap="md" justifyContent="space-between" alignItems="center">
 											<div style={{ minWidth: 0 }}>
 												<Stack direction="column" gap="xs">
-													<Typography variant="body"><strong>Calendar link</strong></Typography>
+													{/* The calendar marks what this card is; the button is a copy, so it gets none */}
+													<Stack direction="row" gap="xs" alignItems="center">
+														<Icon name="calendar" size="sm" />
+														<Typography variant="body"><strong>Calendar link</strong></Typography>
+													</Stack>
 													<div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
 														<Typography variant="small" color="subdued">{icsUrl}</Typography>
 													</div>

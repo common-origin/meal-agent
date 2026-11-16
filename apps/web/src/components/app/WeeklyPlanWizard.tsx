@@ -201,7 +201,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel, initialWeek, pl
                   <Button
                     variant="secondary"
                     size="small"
-                    iconName={isScanning ? undefined : 'export'}
+                    iconName={isScanning ? undefined : 'camera'}
                     onClick={() => scanInputRef.current?.click()}
                     disabled={!loaded || isScanning}
                   >
@@ -268,7 +268,7 @@ export default function WeeklyPlanWizard({ onComplete, onCancel, initialWeek, pl
               ) : null
             }
             right={
-              <Button variant="primary" size="large" iconName="check" onClick={handleGenerate} disabled={!canGenerate}>
+              <Button variant="primary" size="large" iconName="ai" onClick={handleGenerate} disabled={!canGenerate}>
                 Generate plan
               </Button>
             }

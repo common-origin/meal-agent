@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Stack, Typography, Box, Button, Checkbox, ChipGroup, IconButton, Alert, Menu, MenuDivider, MenuItem, Modal, ResponsiveGrid, TextField } from "@common-origin/design-system";
+import { Stack, Typography, Box, Button, Checkbox, ChipGroup, Icon, IconButton, Alert, Menu, MenuDivider, MenuItem, Modal, ResponsiveGrid, TextField } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import { tokens } from "@common-origin/design-system";
 import { isFavorite, getRecipeRating, saveRecipeRating, blockRecipe, isRecipeBlocked } from "@/lib/storage";
@@ -281,16 +281,20 @@ export default function RecipePage({ params }: RecipePageProps) {
               />
             }
           >
-            <MenuItem onSelect={handleFavoriteClick}>
+            {/* An icon on every item, so the menu scans by shape; "inherit" takes the item's colour
+                (the destructive red, the disabled grey) */}
+            <MenuItem icon={<Icon name="heart" size="sm" iconColor="inherit" />} onSelect={handleFavoriteClick}>
               {favorited ? 'Remove from favourites' : 'Favourite this recipe'}
             </MenuItem>
             <MenuItem
+              icon={<Icon name="star" size="sm" iconColor="inherit" />}
               description={rating > 0 ? `Rated ${rating} of 5` : 'Not rated yet'}
               onSelect={() => setShowRatingModal(true)}
             >
               Rate this recipe…
             </MenuItem>
             <MenuItem
+              icon={<Icon name="send" size="sm" iconColor="inherit" />}
               description={
                 savedRecipients.length === 0
                   ? 'Add recipients in Settings first'
@@ -302,7 +306,12 @@ export default function RecipePage({ params }: RecipePageProps) {
               Email recipe…
             </MenuItem>
             <MenuDivider />
-            <MenuItem destructive disabled={blocked} onSelect={() => setShowBlockConfirm(true)}>
+            <MenuItem
+              icon={<Icon name="trash" size="sm" iconColor="inherit" />}
+              destructive
+              disabled={blocked}
+              onSelect={() => setShowBlockConfirm(true)}
+            >
               Remove from plans
             </MenuItem>
           </Menu>

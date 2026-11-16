@@ -94,7 +94,7 @@ export default function ColesExtensionSettings() {
             extension&apos;s reload button in chrome://extensions.
           </Typography>
           <Stack direction="row" gap="md" alignItems="center">
-            <Button variant="secondary" size="medium" purpose="link" url={EXTENSION_ZIP} download iconName="export">
+            <Button variant="secondary" size="medium" purpose="link" url={EXTENSION_ZIP} download iconName="download">
               Download the extension
             </Button>
             {version && <Typography variant="small" color="subdued">{`Version ${version}`}</Typography>}
