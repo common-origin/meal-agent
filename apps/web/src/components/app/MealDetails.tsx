@@ -1,8 +1,8 @@
 "use client";
 
-import { Fragment, type ReactNode } from "react";
+import { Children, type ReactNode } from "react";
 import styled from "styled-components";
-import { Icon, Typography, tokens } from "@common-origin/design-system";
+import { Icon, Tag, Typography, tokens } from "@common-origin/design-system";
 import { isLongCook } from "@/lib/dayCard";
 import type { NutritionInfo } from "@/lib/types/recipe";
 
@@ -12,7 +12,7 @@ export type MealDetailsProps = {
   nutrition?: NutritionInfo;
   /** Where the recipe is from ("AI generated", a chef); omitted when unknown. */
   source?: string;
-  /** More inline items at the end of the line (the plan's tags). */
+  /** More tags at the end of the line, after calories and protein (the plan's tags). */
   children?: ReactNode;
 };
 
@@ -23,32 +23,35 @@ const Time = styled.span`
   vertical-align: middle;
 `;
 
-// Each item stays whole ("AI generated" never splits across lines)
+// The source stays whole ("AI generated" never splits across lines)
 const Item = styled.span`
   white-space: nowrap;
 `;
 
-// The plan's tags, after the text on the same line
+// The tags (calories, protein, then the plan's tags), after the text on the same line. The space
+// before them is a plain text space in the markup, not a margin, so it drops away if the tags wrap
+// onto their own line instead of indenting them.
 const Extras = styled.span`
   display: inline-flex;
   flex-wrap: wrap;
   gap: ${tokens.semantic.space[100]};
-  margin-left: ${tokens.semantic.space[200]};
   vertical-align: middle;
 `;
 
 /**
  * A meal's details line, shared by the plan's day cards and the recipe cards
  * (#160, #181): cook time first with the clock (warning colour and "long cook"
- * over an hour), then calories and protein, then the source.
+ * over an hour), then the source, then calories and protein as tags (like the
+ * plan header's figures), then any tags passed in.
  */
 export default function MealDetails({ timeMins, nutrition, source, children }: MealDetailsProps) {
   const hasTime = timeMins > 0;
   const long = hasTime && isLongCook(timeMins);
-  // The muted items, each after a "·" (the first only if a time precedes it)
-  const rest = [nutrition ? `${nutrition.calories} cal · ${nutrition.protein}g protein` : null, source || null].filter(
-    (item): item is string => Boolean(item)
-  );
+  // Zero means unknown (as in planSummary.ts), so it gets no tag rather than "0 cal"
+  const calories = nutrition && nutrition.calories > 0 ? nutrition.calories : null;
+  const protein = nutrition && nutrition.protein > 0 ? nutrition.protein : null;
+  // Counts the items, so an empty list of tags (PlanMeal passes an array) adds nothing
+  const hasTags = calories !== null || protein !== null || Children.count(children) > 0;
 
   return (
     // Flows as text, each "·" glued to the item before it, so a wrapped line starts with a word
@@ -61,14 +64,27 @@ export default function MealDetails({ timeMins, nutrition, source, children }: M
           </Typography>
         </Time>
       )}
-      {rest.map((item, i) => (
-        <Fragment key={item}>
-          {/* The "·" is glued to what's before it; the line may break only after it */}
-          {hasTime || i > 0 ? "\u00a0· " : ""}
-          <Item>{item}</Item>
-        </Fragment>
-      ))}
-      {children && <Extras>{children}</Extras>}
+      {source && (
+        <>
+          {/* The "·" is glued to the time; the line may break only after it */}
+          {hasTime ? " · " : ""}
+          <Item>{source}</Item>
+        </>
+      )}
+      {hasTags && (
+        <>
+          {hasTime || source ? " " : ""}
+          <Extras>
+            {calories !== null && (
+              <Tag size="small" data-testid="meal-calories">{`${calories} cal`}</Tag>
+            )}
+            {protein !== null && (
+              <Tag size="small" data-testid="meal-protein">{`${protein}g protein`}</Tag>
+            )}
+            {children}
+          </Extras>
+        </>
+      )}
     </Typography>
   );
 }
