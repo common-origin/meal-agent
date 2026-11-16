@@ -74,7 +74,7 @@ describe('recipe card content (#181)', () => {
 });
 
 describe('MealMenu destructive label (#179)', () => {
-  const open = () => fireEvent.click(screen.getByRole('button', { name: 'More options for Soup' }));
+  const open = () => fireEvent.click(screen.getByRole('button', { name: 'More options for Soup' }), { detail: 1 }); // a mouse click: Menu leaves detail 0 to the keyboard
 
   it('says "Remove from plan" by default (the plan)', () => {
     render(<MealMenu recipeId="r1" title="Soup" onDeleteClick={() => {}} />);
