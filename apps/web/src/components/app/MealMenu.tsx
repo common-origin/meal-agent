@@ -20,8 +20,8 @@ export type MealMenuProps = {
   deleteLabel?: string;
 };
 
+// Menu places its panel in a floating layer, so this only keeps the ⋮ from shrinking
 const MenuWrapper = styled.div`
-  position: relative;
   flex-shrink: 0;
 `;
 
