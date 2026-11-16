@@ -85,10 +85,12 @@ export default function PantrySheet({
             <Button
               variant="primary"
               size="medium"
+              // The camera, as on the planner's Scan button (the input opens the camera on phones)
+              iconName={isScanning ? undefined : 'camera'}
               onClick={() => document.getElementById('pantry-sheet-image-upload')?.click()}
               disabled={isScanning}
             >
-              {isScanning ? '📸 Scanning...' : 'Scan Photo'}
+              {isScanning ? 'Scanning…' : 'Scan Photo'}
             </Button>
 
             {scanError && (
