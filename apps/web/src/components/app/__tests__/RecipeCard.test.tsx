@@ -34,9 +34,14 @@ describe('recipe card content (#181)', () => {
     expect(screen.getByRole('heading', { name: 'Coq au Vin' })).toBeInTheDocument();
   });
 
-  it('leads the details line with the time, then nutrition, then the source', () => {
+  it('leads the details line with the time, then the source, then calories and protein as tags', () => {
     const { container } = render(<MealCard {...base} nutrition={{ calories: 520, protein: 24, carbs: 0, fat: 0 }} />);
-    expect(container.textContent).toContain('45 min · 520 cal · 24g protein · Jamie Oliver');
+    // The "·" is glued to the time with a non-breaking space
+    expect(container.textContent).toContain('45 min\u00a0· Jamie Oliver');
+    // Tags after the text, not part of the "·" line
+    expect(container.textContent).not.toMatch(/520 cal\s*·/);
+    expect(screen.getByText('520 cal').className).toMatch(/Tag/);
+    expect(screen.getByText('24g protein').className).toMatch(/Tag/);
   });
 
   it('flags a long cook', () => {
