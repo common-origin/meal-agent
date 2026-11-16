@@ -58,7 +58,7 @@ export default function MealDetails({ timeMins, nutrition, source, children }: M
     <Typography variant="small" color="subdued" as="div">
       {hasTime && (
         <Time>
-          <Icon name="statusPending" size="sm" iconColor={long ? "warning" : "default"} />
+          <Icon name="clock" size="sm" iconColor={long ? "warning" : "default"} />
           <Typography variant="label" as="span" color={long ? "warning" : "default"}>
             {long ? `${timeMins} min · long cook` : `${timeMins} min`}
           </Typography>

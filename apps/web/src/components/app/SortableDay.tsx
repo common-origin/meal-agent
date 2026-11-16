@@ -130,7 +130,7 @@ export default function SortableDay({
         lead={
           canReorder && (
             <Grip ref={setActivatorNodeRef} {...attributes} {...listeners} aria-label={`Reorder ${day}`}>
-              <Icon name="move" size="sm" iconColor="inherit" />
+              <Icon name="drag" size="sm" iconColor="inherit" />
             </Grip>
           )
         }

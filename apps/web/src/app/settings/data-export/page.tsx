@@ -109,7 +109,7 @@ export default function YourDataPage() {
                   </Alert>
                 )}
                 <Stack direction="row">
-                  <Button variant="secondary" size="medium" iconName="export" onClick={exportData} disabled={exporting}>
+                  <Button variant="secondary" size="medium" iconName="download" onClick={exportData} disabled={exporting}>
                     {exporting ? 'Preparing…' : 'Download my data'}
                   </Button>
                 </Stack>

@@ -414,10 +414,10 @@ export default function ShoppingListPage() {
               </Stack>
               <Stack direction="row" gap="sm">
                 {/* Naked: Shop at Coles is the page's one main action */}
-                <Button variant="naked" size="large" iconName="export" onClick={handleExportCSV}>
+                <Button variant="naked" size="large" iconName="download" onClick={handleExportCSV}>
                   Export CSV
                 </Button>
-                <Button variant="primary" size="large" onClick={handleShopAtColes} disabled={sendingToColes}>
+                <Button variant="primary" size="large" iconName="shoppingCart" onClick={handleShopAtColes} disabled={sendingToColes}>
                   Shop at Coles
                 </Button>
               </Stack>
