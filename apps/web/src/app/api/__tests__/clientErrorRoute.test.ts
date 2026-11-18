@@ -65,7 +65,7 @@ describe('POST /api/telemetry/client-error (#246)', () => {
   it('rejects an oversized body (about 4 KB) and malformed JSON with 400', async () => {
     const big = await POST(post({ ...valid, topFrame: 'a'.repeat(5000) }));
     expect(big.status).toBe(400);
-    const padded = JSON.stringify(valid).replace('}', `,"pad":"${'x'.repeat(5000)}"}`);
+    const padded = JSON.stringify({ ...valid, pad: 'x'.repeat(5000) });
     expect((await POST(post(padded, true))).status).toBe(400);
     expect((await POST(post('{not json', true))).status).toBe(400);
     expect((await POST(post('', true))).status).toBe(400);
