@@ -139,7 +139,7 @@ describe('WeekPlanList day cards (#160)', () => {
     const onMoveNight = vi.fn();
     const meals = [meal('Pumpkin soup'), null, null, meal('Roast chicken'), null, null, null];
     render(<WeekPlanList meals={meals} onMoveNight={onMoveNight} />);
-    fireEvent.click(screen.getByRole('button', { name: 'More options for Pumpkin soup' }));
+    fireEvent.click(screen.getByRole('button', { name: 'More options for Pumpkin soup' }), { detail: 1 });
     fireEvent.click(screen.getByText('Move to another night…'));
     const sheet = screen.getByRole('dialog');
     expect(within(sheet).queryByText(/^Monday/)).toBeNull();
@@ -171,7 +171,7 @@ describe('WeekPlanList day cards (#160)', () => {
   it('closes the move sheet for good when moving is switched off', () => {
     const meals = [meal('Pumpkin soup'), null, null, null, null, null, null];
     const { rerender } = render(<WeekPlanList meals={meals} onMoveNight={() => {}} />);
-    fireEvent.click(screen.getByRole('button', { name: 'More options for Pumpkin soup' }));
+    fireEvent.click(screen.getByRole('button', { name: 'More options for Pumpkin soup' }), { detail: 1 });
     fireEvent.click(screen.getByText('Move to another night…'));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     rerender(<WeekPlanList meals={meals} />);

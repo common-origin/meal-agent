@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import styled from "styled-components";
-import { Box, IconButton, List, ListItem, tokens } from "@common-origin/design-system";
+import { IconButton, Menu, MenuDivider, MenuItem } from "@common-origin/design-system";
 import { isFavorite } from "@/lib/storage";
 import { toggleFavorite } from "@/lib/hybridStorage";
 import { track } from "@/lib/analytics";
@@ -20,42 +20,21 @@ export type MealMenuProps = {
   deleteLabel?: string;
 };
 
+// Menu places its panel in a floating layer, so this only keeps the ⋮ from shrinking
 const MenuWrapper = styled.div`
-  position: relative;
   flex-shrink: 0;
 `;
 
-/** A meal's ⋮ menu: swap, move, favourite and remove. */
+/**
+ * A meal's ⋮ menu: swap, move, favourite and remove. The design system's Menu, which brings
+ * keyboard navigation, Escape, menu roles and focus handling, as on the recipe page.
+ */
 export default function MealMenu({ recipeId, title, onSwapClick, onMoveClick, onDeleteClick, deleteLabel = "Remove from plan" }: MealMenuProps) {
   const [favorited, setFavorited] = useState(false);
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setFavorited(isFavorite(recipeId));
   }, [recipeId]);
-
-  // Close on a click outside or Escape
-  useEffect(() => {
-    if (!open) return;
-    const handleClickOutside = (e: globalThis.MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKey);
-    };
-  }, [open]);
-
-  const choose = (action: () => void) => () => {
-    action();
-    setOpen(false);
-  };
 
   const handleFavorite = () => {
     const next = toggleFavorite(recipeId);
@@ -64,47 +43,30 @@ export default function MealMenu({ recipeId, title, onSwapClick, onMoveClick, on
   };
 
   return (
-    // stopPropagation: the menu can sit inside a card link
-    <MenuWrapper ref={menuRef} onClick={(e: MouseEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); }}>
-      <IconButton
-        variant="naked"
-        iconName="kebab"
-        size="medium"
-        onClick={() => setOpen(!open)}
-        aria-label={`More options for ${title}`}
-        aria-expanded={open}
-      />
-      {open && (
-        <Box
-          border="default"
-          borderRadius="lg"
-          bg="surface.raised"
-          p="none"
-          style={{
-            position: "absolute",
-            overflow: "hidden",
-            right: 0,
-            top: "100%",
-            marginTop: 4,
-            zIndex: 10,
-            minWidth: 220,
-            boxShadow: tokens.semantic.elevation.floating,
-          }}
-        >
-          <List dividers spacing="compact">
-            {onSwapClick && <ListItem primary="Use a saved recipe" interactive onClick={choose(onSwapClick)} />}
-            {onMoveClick && <ListItem primary="Move to another night…" interactive onClick={choose(onMoveClick)} />}
-            <ListItem
-              primary={favorited ? "Remove from favourites" : "Favourite this recipe"}
-              interactive
-              onClick={choose(handleFavorite)}
-            />
-            {onDeleteClick && (
-              <ListItem primary={deleteLabel} interactive destructive onClick={choose(onDeleteClick)} />
-            )}
-          </List>
-        </Box>
-      )}
+    // stopPropagation: the menu can sit inside a card link (React events bubble here from the menu too)
+    <MenuWrapper onClick={(e: MouseEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); }}>
+      <Menu
+        align="end"
+        trigger={
+          <IconButton variant="naked" iconName="kebab" size="medium" aria-label={`More options for ${title}`} />
+        }
+      >
+        {/* No dividers between items: a menu's dividers mark groups. The one group is the
+            destructive action, set apart below a single divider. */}
+        {onSwapClick && <MenuItem onSelect={onSwapClick}>Use a saved recipe</MenuItem>}
+        {onMoveClick && <MenuItem onSelect={onMoveClick}>Move to another night…</MenuItem>}
+        <MenuItem onSelect={handleFavorite}>
+          {favorited ? "Remove from favourites" : "Favourite this recipe"}
+        </MenuItem>
+        {onDeleteClick && (
+          <>
+            <MenuDivider />
+            <MenuItem destructive onSelect={onDeleteClick}>
+              {deleteLabel}
+            </MenuItem>
+          </>
+        )}
+      </Menu>
     </MenuWrapper>
   );
 }

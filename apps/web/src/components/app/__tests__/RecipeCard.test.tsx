@@ -74,7 +74,7 @@ describe('recipe card content (#181)', () => {
 });
 
 describe('MealMenu destructive label (#179)', () => {
-  const open = () => fireEvent.click(screen.getByRole('button', { name: 'More options for Soup' }));
+  const open = () => fireEvent.click(screen.getByRole('button', { name: 'More options for Soup' }), { detail: 1 }); // a mouse click: Menu leaves detail 0 to the keyboard
 
   it('says "Remove from plan" by default (the plan)', () => {
     render(<MealMenu recipeId="r1" title="Soup" onDeleteClick={() => {}} />);
@@ -89,5 +89,21 @@ describe('MealMenu destructive label (#179)', () => {
     expect(screen.queryByText('Remove from plan')).toBeNull();
     fireEvent.click(within(document.body).getByText('Delete recipe'));
     expect(onDeleteClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('separates only the destructive action, with one divider just before it', () => {
+    render(<MealMenu recipeId="r1" title="Soup" onSwapClick={() => {}} onMoveClick={() => {}} onDeleteClick={() => {}} />);
+    open();
+    const menu = screen.getByRole('menu');
+    expect(within(menu).getAllByRole('separator')).toHaveLength(1);
+    // The separator comes right before "Remove from plan", not between the other actions
+    const separator = within(menu).getByRole('separator');
+    expect(separator.nextElementSibling).toHaveTextContent('Remove from plan');
+  });
+
+  it('has no divider without a destructive action', () => {
+    render(<MealMenu recipeId="r1" title="Soup" onSwapClick={() => {}} />);
+    open();
+    expect(within(screen.getByRole('menu')).queryAllByRole('separator')).toHaveLength(0);
   });
 });

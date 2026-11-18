@@ -35,7 +35,7 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 import RecipesPage from '../page';
 
-const openMenu = (title: string) => fireEvent.click(screen.getByRole('button', { name: `More options for ${title}` }));
+const openMenu = (title: string) => fireEvent.click(screen.getByRole('button', { name: `More options for ${title}` }), { detail: 1 }); // a mouse click: Menu leaves detail 0 to the keyboard
 
 describe('/recipes delete (#179)', () => {
   beforeEach(() => {
