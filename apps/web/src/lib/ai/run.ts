@@ -164,6 +164,12 @@ function tokenUsage(usage: LanguageModelUsage): TokenUsage {
   };
 }
 
+/**
+ * The ai_usage `error_code` recorded for a billing refusal (#171): status 'error' with this code
+ * means the AI account's credits ran out. The health check and the admin dashboard count it.
+ */
+export const BILLING_ERROR_CODES = ['http_402'] as const;
+
 const RATE_LIMITED = 429;
 const PAYMENT_REQUIRED = 402;
 const UNAVAILABLE = new Set([500, 502, 503, 504]);

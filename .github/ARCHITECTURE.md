@@ -136,6 +136,12 @@ than a session (see [Calendar export](#calendar-export) below);
 `household/ics-url` — session-authenticated, returns the signed-in user's
 feed URL for display in Settings
 
+**Health** (#248): `health` — `GET`, public, returns `{ status, checkedAt,
+release }` from the latest stored check and never runs a live one;
+`health/record` — `POST` with `Authorization: Bearer $HEALTH_CHECK_SECRET`
+(404 if the secret is unset), runs the checks and stores a row (see
+[Health checks](#health-checks-and-uptime))
+
 **Other**: `share-recipe-email`, `debug/custom-recipes`
 
 ### Logic (`apps/web/src/lib/`)
@@ -335,6 +341,10 @@ signup):
   only the service role uses it. Written best-effort by `lib/telemetry/`
   (see [Error capture](#error-capture)); `purge_telemetry()` deletes rows
   past their retention (90 days)
+- **`health_checks`** (migration 021, #248) — one row per scheduled
+  check: `ok`, a `checks` jsonb (per dependency: ok, latency, a short
+  static detail, a few counts), `total_latency_ms` and `release`. Service
+  role only; kept 90 days by `purge_telemetry()`
 - **`signup_invites`** (migration 013) — the emails allowed to create an
   account. A `BEFORE INSERT` trigger on `auth.users`
   (`enforce_signup_invite`) refuses any other signup, so no user or
@@ -344,7 +354,7 @@ signup):
   login and signup pages show as "not invited"
   (`lib/auth/authErrorMessages.ts`, `app/auth/callback/route.ts`)
 
-Migrations run in numeric order, 001 through 019 (009 and 010 are
+Migrations run in numeric order, 001 through 021 (009 and 010 are
 independent of each other) — see `supabase/README.md` for the exact
 steps. There's no migration-runner in CI; each one is applied by
 hand in the Supabase SQL editor, same as every migration so far.
@@ -360,6 +370,27 @@ route, and skips `AiTaskError`, which `runAiTask` already records in
 service role. Pure helpers (`release`, `routePattern`, `scrub`,
 `fingerprint`, `buildErrorRow`) are in `lib/telemetry/`. Telemetry never
 breaks a request: a failed write, or a missing table, only warns.
+
+## Health checks and uptime
+`.github/workflows/uptime.yml` runs at :07, :22, :37 and :52 every hour and
+POSTs `${{ vars.HEALTH_CHECK_URL }}/api/health/record` with
+`HEALTH_CHECK_SECRET`. The endpoint runs `lib/health/checks.ts` live (the
+only place anything does): `database` (a trivial select), `gemini` (a free
+models lookup, plus any billing-type `ai_usage` error in the last hour, since
+the lookup can't see credit depletion), `coles` (key configured and
+`readColesQuota()`; no RapidAPI call), `email` and `config` (env vars
+present). It stores one `health_checks` row and calls `purge_telemetry()`
+every time. The job never fails on an unhealthy result or an unreachable
+app, so GitHub sends no failure emails; it writes a job summary instead.
+
+Uptime is computed on read by `lib/health/uptime.ts`: 15-minute slots that
+are `ok`, `failing` or `no data`. A missing slot is "no data", not "down",
+because GitHub sometimes drops or delays scheduled runs; two or more
+consecutive empty slots are flagged "possible outage (no heartbeat)", since a
+fully-down app can't record a row; uptime % is ok / (ok + failing) with the
+no-data share beside it. GitHub disables schedules on a public repo after 60
+days without repository activity, which the "no health check in 30 minutes"
+warning catches.
 
 ## Calendar export
 
@@ -439,9 +470,10 @@ signal now, but it was never actually gating what reached production.
 
 - **No real scheduling.** `schedule.ts` is a client-side "plan your week"
   reminder that only fires if the app is open on a Sunday — not server-side
-  scheduling. There's no cron anywhere in the project (no Vercel Cron
-  config, no scheduled GitHub workflow), so nothing regenerates a plan or
-  refreshes the ICS feed on its own. Tracked in issue #4.
+  scheduling. There's no product cron in the project (no Vercel Cron
+  config; the only scheduled GitHub workflow is the uptime heartbeat, see
+  [Health checks](#health-checks-and-uptime)), so nothing regenerates a plan
+  or refreshes the ICS feed on its own. Tracked in issue #4.
 - **Coles pricing is a third-party workaround, not an official
   integration.** See [Logic](#logic-appswebsrclib) above and issue #36.
 - **The path to an order stops at a filled trolley.** The Coles extension
