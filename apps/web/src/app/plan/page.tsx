@@ -649,6 +649,8 @@ export default function PlanPage() {
     setGenerationError(null);
     setAriaLiveMessage("Generating weekly meal plan...");
     const startedAt = performance.now();
+    // The week being composed, read now: the user may move to another week while this runs (#247).
+    const composedWeek = weekStartRef.current;
     // Taste comes from the plan being replaced; skeletons show straight away.
     const previousPlan = weekPlanRef.current;
     commitPlan(Array(7).fill(null));
@@ -711,7 +713,7 @@ export default function PlanPage() {
         dayCount: newIds.length,
         pantryItemCount: pantry.length,
         cuisineCount: familySettings.cuisines.length,
-        weekStart: weekStartRef.current,
+        weekStart: composedWeek,
         cost,
         conflicts: 0,
         leftoverDays: 0,
