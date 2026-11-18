@@ -20,6 +20,7 @@ export default function PrivacyPage() {
             "People you share recipes with: the names and email addresses you add in Settings.",
             "Coles orders, only if you install the Coles browser extension: the products in your orders from the last 12 months, used to match shopping lists to what you buy. Older orders are deleted automatically.",
             "A log of AI requests (which feature, when, and how much it used), to enforce daily limits. It doesn't contain your recipes or settings.",
+            "Error logs (which page or feature failed, with no personal details), kept for 90 days.",
           ]}
         />
         <Typography variant="body">

@@ -62,6 +62,59 @@ export type Database = {
         }
         Relationships: []
       }
+      app_errors: {
+        Row: {
+          context: Json
+          created_at: string
+          digest: string | null
+          fingerprint: string
+          household_id: string | null
+          id: string
+          kind: string
+          label: string | null
+          message: string
+          release: string
+          route: string | null
+          source: string
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          digest?: string | null
+          fingerprint: string
+          household_id?: string | null
+          id?: string
+          kind: string
+          label?: string | null
+          message?: string
+          release: string
+          route?: string | null
+          source: string
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          digest?: string | null
+          fingerprint?: string
+          household_id?: string | null
+          id?: string
+          kind?: string
+          label?: string | null
+          message?: string
+          release?: string
+          route?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_errors_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_usage: {
         Row: {
           cost_usd: number | null
@@ -634,6 +687,7 @@ export type Database = {
       }
       remove_household_member: { Args: { p_user: string }; Returns: undefined }
       delete_my_account: { Args: never; Returns: undefined }
+      purge_telemetry: { Args: never; Returns: number }
     }
     Enums: {
       [_ in never]: never

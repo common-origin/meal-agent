@@ -148,7 +148,15 @@
    - Verify success: Should see "Success. No rows returned"
    - This adds `claim_api_call()` and `api_calls_since()`, which count every household's Coles lookups against the shared RapidAPI quota (#227). Until it's run, Coles lookups are refused and prices fall back to estimates
 
-20. **Verify Tables Created:**
+20. **Run App Errors Migration (Step 19):**
+   - Click "New Query"
+   - Copy entire contents of `supabase/migrations/019_app_errors.sql`
+   - Paste into SQL Editor
+   - Click "Run" or press Cmd+Enter
+   - Verify success: Should see "Success. No rows returned"
+   - This adds `app_errors` and `purge_telemetry()` for the admin dashboard (#244, #245). Until it's run, errors are only logged to Vercel and each failed save warns; nothing else is affected
+
+21. **Verify Tables Created:**
    ```sql
    SELECT table_name 
    FROM information_schema.tables 
@@ -159,6 +167,7 @@
    Should see:
    - ai_usage
    - api_usage
+   - app_errors
    - family_settings
    - household_members
    - household_products
@@ -171,7 +180,7 @@
    - shopping_lists
    - signup_invites
 
-21. **Verify RLS Enabled:**
+22. **Verify RLS Enabled:**
    ```sql
    SELECT tablename, rowsecurity 
    FROM pg_tables 

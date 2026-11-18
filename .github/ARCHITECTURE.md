@@ -325,6 +325,16 @@ signup):
   daily spend ceiling across all users (see `AI.md`). The ceiling sums
   `cost_usd` through `ai_spend_since()` (migration 014), which only the
   service role can run
+- **`app_errors`** (migration 019, admin dashboard #244) — one row per
+  failure, with no personal info: `source` (`server`, `route` or `client`), a
+  route *pattern* (never the actual path), a scrubbed message (emails, URLs,
+  quoted strings and id/digit runs replaced, 300 chars), an optional
+  developer-written `label`, a `fingerprint` for grouping, the deployed
+  `release`, a `household_id` (set null if the household is deleted; never a
+  `user_id`) and whitelisted `context` keys. RLS is on with no policies, so
+  only the service role uses it. Written best-effort by `lib/telemetry/`
+  (see [Error capture](#error-capture)); `purge_telemetry()` deletes rows
+  past their retention (90 days)
 - **`signup_invites`** (migration 013) — the emails allowed to create an
   account. A `BEFORE INSERT` trigger on `auth.users`
   (`enforce_signup_invite`) refuses any other signup, so no user or
@@ -334,10 +344,22 @@ signup):
   login and signup pages show as "not invited"
   (`lib/auth/authErrorMessages.ts`, `app/auth/callback/route.ts`)
 
-Migrations run in numeric order, 001 through 018 (009 and 010 are
+Migrations run in numeric order, 001 through 019 (009 and 010 are
 independent of each other) — see `supabase/README.md` for the exact
 steps. There's no migration-runner in CI; each one is applied by
 hand in the Supabase SQL editor, same as every migration so far.
+
+## Error capture
+Uncaught server errors reach `onRequestError` in `src/instrumentation.ts`,
+which stores `context.routePath` (a pattern such as
+`/api/plan/ics/[token]`), never `request.path`, with `source='server'`. Caught
+failures in `app/api/**` routes call `reportErrorAfterResponse()` with a
+static label (`source='route'`); `aiFailureResponse()` does this for every AI
+route, and skips `AiTaskError`, which `runAiTask` already records in
+`ai_usage`. Both log one `type: 'app_error'` JSON line and insert with the
+service role. Pure helpers (`release`, `routePattern`, `scrub`,
+`fingerprint`, `buildErrorRow`) are in `lib/telemetry/`. Telemetry never
+breaks a request: a failed write, or a missing table, only warns.
 
 ## Calendar export
 

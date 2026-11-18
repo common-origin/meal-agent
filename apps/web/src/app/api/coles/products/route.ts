@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { householdForExtension } from '@/lib/coles/extensionAuth';
 import { packSizeOf, parseProductAdd } from '@/lib/coles/extensionList';
+import { reportErrorAfterResponse } from '@/lib/telemetry/report';
 
 export const runtime = 'nodejs';
 
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     console.error('Failed to remember Coles product:', error);
+    reportErrorAfterResponse({ source: 'route', route: '/api/coles/products', label: 'coles-products: save failed', error, householdId });
     return NextResponse.json({ error: 'Could not save the product.' }, { status: 500 });
   }
   return NextResponse.json({ ok: true });

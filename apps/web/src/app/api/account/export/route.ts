@@ -9,6 +9,7 @@ import { createClient, getUserHousehold } from '@/lib/supabase/server';
 import { requireUserWithinBurst } from '@/lib/api/guard';
 import { accountExportRateLimiter } from '@/lib/api/rateLimit';
 import { buildAccountExport } from '@/lib/account/export';
+import { reportErrorAfterResponse } from '@/lib/telemetry/report';
 
 export async function GET() {
   // Each export reads every household table, so it's rate limited.
@@ -23,6 +24,7 @@ export async function GET() {
     return NextResponse.json(body, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     console.error('account export:', error);
+    reportErrorAfterResponse({ source: 'route', route: '/api/account/export', label: 'account-export: request failed', error, householdId: household.household_id });
     return NextResponse.json({ error: "Your data couldn't be exported. Please try again." }, { status: 500 });
   }
 }

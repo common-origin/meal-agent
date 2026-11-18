@@ -7,6 +7,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient, getCurrentUser } from '@/lib/supabase/server';
 import { householdError, type InvitePreview } from '@/lib/household/members';
+import { reportErrorAfterResponse } from '@/lib/telemetry/report';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -24,7 +25,10 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase.rpc('household_invite_preview', { p_token: token });
   const row = data?.[0];
   if (error || !row) {
-    if (error) console.error('household join preview:', error);
+    if (error) {
+      console.error('household join preview:', error);
+      reportErrorAfterResponse({ source: 'route', route: '/api/household/join', label: 'household-join: preview failed', error });
+    }
     return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
   const preview: InvitePreview = {
@@ -48,7 +52,10 @@ export async function POST(request: NextRequest) {
   const { error } = await supabase.rpc('accept_household_invite', { p_token: token });
   if (error) {
     const { status, message, code } = householdError(error);
-    if (status === 500) console.error('household join:', error);
+    if (status === 500) {
+      console.error('household join:', error);
+      reportErrorAfterResponse({ source: 'route', route: '/api/household/join', label: 'household-join: request failed', error });
+    }
     return NextResponse.json({ error: message, code }, { status });
   }
   return NextResponse.json({ ok: true });

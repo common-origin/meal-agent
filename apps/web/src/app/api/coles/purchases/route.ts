@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { householdForExtension } from '@/lib/coles/extensionAuth';
 import { parseOrderImport } from '@/lib/coles/orderHistory';
 import { importOrders, importedOrderIds, pendingSuggestions } from '@/lib/coles/purchases';
+import { reportErrorAfterResponse } from '@/lib/telemetry/report';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -27,6 +28,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ importedOrderIds: orderIds, suggestions }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     console.error('Failed to read Coles order history:', error);
+    reportErrorAfterResponse({ source: 'route', route: '/api/coles/purchases', label: 'coles-purchases: read failed', error, householdId });
     return NextResponse.json({ error: 'Could not read your order history.' }, { status: 500 });
   }
 }
@@ -40,6 +42,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(await importOrders(householdId, orders));
   } catch (error) {
     console.error('Failed to import Coles orders:', error);
+    reportErrorAfterResponse({ source: 'route', route: '/api/coles/purchases', label: 'coles-purchases: import failed', error, householdId });
     return NextResponse.json({ error: 'Could not save your order history.' }, { status: 500 });
   }
 }
