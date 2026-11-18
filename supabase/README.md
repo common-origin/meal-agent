@@ -156,15 +156,23 @@
    - Verify success: Should see "Success. No rows returned"
    - This adds `app_errors` and `purge_telemetry()` for the admin dashboard (#244, #245). Until it's run, errors are only logged to Vercel and each failed save warns; nothing else is affected
 
-21. **Run Health Checks Migration (Step 20):**
+21. **Run Product Events Migration (Step 20):**
+   - Click "New Query"
+   - Copy entire contents of `supabase/migrations/020_product_events.sql`
+   - Paste into SQL Editor
+   - Click "Run" or press Cmd+Enter
+   - Verify success: Should see "Success. No rows returned"
+   - This adds `product_events` and replaces `purge_telemetry()` for the admin dashboard (#244, #247). Run it after `019`. Until it's run, events are dropped with a logged warning; nothing else is affected
+
+22. **Run Health Checks Migration (Step 21):**
    - Click "New Query"
    - Copy entire contents of `supabase/migrations/021_health_checks.sql`
    - Paste into SQL Editor
    - Click "Run" or press Cmd+Enter
    - Verify success: Should see "Success. No rows returned"
-   - This adds `health_checks` and replaces `purge_telemetry()` for the admin dashboard (#244, #248). Run it after `019` (and `020` if that's applied: the function it replaces covers every telemetry table that exists). Also set `HEALTH_CHECK_SECRET` (a long random string) in Vercel production and in GitHub → Settings → Secrets → Actions, and the `HEALTH_CHECK_URL` repo variable (Settings → Variables) to the production origin. Until then, no uptime rows are recorded and nothing else is affected
+   - This adds `health_checks` and replaces `purge_telemetry()` for the admin dashboard (#244, #248). Run it after `019` (and `020`: the function it replaces covers every telemetry table that exists). Also set `HEALTH_CHECK_SECRET` (a long random string) in Vercel production and in GitHub → Settings → Secrets → Actions, and the `HEALTH_CHECK_URL` repo variable (Settings → Variables) to the production origin. Until then, no uptime rows are recorded and nothing else is affected
 
-22. **Verify Tables Created:**
+23. **Verify Tables Created:**
    ```sql
    SELECT table_name 
    FROM information_schema.tables 
@@ -183,13 +191,14 @@
    - households
    - meal_plans
    - pantry_preferences
+   - product_events
    - purchase_history
    - recipe_history
    - recipes
    - shopping_lists
    - signup_invites
 
-23. **Verify RLS Enabled:**
+24. **Verify RLS Enabled:**
    ```sql
    SELECT tablename, rowsecurity 
    FROM pg_tables 

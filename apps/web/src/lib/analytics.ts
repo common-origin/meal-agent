@@ -1,5 +1,7 @@
-// Privacy-safe local analytics using localStorage
-// No data leaves the user's device
+// Privacy-safe analytics. The full events (with their detail) stay in localStorage on this
+// device. A small whitelisted subset is also sent to the server as anonymous counts, with no
+// recipe content, names or emails (#247, see lib/telemetry/productEvents.ts). Opting out stops both.
+import { clearServerEventQueue, enqueueServerEvent, OPT_OUT_KEY, toServerEvent } from '@/lib/telemetry/productEventsClient';
 
 export type AnalyticsEventType = 
   // Navigation
@@ -19,6 +21,7 @@ export type AnalyticsEventType =
   | 'meal_reordered'
   
   // Shopping List
+  | 'shopping_list_built' // the list was first built for a week (#247)
   | 'export_csv'
   | 'coles_list_sent'
   | 'ingredient_reused'
@@ -34,7 +37,10 @@ export type AnalyticsEventType =
   | 'price_reported'
 
   // Sharing
-  | 'recipe_emailed';
+  | 'recipe_emailed'
+
+  // Ratings
+  | 'recipe_rated'; // a star rating was saved (#247)
 
 export type AnalyticsEvent = {
   type: AnalyticsEventType;
@@ -84,7 +90,6 @@ export interface IngredientReusedMeta extends Record<string, unknown> {
 }
 
 const STORAGE_KEY = 'ma_analytics';
-const OPT_OUT_KEY = 'ma_analytics_optout';
 
 /**
  * Check if user has opted out of analytics
@@ -101,6 +106,7 @@ export function setOptOut(optOut: boolean): void {
   if (typeof window === 'undefined') return;
   if (optOut) {
     localStorage.setItem(OPT_OUT_KEY, 'true');
+    clearServerEventQueue();
   } else {
     localStorage.removeItem(OPT_OUT_KEY);
   }
@@ -126,6 +132,9 @@ export function track(type: AnalyticsEventType, meta?: Record<string, unknown>):
   } catch (error) {
     console.warn('Failed to track analytics event', error);
   }
+
+  const serverEvent = toServerEvent(type, meta);
+  if (serverEvent) enqueueServerEvent(serverEvent);
 }
 
 /**

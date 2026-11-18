@@ -142,6 +142,14 @@ release }` from the latest stored check and never runs a live one;
 (404 if the secret is unset), runs the checks and stores a row (see
 [Health checks](#health-checks-and-uptime))
 
+**Telemetry** (admin dashboard, #244): `telemetry/client-error` — `POST`,
+signed-in only, 20 a minute a user, body capped at about 4 KB and strictly
+validated; stores a browser error in `app_errors` with the household taken
+from the session (see [Error capture](#error-capture));
+`telemetry/events` — `POST`, signed-in only, a batch of at most 20
+whitelisted events, body capped at about 8 KB (see
+[Product events](#product-events))
+
 **Other**: `share-recipe-email`, `debug/custom-recipes`
 
 ### Logic (`apps/web/src/lib/`)
@@ -173,7 +181,9 @@ release }` from the latest stored check and never runs a live one;
 - **Recipes**: `library.ts` (`RecipeLibrary`) manages custom recipes,
   AI-generated recipes, and syncing between them and Supabase — see
   [Storage](#storage) for why this is more involved than it should be
-- **Analytics**: `analytics.ts` (privacy-first local event tracking),
+- **Analytics**: `analytics.ts` (privacy-first event tracking: full detail
+  stays in localStorage; a whitelisted anonymous subset goes to
+  `product_events`, see [Product events](#product-events)),
   `ingredientAnalytics.ts` (usage frequency, informs which ingredients are
   worth adding to `colesMapping.ts` next)
 
@@ -341,6 +351,11 @@ signup):
   only the service role uses it. Written best-effort by `lib/telemetry/`
   (see [Error capture](#error-capture)); `purge_telemetry()` deletes rows
   past their retention (90 days)
+- **`product_events`** (migration 020, #247) — one row per anonymous usage
+  event: `type`, `props` (numbers, enums and a `weekStart` date only),
+  `release` and a `household_id` (set null if the household is deleted;
+  never a `user_id`). Service role only; kept 400 days by `purge_telemetry()`
+
 - **`health_checks`** (migration 021, #248) — one row per scheduled
   check: `ok`, a `checks` jsonb (per dependency: ok, latency, a short
   static detail, a few counts), `total_latency_ms` and `release`. Service
@@ -370,6 +385,32 @@ route, and skips `AiTaskError`, which `runAiTask` already records in
 service role. Pure helpers (`release`, `routePattern`, `scrub`,
 `fingerprint`, `buildErrorRow`) are in `lib/telemetry/`. Telemetry never
 breaks a request: a failed write, or a missing table, only warns.
+
+Browser errors: `src/instrumentation-client.ts` listens for `error` and
+`unhandledrejection` from before hydration, and `app/error.tsx` /
+`app/global-error.tsx` (the latter is plain inline-styled markup, since it
+replaces the document) report what React error boundaries catch, all through
+`reportClientError()` (`lib/telemetry/clientReport.ts`). It sends the page
+path as a route pattern, a scrubbed message and the top stack frame to
+`POST /api/telemetry/client-error`, once per distinct error per page load and
+at most 5 per page load. An error with a `digest` is a server error that
+`onRequestError` already recorded, so it isn't reported again. Signed-out
+pages don't report (the endpoint needs a session).
+
+## Product events
+`track()` in `lib/analytics.ts` still writes every event to localStorage. The
+events in the whitelist (`lib/telemetry/productEvents.ts`: `plan_composed`,
+`plan_confirmed`, `plan_edit`, `plan_edit_accepted`, `swap`, `export_csv`,
+`shopping_list_built`, `coles_list_sent`, `shopping_completed`,
+`favorite_added`/`removed`, `price_reported`, `recipe_emailed`, `recipe_rated`)
+are also mapped by `toServerEvent()` to their allowed props, queued, and sent
+in batches (debounced, and on `pagehide`) to `POST /api/telemetry/events`,
+which validates each event again with a strict per-type schema and stores it
+under the session's household. `weekStart` is the same key as
+`meal_plans.week_start`, so funnel steps join on the planned week. `swap`
+sends only `kind` (`add`, `swap` or `delete`) and not the nights filled in
+after generation; no recipe ID or title is ever sent. Opting out stops
+sending and clears the queue.
 
 ## Health checks and uptime
 `.github/workflows/uptime.yml` runs at :07, :22, :37 and :52 every hour and
