@@ -206,6 +206,33 @@ export type Database = {
           },
         ]
       }
+      health_checks: {
+        Row: {
+          checks: Json
+          created_at: string
+          id: string
+          ok: boolean
+          release: string
+          total_latency_ms: number
+        }
+        Insert: {
+          checks?: Json
+          created_at?: string
+          id?: string
+          ok: boolean
+          release: string
+          total_latency_ms?: number
+        }
+        Update: {
+          checks?: Json
+          created_at?: string
+          id?: string
+          ok?: boolean
+          release?: string
+          total_latency_ms?: number
+        }
+        Relationships: []
+      }
       household_favorites: {
         Row: {
           created_at: string

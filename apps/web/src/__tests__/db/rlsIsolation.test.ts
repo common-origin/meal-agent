@@ -91,7 +91,7 @@ beforeAll(async () => {
 }, 60_000);
 
 /** Tables checked by their own describe blocks below, not TABLES. */
-const CHECKED_SEPARATELY = ['households', 'signup_invites', 'app_errors', 'product_events'];
+const CHECKED_SEPARATELY = ['households', 'signup_invites', 'app_errors', 'product_events', 'health_checks'];
 
 describe('every table is covered', () => {
   it('no public table is missing row level security', async () => {
@@ -274,5 +274,28 @@ describe('product_events (admin dashboard telemetry)', () => {
     expect(events.rows.map((r) => r.type)).toEqual(['mid-ev', 'new-ev']);
     const errors = await t.db.query(`SELECT 1 FROM public.app_errors WHERE fingerprint = 'old-err-2'`);
     expect(errors.rows).toHaveLength(0);
+  });
+});
+
+describe('health_checks (admin dashboard telemetry)', () => {
+  const insertRow = `INSERT INTO public.health_checks (release, ok, checks, total_latency_ms) VALUES ('dev', true, '{"database":{"ok":true}}', 10)`;
+
+  it('is service-role only: no member, signed-in or not, can read, add, change or remove rows', async () => {
+    await t.db.query(insertRow);
+    expect(await countAs(alice, `SELECT count(*)::int n FROM public.health_checks`)).toBe(0);
+    expect(await countAs(null, `SELECT count(*)::int n FROM public.health_checks`, [], 'anon')).toBe(0);
+    expect(await t.refusal(alice, insertRow)).toMatch(/row-level security/);
+    expect(await t.as(alice, `UPDATE public.health_checks SET ok = false RETURNING 1`)).toHaveLength(0);
+    expect(await t.as(alice, `DELETE FROM public.health_checks RETURNING 1`)).toHaveLength(0);
+    expect((await t.as<{ n: number }>(null, `SELECT count(*)::int n FROM public.health_checks`, [], 'service_role'))[0].n).toBeGreaterThan(0);
+  });
+
+  it('purge_telemetry keeps health_checks 90 days', async () => {
+    await t.db.query(
+      `INSERT INTO public.health_checks (release, ok, created_at) VALUES ('old-hc', true, now() - interval '91 days'), ('new-hc', true, now() - interval '89 days')`,
+    );
+    await t.as(null, `SELECT public.purge_telemetry()`, [], 'service_role');
+    const checks = await t.db.query<{ release: string }>(`SELECT release FROM public.health_checks WHERE release IN ('old-hc', 'new-hc')`);
+    expect(checks.rows.map((r) => r.release)).toEqual(['new-hc']);
   });
 });

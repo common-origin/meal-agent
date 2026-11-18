@@ -80,6 +80,11 @@ the strict schemas in `lib/telemetry/productEvents.ts` are the whitelist.
 what's sent changes.** Opting out (on `/analytics`) stops both. Check `analytics.ts`
 directly for the current event list rather than trusting a specific count.
 
+**Environment variables for monitoring** (server-only): `HEALTH_CHECK_SECRET`
+authorises `POST /api/health/record` (also a GitHub Actions secret); the
+`HEALTH_CHECK_URL` repo variable is the production origin the workflow calls.
+Without `HEALTH_CHECK_SECRET` the record route answers 404.
+
 ## Common development tasks
 
 ```bash

@@ -164,7 +164,15 @@
    - Verify success: Should see "Success. No rows returned"
    - This adds `product_events` and replaces `purge_telemetry()` for the admin dashboard (#244, #247). Run it after `019`. Until it's run, events are dropped with a logged warning; nothing else is affected
 
-22. **Verify Tables Created:**
+22. **Run Health Checks Migration (Step 21):**
+   - Click "New Query"
+   - Copy entire contents of `supabase/migrations/021_health_checks.sql`
+   - Paste into SQL Editor
+   - Click "Run" or press Cmd+Enter
+   - Verify success: Should see "Success. No rows returned"
+   - This adds `health_checks` and replaces `purge_telemetry()` for the admin dashboard (#244, #248). Run it after `019` (and `020`: the function it replaces covers every telemetry table that exists). Also set `HEALTH_CHECK_SECRET` (a long random string) in Vercel production and in GitHub → Settings → Secrets → Actions, and the `HEALTH_CHECK_URL` repo variable (Settings → Variables) to the production origin. Until then, no uptime rows are recorded and nothing else is affected
+
+23. **Verify Tables Created:**
    ```sql
    SELECT table_name 
    FROM information_schema.tables 
@@ -177,6 +185,7 @@
    - api_usage
    - app_errors
    - family_settings
+   - health_checks
    - household_members
    - household_products
    - households
@@ -189,7 +198,7 @@
    - shopping_lists
    - signup_invites
 
-23. **Verify RLS Enabled:**
+24. **Verify RLS Enabled:**
    ```sql
    SELECT tablename, rowsecurity 
    FROM pg_tables 

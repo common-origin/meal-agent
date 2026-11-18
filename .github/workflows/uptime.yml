@@ -1,0 +1,77 @@
+# Our own uptime check (#248, initiative #244). Every 15 minutes this calls
+# POST /api/health/record on the production app, which runs the dependency
+# checks and stores a row in health_checks; the /admin dashboard computes
+# uptime from those rows.
+#
+# The job never fails on an unhealthy result or an unreachable app: it writes
+# a job summary instead, so GitHub sends no failure emails. The dashboard is
+# where problems show. Needs the HEALTH_CHECK_URL repo variable (the production
+# origin, e.g. https://example.vercel.app) and the HEALTH_CHECK_SECRET secret
+# (the same value as in Vercel).
+#
+# GitHub disables schedules on a public repo after 60 days without repository
+# activity; the dashboard's "no health check in 30 min" warning catches that.
+name: Uptime
+
+on:
+  schedule:
+    # Off the top of the hour, to dodge GitHub's busiest minutes.
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Record a health check
+        env:
+          HEALTH_CHECK_URL: ${{ vars.HEALTH_CHECK_URL }}
+          HEALTH_CHECK_SECRET: ${{ secrets.HEALTH_CHECK_SECRET }}
+        run: |
+          set +e
+          {
+            echo "## Uptime check"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ -z "$HEALTH_CHECK_URL" ] || [ -z "$HEALTH_CHECK_SECRET" ]; then
+            echo "Not configured: set the HEALTH_CHECK_URL repo variable and the HEALTH_CHECK_SECRET secret." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          status=$(curl --silent --show-error --max-time 30 --retry 1 \
+            --output response.json --write-out '%{http_code}' \
+            --request POST \
+            --header "Authorization: Bearer ${HEALTH_CHECK_SECRET}" \
+            "${HEALTH_CHECK_URL%/}/api/health/record")
+          curl_exit=$?
+
+          if [ "$curl_exit" -ne 0 ]; then
+            echo "The app was unreachable (curl exit ${curl_exit}). No row was recorded; the dashboard will show a gap." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          echo "HTTP ${status}" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$status" = "200" ]; then
+            {
+              echo
+              echo '| Check | Result | Detail |'
+              echo '| --- | --- | --- |'
+              jq -r '.checks | to_entries[] | "| \(.key) | \(if .value.ok then "ok" else "FAILING" end) | \(.value.detail // "") |"' response.json
+              echo
+              echo "Recorded: $(jq -r '.recorded' response.json)"
+            } >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$status" = "401" ] || [ "$status" = "404" ]; then
+            echo "The app refused the request: check that HEALTH_CHECK_SECRET matches the value in Vercel." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "The app answered with an error. No row was recorded." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit 0
