@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Modal, Stack, Typography } from "@common-origin/design-system";
 import StarRating from "@/components/app/StarRating";
+import { track } from "@/lib/analytics";
 
 interface RateRecipeModalProps {
   isOpen: boolean;
@@ -38,7 +39,11 @@ export default function RateRecipeModal({ isOpen, recipeTitle, rating, onSave, o
       actions={[
         {
           label: 'Save rating',
-          onClick: () => onSave(draftRating),
+          onClick: () => {
+            // Only the star count is sent to the server: no recipe ID or title (#247).
+            track('recipe_rated', { stars: draftRating });
+            onSave(draftRating);
+          },
           variant: 'primary',
           disabled: draftRating === 0,
         },

@@ -49,7 +49,7 @@ export default function AnalyticsPage() {
             <Stack direction="column" gap="md">
               <Typography variant="h3">Analytics Disabled</Typography>
               <Typography variant="body">
-                You have opted out of local analytics tracking. No usage data is being collected.
+                You have opted out of analytics. No usage data is being collected or sent.
               </Typography>
               <Button variant="secondary" size="medium" onClick={handleToggleOptOut}>
                 Enable Analytics
@@ -84,7 +84,7 @@ export default function AnalyticsPage() {
         </Stack>
 
         <Typography variant="body">
-          Privacy-first analytics. All data stays on your device. Nothing is sent to external servers.
+          Privacy-first analytics. The detail on this page stays on your device. Anonymous usage counts (which features are used, with no recipe content, names or emails) are also sent to Meal Agent, and opting out stops both.
         </Typography>
 
         {/* Plan Metrics */}
@@ -272,7 +272,7 @@ export default function AnalyticsPage() {
         </div>
 
         <Typography variant="small">
-          💡 All analytics data is stored locally in your browser. 
+          💡 This detail is stored locally in your browser. 
           Clear your browser data or use the &quot;Clear Data&quot; button to delete it.
         </Typography>
       </Stack>

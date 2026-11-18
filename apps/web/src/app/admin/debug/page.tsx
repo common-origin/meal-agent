@@ -191,7 +191,7 @@ export default function DebugPage() {
           <Typography variant="caption">
             Last refreshed: {lastRefresh.toLocaleTimeString()} • 
             localStorage key: ma_analytics • 
-            Events stored locally only (never transmitted)
+            Full events stored locally; a whitelisted anonymous subset is also sent (see lib/telemetry/productEvents.ts)
           </Typography>
         </div>
       </Stack>

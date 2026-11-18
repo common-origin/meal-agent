@@ -520,6 +520,41 @@ export type Database = {
           },
         ]
       }
+      product_events: {
+        Row: {
+          created_at: string
+          household_id: string | null
+          id: string
+          props: Json
+          release: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          household_id?: string | null
+          id?: string
+          props?: Json
+          release: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          household_id?: string | null
+          id?: string
+          props?: Json
+          release?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_events_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipe_history: {
         Row: {
           household_id: string

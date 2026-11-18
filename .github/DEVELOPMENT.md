@@ -71,9 +71,14 @@ the week's recipes into one line per ingredient with a buy quantity
 size — check it directly rather than trusting a specific count anywhere
 in prose, including here).
 
-**Analytics**: `analytics.ts` tracks events entirely client-side
-(localStorage, never transmitted) — check the file directly for the
-current event list rather than trusting a specific count.
+**Analytics**: `analytics.ts` records events in localStorage, with their full
+detail, for the local `/analytics` page. A whitelisted subset is also sent to
+the server as anonymous counts (#247): `toServerEvent()` in
+`lib/telemetry/productEventsClient.ts` picks the allowed props by name, and
+the strict schemas in `lib/telemetry/productEvents.ts` are the whitelist.
+**To send a new event, add it to both, and update the privacy page if
+what's sent changes.** Opting out (on `/analytics`) stops both. Check `analytics.ts`
+directly for the current event list rather than trusting a specific count.
 
 ## Common development tasks
 
