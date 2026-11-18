@@ -8,6 +8,7 @@
 
 import { NextResponse } from 'next/server';
 import { AiTaskError } from './run';
+import { reportErrorAfterResponse } from '@/lib/telemetry/report';
 
 const UNREADABLE_PAGE = "We couldn't read that page. Check the link or add the recipe manually.";
 
@@ -80,6 +81,8 @@ export function toAiErrorCode(error: unknown): AiErrorCode {
 /** Logs the raw error server-side and returns the friendly response for it. */
 export function aiFailureResponse(error: unknown, route: string): NextResponse<AiErrorBody> {
   const code = toAiErrorCode(error);
+  // An AiTaskError is already in ai_usage; anything else is a bug in the route, which the dashboard should show (#245).
+  reportErrorAfterResponse({ source: 'route', route: `/api/${route}`, label: `${route}: request failed`, error });
   if (code === 'timeout') console.warn(`${route}: AI call hit its deadline, returning 504`);
   else if (code === 'invalid_output') console.warn(`${route}: AI output failed schema validation twice, returning 502`);
   // Named plainly so the owner can find it in the logs: only topping up the AI account fixes it.

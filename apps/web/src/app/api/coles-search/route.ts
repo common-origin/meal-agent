@@ -9,6 +9,7 @@ import { colesSearchRateLimiter } from '@/lib/api/rateLimit';
 import { requireUserWithinBurst } from '@/lib/api/guard';
 import { getUserHousehold } from '@/lib/supabase/server';
 import { claimColesLookup, readColesQuota } from '@/lib/coles/quota';
+import { reportErrorAfterResponse } from '@/lib/telemetry/report';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -100,6 +101,13 @@ export async function POST(request: NextRequest) {
       console.error(`RapidAPI error: ${response.status} ${response.statusText}`);
       const errorText = await response.text();
       console.error('Error response:', errorText);
+      reportErrorAfterResponse({
+        source: 'route',
+        route: '/api/coles-search',
+        label: 'coles-search: lookup failed',
+        error: new Error(`RapidAPI responded ${response.status}`),
+        context: { status: response.status },
+      });
       
       return NextResponse.json(
         { 
@@ -139,6 +147,7 @@ export async function POST(request: NextRequest) {
     
   } catch (error) {
     console.error('Coles API route error:', error);
+    reportErrorAfterResponse({ source: 'route', route: '/api/coles-search', label: 'coles-search: lookup failed', error });
     return NextResponse.json(
       { 
         error: 'Internal server error',

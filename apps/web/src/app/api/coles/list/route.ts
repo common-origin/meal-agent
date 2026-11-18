@@ -18,6 +18,7 @@ import {
   type RememberedProduct,
 } from '@/lib/coles/extensionList';
 import type { Json } from '@/lib/supabase/database.types';
+import { reportErrorAfterResponse } from '@/lib/telemetry/report';
 
 export const runtime = 'nodejs';
 
@@ -42,6 +43,7 @@ export async function PUT(request: NextRequest) {
 
   if (error) {
     console.error('Failed to save shopping list for Coles:', error);
+    reportErrorAfterResponse({ source: 'route', route: '/api/coles/list', label: 'coles-list: save failed', error, householdId: household.household_id });
     return NextResponse.json({ error: 'Could not save the shopping list.' }, { status: 500 });
   }
   return NextResponse.json({ ok: true, count: list.items.length });
@@ -64,6 +66,7 @@ export async function GET(request: NextRequest) {
     .maybeSingle();
 
   if (error) {
+    reportErrorAfterResponse({ source: 'route', route: '/api/coles/list', label: 'coles-list: load failed', error, householdId });
     return NextResponse.json({ error: 'Could not load the shopping list.' }, { status: 500 });
   }
   if (!list) {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { RecipeLibrary } from "@/lib/library";
 import { requireAdmin } from "@/lib/api/guard";
+import { reportErrorAfterResponse } from '@/lib/telemetry/report';
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,6 +38,7 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Error fetching custom recipes:", error);
+    reportErrorAfterResponse({ source: 'route', route: '/api/debug/custom-recipes', label: 'debug custom-recipes: request failed', error });
     return NextResponse.json(
       {
         success: false,

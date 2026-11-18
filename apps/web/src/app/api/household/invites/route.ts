@@ -12,10 +12,14 @@ import { householdInviteRateLimiter } from '@/lib/api/rateLimit';
 import { householdError } from '@/lib/household/members';
 import { inviteEmail } from '@/lib/household/inviteEmail';
 import { getSiteUrl } from '@/lib/utils/url';
+import { reportErrorAfterResponse } from '@/lib/telemetry/report';
 
 function errorResponse(error: { message?: string } | null) {
   const { status, message, code } = householdError(error);
-  if (status === 500) console.error('household invites:', error);
+  if (status === 500) {
+    console.error('household invites:', error);
+    reportErrorAfterResponse({ source: 'route', route: '/api/household/invites', label: 'household-invites: request failed', error });
+  }
   return NextResponse.json({ error: message, code }, { status });
 }
 
@@ -46,7 +50,10 @@ export async function POST(request: NextRequest) {
   const sent = await new Resend(apiKey)
     .emails.send({ from: fromAddress, to: invite.email, replyTo: user.email, ...message })
     .catch((e: unknown) => ({ error: { message: e instanceof Error ? e.message : String(e) } }));
-  if (sent.error) console.error('household invites: email failed', sent.error);
+  if (sent.error) {
+    console.error('household invites: email failed', sent.error);
+    reportErrorAfterResponse({ source: 'route', route: '/api/household/invites', label: 'household-invites: email failed', error: sent.error });
+  }
 
   return NextResponse.json({
     invite: { id: invite.id, email: invite.email, expiresAt: invite.expires_at },

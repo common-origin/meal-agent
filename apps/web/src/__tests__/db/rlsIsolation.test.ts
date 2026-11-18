@@ -91,7 +91,7 @@ beforeAll(async () => {
 }, 60_000);
 
 /** Tables checked by their own describe blocks below, not TABLES. */
-const CHECKED_SEPARATELY = ['households', 'signup_invites'];
+const CHECKED_SEPARATELY = ['households', 'signup_invites', 'app_errors'];
 
 describe('every table is covered', () => {
   it('no public table is missing row level security', async () => {
@@ -205,5 +205,39 @@ describe('ai_usage', () => {
     expect(
       await t.refusal(alice, `INSERT INTO public.ai_usage (user_id, household_id, task, model, latency_ms, status) VALUES ($1, $2, 'generation', 'test', 1, 'ok')`, [bob, householdA]),
     ).toMatch(/row-level security/);
+  });
+});
+
+describe('app_errors (admin dashboard telemetry)', () => {
+  const insertRow = `INSERT INTO public.app_errors (release, source, kind, fingerprint, household_id) VALUES ('dev', 'server', 'Error', 'f', $1)`;
+
+  it('is service-role only: no member, signed-in or not, can read, add, change or remove rows', async () => {
+    await t.db.query(insertRow, [householdA]);
+    expect(await countAs(alice, `SELECT count(*)::int n FROM public.app_errors`)).toBe(0);
+    expect(await countAs(null, `SELECT count(*)::int n FROM public.app_errors`, [], 'anon')).toBe(0);
+    expect(await t.refusal(alice, insertRow, [householdA])).toMatch(/row-level security/);
+    expect(await t.as(alice, `UPDATE public.app_errors SET label = 'x' RETURNING 1`)).toHaveLength(0);
+    expect(await t.as(alice, `DELETE FROM public.app_errors RETURNING 1`)).toHaveLength(0);
+    expect((await t.as<{ n: number }>(null, `SELECT count(*)::int n FROM public.app_errors`, [], 'service_role'))[0].n).toBeGreaterThan(0);
+  });
+
+  it('keeps the row, unlinked, when the household is deleted', async () => {
+    const owner = await t.signUp('carol@example.com');
+    const household = (await t.householdOf(owner))!.household_id;
+    await t.db.query(`INSERT INTO public.app_errors (release, source, kind, fingerprint, household_id) VALUES ('dev', 'route', 'Error', 'unlink-me', $1)`, [household]);
+    await t.db.query(`DELETE FROM public.households WHERE id = $1`, [household]);
+    const { rows } = await t.db.query<{ household_id: string | null }>(`SELECT household_id FROM public.app_errors WHERE fingerprint = 'unlink-me'`);
+    expect(rows).toEqual([{ household_id: null }]);
+  });
+
+  it('purge_telemetry deletes only rows older than 90 days, and only the service role may call it', async () => {
+    await t.db.query(
+      `INSERT INTO public.app_errors (release, source, kind, fingerprint, created_at) VALUES ('dev', 'server', 'Error', 'old-row', now() - interval '91 days'), ('dev', 'server', 'Error', 'new-row', now() - interval '89 days')`,
+    );
+    expect(await t.refusal(alice, `SELECT public.purge_telemetry()`)).toMatch(/permission denied/);
+    const [{ n }] = await t.as<{ n: number }>(null, `SELECT public.purge_telemetry() AS n`, [], 'service_role');
+    expect(n).toBeGreaterThanOrEqual(1);
+    const { rows } = await t.db.query<{ fingerprint: string }>(`SELECT fingerprint FROM public.app_errors WHERE fingerprint IN ('old-row', 'new-row')`);
+    expect(rows.map((r) => r.fingerprint)).toEqual(['new-row']);
   });
 });

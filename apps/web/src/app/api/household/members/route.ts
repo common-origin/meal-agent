@@ -8,12 +8,16 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient, getCurrentUser } from '@/lib/supabase/server';
 import { householdError, type HouseholdMembersResponse } from '@/lib/household/members';
+import { reportErrorAfterResponse } from '@/lib/telemetry/report';
 
 const unauthenticated = () => NextResponse.json({ error: 'Please sign in.' }, { status: 401 });
 
 function errorResponse(error: { message?: string } | null) {
   const { status, message, code } = householdError(error);
-  if (status === 500) console.error('household members:', error);
+  if (status === 500) {
+    console.error('household members:', error);
+    reportErrorAfterResponse({ source: 'route', route: '/api/household/members', label: 'household-members: request failed', error });
+  }
   return NextResponse.json({ error: message, code }, { status });
 }
 

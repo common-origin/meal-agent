@@ -9,6 +9,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient, getCurrentUser } from '@/lib/supabase/server';
 import { deleteConfirmation } from '@/lib/account/deleteConfirmation';
+import { reportErrorAfterResponse } from '@/lib/telemetry/report';
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
@@ -24,6 +25,7 @@ export async function POST(request: NextRequest) {
   const { error } = await supabase.rpc('delete_my_account');
   if (error) {
     console.error('account delete:', error);
+    reportErrorAfterResponse({ source: 'route', route: '/api/account/delete', label: 'account-delete: request failed', error });
     return NextResponse.json({ error: "Your account couldn't be deleted. Please try again." }, { status: 500 });
   }
   return NextResponse.json({ ok: true });

@@ -154,7 +154,7 @@ in `supabase/migrations/` in PGlite (Postgres in WASM) as part of
 households can't reach each other's rows in any table, and the household,
 favourites, delete-account and spend functions. **When you add a table,
 add it to `TABLES` in `rlsIsolation.test.ts`**; a test fails if any public
-table has RLS off. A migration that doesn't run in plain Postgres fails
+table has RLS off. A service-role-only table (telemetry, `signup_invites`) goes in `CHECKED_SEPARATELY` with its own test instead. A migration that doesn't run in plain Postgres fails
 the suite too.
 
 Manual testing checklist for planning changes:

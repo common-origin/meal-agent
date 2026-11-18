@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { householdForExtension } from '@/lib/coles/extensionAuth';
 import { parseMatchConfirmation } from '@/lib/coles/orderHistory';
 import { confirmMatch } from '@/lib/coles/purchases';
+import { reportErrorAfterResponse } from '@/lib/telemetry/report';
 
 export const runtime = 'nodejs';
 
@@ -24,6 +25,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(await confirmMatch(householdId, answer.productId, answer.key, answer.accept));
   } catch (error) {
     console.error('Failed to confirm Coles match:', error);
+    reportErrorAfterResponse({ source: 'route', route: '/api/coles/purchases/confirm', label: 'coles-purchases: confirm failed', error, householdId });
     return NextResponse.json({ error: 'Could not save that answer.' }, { status: 500 });
   }
 }

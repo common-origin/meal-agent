@@ -19,6 +19,7 @@ import RecipeEmail from '@/emails/RecipeEmail';
 import { createRateLimiter } from '@/lib/api/rateLimit';
 import { rowToRecipe } from '@/lib/recipeRow';
 import type { FamilySettings, RecipeRecipient } from '@/lib/types/settings';
+import { reportErrorAfterResponse } from '@/lib/telemetry/report';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -195,6 +196,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('share-recipe-email error:', error);
+    reportErrorAfterResponse({ source: 'route', route: '/api/share-recipe-email', label: 'share-recipe-email: request failed', error });
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
