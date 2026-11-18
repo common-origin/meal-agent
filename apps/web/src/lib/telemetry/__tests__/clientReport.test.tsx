@@ -60,6 +60,14 @@ describe('reportClientError (#246)', () => {
     expect(() => reportClientError(new Error('and another'))).not.toThrow();
   });
 
+  it('ignores network failures, aborts and reasonless rejections', () => {
+    reportClientError(new TypeError('Failed to fetch'));
+    reportClientError(new TypeError('Load failed'));
+    reportClientError(Object.assign(new Error('The operation was aborted.'), { name: 'AbortError' }));
+    reportClientError(undefined);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('reports a non-Error rejection reason', () => {
     reportClientError('plain string reason');
     expect(sentBodies()[0]).toMatchObject({ kind: 'Error', message: 'plain string reason' });

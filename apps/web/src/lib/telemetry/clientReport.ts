@@ -20,7 +20,13 @@ export const CLIENT_ERROR_ENDPOINT = '/api/telemetry/client-error';
 export const MAX_PER_PAGE_LOAD = 5;
 
 /** Browser noise that isn't an app bug. */
-const IGNORED_MESSAGES = [/^ResizeObserver loop/i, /^Script error\.?$/i];
+const IGNORED_MESSAGES = [
+  /^ResizeObserver loop/i,
+  /^Script error\.?$/i,
+  // The network or the user cancelling, not a bug in the app.
+  /^(Failed to fetch|Load failed|NetworkError|The operation was aborted|signal is aborted)/i,
+  /^The user aborted a request/i,
+];
 
 const seen = new Set<string>();
 let sent = 0;
@@ -61,7 +67,9 @@ export function reportClientError(error: unknown, options: { digest?: string | n
     if (typeof error === 'object' && error !== null && 'digest' in error && (error as { digest?: unknown }).digest) return;
 
     const body = buildClientErrorBody(error, window.location.pathname);
-    if (IGNORED_MESSAGES.some((pattern) => pattern.test(body.message))) return;
+    // A rejection with no reason (Promise.reject()) has nothing to group by.
+    if (!body.message || IGNORED_MESSAGES.some((pattern) => pattern.test(body.message))) return;
+    if (body.kind === 'AbortError') return;
     const key = `${body.kind}|${body.message}|${body.route}`;
     if (seen.has(key) || sent >= MAX_PER_PAGE_LOAD) return;
     seen.add(key);

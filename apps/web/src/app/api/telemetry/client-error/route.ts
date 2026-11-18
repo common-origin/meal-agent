@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
 
   const declared = Number(request.headers.get('content-length') ?? 0);
   if (declared > MAX_BODY_BYTES) return aiErrorResponse('invalid_request');
+  // Without a Content-Length (a chunked body) the cap is still enforced, after reading; the platform's own body limit bounds that.
   const text = await request.text().catch(() => '');
   if (text.length === 0 || new TextEncoder().encode(text).length > MAX_BODY_BYTES) return aiErrorResponse('invalid_request');
 
