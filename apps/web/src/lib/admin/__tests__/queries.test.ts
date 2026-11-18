@@ -93,6 +93,15 @@ describe('loadDashboard (#249)', () => {
     expect(JSON.stringify(data)).not.toContain(FULL_ID);
   });
 
+  it('shares the schema check, spend and Coles reads between the sections and the attention rules', async () => {
+    await loadDashboard({ range: '7d', household: null }, now);
+    expect(callsTo('admin_schema_check')).toHaveLength(1);
+    expect(callsTo('admin_db_stats')).toHaveLength(1);
+    expect(callsTo('admin_household_summary')).toHaveLength(1);
+    expect(callsTo('ai_spend_since')).toHaveLength(2); // today and month to date, once each
+    expect(mocks.readColesQuota).toHaveBeenCalledTimes(1);
+  });
+
   it('ignores a short ID that matches no household', async () => {
     const data = await loadDashboard({ range: '7d', household: '00000000' }, now);
     expect(data.household).toBeNull();

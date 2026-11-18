@@ -129,25 +129,32 @@ export async function loadCost(now: Date): Promise<CostData> {
  * sections: the rules look at the last 24 hours or 7 days across every
  * household, whatever range or household the page is filtered to.
  */
-export async function loadAttention(now: Date, households: HouseholdRowRaw[] | null): Promise<AttentionItem[]> {
+export async function loadAttention(
+  now: Date,
+  shared: {
+    /** Already being loaded for the Households, Cost and Database sections: shared, not read again. */
+    households: Promise<HouseholdRowRaw[] | null>;
+    cost: Promise<CostData>;
+    database: Promise<{ stats: DbStat[]; schema: SchemaCheck[] }>;
+  }
+): Promise<AttentionItem[]> {
   const since24h = new Date(now.getTime() - DAY_MS);
   const since7d = new Date(now.getTime() - 7 * DAY_MS);
   const recent = new Date(now.getTime() - 6 * 3_600_000);
-  const names = ['health', 'errors', 'ai', 'spend', 'coles', 'migrations'] as const;
+  const names = ['health', 'errors', 'ai', 'cost and quota', 'migrations', 'households'] as const;
   const results = await Promise.allSettled([
     Promise.all([latestHealthRow(), healthRowsSince(recent)]),
     loadErrors(since7d, null),
     loadAi(since24h, null),
-    spendSince(startOfUtcDay(now)),
-    readColesQuota(now),
-    rpc<SchemaCheck[]>('admin_schema_check'),
+    shared.cost,
+    shared.database,
+    shared.households,
   ]);
   const value = <T,>(i: number): T | null => (results[i].status === 'fulfilled' ? ((results[i] as PromiseFulfilledResult<T>).value ?? null) : null);
-  const unavailable = names.filter((name, i) => results[i].status === 'rejected' || (name === 'coles' && value(i) === null)).map((name) => name);
+  const cost = value<CostData>(3);
+  const unavailable = names.filter((_, i) => value(i) === null);
 
   const health = value<[HealthCheckRow | null, { created_at: string; ok: boolean }[]]>(0);
-  const spend = value<number>(3);
-  const coles = value<{ used: number; limit: number }>(4);
   const attentionHealth = health
     ? {
         latest: health[0],
@@ -161,11 +168,11 @@ export async function loadAttention(now: Date, households: HouseholdRowRaw[] | n
     health: attentionHealth,
     errors7d: value<ErrorGroup[]>(1),
     ai24h: value<AiSummary>(2),
-    spend: spend === null ? null : { todayUsd: spend, capUsd: dailySpendCapUsd() },
-    coles,
-    schema: value<SchemaCheck[]>(5),
-    households,
-    unavailable,
+    spend: cost ? { todayUsd: cost.spendTodayUsd, capUsd: cost.capUsd } : null,
+    coles: cost?.coles ?? null,
+    schema: value<{ stats: DbStat[]; schema: SchemaCheck[] }>(4)?.schema ?? null,
+    households: value<HouseholdRowRaw[]>(5),
+    unavailable: unavailable.filter((name) => !(name === 'cost and quota' && cost !== null)),
   });
 }
 
@@ -204,25 +211,35 @@ function loaded<T>(result: PromiseSettledResult<T>, hint: string, section: strin
 export async function loadDashboard(params: { range: Range; household: string | null }, now: Date = new Date()): Promise<DashboardData> {
   const since = rangeStart(params.range, now);
 
-  // The household list comes first: it resolves ?household= and feeds two other sections.
-  const householdsResult = await Promise.allSettled([loadHouseholdsRaw(since)]).then(([result]) => result);
-  const householdsRaw = householdsResult.status === 'fulfilled' ? householdsResult.value : null;
-  const householdId = resolveHousehold(params.household, householdsRaw ?? []);
+  // The household list feeds three sections and resolves ?household=; only a filter makes the others wait for it.
+  const householdsResult = Promise.allSettled([loadHouseholdsRaw(since)]).then(([result]) => result);
+  const settledHouseholds = params.household ? await householdsResult : null;
+  const householdId = resolveHousehold(params.household, settledHouseholds?.status === 'fulfilled' ? settledHouseholds.value : []);
 
-  const [status, errors, ai, cost, cycle, database, attention] = await Promise.allSettled([
+  // Cost and database are also what the attention rules need: loaded once, shared.
+  const costPromise = loadCost(now);
+  const databasePromise = loadDatabase();
+
+  const [status, errors, ai, cost, cycle, database, attention, households] = await Promise.allSettled([
     loadStatus(params.range, now),
     loadErrors(since, householdId),
     loadAi(since, householdId),
-    loadCost(now),
+    costPromise,
     loadCycle(householdId),
-    loadDatabase(),
-    loadAttention(now, householdsRaw),
+    databasePromise,
+    loadAttention(now, {
+      households: householdsResult.then((result) => (result.status === 'fulfilled' ? result.value : null)),
+      cost: costPromise,
+      database: databasePromise,
+    }),
+    householdsResult,
   ]);
-
+  // householdsResult never rejects (it wraps allSettled), so the outer result is always fulfilled.
+  const householdsSettled = households.status === 'fulfilled' ? households.value : households;
   const householdsLoaded: Loaded<HouseholdRow[]> =
-    householdsResult.status === 'fulfilled'
-      ? { ok: true, data: householdsResult.value.map(toHouseholdRow) }
-      : loaded<HouseholdRow[]>(householdsResult, HINTS.households, 'households');
+    householdsSettled.status === 'fulfilled'
+      ? { ok: true, data: householdsSettled.value.map(toHouseholdRow) }
+      : loaded<HouseholdRow[]>(householdsSettled, HINTS.households, 'households');
 
   return {
     range: params.range,

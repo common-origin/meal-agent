@@ -244,7 +244,7 @@ function AiBody({ ai }: { ai: AiSummary }) {
           <DataTable
             caption="Latest failed AI calls"
             rows={ai.failures}
-            rowKey={(f) => `${f.created_at}-${f.task}-${f.latency_ms}`}
+            rowKey={(f) => `${f.created_at}-${f.task}-${f.model}-${f.status}-${f.error_code ?? ''}-${f.latency_ms}`}
             columns={[
               { header: "When", render: (f) => when(f.created_at) },
               { header: "Task", render: (f) => f.task },
