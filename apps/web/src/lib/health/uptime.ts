@@ -123,12 +123,14 @@ export function summariseUptime(rows: HealthRow[], from: Date | number, to: Date
 
 /** The most recent incident: failing slots, or a possible outage, joined where they touch. Null if none. */
 export function lastIncident(slots: Slot[]): Run | null {
-  const incidentSlots = slots.map((slot, i): Slot => {
-    if (slot.state === 'failing') return slot;
-    // An empty slot counts only as part of a run of OUTAGE_EMPTY_SLOTS or more.
-    const inOutage = runsOf(slots, ['no_data'], OUTAGE_EMPTY_SLOTS).some((run) => slot.start >= run.start && slot.start < run.end);
-    return { start: slots[i].start, state: inOutage ? 'failing' : 'ok' };
-  });
+  // An empty slot counts only as part of a run of OUTAGE_EMPTY_SLOTS or more.
+  const outages = runsOf(slots, ['no_data'], OUTAGE_EMPTY_SLOTS);
+  const outageStarts = new Set<number>();
+  for (const run of outages) for (let start = run.start; start < run.end; start += SLOT_MS) outageStarts.add(start);
+  const incidentSlots = slots.map((slot): Slot => ({
+    start: slot.start,
+    state: slot.state === 'failing' || outageStarts.has(slot.start) ? 'failing' : 'ok',
+  }));
   const runs = runsOf(incidentSlots, ['failing']);
   return runs[runs.length - 1] ?? null;
 }
