@@ -19,8 +19,8 @@ const RULES: Array<[RegExp, string]> = [
   [/\(([^()]*)\)=\(([^()]*)\)/g, '($1)=([value])'],
   // 'single', "double" or `backtick` quoted text, but not an apostrophe inside a word (can't).
   [/(?<![\w])(["'`])(?:(?!\1).)*\1(?![\w])/g, '[str]'],
-  // Hyphenated slugs of 3+ parts, e.g. ai-quick-chicken-skillet.
-  [/\b[a-z0-9]+(?:-[a-z0-9]+){2,}\b/gi, '[slug]'],
+  // Hyphenated slugs of 3+ parts with a letter in them, e.g. ai-quick-chicken-skillet (not a date, 2026-11-16).
+  [/\b(?=[a-z0-9-]*[a-z])[a-z0-9]+(?:-[a-z0-9]+){2,}\b/gi, '[slug]'],
   // Long opaque tokens (base64, hex, nanoid) that contain a digit.
   [/\b(?=[A-Za-z0-9_]*\d)[A-Za-z0-9_]{20,}\b/g, '[token]'],
   [/\d{5,}/g, '[n]'],

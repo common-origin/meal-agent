@@ -1,5 +1,9 @@
 // @vitest-environment node
 import { describe, it, expect, vi } from 'vitest';
+
+const reportErrorAfterResponse = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/telemetry/report', () => ({ reportErrorAfterResponse }));
+
 import { AI_ERRORS, aiErrorResponse, aiFailureResponse, toAiErrorCode, unreadablePageResponse } from '../errors';
 import { AiTaskError, type AiTaskErrorCode } from '../run';
 
@@ -59,6 +63,19 @@ describe('AI error contract (#96)', () => {
     expect(body).not.toHaveProperty('details');
     expect(log).toHaveBeenCalledWith('test-route: request failed (unknown)', raw);
     log.mockRestore();
+  });
+
+  it('reports an unexpected error to app_errors, with its route and a label', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    reportErrorAfterResponse.mockClear();
+    const raw = new TypeError('x is undefined');
+    aiFailureResponse(raw, 'scan-pantry-image');
+    expect(reportErrorAfterResponse).toHaveBeenCalledWith({
+      source: 'route',
+      route: '/api/scan-pantry-image',
+      label: 'scan-pantry-image: request failed',
+      error: raw,
+    });
   });
 
   it.each([

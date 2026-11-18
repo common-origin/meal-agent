@@ -218,7 +218,7 @@ describe('app_errors (admin dashboard telemetry)', () => {
     expect(await t.refusal(alice, insertRow, [householdA])).toMatch(/row-level security/);
     expect(await t.as(alice, `UPDATE public.app_errors SET label = 'x' RETURNING 1`)).toHaveLength(0);
     expect(await t.as(alice, `DELETE FROM public.app_errors RETURNING 1`)).toHaveLength(0);
-    expect(await countAs(null, `SELECT count(*)::int n FROM public.app_errors`, [], 'service_role')).toBeGreaterThan(0);
+    expect((await t.as<{ n: number }>(null, `SELECT count(*)::int n FROM public.app_errors`, [], 'service_role'))[0].n).toBeGreaterThan(0);
   });
 
   it('keeps the row, unlinked, when the household is deleted', async () => {

@@ -73,6 +73,10 @@ describe('scrub', () => {
     expect(scrub(`missing "Chicken Stir Fry" and 'Lamb Rogan Josh'`)).toBe('missing [str] and [str]');
   });
 
+  it('keeps ISO dates', () => {
+    expect(scrub('no plan for week 2026-11-16')).toBe('no plan for week 2026-11-16');
+  });
+
   it('keeps apostrophes inside words', () => {
     expect(scrub("can't read the household's plan")).toBe("can't read the household's plan");
   });
@@ -144,10 +148,14 @@ describe('buildErrorRow', () => {
     expect(row).not.toHaveProperty('user_id');
   });
 
-  it('normalises an actual path into a pattern and scrubs the label', () => {
-    const row = buildErrorRow({ source: 'route', route: `/api/plan/ics/${UUID}?x=1`, label: 'ics: failed for a@b.co', error: new Error('boom') });
+  it('normalises an actual path into a pattern', () => {
+    const row = buildErrorRow({ source: 'route', route: `/api/plan/ics/${UUID}?x=1`, label: 'ics: failed', error: new Error('boom') });
     expect(row.route).toBe('/api/plan/ics/[param]');
-    expect(row.label).toBe('ics: failed for [email]');
+    expect(row.label).toBe('ics: failed');
+  });
+
+  it('keeps a developer-written label as written, even with hyphenated route names', () => {
+    expect(buildErrorRow({ source: 'route', label: 'scan-pantry-image: request failed', error: new Error('x') }).label).toBe('scan-pantry-image: request failed');
   });
 
   it('handles non-Error values and odd names', () => {

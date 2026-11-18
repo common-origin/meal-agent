@@ -109,7 +109,8 @@ export function sanitizeContext(context: ErrorContext | undefined): ErrorContext
 
 export function buildErrorRow(report: ErrorReport, env?: Record<string, string | undefined>): AppErrorRow {
   const route = report.route ? routePattern(report.route) : null;
-  const label = report.label ? scrub(report.label).slice(0, MAX_LABEL) : null;
+  // Labels are developer-written and static, so they aren't scrubbed (the slug rule would mangle 'scan-pantry-image: ...').
+  const label = report.label ? report.label.replace(/\s+/g, ' ').trim().slice(0, MAX_LABEL) : null;
   const kind = errorKind(report.error);
   const message = scrub(errorMessage(report.error));
   const context = sanitizeContext({
