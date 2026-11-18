@@ -750,6 +750,12 @@ export type Database = {
       remove_household_member: { Args: { p_user: string }; Returns: undefined }
       delete_my_account: { Args: never; Returns: undefined }
       purge_telemetry: { Args: never; Returns: number }
+      admin_ai_summary: { Args: { p_since: string; p_household?: string | null; p_billing_codes?: string[] }; Returns: Json }
+      admin_error_groups: { Args: { p_since: string; p_household?: string | null }; Returns: Json }
+      admin_weekly_cycle: { Args: { p_weeks?: number; p_household?: string | null }; Returns: Json }
+      admin_household_summary: { Args: { p_since: string }; Returns: Json }
+      admin_db_stats: { Args: never; Returns: Json }
+      admin_schema_check: { Args: never; Returns: Json }
     }
     Enums: {
       [_ in never]: never
