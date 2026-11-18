@@ -69,6 +69,9 @@ export const accountExportRateLimiter = createRateLimiter({ limit: 5, windowMs: 
 /** Sending and cancelling household invites (#217): each send is an email. */
 export const householdInviteRateLimiter = createRateLimiter({ limit: 10, windowMs: TEN_MINUTES_MS });
 
+/** Product events (#247): the browser batches them (at most 20 a request), so this is generous. */
+export const productEventsRateLimiter = createRateLimiter({ limit: 30, windowMs: 60 * 1000 });
+
 export const aiRateLimiters = {
   // A week is 7 parallel requests (#95) and each typed edit regenerates its nights (#38).
   generateRecipes: createRateLimiter({ limit: 40, windowMs: TEN_MINUTES_MS }),

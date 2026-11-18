@@ -91,7 +91,7 @@ beforeAll(async () => {
 }, 60_000);
 
 /** Tables checked by their own describe blocks below, not TABLES. */
-const CHECKED_SEPARATELY = ['households', 'signup_invites', 'app_errors'];
+const CHECKED_SEPARATELY = ['households', 'signup_invites', 'app_errors', 'product_events'];
 
 describe('every table is covered', () => {
   it('no public table is missing row level security', async () => {
@@ -239,5 +239,40 @@ describe('app_errors (admin dashboard telemetry)', () => {
     expect(n).toBeGreaterThanOrEqual(1);
     const { rows } = await t.db.query<{ fingerprint: string }>(`SELECT fingerprint FROM public.app_errors WHERE fingerprint IN ('old-row', 'new-row')`);
     expect(rows.map((r) => r.fingerprint)).toEqual(['new-row']);
+  });
+});
+
+describe('product_events (admin dashboard telemetry)', () => {
+  const insertRow = `INSERT INTO public.product_events (household_id, type, props, release) VALUES ($1, 'plan_confirmed', '{"weekStart":"2026-11-16"}', 'dev')`;
+
+  it('is service-role only: no member, signed-in or not, can read, add, change or remove rows', async () => {
+    await t.db.query(insertRow, [householdA]);
+    expect(await countAs(alice, `SELECT count(*)::int n FROM public.product_events`)).toBe(0);
+    expect(await countAs(null, `SELECT count(*)::int n FROM public.product_events`, [], 'anon')).toBe(0);
+    expect(await t.refusal(alice, insertRow, [householdA])).toMatch(/row-level security/);
+    expect(await t.as(alice, `UPDATE public.product_events SET type = 'x' RETURNING 1`)).toHaveLength(0);
+    expect(await t.as(alice, `DELETE FROM public.product_events RETURNING 1`)).toHaveLength(0);
+    expect((await t.as<{ n: number }>(null, `SELECT count(*)::int n FROM public.product_events`, [], 'service_role'))[0].n).toBeGreaterThan(0);
+  });
+
+  it('keeps the row, unlinked, when the household is deleted', async () => {
+    const owner = await t.signUp('dave@example.com');
+    const household = (await t.householdOf(owner))!.household_id;
+    await t.db.query(`INSERT INTO public.product_events (household_id, type, release) VALUES ($1, 'unlink-me', 'dev')`, [household]);
+    await t.db.query(`DELETE FROM public.households WHERE id = $1`, [household]);
+    const { rows } = await t.db.query<{ household_id: string | null }>(`SELECT household_id FROM public.product_events WHERE type = 'unlink-me'`);
+    expect(rows).toEqual([{ household_id: null }]);
+  });
+
+  it('purge_telemetry keeps product_events for 400 days and app_errors for 90', async () => {
+    await t.db.query(
+      `INSERT INTO public.product_events (type, release, created_at) VALUES ('old-ev', 'dev', now() - interval '401 days'), ('new-ev', 'dev', now() - interval '399 days'), ('mid-ev', 'dev', now() - interval '100 days')`,
+    );
+    await t.db.query(`INSERT INTO public.app_errors (release, source, kind, fingerprint, created_at) VALUES ('dev', 'server', 'Error', 'old-err-2', now() - interval '91 days')`);
+    await t.as(null, `SELECT public.purge_telemetry()`, [], 'service_role');
+    const events = await t.db.query<{ type: string }>(`SELECT type FROM public.product_events WHERE type IN ('old-ev', 'new-ev', 'mid-ev') ORDER BY type`);
+    expect(events.rows.map((r) => r.type)).toEqual(['mid-ev', 'new-ev']);
+    const errors = await t.db.query(`SELECT 1 FROM public.app_errors WHERE fingerprint = 'old-err-2'`);
+    expect(errors.rows).toHaveLength(0);
   });
 });

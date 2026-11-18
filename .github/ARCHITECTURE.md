@@ -136,6 +136,10 @@ than a session (see [Calendar export](#calendar-export) below);
 `household/ics-url` — session-authenticated, returns the signed-in user's
 feed URL for display in Settings
 
+`telemetry/events` — `POST`, signed-in only, a batch of at most 20
+whitelisted events, body capped at about 8 KB (see
+[Product events](#product-events))
+
 **Other**: `share-recipe-email`, `debug/custom-recipes`
 
 ### Logic (`apps/web/src/lib/`)
@@ -167,7 +171,9 @@ feed URL for display in Settings
 - **Recipes**: `library.ts` (`RecipeLibrary`) manages custom recipes,
   AI-generated recipes, and syncing between them and Supabase — see
   [Storage](#storage) for why this is more involved than it should be
-- **Analytics**: `analytics.ts` (privacy-first local event tracking),
+- **Analytics**: `analytics.ts` (privacy-first event tracking: full detail
+  stays in localStorage; a whitelisted anonymous subset goes to
+  `product_events`, see [Product events](#product-events)),
   `ingredientAnalytics.ts` (usage frequency, informs which ingredients are
   worth adding to `colesMapping.ts` next)
 
@@ -335,6 +341,10 @@ signup):
   only the service role uses it. Written best-effort by `lib/telemetry/`
   (see [Error capture](#error-capture)); `purge_telemetry()` deletes rows
   past their retention (90 days)
+- **`product_events`** (migration 020, #247) — one row per anonymous usage
+  event: `type`, `props` (numbers, enums and a `weekStart` date only),
+  `release` and a `household_id` (set null if the household is deleted;
+  never a `user_id`). Service role only; kept 400 days by `purge_telemetry()`
 - **`signup_invites`** (migration 013) — the emails allowed to create an
   account. A `BEFORE INSERT` trigger on `auth.users`
   (`enforce_signup_invite`) refuses any other signup, so no user or
@@ -344,7 +354,7 @@ signup):
   login and signup pages show as "not invited"
   (`lib/auth/authErrorMessages.ts`, `app/auth/callback/route.ts`)
 
-Migrations run in numeric order, 001 through 019 (009 and 010 are
+Migrations run in numeric order, 001 through 020 (009 and 010 are
 independent of each other) — see `supabase/README.md` for the exact
 steps. There's no migration-runner in CI; each one is applied by
 hand in the Supabase SQL editor, same as every migration so far.
@@ -360,6 +370,21 @@ route, and skips `AiTaskError`, which `runAiTask` already records in
 service role. Pure helpers (`release`, `routePattern`, `scrub`,
 `fingerprint`, `buildErrorRow`) are in `lib/telemetry/`. Telemetry never
 breaks a request: a failed write, or a missing table, only warns.
+
+## Product events
+`track()` in `lib/analytics.ts` still writes every event to localStorage. The
+events in the whitelist (`lib/telemetry/productEvents.ts`: `plan_composed`,
+`plan_confirmed`, `plan_edit`, `plan_edit_accepted`, `swap`, `export_csv`,
+`shopping_list_built`, `coles_list_sent`, `shopping_completed`,
+`favorite_added`/`removed`, `price_reported`, `recipe_emailed`, `recipe_rated`)
+are also mapped by `toServerEvent()` to their allowed props, queued, and sent
+in batches (debounced, and on `pagehide`) to `POST /api/telemetry/events`,
+which validates each event again with a strict per-type schema and stores it
+under the session's household. `weekStart` is the same key as
+`meal_plans.week_start`, so funnel steps join on the planned week. `swap`
+sends only `kind` (`add`, `swap` or `delete`) and not the nights filled in
+after generation; no recipe ID or title is ever sent. Opting out stops
+sending and clears the queue.
 
 ## Calendar export
 

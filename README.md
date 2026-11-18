@@ -21,7 +21,7 @@ An AI-powered multi-user meal planning application that helps households plan we
 - 🔗 **URL Recipe Extraction** - Import recipes from any website
 - 🎯 **Weekly Planning Wizard** - Step-by-step guided meal plan generation
 - 🛒 **Smart Shopping Lists** - Aggregated ingredients with Coles pricing and CSV export
-- 📊 **Analytics Dashboard** - Privacy-first local analytics tracking
+- 📊 **Analytics Dashboard** - Privacy-first local analytics, plus anonymous usage counts
 - ⚙️ **Regeneration** - Pin favorite meals and regenerate others with custom constraints
 - 📈 **Ingredient Analytics** - Track usage frequency to prioritize price mapping
 
@@ -212,7 +212,7 @@ All components are WCAG 2.1 AA accessible with full keyboard navigation and scre
 - **Protected Routes** - All data pages require authentication
 
 ### Privacy
-- **Privacy-First Analytics** - All analytics stored locally, never sent to servers
+- **Privacy-First Analytics** - Detailed analytics stay in the browser; only anonymous usage counts (no recipe content, names or emails) are sent, and you can opt out
 - **Fresh Start** - New users start with empty household (no localStorage migration)
 - **Data Export** - Users can export all their data as JSON
 - **Complete Control** - Users can delete their account and all associated data

@@ -34,6 +34,7 @@ export default function ShoppingListPage() {
   // would open (weekToOpen: the week ahead at the weekend, else today's), else the week you'd plan next.
   const [weekStart, setWeekStart] = useState<string | null>(null);
   const weekRef = useRef<string>(defaultPlanningWeekISO());
+  const builtTrackedRef = useRef(false);
 
   // Serializes pantry-preference read-modify-write cycles so two quick
   // mark/unmark clicks can't interleave their loadPantryItems/savePantryItems
@@ -171,6 +172,12 @@ export default function ShoppingListPage() {
     
     setAggregatedItems(items);
     setLoading(false);
+
+    // Once per page load: reopening the list from the completed screen isn't a new build (#247).
+    if (!builtTrackedRef.current) {
+      builtTrackedRef.current = true;
+      track('shopping_list_built', { weekStart: nextWeekISO, itemCount: items.length });
+    }
     
     // Load API prices asynchronously (non-blocking)
     loadApiPrices(items);
@@ -261,7 +268,7 @@ export default function ShoppingListPage() {
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error ?? 'Could not send the list to Coles.');
-      track('coles_list_sent', { itemCount: body.count ?? 0 });
+      track('coles_list_sent', { itemCount: body.count ?? 0, weekStart: weekRef.current });
       setColesStatus({
         tone: 'success',
         text: `Sent ${body.count} items. On coles.com.au, click the Meal Agent extension icon to open your list beside the site.`,

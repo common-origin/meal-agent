@@ -21,11 +21,13 @@ export default function PrivacyPage() {
             "Coles orders, only if you install the Coles browser extension: the products in your orders from the last 12 months, used to match shopping lists to what you buy. Older orders are deleted automatically.",
             "A log of AI requests (which feature, when, and how much it used), to enforce daily limits. It doesn't contain your recipes or settings.",
             "Error logs (which page or feature failed, with no personal details), kept for 90 days.",
+            "Anonymous usage counts: which features your household uses and when (planning, confirming, shopping, swapping a meal), kept for about a year. They carry no recipe content, names or emails.",
           ]}
         />
         <Typography variant="body">
-          Usage statistics, favourites and ratings stay in your own browser and aren&apos;t sent to us. Photos you scan for your pantry or a recipe are
-          read once and not stored.
+          Your favourite recipes are saved with your household, so they follow you across devices. Your recipe ratings and the detailed usage
+          statistics on the <Link href="/analytics">analytics page</Link> stay in your own browser. Only the anonymous usage counts above are sent to
+          us, and you can turn analytics off on that page, which stops them. Photos you scan for your pantry or a recipe are read once and not stored.
         </Typography>
       </LegalSection>
 

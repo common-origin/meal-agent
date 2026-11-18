@@ -711,6 +711,7 @@ export default function PlanPage() {
         dayCount: newIds.length,
         pantryItemCount: pantry.length,
         cuisineCount: familySettings.cuisines.length,
+        weekStart: weekStartRef.current,
         cost,
         conflicts: 0,
         leftoverDays: 0,
@@ -974,7 +975,7 @@ export default function PlanPage() {
       {
         pendingSaves: saveChainRef.current,
         markConfirmed: (ids) => RecipeLibrary.markRecipesAsConfirmed(ids),
-        track: (meta) => track('plan_confirmed', meta),
+        track: (meta) => track('plan_confirmed', { ...meta, weekStart: weekStartRef.current }),
         clearShoppingComplete: () => clearShoppingComplete(weekStartRef.current),
         // The shopping list for this plan's week, whichever week that is (#194)
         navigate: (path) => router.push(`${path}?week=${weekStartRef.current}`),
