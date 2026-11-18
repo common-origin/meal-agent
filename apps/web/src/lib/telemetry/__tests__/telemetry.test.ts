@@ -100,7 +100,7 @@ describe('fingerprint', () => {
 
   it('is stable and groups messages that differ only in digits or case', () => {
     expect(fingerprint(base)).toBe(fingerprint({ ...base, message: 'Timed out after 8ms' }));
-    expect(fingerprint(base)).toMatch(/^[0-9a-f]{40}$/);
+    expect(fingerprint(base)).toMatch(/^[0-9a-f]{32}$/);
     expect(normaliseMessage('Timed out after 31ms')).toBe('timed out after 0ms');
   });
 

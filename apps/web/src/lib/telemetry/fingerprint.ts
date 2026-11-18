@@ -1,5 +1,5 @@
 /**
- * Groups equal errors: a sha1 over source + kind + route pattern + the
+ * Groups equal errors: a SHA-256 (first 32 hex characters) over source + kind + route pattern + the
  * normalised message, or over source + route + label when the caller gave a
  * developer-written label (a label is stable; messages can vary). Node only,
  * since it uses node:crypto.
@@ -25,5 +25,5 @@ export function fingerprint({ source, kind, route, message, label }: Fingerprint
   const parts = label
     ? [source, route ?? '', 'label', label]
     : [source, kind, route ?? '', normaliseMessage(message)];
-  return createHash('sha1').update(parts.join('\n')).digest('hex');
+  return createHash('sha256').update(parts.join('\n')).digest('hex').slice(0, 32);
 }
