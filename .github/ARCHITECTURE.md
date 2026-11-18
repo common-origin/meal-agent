@@ -136,6 +136,10 @@ than a session (see [Calendar export](#calendar-export) below);
 `household/ics-url` — session-authenticated, returns the signed-in user's
 feed URL for display in Settings
 
+**Telemetry** (admin dashboard, #244): `telemetry/client-error` — `POST`,
+signed-in only, 20 a minute a user, body capped at about 4 KB and strictly
+validated; stores a browser error in `app_errors` with the household taken
+from the session (see [Error capture](#error-capture));
 `telemetry/events` — `POST`, signed-in only, a batch of at most 20
 whitelisted events, body capped at about 8 KB (see
 [Product events](#product-events))
@@ -370,6 +374,17 @@ route, and skips `AiTaskError`, which `runAiTask` already records in
 service role. Pure helpers (`release`, `routePattern`, `scrub`,
 `fingerprint`, `buildErrorRow`) are in `lib/telemetry/`. Telemetry never
 breaks a request: a failed write, or a missing table, only warns.
+
+Browser errors: `src/instrumentation-client.ts` listens for `error` and
+`unhandledrejection` from before hydration, and `app/error.tsx` /
+`app/global-error.tsx` (the latter is plain inline-styled markup, since it
+replaces the document) report what React error boundaries catch, all through
+`reportClientError()` (`lib/telemetry/clientReport.ts`). It sends the page
+path as a route pattern, a scrubbed message and the top stack frame to
+`POST /api/telemetry/client-error`, once per distinct error per page load and
+at most 5 per page load. An error with a `digest` is a server error that
+`onRequestError` already recorded, so it isn't reported again. Signed-out
+pages don't report (the endpoint needs a session).
 
 ## Product events
 `track()` in `lib/analytics.ts` still writes every event to localStorage. The
