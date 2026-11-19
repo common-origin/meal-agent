@@ -29,8 +29,11 @@ export function toHouseholdRow({ id, ...rest }: HouseholdRowRaw, viewerHousehold
 
 /** Most recently active first; households that have never been active last. */
 export function sortHouseholds(rows: HouseholdRow[]): HouseholdRow[] {
-  const time = (row: HouseholdRow) => (row.last_active ? new Date(row.last_active).getTime() : -Infinity);
-  return [...rows].sort((a, b) => time(b) - time(a));
+  const time = (row: HouseholdRow) => (row.last_active ? new Date(row.last_active).getTime() : Number.NEGATIVE_INFINITY);
+  return [...rows].sort((a, b) => {
+    const [ta, tb] = [time(a), time(b)];
+    return ta === tb ? 0 : tb > ta ? 1 : -1;
+  });
 }
 
 /** Below this many (estimated) rows a table's dead-tuple ratio is noise: two dead rows in a six-row table is 33%. */

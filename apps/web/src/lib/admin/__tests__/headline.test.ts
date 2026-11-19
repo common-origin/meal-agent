@@ -36,18 +36,18 @@ const tile = (headline: ReturnType<typeof computeHeadline>, id: string) => headl
 
 describe('computeHeadline (#270)', () => {
   it('says "All systems OK" with nothing to attend to', () => {
-    expect(computeHeadline(data(), now)).toMatchObject({ tone: 'ok', title: 'All systems OK' });
+    expect(computeHeadline(data(), now)).toMatchObject({ title: 'All systems OK' });
   });
 
   it('counts the things that need attention, and calls it an error if any is', () => {
     const warning = { id: 'a', severity: 'warning' as const, section: 'errors' as const, message: 'x' };
     const error = { id: 'b', severity: 'error' as const, section: 'status' as const, message: 'y' };
-    expect(computeHeadline(data({ attention: { ok: true, data: [warning] } }), now)).toMatchObject({ tone: 'warning', title: '1 thing needs attention' });
-    expect(computeHeadline(data({ attention: { ok: true, data: [warning, error] } }), now)).toMatchObject({ tone: 'error', title: '2 things need attention' });
+    expect(computeHeadline(data({ attention: { ok: true, data: [warning] } }), now)).toMatchObject({ title: '1 thing needs attention' });
+    expect(computeHeadline(data({ attention: { ok: true, data: [warning, error] } }), now)).toMatchObject({ title: '2 things need attention' });
   });
 
   it('says so when the rules could not run, rather than claiming all is well', () => {
-    expect(computeHeadline(data({ attention: failed }), now)).toMatchObject({ tone: 'unknown', title: "Couldn't work out what needs attention" });
+    expect(computeHeadline(data({ attention: failed }), now)).toMatchObject({ title: "Couldn't work out what needs attention" });
   });
 
   it('status tile: healthy, failing (naming the check), stale, none yet, and unavailable', () => {
@@ -65,6 +65,10 @@ describe('computeHeadline (#270)', () => {
     expect(tile(computeHeadline(data(), now), 'errors')).toMatchObject({ label: 'Errors, last 7 days', value: '0', tone: 'ok' });
     expect(tile(computeHeadline(data({ range: '24h', errors: { ok: true, data: [group(3), group(2)] } }), now), 'errors')).toMatchObject({ label: 'Errors, last 24 hours', value: '5', note: '2 kinds of error', tone: 'warning' });
     expect(tile(computeHeadline(data({ errors: { ok: true, data: [group(1)] } }), now), 'errors').note).toBe('1 kind of error');
+  });
+
+  it('errors tile says when the page is filtered to one household', () => {
+    expect(tile(computeHeadline(data({ household: 'abcdef12' }), now), 'errors').label).toBe('Errors, last 7 days, household abcdef12');
   });
 
   it('AI spend tile warns from 80% of the daily cap and fails at 100%', () => {

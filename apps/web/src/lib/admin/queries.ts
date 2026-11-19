@@ -63,7 +63,7 @@ async function earliestHealthTime(): Promise<number | null> {
 /** The full ID of the household the signed-in admin belongs to, for marking "You". Best effort: null on any failure. */
 async function viewerHouseholdId(userId: string): Promise<string | null> {
   try {
-    const { data, error } = await createAdminClient().from('household_members').select('household_id').eq('user_id', userId).limit(1).maybeSingle();
+    const { data, error } = await createAdminClient().from('household_members').select('household_id').eq('user_id', userId).order('joined_at', { ascending: true }).limit(1).maybeSingle();
     if (error) return null;
     return (data as { household_id: string } | null)?.household_id ?? null;
   } catch {

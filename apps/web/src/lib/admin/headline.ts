@@ -20,7 +20,6 @@ export interface HeadlineTile {
 }
 
 export interface Headline {
-  tone: 'ok' | 'warning' | 'error' | 'unknown';
   title: string;
   tiles: HeadlineTile[];
 }
@@ -28,15 +27,14 @@ export interface Headline {
 const COULDNT = 'Unavailable';
 
 export function computeHeadline(data: DashboardData, now: Date): Headline {
-  return { ...titleFor(data), tiles: [statusTile(data, now), errorsTile(data), aiTile(data), householdsTile(data, now)] };
+  return { title: titleFor(data), tiles: [statusTile(data, now), errorsTile(data), aiTile(data), householdsTile(data, now)] };
 }
 
-function titleFor(data: DashboardData): Pick<Headline, 'tone' | 'title'> {
-  if (!data.attention.ok) return { tone: 'unknown', title: "Couldn't work out what needs attention" };
-  const items = data.attention.data;
-  if (items.length === 0) return { tone: 'ok', title: 'All systems OK' };
-  const tone = items.some((item) => item.severity === 'error') ? 'error' : 'warning';
-  return { tone, title: items.length === 1 ? '1 thing needs attention' : `${items.length} things need attention` };
+function titleFor(data: DashboardData): string {
+  if (!data.attention.ok) return "Couldn't work out what needs attention";
+  const count = data.attention.data.length;
+  if (count === 0) return 'All systems OK';
+  return count === 1 ? '1 thing needs attention' : `${count} things need attention`;
 }
 
 function statusTile(data: DashboardData, now: Date): HeadlineTile {
@@ -56,7 +54,7 @@ function statusTile(data: DashboardData, now: Date): HeadlineTile {
 
 function errorsTile(data: DashboardData): HeadlineTile {
   const range = RANGE_WORDS[data.range];
-  const base = { id: 'errors', label: `Errors, last ${range}`, href: '#errors' } as const;
+  const base = { id: 'errors', label: `Errors, last ${range}${data.household ? `, household ${data.household}` : ''}`, href: '#errors' } as const;
   if (!data.errors.ok) return { ...base, value: COULDNT, note: 'See the errors section', tone: 'neutral' };
   const total = data.errors.data.reduce((n, group) => n + group.count, 0);
   if (total === 0) return { ...base, value: '0', note: 'None reported', tone: 'ok' };

@@ -177,6 +177,16 @@ describe('AdminDashboard (#249)', () => {
     expect(within(screen.getByRole('region', { name: 'Status' })).getByText(/Monitoring began .*so the uptime below covers that time rather than the whole range/)).toBeInTheDocument();
   });
 
+  it('status: does not claim "All 0 checks passed" when the row has no individual results', () => {
+    const data = fixture();
+    if (!data.status.ok || !data.status.data.latest) throw new Error('fixture');
+    data.status.data.latest.checks = {};
+    render(<AdminDashboard data={data} />);
+    const section = screen.getByRole('region', { name: 'Status' });
+    expect(within(section).getByText(/The check recorded no individual results/)).toBeInTheDocument();
+    expect(within(section).queryByText(/All 0 checks/)).not.toBeInTheDocument();
+  });
+
   it('status: with no health check recorded yet, there is no uptime strip to misread', () => {
     const data = fixture();
     if (!data.status.ok) throw new Error('fixture');

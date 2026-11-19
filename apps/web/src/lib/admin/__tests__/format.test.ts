@@ -130,6 +130,7 @@ describe('readability helpers (#270)', () => {
     const input = [row('c', null), row('a', '2026-11-01T00:00:00Z'), row('b', '2026-11-10T00:00:00Z')];
     expect(sortHouseholds(input).map((h) => h.shortId)).toEqual(['b', 'a', 'c']);
     expect(input.map((h) => h.shortId)).toEqual(['c', 'a', 'b']);
+    expect(sortHouseholds([row('x', null), row('y', null)]).map((h) => h.shortId)).toEqual(['x', 'y']);
   });
 
   it('marks only the viewer\'s household as theirs, and strips the full ID', () => {

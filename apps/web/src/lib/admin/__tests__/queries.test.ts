@@ -23,6 +23,7 @@ vi.mock('@/lib/supabase/server', () => ({
             mocks.memberLookups.push(userId);
             return m;
           },
+          order: () => m,
           limit: () => m,
           maybeSingle: () => Promise.resolve({ data: mocks.memberHousehold ? { household_id: mocks.memberHousehold } : null, error: null }),
         };

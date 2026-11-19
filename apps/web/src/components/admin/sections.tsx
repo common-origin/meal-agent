@@ -87,7 +87,7 @@ function StatusBody({ status, now }: { status: StatusData; now: Date }) {
     <Stack direction="column" gap="lg">
       <Stack direction="column" gap="sm">
         <Typography variant="body">
-          {failing.length === 0 ? `All ${checks.length} checks passed` : `${failing.join(", ")} failing`} {ago(latest.created_at, now)} ({when(latest.created_at)}, {latest.total_latency_ms} ms in total).
+          {checks.length === 0 ? "The check recorded no individual results" : failing.length === 0 ? `All ${checks.length} checks passed` : `${failing.join(", ")} failing`} {ago(latest.created_at, now)} ({when(latest.created_at)}, {latest.total_latency_ms} ms in total).
         </Typography>
         <Stack direction="row" gap="md" wrap>
           {checks.map(([name, check]) => (
