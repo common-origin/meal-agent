@@ -458,7 +458,11 @@ creation dates are bucketed in Australia/Sydney. Percentiles are computed in
 SQL (`percentile_cont`), the attention rules and projections in TypeScript.
 Components are in `components/admin/` (design-system parts and tokens only, no
 chart library). The page shows household short IDs only, never names or
-emails.
+emails. The dashboard components are client components, which have no
+`process.env` in the browser, so anything built from env vars (the Supabase and
+Vercel links, `lib/admin/links.ts`) is built in `app/admin/page.tsx` and passed
+down as a prop; reading the env inside them renders different markup on the
+client than the server sent and fails hydration (React #418, #272).
 
 ## Calendar export
 
