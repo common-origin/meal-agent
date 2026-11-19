@@ -24,7 +24,20 @@ export interface AdminLink {
   href: string;
 }
 
-export function adminLinks(env: Record<string, string | undefined> = process.env): { supabase: AdminLink[]; vercel: AdminLink[]; debug: AdminLink[] } {
+export interface AdminLinks {
+  supabase: AdminLink[];
+  vercel: AdminLink[];
+  debug: AdminLink[];
+}
+
+/**
+ * Server-only: call it from the page (`app/admin/page.tsx`) and pass the result
+ * down as a prop. The env is a required argument, not a `process.env` default,
+ * because a client component that read `process.env` here would see an empty
+ * object in the browser, render different links from the server's HTML and
+ * trigger a hydration mismatch (React #418).
+ */
+export function adminLinks(env: Record<string, string | undefined>): AdminLinks {
   const ref = supabaseProjectRef(env.NEXT_PUBLIC_SUPABASE_URL);
   const project = ref ? `https://supabase.com/dashboard/project/${ref}` : null;
   const vercel = env.ADMIN_VERCEL_PROJECT_URL?.trim() || DEFAULT_VERCEL_PROJECT_URL;

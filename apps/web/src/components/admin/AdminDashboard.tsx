@@ -5,15 +5,17 @@ import { Stack, Typography } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import { RANGES } from "@/lib/admin/format";
 import type { DashboardData } from "@/lib/admin/queries";
+import type { AdminLinks } from "@/lib/admin/links";
 import { AiAgent, CostAndQuotas, Database, DebugLinks, Errors, Households, NeedsAttention, Status, WeeklyCycleSection } from "./sections";
 
 /**
  * The /admin overview (#249). The page loads everything on the server and
  * passes it here already serialisable; each section shows its own data or its
- * own "couldn't load". Mobile-friendly: tables scroll sideways inside their
+ * own "couldn't load". `links` is built on the server (it reads env vars the
+ * browser doesn't have), so it arrives as a prop. Mobile-friendly: tables scroll sideways inside their
  * section and the stats wrap.
  */
-export default function AdminDashboard({ data }: { data: DashboardData }) {
+export default function AdminDashboard({ data, links }: { data: DashboardData; links: AdminLinks }) {
   const now = new Date(data.generatedAt);
   const query = (range: string) => `/admin?range=${range}${data.household ? `&household=${data.household}` : ""}`;
   return (
@@ -48,8 +50,8 @@ export default function AdminDashboard({ data }: { data: DashboardData }) {
         <CostAndQuotas data={data.cost} />
         <Households data={data.households} range={data.range} selected={data.household} now={now} />
         <WeeklyCycleSection data={data.cycle} />
-        <Database data={data.database} />
-        <DebugLinks />
+        <Database data={data.database} links={links} />
+        <DebugLinks links={links} />
       </Stack>
     </Main>
   );

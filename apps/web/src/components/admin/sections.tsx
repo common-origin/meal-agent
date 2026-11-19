@@ -8,7 +8,7 @@
 
 import Link from "next/link";
 import { Alert, Stack, StatusLabel, Tag, Typography } from "@common-origin/design-system";
-import { adminLinks } from "@/lib/admin/links";
+import type { AdminLinks } from "@/lib/admin/links";
 import { ago, formatBytes, formatUsd, MIN_FOR_PERCENT, successPct, weekLabel } from "@/lib/admin/format";
 import type {
   AiSummary,
@@ -407,8 +407,7 @@ function CycleBody({ cycle }: { cycle: WeeklyCycle }) {
   );
 }
 
-export function Database({ data }: { data: Loaded<{ stats: DbStat[]; schema: SchemaCheck[] }> }) {
-  const links = adminLinks();
+export function Database({ data, links }: { data: Loaded<{ stats: DbStat[]; schema: SchemaCheck[] }>; links: AdminLinks }) {
   return (
     <Section id="database" title="Database" note="Row counts are the database's own estimates. Dead tuples above 20% suggest a vacuum is behind.">
       {!data.ok ? (
@@ -453,8 +452,7 @@ export function Database({ data }: { data: Loaded<{ stats: DbStat[]; schema: Sch
   );
 }
 
-export function DebugLinks() {
-  const { debug } = adminLinks();
+export function DebugLinks({ links: { debug } }: { links: AdminLinks }) {
   return (
     <Section id="debug" title="Debug pages">
       <Stack direction="row" gap="lg" wrap>
