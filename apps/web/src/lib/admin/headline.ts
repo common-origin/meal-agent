@@ -4,7 +4,7 @@
  * link to their sections. Pure; built from what the page already loaded.
  */
 
-import { ago, formatUsd, RANGE_WORDS, rangeStart } from './format';
+import { ago, ERROR_GROUP_LIMIT, formatUsd, RANGE_WORDS, rangeStart } from './format';
 import type { DashboardData } from './queries';
 
 export type Tone = 'ok' | 'warning' | 'bad' | 'neutral';
@@ -42,13 +42,15 @@ function statusTile(data: DashboardData, now: Date): HeadlineTile {
   if (!data.status.ok) return { ...base, value: COULDNT, note: 'See the status section', tone: 'neutral' };
   const { latest, heartbeatStale } = data.status.data;
   if (!latest) return { ...base, value: 'No checks yet', note: 'The Uptime workflow has not recorded one', tone: 'neutral' };
-  if (!latest.ok) {
-    const failing = Object.entries(latest.checks ?? {})
-      .filter(([, check]) => !check.ok)
-      .map(([name]) => name);
-    return { ...base, value: 'Failing', note: failing.length ? `${failing.join(', ')} failing` : 'A check is failing', tone: 'bad' };
+  const failing = Object.entries(latest.checks ?? {})
+    .filter(([, check]) => !check.ok)
+    .map(([name]) => name);
+  // Stale first: an old failure says nothing about now, and monitoring having stopped is the thing to fix.
+  if (heartbeatStale) {
+    const outcome = latest.ok ? 'it passed' : failing.length ? `${failing.join(', ')} failing then` : 'it failed';
+    return { ...base, value: 'No recent check', note: `Last check ${ago(latest.created_at, now)} (${outcome})`, tone: 'bad' };
   }
-  if (heartbeatStale) return { ...base, value: 'No recent check', note: `Last check ${ago(latest.created_at, now)}`, tone: 'bad' };
+  if (!latest.ok) return { ...base, value: 'Failing', note: failing.length ? `${failing.join(', ')} failing` : 'A check is failing', tone: 'bad' };
   return { ...base, value: 'Healthy', note: `Checked ${ago(latest.created_at, now)}`, tone: 'ok' };
 }
 
@@ -59,7 +61,10 @@ function errorsTile(data: DashboardData): HeadlineTile {
   const total = data.errors.data.reduce((n, group) => n + group.count, 0);
   if (total === 0) return { ...base, value: '0', note: 'None reported', tone: 'ok' };
   const kinds = data.errors.data.length;
-  return { ...base, value: String(total), note: kinds === 1 ? '1 kind of error' : `${kinds} kinds of error`, tone: 'warning' };
+  // The query returns at most ERROR_GROUP_LIMIT groups: at the cap, there may be more, so say "at least".
+  const capped = kinds >= ERROR_GROUP_LIMIT;
+  const note = capped ? `${kinds}+ kinds of error (only the latest ${ERROR_GROUP_LIMIT} are counted)` : kinds === 1 ? '1 kind of error' : `${kinds} kinds of error`;
+  return { ...base, value: capped ? `${total}+` : String(total), note, tone: 'warning' };
 }
 
 function aiTile(data: DashboardData): HeadlineTile {

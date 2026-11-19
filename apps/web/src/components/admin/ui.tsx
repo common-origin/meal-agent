@@ -3,7 +3,9 @@
 /**
  * Small building blocks for the /admin page. Everything here is a design-system
  * part (Box, ResponsiveGrid, Stack, List/ListItem, ProgressBar, Typography,
- * InlineAlert) arranged for this page: no custom CSS, no table or chart code.
+ * InlineAlert) arranged for this page: no table or chart code, and no custom
+ * CSS beyond one inline `flex` in UptimeStrip that sizes each run of slots
+ * (the design system's Box has no flex-grow prop).
  * The design system has no Table, so rows are List/ListItem with their numbers
  * in the secondary line.
  */

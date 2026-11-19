@@ -8,8 +8,9 @@ const mocks = vi.hoisted(() => ({
   healthRows: [] as { created_at: string; ok: boolean; release?: string; checks?: unknown; total_latency_ms?: number }[],
   rangeCalls: [] as [number, number][],
   readColesQuota: vi.fn(),
-  memberHousehold: null as string | null,
+  memberHouseholds: [] as string[],
   memberLookups: [] as string[],
+  earliestFails: false,
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -21,11 +22,8 @@ vi.mock('@/lib/supabase/server', () => ({
           select: () => m,
           eq: (_column: string, userId: string) => {
             mocks.memberLookups.push(userId);
-            return m;
+            return Promise.resolve({ data: mocks.memberHouseholds.map((household_id) => ({ household_id })), error: null });
           },
-          order: () => m,
-          limit: () => m,
-          maybeSingle: () => Promise.resolve({ data: mocks.memberHousehold ? { household_id: mocks.memberHousehold } : null, error: null }),
         };
         return m;
       }
@@ -43,7 +41,10 @@ vi.mock('@/lib/supabase/server', () => ({
           mocks.rangeCalls.push([from, to]);
           return Promise.resolve({ data: mocks.healthRows.slice(from, to + 1), error: null });
         },
-        maybeSingle: () => Promise.resolve({ data: (ascending ? mocks.healthRows[0] : mocks.healthRows[mocks.healthRows.length - 1]) ?? null, error: null }),
+        maybeSingle: () =>
+          ascending && mocks.earliestFails
+            ? Promise.reject(new Error('timeout'))
+            : Promise.resolve({ data: (ascending ? mocks.healthRows[0] : mocks.healthRows[mocks.healthRows.length - 1]) ?? null, error: null }),
       };
       return q;
     },
@@ -76,8 +77,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.rangeCalls = [];
   mocks.healthRows = [];
-  mocks.memberHousehold = null;
+  mocks.memberHouseholds = [];
   mocks.memberLookups = [];
+  mocks.earliestFails = false;
   for (const key of Object.keys(results)) delete results[key];
   setRpc();
   mocks.rpc.mockImplementation(async (name: string) => {
@@ -182,7 +184,7 @@ describe('loadDashboard (#249)', () => {
   });
 
   it('marks the signed-in admin\'s own household, sorts by last activity, and never sends the full ID', async () => {
-    mocks.memberHousehold = FULL_ID;
+    mocks.memberHouseholds = [FULL_ID];
     setRpc({
       admin_household_summary: [
         { id: '99999999-0000-0000-0000-000000000000', members: 1, pending_invites: 0, last_active: null, has_plan_this_week: false, settings_complete: false, ai_calls: 0, ai_cost_usd: 0, errors: 0, last3_generation_failed: false },
@@ -196,6 +198,30 @@ describe('loadDashboard (#249)', () => {
     expect(data.households.data.map((h) => [h.shortId, h.isYou])).toEqual([['abcdef12', true], ['55555555', false], ['99999999', false]]);
     expect(JSON.stringify(data)).not.toContain(FULL_ID);
     expect(JSON.stringify(data)).not.toContain('user-1');
+  });
+
+  it('marks every household the viewer belongs to, not a guess at one', async () => {
+    const other = '55555555-0000-0000-0000-000000000000';
+    mocks.memberHouseholds = [FULL_ID, other];
+    setRpc({
+      admin_household_summary: [
+        { id: FULL_ID, members: 2, pending_invites: 0, last_active: '2026-11-18T11:00:00Z', has_plan_this_week: true, settings_complete: true, ai_calls: 0, ai_cost_usd: 0, errors: 0, last3_generation_failed: false },
+        { id: other, members: 3, pending_invites: 0, last_active: '2026-11-17T11:00:00Z', has_plan_this_week: true, settings_complete: true, ai_calls: 0, ai_cost_usd: 0, errors: 0, last3_generation_failed: false },
+        { id: '99999999-0000-0000-0000-000000000000', members: 1, pending_invites: 0, last_active: null, has_plan_this_week: false, settings_complete: false, ai_calls: 0, ai_cost_usd: 0, errors: 0, last3_generation_failed: false },
+      ],
+    });
+    const data = await loadDashboard({ range: '7d', household: null, viewerUserId: 'user-1' }, now);
+    if (!data.households.ok) throw new Error('households failed');
+    expect(data.households.data.map((h) => [h.shortId, h.isYou])).toEqual([['abcdef12', true], ['55555555', true], ['99999999', false]]);
+  });
+
+  it('still loads the status section when the "monitoring began" lookup fails', async () => {
+    mocks.earliestFails = true;
+    mocks.healthRows = [{ created_at: new Date(now.getTime() - 5 * 60_000).toISOString(), ok: true, release: 'abc1234', checks: {}, total_latency_ms: 5 }];
+    const data = await loadDashboard({ range: '24h', household: null }, now);
+    if (!data.status.ok) throw new Error('status failed');
+    expect(data.status.data.latest?.ok).toBe(true);
+    expect(data.status.data.uptime.monitoringSince).toBeNull();
   });
 
   it('marks no household as yours when the viewer is in none, or the lookup is skipped', async () => {

@@ -22,10 +22,18 @@ export function parseHouseholdParam(value: string | string[] | undefined): strin
 
 export const shortId = (id: string): string => id.slice(0, 8);
 
-/** Strips the full ID: only the short ID leaves the server. `viewerHouseholdId` marks the signed-in admin's own household. */
-export function toHouseholdRow({ id, ...rest }: HouseholdRowRaw, viewerHouseholdId: string | null = null): HouseholdRow {
-  return { shortId: shortId(id), isYou: viewerHouseholdId !== null && id === viewerHouseholdId, ...rest };
+/**
+ * Strips the full ID: only the short ID leaves the server. `viewerHouseholdIds`
+ * are every household the signed-in admin belongs to, all marked "You": the
+ * database's own pick (`get_user_household_id()`, LIMIT 1 with no order) isn't
+ * stable for someone in more than one, so marking one would be a guess.
+ */
+export function toHouseholdRow({ id, ...rest }: HouseholdRowRaw, viewerHouseholdIds: ReadonlySet<string> = new Set()): HouseholdRow {
+  return { shortId: shortId(id), isYou: viewerHouseholdIds.has(id), ...rest };
 }
+
+/** The most error groups `admin_error_groups` returns (its `LIMIT 100`, migration 022): at this many, there may be more. */
+export const ERROR_GROUP_LIMIT = 100;
 
 /** Most recently active first; households that have never been active last. */
 export function sortHouseholds(rows: HouseholdRow[]): HouseholdRow[] {

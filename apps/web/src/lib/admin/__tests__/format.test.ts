@@ -133,12 +133,13 @@ describe('readability helpers (#270)', () => {
     expect(sortHouseholds([row('x', null), row('y', null)]).map((h) => h.shortId)).toEqual(['x', 'y']);
   });
 
-  it('marks only the viewer\'s household as theirs, and strips the full ID', () => {
+  it('marks a household as the viewer\'s when they belong to it, and strips the full ID', () => {
     const raw = { id: 'abcdef12-0000', members: 1, pending_invites: 0, last_active: null, has_plan_this_week: false, settings_complete: false, ai_calls: 0, ai_cost_usd: 0, errors: 0, last3_generation_failed: false };
-    expect(toHouseholdRow(raw, 'abcdef12-0000')).toMatchObject({ shortId: 'abcdef12', isYou: true });
-    expect(toHouseholdRow(raw, 'other')).toMatchObject({ isYou: false });
+    expect(toHouseholdRow(raw, new Set(['abcdef12-0000']))).toMatchObject({ shortId: 'abcdef12', isYou: true });
+    expect(toHouseholdRow(raw, new Set(['other', 'abcdef12-0000']))).toMatchObject({ isYou: true });
+    expect(toHouseholdRow(raw, new Set(['other']))).toMatchObject({ isYou: false });
     expect(toHouseholdRow(raw)).toMatchObject({ isYou: false });
-    expect(JSON.stringify(toHouseholdRow(raw, 'abcdef12-0000'))).not.toContain('abcdef12-0000');
+    expect(JSON.stringify(toHouseholdRow(raw, new Set(['abcdef12-0000'])))).not.toContain('abcdef12-0000');
   });
 
   it('only flags dead tuples on tables with at least 1,000 estimated rows and over 20% dead', () => {

@@ -431,7 +431,9 @@ consecutive empty slots are flagged "possible outage (no heartbeat)", since a
 fully-down app can't record a row; uptime % is ok / (ok + failing) with the
 count of missed checks beside it. When the first health row is newer than the
 start of the range, `/admin` starts the window at that row's slot (`monitoringSince`),
-so time before monitoring began is neither "down" nor "no data". GitHub disables schedules on a public repo after 60
+so time before monitoring began is neither "down" nor "no data". That lookup is
+best effort: if it fails, the section shows the whole range rather than
+"couldn't load". GitHub disables schedules on a public repo after 60
 days without repository activity, which the "no health check in 30 minutes"
 warning catches.
 
@@ -445,7 +447,12 @@ migration 022 (`admin_ai_summary`, `admin_error_groups`, `admin_weekly_cycle`,
 `admin_household_summary`, `admin_db_stats`, `admin_schema_check`). Each
 returns one jsonb value, so no aggregate is cut off at Supabase's 1,000-row
 limit; the one direct read (health rows for the uptime strip) pages through
-`readAllPages`. Sections load with `Promise.allSettled`, so a section whose
+`readAllPages`. The one deliberate cap is `admin_error_groups`, which returns
+the 100 most recently seen fingerprints (`ERROR_GROUP_LIMIT` in
+`lib/admin/format.ts`): at the cap, the Errors tile shows "N+" and the section
+says older kinds aren't listed. "You" marks every household the signed-in
+admin belongs to (all their `household_members` rows), since
+`get_user_household_id()` picks one with no stable order. Sections load with `Promise.allSettled`, so a section whose
 migration isn't applied shows "couldn't load (is migration 0xx applied?)" and
 the rest render. `?range=24h|7d|30d` (default 7d) and `?household=` (the
 8-character short ID; the full ID never leaves the server) filter the errors,

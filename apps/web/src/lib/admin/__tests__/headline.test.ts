@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { computeHeadline } from '../headline';
+import { ERROR_GROUP_LIMIT } from '../format';
 import type { DashboardData } from '../queries';
 import type { CostData, ErrorGroup, HouseholdRow, StatusData } from '../types';
 
@@ -56,9 +57,26 @@ describe('computeHeadline (#270)', () => {
     const failing = status({ latest: { created_at: '2026-11-19T09:16:00Z', ok: false, release: 'a', total_latency_ms: 1, checks: { database: { ok: true }, gemini: { ok: false } } } });
     expect(tile(computeHeadline(data({ status: { ok: true, data: failing } }), now), 'status')).toMatchObject({ value: 'Failing', note: 'gemini failing', tone: 'bad' });
 
-    expect(tile(computeHeadline(data({ status: { ok: true, data: status({ heartbeatStale: true }) } }), now), 'status')).toMatchObject({ value: 'No recent check', tone: 'bad' });
+    expect(tile(computeHeadline(data({ status: { ok: true, data: status({ heartbeatStale: true }) } }), now), 'status')).toMatchObject({ value: 'No recent check', tone: 'bad', note: 'Last check 4 min ago (it passed)' });
     expect(tile(computeHeadline(data({ status: { ok: true, data: status({ latest: null }) } }), now), 'status')).toMatchObject({ value: 'No checks yet', tone: 'neutral' });
     expect(tile(computeHeadline(data({ status: failed }), now), 'status')).toMatchObject({ value: 'Unavailable', tone: 'neutral' });
+  });
+
+  it('status tile: a stale heartbeat outranks an old failure, which is named as past', () => {
+    const staleFailing = status({
+      heartbeatStale: true,
+      latest: { created_at: '2026-11-19T03:16:00Z', ok: false, release: 'a', total_latency_ms: 1, checks: { database: { ok: true }, gemini: { ok: false } } },
+    });
+    expect(tile(computeHeadline(data({ status: { ok: true, data: staleFailing } }), now), 'status')).toMatchObject({ value: 'No recent check', note: 'Last check 6 h ago (gemini failing then)', tone: 'bad' });
+  });
+
+  it('errors tile says "at least" when the error groups hit the query cap', () => {
+    const groups = Array.from({ length: ERROR_GROUP_LIMIT }, () => group(2));
+    expect(tile(computeHeadline(data({ errors: { ok: true, data: groups } }), now), 'errors')).toMatchObject({
+      value: `${2 * ERROR_GROUP_LIMIT}+`,
+      note: `${ERROR_GROUP_LIMIT}+ kinds of error (only the latest ${ERROR_GROUP_LIMIT} are counted)`,
+    });
+    expect(tile(computeHeadline(data({ errors: { ok: true, data: groups.slice(1) } }), now), 'errors').value).toBe(String(2 * (ERROR_GROUP_LIMIT - 1)));
   });
 
   it('errors tile: total occurrences and how many kinds, labelled with the range', () => {
