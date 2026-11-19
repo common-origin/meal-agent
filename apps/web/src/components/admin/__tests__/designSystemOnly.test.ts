@@ -22,6 +22,12 @@ describe('/admin uses the design system, not custom styling (#270)', () => {
     expect(source).not.toMatch(/<(table|details|style)[\s>]/);
   });
 
+  it.each(files)('%s has no hex or rgb colour: colours are design-system tokens', (name) => {
+    const source = readFileSync(join(dir, name), 'utf8');
+    expect(source).not.toMatch(/["'`]#[0-9a-fA-F]{3,8}["'`]/);
+    expect(source).not.toMatch(/\brgba?\(/);
+  });
+
   it.each(files)('%s has no hard-coded layout CSS in a style prop beyond the one flex weight of the uptime strip', (name) => {
     const source = readFileSync(join(dir, name), 'utf8');
     const styles = source.match(/style=\{\{[^}]*\}\}/g) ?? [];

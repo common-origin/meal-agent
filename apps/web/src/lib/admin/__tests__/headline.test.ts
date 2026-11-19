@@ -41,8 +41,9 @@ describe('computeHeadline (#270)', () => {
   });
 
   it('counts the things that need attention, and calls it an error if any is', () => {
-    const warning = { id: 'a', severity: 'warning' as const, section: 'errors' as const, message: 'x' };
-    const error = { id: 'b', severity: 'error' as const, section: 'status' as const, message: 'y' };
+    const base = { title: 't', where: 'w', since: null, window: 'now', fix: [], actions: [] };
+    const warning = { ...base, id: 'a', severity: 'warning' as const, section: 'errors' as const, message: 'x' };
+    const error = { ...base, id: 'b', severity: 'error' as const, section: 'status' as const, message: 'y' };
     expect(computeHeadline(data({ attention: { ok: true, data: [warning] } }), now)).toMatchObject({ title: '1 thing needs attention' });
     expect(computeHeadline(data({ attention: { ok: true, data: [warning, error] } }), now)).toMatchObject({ title: '2 things need attention' });
   });

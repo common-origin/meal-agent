@@ -20,8 +20,36 @@ const fixture = (over: Partial<DashboardData> = {}): DashboardData => ({
   attention: {
     ok: true,
     data: [
-      { id: 'health-failing', severity: 'error', section: 'status', message: 'The latest health check is failing: gemini' },
-      { id: 'new-errors', severity: 'warning', section: 'errors', message: '1 new error in the last 24 hours: coles-search: lookup failed' },
+      {
+        id: 'health-failing',
+        severity: 'error',
+        section: 'status',
+        title: 'Health check failing',
+        where: 'Status · gemini',
+        since: '2026-11-18T11:00:00Z',
+        window: 'latest check',
+        message: 'The latest health check is failing: gemini',
+        fix: ['gemini: top up the prepaid credits.', 'Run the Uptime workflow again.'],
+        actions: [
+          { label: 'See the check detail', target: 'section' },
+          { label: 'Open Vercel logs', target: 'vercel-logs' },
+        ],
+      },
+      {
+        id: 'new-errors',
+        severity: 'warning',
+        section: 'errors',
+        title: 'New error',
+        where: 'Errors · /api/coles-search',
+        since: '2026-11-18T10:00:00Z',
+        window: 'last 24 hours',
+        message: '1 new error in the last 24 hours: coles-search: lookup failed',
+        fix: ['Open the error and read the message.'],
+        actions: [
+          { label: 'See the new errors', target: 'section' },
+          { label: 'Open the Supabase SQL editor', target: 'supabase-sql' },
+        ],
+      },
     ],
   },
   status: {
@@ -141,13 +169,77 @@ describe('AdminDashboard (#249)', () => {
     render(<AdminDashboard links={LINKS} data={fixture()} />);
     const section = screen.getByRole('region', { name: '2 things need attention' });
     expect(within(section).getByText(/The latest health check is failing: gemini/)).toBeInTheDocument();
-    const hrefs = within(section).getAllByRole('link').map((a) => a.getAttribute('href'));
-    expect(hrefs).toEqual(['#status', '#errors', '#cost', '#households', '#status', '#errors']);
+    // Collapsed inbox rows are hidden from assistive tech, so only the tiles' links are in the accessible tree.
+    expect(within(section).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['#status', '#errors', '#cost', '#households']);
+    // Open, a row's action links lead to the section and to the tool that fixes it.
+    for (const row of within(section).getAllByRole('listitem')) fireEvent.click(within(row).getByRole('button'));
+    expect(within(section).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['#status', LINKS.targets.vercelLogs, '#errors', LINKS.targets.supabaseSql, '#status', '#errors', '#cost', '#households']);
     expect(within(section).getByText('Failing')).toBeInTheDocument();
     expect(within(section).getByText('gemini failing')).toBeInTheDocument();
     expect(within(section).getByText('$1.00')).toBeInTheDocument();
     expect(within(section).getByText('of $5.00 daily cap')).toBeInTheDocument();
     expect(within(section).getByText('1 of 2')).toBeInTheDocument();
+  });
+
+  describe('triage inbox (#279)', () => {
+    it('comes before the headline numbers, one row per item, errors first', () => {
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      const section = screen.getByRole('region', { name: '2 things need attention' });
+      const rows = within(section).getAllByRole('listitem');
+      expect(rows).toHaveLength(2);
+      expect(rows[0]).toHaveTextContent('Health check failing');
+      expect(rows[1]).toHaveTextContent('New error');
+      // The inbox is above the tiles in the document.
+      const inbox = within(section).getByText('Health check failing');
+      expect(inbox.compareDocumentPosition(within(section).getByText('Active households')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('each row says how bad, what, where and since when', () => {
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      const rows = within(screen.getByRole('region', { name: '2 things need attention' })).getAllByRole('listitem');
+      expect(within(rows[0]).getByText('Error')).toBeInTheDocument();
+      expect(rows[0]).toHaveTextContent('Status · gemini · since 1 h ago');
+      expect(within(rows[1]).getByText('Warning')).toBeInTheDocument();
+      expect(rows[1]).toHaveTextContent('Errors · /api/coles-search · since 2 h ago');
+    });
+
+    it('opens to numbered fix steps and action links, dropping an action whose target cannot be built', () => {
+      render(<AdminDashboard links={adminLinks({})} data={fixture()} />);
+      const rows = within(screen.getByRole('region', { name: '2 things need attention' })).getAllByRole('listitem');
+      for (const row of rows) fireEvent.click(within(row).getByRole('button'));
+      expect(within(rows[0]).getByText('How to fix')).toBeInTheDocument();
+      expect(within(rows[0]).getByText('1. gemini: top up the prepaid credits.')).toBeInTheDocument();
+      expect(within(rows[0]).getByText('2. Run the Uptime workflow again.')).toBeInTheDocument();
+      const logs = within(rows[0]).getByRole('link', { name: /Open Vercel logs/ });
+      expect(logs).toHaveAttribute('href', adminLinks({}).targets.vercelLogs);
+      expect(logs).toHaveAttribute('target', '_blank');
+      expect(within(rows[0]).getByRole('link', { name: /See the check detail/ })).not.toHaveAttribute('target');
+      // No Supabase URL in this env: the SQL editor action is left out rather than linking nowhere.
+      expect(within(rows[1]).queryByRole('link', { name: /SQL editor/ })).toBeNull();
+      expect(within(rows[1]).getByRole('link', { name: /See the new errors/ })).toHaveAttribute('href', '#errors');
+    });
+
+    it('puts no block element inside a paragraph in the inbox or the error rows', () => {
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      const blocks = 'address, article, aside, blockquote, dd, details, div, dl, dt, fieldset, figure, footer, form, h1, h2, h3, h4, h5, h6, header, hr, li, main, menu, nav, ol, p, pre, section, table, ul';
+      const offenders = ['2 things need attention', 'Errors'].flatMap((name) => {
+        const region = screen.getByRole('region', { name });
+        for (const toggle of region.querySelectorAll('[aria-expanded="false"]')) fireEvent.click(toggle);
+        return Array.from(region.querySelectorAll('p')).flatMap((p) => Array.from(p.querySelectorAll(blocks)).map((el) => `<${el.tagName.toLowerCase()}> inside <p>: ${p.textContent?.slice(0, 60)}`));
+      });
+      expect(offenders).toEqual([]);
+    });
+  });
+
+  it('one severity vocabulary: tiles, households and the database use the same StatusLabel, not a border colour or an emphasised Tag', () => {
+    render(<AdminDashboard links={LINKS} data={fixture()} />);
+    // Tiles: Failing status is an Error, 17% of the cap is OK; the neutral households tile has no label.
+    const tiles = screen.getByRole('region', { name: '2 things need attention' });
+    expect(within(tiles).getAllByRole('status').map((s) => s.getAttribute('aria-label'))).toEqual(expect.arrayContaining(['Status: Error', 'Status: Warning', 'Status: OK']));
+    // A household's error count and a table's dead tuples are Warnings, as StatusLabels.
+    const households = screen.getByRole('region', { name: 'Households' });
+    expect(within(households).getByText('1 error').closest('[role="status"]')).toHaveAttribute('aria-label', 'Status: 1 error');
+    expect(within(screen.getByRole('region', { name: 'Database' })).getByText('High dead tuples').closest('[role="status"]')).not.toBeNull();
   });
 
   it('headline: "All systems OK" when nothing needs attention', () => {
@@ -230,11 +322,45 @@ describe('AdminDashboard (#249)', () => {
     render(<AdminDashboard links={LINKS} data={fixture()} />);
     const section = screen.getByRole('region', { name: 'Errors' });
     expect(within(section).getByText('coles-search: lookup failed', { selector: 'strong' })).toBeInTheDocument();
-    expect(within(section).getByText('/api/coles-search')).toBeInTheDocument();
-    expect(within(section).getByText('releases abc1234')).toBeInTheDocument();
-    expect(within(section).getByText('2 households')).toBeInTheDocument();
+    expect(within(section).queryByText(/release abc1234 · route · status 429/)).toBeNull(); // not rendered until the row is opened
+    fireEvent.click(within(section).getAllByRole('button')[0]);
     expect(within(section).getByText(/release abc1234 · route · status 429/)).toBeInTheDocument();
-    expect(within(section).getByText(/4× · last/)).toBeInTheDocument();
+    // Collapsed row: where, how often, how many households, when.
+    expect(within(section).getByText('/api/coles-search · 4× · 2 households · last 37 min ago')).toBeInTheDocument();
+  });
+
+  it('errors: a Sentry-style row with severity and state, then label/value details and investigate links', () => {
+    render(<AdminDashboard links={LINKS} data={fixture()} />);
+    const row = within(screen.getByRole('region', { name: 'Errors' })).getAllByRole('listitem')[0];
+    fireEvent.click(within(row).getAllByRole('button')[0]);
+    // A server-side error that hit two households, first seen 2 hours ago.
+    expect(within(row).getByText('Error')).toBeInTheDocument();
+    expect(within(row).getByText('New')).toBeInTheDocument();
+    for (const [label, value] of [
+      ['Route', '/api/coles-search'],
+      ['Source', 'route'],
+      ['Households affected', '2'],
+      ['Events', '4 in 24 h, 4 in 7 d'],
+      ['Releases', 'abc1234'],
+    ]) {
+      expect(within(row).getByText(label).nextElementSibling).toHaveTextContent(value);
+    }
+    expect(within(row).getByText('First seen').nextElementSibling).toHaveTextContent('2 h ago (2026-11-18 10:00 UTC)');
+    expect(within(row).getByText('Recent occurrences')).toBeInTheDocument();
+    expect(within(row).getByRole('link', { name: /Open Vercel runtime logs/ })).toHaveAttribute('href', `${LINKS.targets.vercelLogs}?search=${encodeURIComponent('/api/coles-search')}`);
+    expect(within(row).getByRole('link', { name: /Search the code on GitHub/ })).toHaveAttribute('href', `${LINKS.targets.githubRepo}/search?q=${encodeURIComponent('coles-search: lookup failed')}&type=code`);
+  });
+
+  it('errors: the most severe come first, and one not seen in 24 hours reads Quiet', () => {
+    const base = fixture();
+    if (!base.errors.ok) throw new Error('fixture');
+    const [one] = base.errors.data;
+    const quiet = { ...one, fingerprint: 'quiet', label: 'old quiet error', count_24h: 0, first_seen: '2026-11-01T00:00:00Z', last_seen: '2026-11-17T00:00:00Z' };
+    render(<AdminDashboard links={LINKS} data={fixture({ errors: { ok: true, data: [quiet, one] } })} />);
+    const rows = within(screen.getByRole('region', { name: 'Errors' })).getAllByRole('listitem').filter((li) => li.getAttribute('role') !== 'none' && li.querySelector('strong'));
+    expect(rows.map((li) => li.querySelector('strong')?.textContent)).toEqual(['coles-search: lookup failed', 'old quiet error']);
+    expect(within(rows[1]).getByText('Quiet')).toBeInTheDocument();
+    expect(within(rows[1]).getByText('Ongoing')).toBeInTheDocument();
   });
 
   it('AI agent, cost and quotas', () => {

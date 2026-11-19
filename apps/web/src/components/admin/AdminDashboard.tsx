@@ -60,9 +60,9 @@ export default function AdminDashboard({ data, links }: { data: DashboardData; l
           </nav>
         </Stack>
 
-        <Overview data={data} now={now} />
+        <Overview data={data} now={now} links={links} />
         <Status data={data.status} now={now} />
-        <Errors data={data.errors} now={now} />
+        <Errors data={data.errors} now={now} links={links} />
         <AiAgent data={data.ai} />
         <CostAndQuotas data={data.cost} />
         <Households data={data.households} range={data.range} selected={data.household} now={now} />

@@ -8,53 +8,70 @@
  */
 
 import Link from "next/link";
-import { Alert, List, ListItem, ResponsiveGrid, Stack, StatusLabel, Tag, Typography } from "@common-origin/design-system";
-import type { AdminLinks } from "@/lib/admin/links";
+import { Button, List, ListItem, ResponsiveGrid, Stack, Tag, Typography } from "@common-origin/design-system";
+import { attentionWhen } from "@/lib/admin/attention";
+import { classifyError, errorInvestigateLinks, prioritiseErrors } from "@/lib/admin/errors";
+import { resolveAction, type AdminLinks, type ResolvedAction } from "@/lib/admin/links";
 import { ago, ERROR_GROUP_LIMIT, formatBytes, formatDuration, formatUsd, hasManyDeadTuples, MIN_FOR_PERCENT, plural, successPct, utcStamp, weekLabel } from "@/lib/admin/format";
 import { computeHeadline } from "@/lib/admin/headline";
 import { aiProblems, cycleSentence, databaseSummary } from "@/lib/admin/summaries";
 import type { DashboardData } from "@/lib/admin/queries";
 import type { AiSummary, AttentionItem, CostData, DbStat, ErrorGroup, HouseholdRow, Loaded, Range, SchemaCheck, StatusData, WeeklyCycle } from "@/lib/admin/types";
-import { Bar, Disclosure, Empty, ExpandableItem, NotLoaded, Section, Stat, Stats, Tile, UptimeStrip } from "./ui";
+import { Bar, Disclosure, Empty, ExpandableItem, Field, NotLoaded, Section, SeverityLabel, Stat, Stats, Tile, UptimeStrip } from "./ui";
 
 const when = utcStamp;
 const dot = (parts: (string | null | false | undefined)[]) => parts.filter(Boolean).join(" · ");
 
-const SECTION_NAMES: Record<AttentionItem["section"], string> = {
-  status: "status",
-  errors: "errors",
-  ai: "the AI agent",
-  cost: "cost and quotas",
-  households: "households",
-  database: "the database",
-};
+/** Link-styled design-system buttons, in a row: an action or an "investigate" link. External ones open in a new tab. */
+function LinkButtons({ links }: { links: ResolvedAction[] }) {
+  return (
+    <Stack direction="row" gap="sm" wrap>
+      {links.map((link) => (
+        <Button key={`${link.label}-${link.href}`} purpose="link" variant="secondary" size="small" url={link.href} {...(link.external ? { target: "_blank", rel: "noreferrer" } : {})}>
+          {link.label}
+        </Button>
+      ))}
+    </Stack>
+  );
+}
+
+/** Each thing to look at: severity, a short title, where and since when; open one for how to fix it and where to click. */
+function Inbox({ items, links, now }: { items: AttentionItem[]; links: AdminLinks; now: Date }) {
+  return (
+    <List>
+      {items.map((item) => (
+        <ExpandableItem key={item.id} primary={item.title} secondary={dot([item.where, attentionWhen(item, now)])} badge={<SeverityLabel level={item.severity} />}>
+          <Stack direction="column" gap="md">
+            <Typography variant="body">{item.message}</Typography>
+            <Stack direction="column" gap="xs">
+              <Typography variant="label">How to fix</Typography>
+              {item.fix.map((step, i) => (
+                <Typography key={step} variant="body">{`${i + 1}. ${step}`}</Typography>
+              ))}
+            </Stack>
+            <LinkButtons links={item.actions.map((action) => resolveAction(action, item.section, links)).filter((link): link is ResolvedAction => link !== null)} />
+          </Stack>
+        </ExpandableItem>
+      ))}
+    </List>
+  );
+}
 
 /**
- * The top of the page: one sentence on whether anything needs attention, four
- * headline numbers that link to their sections, then each thing to look at.
+ * The top of the page: one sentence on whether anything needs attention, the
+ * triage inbox of each thing to look at, then four headline numbers that link
+ * to their sections.
  */
-export function Overview({ data, now }: { data: DashboardData; now: Date }) {
+export function Overview({ data, now, links }: { data: DashboardData; now: Date; links: AdminLinks }) {
   const headline = computeHeadline(data, now);
   return (
     <Section id="overview" title={headline.title} note="Worked out each time the page loads, from the last 24 hours and 7 days across every household. Nothing is emailed.">
+      {!data.attention.ok ? <NotLoaded hint={data.attention.hint} /> : data.attention.data.length > 0 && <Inbox items={data.attention.data} links={links} now={now} />}
       <ResponsiveGrid cols={2} colsMd={4} gapX="4" gapY="4">
         {headline.tiles.map((tile) => (
           <Tile key={tile.id} label={tile.label} value={tile.value} note={tile.note} tone={tile.tone} href={tile.href} />
         ))}
       </ResponsiveGrid>
-      {!data.attention.ok ? (
-        <NotLoaded hint={data.attention.hint} />
-      ) : (
-        data.attention.data.length > 0 && (
-          <Stack direction="column" gap="sm">
-            {data.attention.data.map((item) => (
-              <Alert key={item.id} variant={item.severity === "error" ? "error" : "warning"}>
-                {item.message} <a href={`#${item.section}`}>See {SECTION_NAMES[item.section]}</a>
-              </Alert>
-            ))}
-          </Stack>
-        )
-      )}
     </Section>
   );
 }
@@ -82,7 +99,7 @@ function StatusBody({ status, now }: { status: StatusData; now: Date }) {
         <Stack direction="row" gap="md" wrap>
           {checks.map(([name, check]) => (
             <Stack key={name} direction="row" gap="xs" alignItems="center">
-              <StatusLabel status={check.ok ? "completed" : "failed"} label={name} size="small" />
+              <SeverityLabel level={check.ok ? "ok" : "error"} label={name} />
               {(check.detail || check.metrics) && (
                 <Typography variant="small" color="subdued">
                   {dot([check.detail, check.metrics ? Object.entries(check.metrics).map(([k, v]) => `${k} ${v}`).join(", ") : null])}
@@ -130,7 +147,7 @@ function contextText(context: Record<string, unknown>, digest: string | null): s
   return parts.join(" · ") || "–";
 }
 
-export function Errors({ data, now }: { data: Loaded<ErrorGroup[]>; now: Date }) {
+export function Errors({ data, now, links }: { data: Loaded<ErrorGroup[]>; now: Date; links: AdminLinks }) {
   return (
     <Section id="errors" title="Errors" note="Problems the app reported, grouped so repeats count once. Open one to see where and when it happened. Messages are scrubbed of emails, links and ids.">
       {!data.ok ? (
@@ -145,36 +162,55 @@ export function Errors({ data, now }: { data: Loaded<ErrorGroup[]>; now: Date })
             </Typography>
           )}
           <List>
-            {data.data.map((group) => (
-              <ExpandableItem
-                key={group.fingerprint}
-                primary={
-                  <>
-                    <strong>{group.label ?? group.kind}</strong>
-                    {group.label ? "" : ` – ${snippet(group.message)}`}
-                  </>
-                }
-                secondary={`${group.count}× · last ${ago(group.last_seen, now)}`}
-                badge={<Tag size="small">{group.source}</Tag>}
-              >
-                <Stack direction="column" gap="sm">
-                  <Typography variant="small" color="subdued">
-                    {group.message || "(no message)"}
-                  </Typography>
-                  <Stack direction="row" gap="sm" wrap>
-                    <Tag size="small">{group.route ?? "no route"}</Tag>
-                    <Tag size="small">{`first seen ${when(group.first_seen)}`}</Tag>
-                    <Tag size="small">{`releases ${group.releases.join(", ")}`}</Tag>
-                    <Tag size="small">{plural(group.households, "household")}</Tag>
+            {prioritiseErrors(data.data, now).map((group) => {
+              const triage = classifyError(group, now);
+              return (
+                <ExpandableItem
+                  key={group.fingerprint}
+                  lazy
+                  primary={
+                    <>
+                      <strong>{group.label ?? group.kind}</strong>
+                      {group.label ? "" : ` – ${snippet(group.message)}`}
+                    </>
+                  }
+                  secondary={dot([group.route ?? group.source, `${group.count}×`, plural(group.households, "household"), `last ${ago(group.last_seen, now)}`])}
+                  badge={
+                    <Stack direction="row" gap="xs" alignItems="center">
+                      <SeverityLabel level={triage.level} label={triage.levelLabel} />
+                      <Tag size="small">{triage.stateLabel}</Tag>
+                    </Stack>
+                  }
+                >
+                  <Stack direction="column" gap="md">
+                    <Typography variant="small" color="subdued">
+                      {group.message || "(no message)"}
+                    </Typography>
+                    <ResponsiveGrid cols={2} colsMd={4} gapX="4" gapY="3">
+                      <Field label="Route" value={group.route ?? "No route"} />
+                      <Field label="Source" value={group.source} />
+                      <Field label="Households affected" value={String(group.households)} />
+                      <Field label="Events" value={`${group.count_24h} in 24 h, ${group.count_7d} in 7 d`} />
+                      <Field label="First seen" value={`${ago(group.first_seen, now)} (${when(group.first_seen)})`} />
+                      <Field label="Last seen" value={`${ago(group.last_seen, now)} (${when(group.last_seen)})`} />
+                      <Field label="Releases" value={group.releases.join(", ") || "–"} />
+                    </ResponsiveGrid>
+                    <Stack direction="column" gap="xs">
+                      <Typography variant="label">Recent occurrences</Typography>
+                      <List>
+                        {group.latest.map((o) => (
+                          <ListItem key={`${o.created_at}-${o.release}-${o.digest ?? ""}`} primary={when(o.created_at)} secondary={dot([`release ${o.release}`, o.source, contextText(o.context, o.digest)])} />
+                        ))}
+                      </List>
+                    </Stack>
+                    <Stack direction="column" gap="xs">
+                      <Typography variant="label">Investigate</Typography>
+                      <LinkButtons links={errorInvestigateLinks(group, links).map((link) => ({ ...link, external: true }))} />
+                    </Stack>
                   </Stack>
-                  <List>
-                    {group.latest.map((o) => (
-                      <ListItem key={`${o.created_at}-${o.release}-${o.digest ?? ""}`} primary={when(o.created_at)} secondary={dot([`release ${o.release}`, o.source, contextText(o.context, o.digest)])} />
-                    ))}
-                  </List>
-                </Stack>
-              </ExpandableItem>
-            ))}
+                </ExpandableItem>
+              );
+            })}
           </List>
         </Stack>
       )}
@@ -211,7 +247,7 @@ function AiBody({ ai }: { ai: AiSummary }) {
                 `tokens in/out ${r.avg_input_tokens ?? "–"} / ${r.avg_output_tokens ?? "–"}`,
                 formatUsd(Number(r.cost_usd)),
               ])}
-              badge={problems === "None" ? undefined : <StatusLabel status="failed" label={problems} size="small" />}
+              badge={problems === "None" ? undefined : <SeverityLabel level="error" label={problems} />}
             />
           );
         })}
@@ -314,7 +350,7 @@ export function Households({ data, range, selected, now }: { data: Loaded<Househ
                 `settings done: ${h.settings_complete ? "yes" : "no"}`,
                 `${plural(h.ai_calls, "AI call")} (${formatUsd(Number(h.ai_cost_usd))})`,
               ])}
-              badge={h.errors > 0 ? <Tag size="small" variant="emphasis">{plural(h.errors, "error")}</Tag> : undefined}
+              badge={h.errors > 0 ? <SeverityLabel level="warning" label={plural(h.errors, "error")} /> : undefined}
             />
           ))}
         </List>
@@ -425,7 +461,7 @@ function DatabaseBody({ stats, schema, links }: { stats: DbStat[]; schema: Schem
         {summary.missing.length > 0 && (
           <Stack direction="row" gap="sm" wrap>
             {summary.missing.map((migration) => (
-              <StatusLabel key={migration} status="failed" label={`${migration} MISSING`} size="small" />
+              <SeverityLabel key={migration} level="error" label={`${migration} MISSING`} />
             ))}
           </Stack>
         )}
@@ -442,7 +478,7 @@ function DatabaseBody({ stats, schema, links }: { stats: DbStat[]; schema: Schem
               key={s.table}
               primary={s.table}
               secondary={dot([`${s.rows.toLocaleString("en-AU")} rows (estimate)`, formatBytes(s.size_bytes), `${(s.dead_ratio * 100).toFixed(1)}% dead rows`])}
-              badge={hasManyDeadTuples(s) ? <Tag size="small" variant="emphasis">High dead tuples</Tag> : undefined}
+              badge={hasManyDeadTuples(s) ? <SeverityLabel level="warning" label="High dead tuples" /> : undefined}
             />
           ))}
         </List>

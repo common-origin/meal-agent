@@ -167,11 +167,38 @@ export interface CostData {
 
 export type AttentionSection = 'status' | 'errors' | 'ai' | 'cost' | 'households' | 'database';
 
+/**
+ * The one severity vocabulary the page uses (#279): how it reads in the UI is
+ * the design system's StatusLabel (error is `failed`, warning is `pending`
+ * labelled "Warning", ok is `completed`, unknown is `cancelled`).
+ */
+export type Level = 'error' | 'warning' | 'ok' | 'unknown';
+
+/** Where an action link goes. Resolved against the page's links (resolveAction in ./links) so the rules stay pure and server/client safe. */
+export type ActionTarget = 'section' | 'vercel-logs' | 'vercel-project' | 'supabase-sql' | 'supabase-performance' | 'uptime-workflow';
+
+export interface AttentionAction {
+  label: string;
+  target: ActionTarget;
+}
+
 export interface AttentionItem {
   id: string;
   severity: 'error' | 'warning';
-  message: string;
   section: AttentionSection;
+  /** One sentence of detail, e.g. "The latest health check is failing: gemini". */
+  message: string;
+  /** A short name for the row, e.g. "Health check failing". */
+  title: string;
+  /** What it's about: the section and the thing in it, e.g. "Errors · /api/coles-search". */
+  where: string;
+  /** When it started, as an ISO time, only where the data says so (first seen, or the last good check). Null otherwise. */
+  since: string | null;
+  /** The period the rule looked at, shown when `since` is null: "last 24 hours", "today (UTC)", "now". */
+  window: string;
+  /** What to do about it, step by step. */
+  fix: string[];
+  actions: AttentionAction[];
 }
 
 /** One dashboard section's result: its data, or that it couldn't load (and which migration to check). */

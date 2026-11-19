@@ -459,9 +459,11 @@ the rest render. `?range=24h|7d|30d` (default 7d) and `?household=` (the
 AI and weekly-cycle sections.
 
 The top of the page (#270) is a headline from `lib/admin/headline.ts` (pure,
-tested): "All systems OK" or "N things need attention", then four tiles (status,
-errors, AI spend today, active households) that link to their sections, then
-each attention item. Sentences that say what a table means (the weekly-cycle
+tested): "All systems OK" or "N things need attention", then the triage inbox
+(#279: one expandable row per attention item with a severity label, title,
+where, since when, numbered "How to fix" steps and action links), then four
+tiles (status, errors, AI spend today, active households) that link to their
+sections. Sentences that say what a table means (the weekly-cycle
 summary, AI problems, the migrations line) are in `lib/admin/summaries.ts`.
 Detail most visits don't need (week-by-week table, raw event counts, the table
 list) sits in closed `<details>`. In the households table, `isYou` marks the
@@ -473,7 +475,16 @@ on a six-row table.
 
 "Needs attention" is computed on each load by `lib/admin/attention.ts` (pure,
 tested) from its own reads of the last 24 hours and 7 days across every
-household; nothing is emailed. Weeks are ISO weeks (Monday start) in each
+household; nothing is emailed. Each item carries `title`, `where`, `since`
+(only where the data says when it started), `window`, `fix` steps and `actions`;
+an action names a `target` that `resolveAction` (`lib/admin/links.ts`) turns into
+a link against the server-built `AdminLinks` (and drops when it can't, e.g. no
+hosted Supabase project). Error groups get a Sentry-style severity and state
+(New, Spike, Ongoing; no Regressed, since nothing records an error as resolved)
+from `lib/admin/errors.ts`, and one severity vocabulary runs through the page:
+`SeverityLabel` in `components/admin/ui.tsx` maps error, warning, ok and unknown
+to the design system's StatusLabel (`failed`, `pending` labelled "Warning" since
+it has no warning status, `completed`, `cancelled`). Weeks are ISO weeks (Monday start) in each
 household's own time zone (`family_settings.full_settings.location.timeZone`
 when Postgres knows it), else Australia/Sydney (`lib/timeZones.ts`); recipe
 creation dates are bucketed in Australia/Sydney. Percentiles are computed in
