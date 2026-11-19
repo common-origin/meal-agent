@@ -10,7 +10,7 @@
 import Link from "next/link";
 import { Button, List, ListItem, ResponsiveGrid, Stack, Tag, Typography } from "@common-origin/design-system";
 import { attentionWhen } from "@/lib/admin/attention";
-import { classifyError, errorInvestigateLinks, prioritiseErrors } from "@/lib/admin/errors";
+import { errorInvestigateLinks, prioritiseErrors } from "@/lib/admin/errors";
 import { resolveAction, type AdminLinks, type ResolvedAction } from "@/lib/admin/links";
 import { ago, ERROR_GROUP_LIMIT, formatBytes, formatDuration, formatUsd, hasManyDeadTuples, MIN_FOR_PERCENT, plural, successPct, utcStamp, weekLabel } from "@/lib/admin/format";
 import { computeHeadline } from "@/lib/admin/headline";
@@ -147,7 +147,41 @@ function contextText(context: Record<string, unknown>, digest: string | null): s
   return parts.join(" · ") || "–";
 }
 
-export function Errors({ data, now, links }: { data: Loaded<ErrorGroup[]>; now: Date; links: AdminLinks }) {
+/** One error group opened: its message, the facts as label/value pairs, recent occurrences and where to investigate. Mounted only once the row is open. */
+function ErrorDetails({ group, now, range, links }: { group: ErrorGroup; now: Date; range: Range; links: AdminLinks }) {
+  // The 24-hour range's "7 days" is only those 24 hours (the query counts within the range), so it isn't shown there.
+  const events = range === "24h" ? `${group.count_24h} in 24 h` : `${group.count_24h} in 24 h, ${group.count_7d} in 7 d`;
+  return (
+    <Stack direction="column" gap="md">
+      <Typography variant="small" color="subdued">
+        {group.message || "(no message)"}
+      </Typography>
+      <ResponsiveGrid cols={2} colsMd={4} gapX="4" gapY="3">
+        <Field label="Route" value={group.route ?? "No route"} />
+        <Field label="Source" value={group.source} />
+        <Field label="Households affected" value={String(group.households)} />
+        <Field label="Events" value={events} />
+        <Field label="First seen" value={`${ago(group.first_seen, now)} (${when(group.first_seen)})`} />
+        <Field label="Last seen" value={`${ago(group.last_seen, now)} (${when(group.last_seen)})`} />
+        <Field label="Releases" value={group.releases.join(", ") || "–"} />
+      </ResponsiveGrid>
+      <Stack direction="column" gap="xs">
+        <Typography variant="label">Recent occurrences</Typography>
+        <List>
+          {group.latest.map((o) => (
+            <ListItem key={`${o.created_at}-${o.release}-${o.digest ?? ""}`} primary={when(o.created_at)} secondary={dot([`release ${o.release}`, o.source, contextText(o.context, o.digest)])} />
+          ))}
+        </List>
+      </Stack>
+      <Stack direction="column" gap="xs">
+        <Typography variant="label">Investigate</Typography>
+        <LinkButtons links={errorInvestigateLinks(group, links).map((link) => ({ ...link, external: true }))} />
+      </Stack>
+    </Stack>
+  );
+}
+
+export function Errors({ data, now, range, links }: { data: Loaded<ErrorGroup[]>; now: Date; range: Range; links: AdminLinks }) {
   return (
     <Section id="errors" title="Errors" note="Problems the app reported, grouped so repeats count once. Open one to see where and when it happened. Messages are scrubbed of emails, links and ids.">
       {!data.ok ? (
@@ -162,55 +196,27 @@ export function Errors({ data, now, links }: { data: Loaded<ErrorGroup[]>; now: 
             </Typography>
           )}
           <List>
-            {prioritiseErrors(data.data, now).map((group) => {
-              const triage = classifyError(group, now);
-              return (
-                <ExpandableItem
-                  key={group.fingerprint}
-                  lazy
-                  primary={
-                    <>
-                      <strong>{group.label ?? group.kind}</strong>
-                      {group.label ? "" : ` – ${snippet(group.message)}`}
-                    </>
-                  }
-                  secondary={dot([group.route ?? group.source, `${group.count}×`, plural(group.households, "household"), `last ${ago(group.last_seen, now)}`])}
-                  badge={
-                    <Stack direction="row" gap="xs" alignItems="center">
-                      <SeverityLabel level={triage.level} label={triage.levelLabel} />
-                      <Tag size="small">{triage.stateLabel}</Tag>
-                    </Stack>
-                  }
-                >
-                  <Stack direction="column" gap="md">
-                    <Typography variant="small" color="subdued">
-                      {group.message || "(no message)"}
-                    </Typography>
-                    <ResponsiveGrid cols={2} colsMd={4} gapX="4" gapY="3">
-                      <Field label="Route" value={group.route ?? "No route"} />
-                      <Field label="Source" value={group.source} />
-                      <Field label="Households affected" value={String(group.households)} />
-                      <Field label="Events" value={`${group.count_24h} in 24 h, ${group.count_7d} in 7 d`} />
-                      <Field label="First seen" value={`${ago(group.first_seen, now)} (${when(group.first_seen)})`} />
-                      <Field label="Last seen" value={`${ago(group.last_seen, now)} (${when(group.last_seen)})`} />
-                      <Field label="Releases" value={group.releases.join(", ") || "–"} />
-                    </ResponsiveGrid>
-                    <Stack direction="column" gap="xs">
-                      <Typography variant="label">Recent occurrences</Typography>
-                      <List>
-                        {group.latest.map((o) => (
-                          <ListItem key={`${o.created_at}-${o.release}-${o.digest ?? ""}`} primary={when(o.created_at)} secondary={dot([`release ${o.release}`, o.source, contextText(o.context, o.digest)])} />
-                        ))}
-                      </List>
-                    </Stack>
-                    <Stack direction="column" gap="xs">
-                      <Typography variant="label">Investigate</Typography>
-                      <LinkButtons links={errorInvestigateLinks(group, links).map((link) => ({ ...link, external: true }))} />
-                    </Stack>
+            {prioritiseErrors(data.data, now, range).map(({ group, triage }) => (
+              <ExpandableItem
+                key={group.fingerprint}
+                lazy
+                primary={
+                  <>
+                    <strong>{group.label ?? group.kind}</strong>
+                    {group.label ? "" : ` – ${snippet(group.message)}`}
+                  </>
+                }
+                secondary={dot([group.route ?? group.source, `${group.count}×`, plural(group.households, "household"), `last ${ago(group.last_seen, now)}`])}
+                badge={
+                  <Stack direction="row" gap="xs" alignItems="center">
+                    <SeverityLabel level={triage.level} label={triage.levelLabel} />
+                    <Tag size="small">{triage.stateLabel}</Tag>
                   </Stack>
-                </ExpandableItem>
-              );
-            })}
+                }
+              >
+                <ErrorDetails group={group} now={now} range={range} links={links} />
+              </ExpandableItem>
+            ))}
           </List>
         </Stack>
       )}

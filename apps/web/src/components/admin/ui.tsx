@@ -12,9 +12,8 @@
 
 import { useState, type ReactNode } from "react";
 import { Box, InlineAlert, List, ListItem, ProgressBar, ResponsiveGrid, Stack, StatusLabel, Typography } from "@common-origin/design-system";
+import type { Tone } from "@/lib/admin/headline";
 import type { Level } from "@/lib/admin/types";
-
-type Tone = "ok" | "warning" | "bad" | "neutral";
 
 // The one severity vocabulary for the page (#279). The design system has no warning status
 // (gap: it needs a StatusLabel `warning`), so a warning is `pending` with a "Warning" label.

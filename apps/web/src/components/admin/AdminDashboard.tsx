@@ -62,7 +62,7 @@ export default function AdminDashboard({ data, links }: { data: DashboardData; l
 
         <Overview data={data} now={now} links={links} />
         <Status data={data.status} now={now} />
-        <Errors data={data.errors} now={now} links={links} />
+        <Errors data={data.errors} now={now} range={data.range} links={links} />
         <AiAgent data={data.ai} />
         <CostAndQuotas data={data.cost} />
         <Households data={data.households} range={data.range} selected={data.household} now={now} />

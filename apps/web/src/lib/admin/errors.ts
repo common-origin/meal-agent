@@ -8,11 +8,9 @@
  * nothing in the app records that.
  */
 
-import { isSpike } from './attention';
+import { isNewError, isSpike, SPIKE_MIN_24H } from './attention';
 import type { AdminLink, AdminLinks } from './links';
-import type { ErrorGroup, Level } from './types';
-
-const DAY_MS = 86_400_000;
+import type { ErrorGroup, Level, Range } from './types';
 
 export type ErrorState = 'new' | 'spike' | 'ongoing';
 
@@ -27,40 +25,51 @@ export interface ErrorTriage {
 const STATE_LABEL: Record<ErrorState, string> = { new: 'New', spike: 'Spike', ongoing: 'Ongoing' };
 
 /**
- * State: Spike when 24 hours is well over the usual daily rate, New when first
- * seen in the last 24 hours, otherwise Ongoing.
- * Severity: Error for a spike, or a server-side error that hit two or more
- * households; Warning for anything else seen in the last 24 hours (a client
- * error, or one household); Quiet (unknown) when it hasn't happened in 24 hours.
+ * State: New when first seen in the last 24 hours, else Spike when 24 hours is
+ * well over the usual daily rate, else Ongoing. The rate needs a real 7-day
+ * count, which the query only gives on the 7 and 30 day ranges (it counts
+ * within the range), so on the 24 hour range nothing is called a Spike.
+ * Severity: Error for a spike, a server-side error that hit two or more
+ * households, or a new error that already happened SPIKE_MIN_24H times;
+ * Warning for anything else seen in the last 24 hours (a client error, or one
+ * household); Quiet (unknown) when it hasn't happened in 24 hours.
  */
-export function classifyError(group: ErrorGroup, now: Date): ErrorTriage {
-  const state: ErrorState = isSpike(group) ? 'spike' : now.getTime() - new Date(group.first_seen).getTime() < DAY_MS ? 'new' : 'ongoing';
+export function classifyError(group: ErrorGroup, now: Date, range: Range): ErrorTriage {
+  const isNew = isNewError(group, now);
+  const spike = range !== '24h' && isSpike(group, now);
+  const state: ErrorState = isNew ? 'new' : spike ? 'spike' : 'ongoing';
   const recent = group.count_24h > 0;
-  const serious = state === 'spike' || (group.source !== 'client' && group.households >= 2);
+  const serious = spike || (group.source !== 'client' && group.households >= 2) || (isNew && group.count_24h >= SPIKE_MIN_24H);
   const level: Level = !recent ? 'unknown' : serious ? 'error' : 'warning';
   return { level, levelLabel: level === 'error' ? 'Error' : level === 'warning' ? 'Warning' : 'Quiet', state, stateLabel: STATE_LABEL[state] };
 }
 
 const RANK: Record<Level, number> = { error: 0, warning: 1, ok: 2, unknown: 3 };
 
-/** Most severe first, then most recently seen: the order Sentry calls "prioritized". */
-export function prioritiseErrors(groups: ErrorGroup[], now: Date): ErrorGroup[] {
-  const level = new Map(groups.map((group) => [group, classifyError(group, now).level]));
-  return [...groups].sort((a, b) => {
-    const byLevel = RANK[level.get(a) ?? 'unknown'] - RANK[level.get(b) ?? 'unknown'];
-    return byLevel !== 0 ? byLevel : new Date(b.last_seen).getTime() - new Date(a.last_seen).getTime();
-  });
+export interface ErrorRow {
+  group: ErrorGroup;
+  triage: ErrorTriage;
 }
+
+/** Each group with its triage, most severe first, then most recently seen: the order Sentry calls "prioritized". */
+export function prioritiseErrors(groups: ErrorGroup[], now: Date, range: Range): ErrorRow[] {
+  return groups
+    .map((group) => ({ group, triage: classifyError(group, now, range) }))
+    .sort((a, b) => RANK[a.triage.level] - RANK[b.triage.level] || new Date(b.group.last_seen).getTime() - new Date(a.group.last_seen).getTime());
+}
+
+/** The last path segment of a route that isn't a `[param]`: "/api/plan/ics/[token]" is "ics". Null when there isn't one. */
+const routeWord = (route: string | null): string | null => route?.split('/').filter((part) => part && !part.startsWith('[') && !part.startsWith('(')).pop() ?? null;
 
 /**
  * Where to look next: the Vercel runtime logs (searched for the route, when
- * there is one) and a search of the code for the error's label, route or kind.
- * Messages are scrubbed of ids and emails and the code is the only thing
- * searched, so nothing personal goes in a URL.
+ * there is one) and a search of the code for the error's label, else the last
+ * word of its route, else its kind. Messages are scrubbed of ids and emails
+ * and are never put in a URL, so nothing personal goes in one.
  */
 export function errorInvestigateLinks(group: ErrorGroup, links: AdminLinks): AdminLink[] {
   const { vercelLogs, githubRepo } = links.targets;
-  const term = group.label ?? group.route ?? group.kind;
+  const term = group.label ? `"${group.label.replace(/"/g, '')}"` : (routeWord(group.route) ?? group.kind);
   return [
     { label: 'Open Vercel runtime logs', href: group.route ? `${vercelLogs}?search=${encodeURIComponent(group.route)}` : vercelLogs },
     { label: 'Search the code on GitHub', href: `${githubRepo}/search?q=${encodeURIComponent(term)}&type=code` },

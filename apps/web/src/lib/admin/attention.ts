@@ -20,8 +20,18 @@ export const SPEND_WARN_FRACTION = 0.8;
 export const COLES_WARN_FRACTION = 0.8;
 const DAY_MS = 86_400_000;
 
-/** An error group's last 24 hours is at least SPIKE_MIN_24H and well over its usual daily rate. */
-export const isSpike = (group: Pick<ErrorGroup, 'count_24h' | 'count_7d'>): boolean => group.count_24h >= SPIKE_MIN_24H && group.count_24h > SPIKE_FACTOR * (group.count_7d / 7);
+/** First seen in the last 24 hours (first ever, not first in the page's range). */
+export const isNewError = (group: Pick<ErrorGroup, 'first_seen'>, now: Date): boolean => now.getTime() - new Date(group.first_seen).getTime() < DAY_MS;
+
+/**
+ * An error group's last 24 hours is at least SPIKE_MIN_24H and well over its
+ * usual daily rate. A new error has no usual rate (its 7 days are its 24
+ * hours), so it is "new" and never also a spike. `count_7d` must be a true
+ * 7-day count: the SQL counts within the page's range, so on the 24-hour range
+ * it equals `count_24h` and says nothing about the rate (callers skip it there).
+ */
+export const isSpike = (group: Pick<ErrorGroup, 'count_24h' | 'count_7d' | 'first_seen'>, now: Date): boolean =>
+  !isNewError(group, now) && group.count_24h >= SPIKE_MIN_24H && group.count_24h > SPIKE_FACTOR * (group.count_7d / 7);
 
 export interface AttentionInput {
   now: Date;
@@ -146,7 +156,7 @@ export function computeAttention(input: AttentionInput): AttentionItem[] {
   }
 
   if (input.errors7d) {
-    const fresh = input.errors7d.filter((group) => now.getTime() - new Date(group.first_seen).getTime() < DAY_MS);
+    const fresh = input.errors7d.filter((group) => isNewError(group, now));
     if (fresh.length > 0) {
       const names = fresh.slice(0, 3).map(describeGroup).join('; ');
       const earliest = fresh.reduce((first, group) => (new Date(group.first_seen) < new Date(first) ? group.first_seen : first), fresh[0].first_seen);
@@ -160,7 +170,7 @@ export function computeAttention(input: AttentionInput): AttentionItem[] {
         window: 'last 24 hours',
         message: `${fresh.length} new error${fresh.length === 1 ? '' : 's'} in the last 24 hours: ${names}${fresh.length > 3 ? '…' : ''}`,
         fix: [
-          'Open the error below marked New and read the message, route and release.',
+          'Open the error in the Errors section tagged New and read the message, route and release.',
           'If it started with the latest release, look at what changed in that deploy; "Search the code" on the error finds where it is raised.',
           'Open the Vercel runtime logs for the route to see the surrounding requests.',
         ],
@@ -168,7 +178,7 @@ export function computeAttention(input: AttentionInput): AttentionItem[] {
       });
     }
     for (const group of input.errors7d) {
-      if (isSpike(group)) {
+      if (isSpike(group, now)) {
         add({
           id: `spike-${group.fingerprint}`,
           severity: 'warning',

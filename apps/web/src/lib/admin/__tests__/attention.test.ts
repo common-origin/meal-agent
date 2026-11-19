@@ -95,6 +95,10 @@ describe('computeAttention (#249)', () => {
     expect(ids({ now, errors7d: [group({ count_24h: 6, count_7d: 14 })] })).toEqual([]); // 6 is not above 3 x 2
   });
 
+  it('a new error that fires many times is one "new error" item, not also a spike (it has no usual rate yet)', () => {
+    expect(ids({ now, errors7d: [group({ first_seen: hoursAgo(3), count_24h: 12, count_7d: 12 })] })).toEqual(['new-errors']);
+  });
+
   it('flags an AI task under 90% success with at least 10 calls in 24h, summing its models', () => {
     expect(ids({ now, ai24h: ai([{ task: 'generation', calls: 10, ok_calls: 8 }]) })).toEqual(['ai-success-generation']);
     expect(ids({ now, ai24h: ai([{ task: 'generation', calls: 10, ok_calls: 9 }]) })).toEqual([]); // exactly 90%

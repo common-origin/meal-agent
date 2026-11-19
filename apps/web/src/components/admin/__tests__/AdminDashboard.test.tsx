@@ -348,7 +348,7 @@ describe('AdminDashboard (#249)', () => {
     expect(within(row).getByText('First seen').nextElementSibling).toHaveTextContent('2 h ago (2026-11-18 10:00 UTC)');
     expect(within(row).getByText('Recent occurrences')).toBeInTheDocument();
     expect(within(row).getByRole('link', { name: /Open Vercel runtime logs/ })).toHaveAttribute('href', `${LINKS.targets.vercelLogs}?search=${encodeURIComponent('/api/coles-search')}`);
-    expect(within(row).getByRole('link', { name: /Search the code on GitHub/ })).toHaveAttribute('href', `${LINKS.targets.githubRepo}/search?q=${encodeURIComponent('coles-search: lookup failed')}&type=code`);
+    expect(within(row).getByRole('link', { name: /Search the code on GitHub/ })).toHaveAttribute('href', `${LINKS.targets.githubRepo}/search?q=${encodeURIComponent('"coles-search: lookup failed"')}&type=code`);
   });
 
   it('errors: the most severe come first, and one not seen in 24 hours reads Quiet', () => {
