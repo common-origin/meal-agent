@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Stack, Typography } from "@common-origin/design-system";
+import { useRouter } from "next/navigation";
+import { Stack, TabBar, Typography } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import { RANGES } from "@/lib/admin/format";
 import type { DashboardData } from "@/lib/admin/queries";
@@ -24,6 +25,7 @@ const JUMPS: [string, string][] = [
  * section and the stats wrap.
  */
 export default function AdminDashboard({ data }: { data: DashboardData }) {
+  const router = useRouter();
   const now = new Date(data.generatedAt);
   const query = (range: string) => `/admin?range=${range}${data.household ? `&household=${data.household}` : ""}`;
   return (
@@ -31,21 +33,17 @@ export default function AdminDashboard({ data }: { data: DashboardData }) {
       <Stack direction="column" gap="2xl">
         <Stack direction="column" gap="sm">
           <Typography variant="h1">Admin</Typography>
-          <Stack direction="row" gap="md" alignItems="center" wrap>
-            <Typography variant="small" color="subdued" as="span">
-              Range:
+          <TabBar
+            aria-label="Time range"
+            tabs={RANGES.map((range) => ({ id: range, label: range === "24h" ? "24 hours" : range === "7d" ? "7 days" : "30 days" }))}
+            activeTab={data.range}
+            onTabChange={(range) => router.push(query(range))}
+          />
+          {data.household && (
+            <Typography variant="small">
+              Household {data.household} · <Link href={`/admin?range=${data.range}`}>clear filter</Link>
             </Typography>
-            {RANGES.map((range) => (
-              <Link key={range} href={query(range)} aria-current={range === data.range ? "true" : undefined} style={{ fontWeight: range === data.range ? 700 : 400 }}>
-                {range}
-              </Link>
-            ))}
-            {data.household && (
-              <Typography variant="small" as="span">
-                Household {data.household} · <Link href={`/admin?range=${data.range}`}>clear filter</Link>
-              </Typography>
-            )}
-          </Stack>
+          )}
           <Typography variant="small" color="subdued">
             Loaded {data.generatedAt.slice(0, 16).replace("T", " ")} UTC. Reload for fresh numbers.
           </Typography>

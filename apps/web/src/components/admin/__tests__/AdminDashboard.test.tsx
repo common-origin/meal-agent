@@ -1,5 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+const push = vi.hoisted(() => vi.fn());
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
+
 import AdminDashboard from '../AdminDashboard';
 import type { DashboardData } from '@/lib/admin/queries';
 
@@ -204,16 +207,15 @@ describe('AdminDashboard (#249)', () => {
     expect(within(section).getByText('/api/coles-search')).toBeInTheDocument();
     expect(within(section).getByText('releases abc1234')).toBeInTheDocument();
     expect(within(section).getByText('2 households')).toBeInTheDocument();
-    expect(within(section).getByText('status 429')).toBeInTheDocument();
+    expect(within(section).getByText(/release abc1234 · route · status 429/)).toBeInTheDocument();
+    expect(within(section).getByText(/4× · last/)).toBeInTheDocument();
   });
 
   it('AI agent, cost and quotas', () => {
     render(<AdminDashboard data={fixture()} />);
     const ai = screen.getByRole('region', { name: 'AI agent' });
-    expect(within(ai).getByText('90%')).toBeInTheDocument();
-    expect(within(ai).getByText('4000 ms')).toBeInTheDocument();
+    expect(within(ai).getByText(/gemini-x · 20 calls · 90% worked · median 4000 ms · slowest 5% 9000 ms/)).toBeInTheDocument();
     expect(within(ai).getByText('error 2, http_503 ×2')).toBeInTheDocument();
-    expect(within(ai).getByText('Median time')).toBeInTheDocument();
     const cost = screen.getByRole('region', { name: 'Cost and quotas' });
     expect(within(cost).getByText('$1.00 of $5.00')).toBeInTheDocument();
     expect(within(cost).getByText('$17.00')).toBeInTheDocument();
@@ -232,23 +234,25 @@ describe('AdminDashboard (#249)', () => {
     render(<AdminDashboard data={fixture()} />);
     const section = screen.getByRole('region', { name: 'Households' });
     expect(within(section).getAllByText('You')).toHaveLength(1);
-    expect(within(section).getByText('You').closest('tr')).toHaveTextContent('abcdef12');
+    expect(within(section).getByText('You').closest('li')).toHaveTextContent('abcdef12');
   });
 
   it('a selected household is shown, with a way to clear the filter, and range links keep it', () => {
     render(<AdminDashboard data={fixture({ household: 'abcdef12' })} />);
     expect(screen.getByText(/Household abcdef12/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'clear filter' })).toHaveAttribute('href', '/admin?range=7d');
-    expect(screen.getByRole('link', { name: '30d' })).toHaveAttribute('href', '/admin?range=30d&household=abcdef12');
-    expect(screen.getByRole('link', { name: '7d' })).toHaveAttribute('aria-current', 'true');
+    push.mockClear();
+    fireEvent.click(screen.getByRole('tab', { name: '30 days' }));
+    expect(push).toHaveBeenCalledWith('/admin?range=30d&household=abcdef12');
+    expect(screen.getByRole('tab', { name: '7 days' })).toHaveAttribute('aria-selected', 'true');
   });
 
   it('weekly cycle: counts under 10 plans, percentages at 10 or more, and the pillar indicators', () => {
     render(<AdminDashboard data={fixture()} />);
     const section = screen.getByRole('region', { name: 'Weekly cycle and usage' });
-    const row = within(section).getByRole('row', { name: /16 Nov/ });
-    expect(row).toHaveTextContent('2'); // confirmed: a count, not "100%"
-    expect(row).not.toHaveTextContent('%');
+    const week = within(section).getByText('Week of 16 Nov').closest('li');
+    expect(week).toHaveTextContent('2 composed · 2 confirmed'); // a count, not "100%"
+    expect(week).not.toHaveTextContent('%');
     expect(within(section).getByText('1.3')).toBeInTheDocument(); // (3 swaps + 1 edit) / 3 plans
     expect(within(section).getByText('9')).toBeInTheDocument(); // recipes added
     expect(within(section).getByText(/7 by AI, 1 imported, 1 by hand/)).toBeInTheDocument();
@@ -263,7 +267,7 @@ describe('AdminDashboard (#249)', () => {
     data.cycle.data.weeks[0].composed = 20;
     data.cycle.data.events.funnel = [{ week_start: '2026-11-16', type: 'plan_confirmed', households: 10 }];
     render(<AdminDashboard data={data} />);
-    expect(within(screen.getByRole('region', { name: 'Weekly cycle and usage' })).getByText('10 (50%)')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Weekly cycle and usage' })).getByText(/20 composed · 10 \(50%\) confirmed/)).toBeInTheDocument();
   });
 
   it('database: lists only the missing migrations, flags dead rows only on tables big enough to matter, and links out', () => {
@@ -273,7 +277,7 @@ describe('AdminDashboard (#249)', () => {
     expect(within(section).getByText('021 MISSING')).toBeInTheDocument();
     expect(within(section).queryByText('019 applied')).not.toBeInTheDocument();
     const flagged = within(section).getByText('High dead tuples');
-    expect(flagged.closest('tr')).toHaveTextContent('meal_plans');
+    expect(flagged.closest('li')).toHaveTextContent('meal_plans');
     expect(within(section).queryAllByText('High dead tuples')).toHaveLength(1); // shopping_lists is 33% dead but has 2 rows
     expect(within(section).getByText('meal_plans have many dead rows and may need a vacuum.'.replace('have', 'has'))).toBeInTheDocument();
     expect(within(section).getByRole('link', { name: 'Vercel project' })).toBeInTheDocument();

@@ -471,8 +471,12 @@ household's own time zone (`family_settings.full_settings.location.timeZone`
 when Postgres knows it), else Australia/Sydney (`lib/timeZones.ts`); recipe
 creation dates are bucketed in Australia/Sydney. Percentiles are computed in
 SQL (`percentile_cont`), the attention rules and projections in TypeScript.
-Components are in `components/admin/` (design-system parts and tokens only, no
-chart library). The page shows household short IDs only, never names or
+Components are in `components/admin/`: design-system parts and its layout grid
+only (`ResponsiveGrid`, `Box`, `Stack`, `TabBar`, `ProgressBar`, `List`/`ListItem`
+with expandable rows), no custom CSS, table or chart code; the design system has
+no Table, so rows are list items with their numbers in the secondary line, and
+`designSystemOnly.test.ts` fails if `styled-components`, `<table>` or `<details>`
+return. The page shows household short IDs only, never names or
 emails.
 
 ## Calendar export
