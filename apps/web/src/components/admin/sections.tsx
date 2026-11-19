@@ -10,7 +10,7 @@
 import Link from "next/link";
 import { Alert, List, ListItem, ResponsiveGrid, Stack, StatusLabel, Tag, Typography } from "@common-origin/design-system";
 import type { AdminLinks } from "@/lib/admin/links";
-import { ago, formatBytes, formatDuration, formatUsd, hasManyDeadTuples, MIN_FOR_PERCENT, plural, successPct, utcStamp, weekLabel } from "@/lib/admin/format";
+import { ago, ERROR_GROUP_LIMIT, formatBytes, formatDuration, formatUsd, hasManyDeadTuples, MIN_FOR_PERCENT, plural, successPct, utcStamp, weekLabel } from "@/lib/admin/format";
 import { computeHeadline } from "@/lib/admin/headline";
 import { aiProblems, cycleSentence, databaseSummary } from "@/lib/admin/summaries";
 import type { DashboardData } from "@/lib/admin/queries";
@@ -138,38 +138,45 @@ export function Errors({ data, now }: { data: Loaded<ErrorGroup[]>; now: Date })
       ) : data.data.length === 0 ? (
         <Empty>No errors in this range.</Empty>
       ) : (
-        <List>
-          {data.data.map((group) => (
-            <ExpandableItem
-              key={group.fingerprint}
-              primary={
-                <>
-                  <strong>{group.label ?? group.kind}</strong>
-                  {group.label ? "" : ` – ${snippet(group.message)}`}
-                </>
-              }
-              secondary={`${group.count}× · last ${ago(group.last_seen, now)}`}
-              badge={<Tag size="small">{group.source}</Tag>}
-            >
-              <Stack direction="column" gap="sm">
-                <Typography variant="small" color="subdued">
-                  {group.message || "(no message)"}
-                </Typography>
-                <Stack direction="row" gap="sm" wrap>
-                  <Tag size="small">{group.route ?? "no route"}</Tag>
-                  <Tag size="small">{`first seen ${when(group.first_seen)}`}</Tag>
-                  <Tag size="small">{`releases ${group.releases.join(", ")}`}</Tag>
-                  <Tag size="small">{plural(group.households, "household")}</Tag>
+        <Stack direction="column" gap="sm">
+          {data.data.length >= ERROR_GROUP_LIMIT && (
+            <Typography variant="small" color="subdued">
+              {`Showing the ${ERROR_GROUP_LIMIT} most recently seen kinds of error; older ones in this range aren't listed or counted.`}
+            </Typography>
+          )}
+          <List>
+            {data.data.map((group) => (
+              <ExpandableItem
+                key={group.fingerprint}
+                primary={
+                  <>
+                    <strong>{group.label ?? group.kind}</strong>
+                    {group.label ? "" : ` – ${snippet(group.message)}`}
+                  </>
+                }
+                secondary={`${group.count}× · last ${ago(group.last_seen, now)}`}
+                badge={<Tag size="small">{group.source}</Tag>}
+              >
+                <Stack direction="column" gap="sm">
+                  <Typography variant="small" color="subdued">
+                    {group.message || "(no message)"}
+                  </Typography>
+                  <Stack direction="row" gap="sm" wrap>
+                    <Tag size="small">{group.route ?? "no route"}</Tag>
+                    <Tag size="small">{`first seen ${when(group.first_seen)}`}</Tag>
+                    <Tag size="small">{`releases ${group.releases.join(", ")}`}</Tag>
+                    <Tag size="small">{plural(group.households, "household")}</Tag>
+                  </Stack>
+                  <List>
+                    {group.latest.map((o) => (
+                      <ListItem key={`${o.created_at}-${o.release}-${o.digest ?? ""}`} primary={when(o.created_at)} secondary={dot([`release ${o.release}`, o.source, contextText(o.context, o.digest)])} />
+                    ))}
+                  </List>
                 </Stack>
-                <List>
-                  {group.latest.map((o) => (
-                    <ListItem key={`${o.created_at}-${o.release}-${o.digest ?? ""}`} primary={when(o.created_at)} secondary={dot([`release ${o.release}`, o.source, contextText(o.context, o.digest)])} />
-                  ))}
-                </List>
-              </Stack>
-            </ExpandableItem>
-          ))}
-        </List>
+              </ExpandableItem>
+            ))}
+          </List>
+        </Stack>
       )}
     </Section>
   );
@@ -417,11 +424,9 @@ function DatabaseBody({ stats, schema, links }: { stats: DbStat[]; schema: Schem
         <Typography variant="body">{summary.migrations}</Typography>
         {summary.missing.length > 0 && (
           <Stack direction="row" gap="sm" wrap>
-            {schema
-              .filter((check) => !check.applied)
-              .map((check) => (
-                <StatusLabel key={check.migration} status="failed" label={`${check.migration} MISSING`} size="small" />
-              ))}
+            {summary.missing.map((migration) => (
+              <StatusLabel key={migration} status="failed" label={`${migration} MISSING`} size="small" />
+            ))}
           </Stack>
         )}
         {summary.needVacuum.length > 0 && (

@@ -53,21 +53,30 @@ async function latestHealthRow(): Promise<HealthCheckRow | null> {
   return (data as unknown as HealthCheckRow | null) ?? null;
 }
 
+/**
+ * When the first health check was recorded. Only sets the "monitoring began"
+ * caption and where uptime starts, so it's best effort: on any failure it's
+ * null and the section shows the whole range rather than "couldn't load".
+ */
 async function earliestHealthTime(): Promise<number | null> {
-  const { data, error } = await createAdminClient().from('health_checks').select('created_at').order('created_at', { ascending: true }).limit(1).maybeSingle();
-  if (error) throw new Error(`health_checks: ${error.message}`);
-  const time = data ? new Date((data as { created_at: string }).created_at).getTime() : NaN;
-  return Number.isNaN(time) ? null : time;
-}
-
-/** The full ID of the household the signed-in admin belongs to, for marking "You". Best effort: null on any failure. */
-async function viewerHouseholdId(userId: string): Promise<string | null> {
   try {
-    const { data, error } = await createAdminClient().from('household_members').select('household_id').eq('user_id', userId).order('joined_at', { ascending: true }).limit(1).maybeSingle();
+    const { data, error } = await createAdminClient().from('health_checks').select('created_at').order('created_at', { ascending: true }).limit(1).maybeSingle();
     if (error) return null;
-    return (data as { household_id: string } | null)?.household_id ?? null;
+    const time = data ? new Date((data as { created_at: string }).created_at).getTime() : NaN;
+    return Number.isNaN(time) ? null : time;
   } catch {
     return null;
+  }
+}
+
+/** The full IDs of every household the signed-in admin belongs to, for marking "You". Best effort: empty on any failure. */
+async function viewerHouseholdIds(userId: string): Promise<Set<string>> {
+  try {
+    const { data, error } = await createAdminClient().from('household_members').select('household_id').eq('user_id', userId);
+    if (error || !data) return new Set();
+    return new Set((data as { household_id: string }[]).map((row) => row.household_id));
+  } catch {
+    return new Set();
   }
 }
 
@@ -238,7 +247,7 @@ export async function loadDashboard(params: { range: Range; household: string | 
   const settledHouseholds = params.household ? await householdsResult : null;
   const householdId = resolveHousehold(params.household, settledHouseholds?.status === 'fulfilled' ? settledHouseholds.value : []);
 
-  const viewerPromise = params.viewerUserId ? viewerHouseholdId(params.viewerUserId) : Promise.resolve(null);
+  const viewerPromise = params.viewerUserId ? viewerHouseholdIds(params.viewerUserId) : Promise.resolve(new Set<string>());
 
   // Cost and database are also what the attention rules need: loaded once, shared.
   const costPromise = loadCost(now);
@@ -260,10 +269,10 @@ export async function loadDashboard(params: { range: Range; household: string | 
   ]);
   // householdsResult never rejects (it wraps allSettled), so the outer result is always fulfilled.
   const householdsSettled = households.status === 'fulfilled' ? households.value : households;
-  const viewerHousehold = await viewerPromise;
+  const viewerHouseholds = await viewerPromise;
   const householdsLoaded: Loaded<HouseholdRow[]> =
     householdsSettled.status === 'fulfilled'
-      ? { ok: true, data: sortHouseholds(householdsSettled.value.map((row) => toHouseholdRow(row, viewerHousehold))) }
+      ? { ok: true, data: sortHouseholds(householdsSettled.value.map((row) => toHouseholdRow(row, viewerHouseholds))) }
       : loaded<HouseholdRow[]>(householdsSettled, HINTS.households, 'households');
 
   return {

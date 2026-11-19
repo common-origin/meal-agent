@@ -5,6 +5,7 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
 
 import AdminDashboard from '../AdminDashboard';
 import { adminLinks } from '@/lib/admin/links';
+import { ERROR_GROUP_LIMIT } from '@/lib/admin/format';
 import type { DashboardData } from '@/lib/admin/queries';
 
 const LINKS = adminLinks({ NEXT_PUBLIC_SUPABASE_URL: 'https://abcd1234.supabase.co' });
@@ -157,6 +158,18 @@ describe('AdminDashboard (#249)', () => {
   it('headline: says so when the attention rules could not run', () => {
     render(<AdminDashboard links={LINKS} data={fixture({ attention: { ok: false, hint: 'is migration 022 applied?' } })} />);
     expect(screen.getByRole('region', { name: "Couldn't work out what needs attention" })).toBeInTheDocument();
+  });
+
+  it('errors: says older kinds are not listed only when the list hits the query cap', () => {
+    const base = fixture();
+    if (!base.errors.ok) throw new Error('fixture errors failed');
+    const one = base.errors.data[0];
+    const many = Array.from({ length: ERROR_GROUP_LIMIT }, (_, i) => ({ ...one, fingerprint: `f${i}` }));
+    render(<AdminDashboard links={LINKS} data={fixture({ errors: { ok: true, data: many } })} />);
+    expect(screen.getByText(new RegExp(`Showing the ${ERROR_GROUP_LIMIT} most recently seen kinds of error`))).toBeTruthy();
+    cleanup();
+    render(<AdminDashboard links={LINKS} data={fixture({ errors: { ok: true, data: many.slice(1) } })} />);
+    expect(screen.queryByText(/most recently seen kinds of error/)).toBeNull();
   });
 
   it('status: dependency states, uptime, missed checks, both releases and the last incident', () => {
