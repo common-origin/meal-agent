@@ -61,7 +61,7 @@ Pages, by area:
 - **Debug**: `/debug/api-usage`, `/debug/coles-api-test`,
   `/debug/ingredient-analytics`, `/debug/persistent-cache`,
   `/debug/search-mapping`
-- **Admin**: `/admin/debug`
+- **Admin**: `/admin` (the overview, see [Admin overview](#admin-overview)), `/admin/debug`
 - Both are owner-only: the proxy sends any signed-in user whose email isn't
   in `ADMIN_EMAILS` to `/plan` (`lib/auth/admin.ts`; unset means nobody),
   and `/api/debug/*` answers anyone else with a 404 (`requireAdmin` in
@@ -369,7 +369,7 @@ signup):
   login and signup pages show as "not invited"
   (`lib/auth/authErrorMessages.ts`, `app/auth/callback/route.ts`)
 
-Migrations run in numeric order, 001 through 021 (009 and 010 are
+Migrations run in numeric order, 001 through 022 (009 and 010 are
 independent of each other) — see `supabase/README.md` for the exact
 steps. There's no migration-runner in CI; each one is applied by
 hand in the Supabase SQL editor, same as every migration so far.
@@ -432,6 +432,33 @@ fully-down app can't record a row; uptime % is ok / (ok + failing) with the
 no-data share beside it. GitHub disables schedules on a public repo after 60
 days without repository activity, which the "no health check in 30 minutes"
 warning catches.
+
+## Admin overview
+`/admin` (#249) is the owner's one-page view of product health, errors, the AI
+agent, cost, households and usage. It is a server component: `proxy.ts`
+redirects anyone not in `ADMIN_EMAILS` to `/plan`, and the page checks
+`isAdminEmail` again and calls `notFound()`. It reads through
+`lib/admin/queries.ts`, which calls the six service-role SQL functions in
+migration 022 (`admin_ai_summary`, `admin_error_groups`, `admin_weekly_cycle`,
+`admin_household_summary`, `admin_db_stats`, `admin_schema_check`). Each
+returns one jsonb value, so no aggregate is cut off at Supabase's 1,000-row
+limit; the one direct read (health rows for the uptime strip) pages through
+`readAllPages`. Sections load with `Promise.allSettled`, so a section whose
+migration isn't applied shows "couldn't load (is migration 0xx applied?)" and
+the rest render. `?range=24h|7d|30d` (default 7d) and `?household=` (the
+8-character short ID; the full ID never leaves the server) filter the errors,
+AI and weekly-cycle sections.
+
+"Needs attention" is computed on each load by `lib/admin/attention.ts` (pure,
+tested) from its own reads of the last 24 hours and 7 days across every
+household; nothing is emailed. Weeks are ISO weeks (Monday start) in each
+household's own time zone (`family_settings.full_settings.location.timeZone`
+when Postgres knows it), else Australia/Sydney (`lib/timeZones.ts`); recipe
+creation dates are bucketed in Australia/Sydney. Percentiles are computed in
+SQL (`percentile_cont`), the attention rules and projections in TypeScript.
+Components are in `components/admin/` (design-system parts and tokens only, no
+chart library). The page shows household short IDs only, never names or
+emails.
 
 ## Calendar export
 

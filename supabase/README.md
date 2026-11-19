@@ -172,7 +172,15 @@
    - Verify success: Should see "Success. No rows returned"
    - This adds `health_checks` and replaces `purge_telemetry()` for the admin dashboard (#244, #248). Run it after `019` (and `020`: the function it replaces covers every telemetry table that exists). Also set `HEALTH_CHECK_SECRET` (a long random string) in Vercel production and in GitHub → Settings → Secrets → Actions, and the `HEALTH_CHECK_URL` repo variable (Settings → Variables) to the production origin. Until then, no uptime rows are recorded and nothing else is affected
 
-23. **Verify Tables Created:**
+23. **Run Admin Reporting Migration (Step 22):**
+   - Click "New Query"
+   - Copy entire contents of `supabase/migrations/022_admin_reporting.sql`
+   - Paste into SQL Editor
+   - Click "Run" or press Cmd+Enter
+   - Verify success: Should see "Success. No rows returned"
+   - This adds the six reporting functions behind the `/admin` overview (#244, #249). Run it after `019`-`021`. Until it's run, `/admin` still opens but its sections say they couldn't load
+
+24. **Verify Tables Created:**
    ```sql
    SELECT table_name 
    FROM information_schema.tables 
@@ -198,7 +206,7 @@
    - shopping_lists
    - signup_invites
 
-24. **Verify RLS Enabled:**
+25. **Verify RLS Enabled:**
    ```sql
    SELECT tablename, rowsecurity 
    FROM pg_tables 

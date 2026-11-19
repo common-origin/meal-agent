@@ -84,6 +84,12 @@ directly for the current event list rather than trusting a specific count.
 authorises `POST /api/health/record` (also a GitHub Actions secret); the
 `HEALTH_CHECK_URL` repo variable is the production origin the workflow calls.
 Without `HEALTH_CHECK_SECRET` the record route answers 404.
+`/admin` is the dashboard for all of this (owner only, via `ADMIN_EMAILS`);
+`ADMIN_VERCEL_PROJECT_URL` optionally overrides the Vercel link it shows. To
+add something to it, add a SQL function to a new migration (or extend one in
+`022_admin_reporting.sql`'s style: one jsonb result, service role only), a
+loader in `lib/admin/queries.ts`, and a test in
+`__tests__/db/adminReporting.test.ts`.
 
 ## Common development tasks
 
