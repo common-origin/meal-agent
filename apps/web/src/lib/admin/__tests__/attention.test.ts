@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { attentionWhen, computeAttention, failingSince } from '../attention';
+import { attentionWhen, computeAttention, countBySection, failingSince } from '../attention';
 import type { AiSummary, ErrorGroup, HealthCheckRow, HouseholdRowRaw, SchemaCheck } from '../types';
 
 const now = new Date('2026-11-18T12:00:00Z');
@@ -237,6 +237,21 @@ describe('failingSince', () => {
     expect(failingSince([row(2, false), row(1, true)])).toBeNull();
     expect(failingSince([row(2, false), row(1, false)])).toBeNull();
     expect(failingSince([])).toBeNull();
+  });
+});
+
+describe('countBySection', () => {
+  it('counts the inbox items in each area, and in total, for the navigation badges', () => {
+    const items = computeAttention({
+      now,
+      errors7d: [group({ first_seen: hoursAgo(3) }), group({ fingerprint: 'f2', label: 'spiky', count_24h: 10, count_7d: 14 })],
+      spend: { todayUsd: 4.5, capUsd: 5 },
+      schema: [{ migration: '021', name: 'health_checks', applied: false }],
+    });
+    expect(countBySection(items)).toEqual({ status: 0, errors: 2, ai: 0, cost: 1, households: 0, database: 1, total: 4 });
+  });
+  it('is all zero for an empty inbox', () => {
+    expect(countBySection([])).toEqual({ status: 0, errors: 0, ai: 0, cost: 0, households: 0, database: 0, total: 0 });
   });
 });
 

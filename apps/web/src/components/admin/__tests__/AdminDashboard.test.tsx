@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 const push = vi.hoisted(() => vi.fn());
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
+const refresh = vi.hoisted(() => vi.fn());
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push, refresh }) }));
 
 import AdminDashboard from '../AdminDashboard';
 import { adminLinks } from '@/lib/admin/links';
@@ -191,7 +192,7 @@ describe('AdminDashboard (#249)', () => {
       expect(rows[1]).toHaveTextContent('New error');
       // The inbox is above the tiles in the document.
       const inbox = within(section).getByText('Health check failing');
-      expect(inbox.compareDocumentPosition(within(section).getByText('Active households')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(inbox.compareDocumentPosition(within(section).getByText(/Active households/)) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
     it('each row says how bad, what, where and since when', () => {
@@ -323,7 +324,7 @@ describe('AdminDashboard (#249)', () => {
     const section = screen.getByRole('region', { name: 'Errors' });
     expect(within(section).getByText('coles-search: lookup failed', { selector: 'strong' })).toBeInTheDocument();
     expect(within(section).queryByText(/release abc1234 · route · status 429/)).toBeNull(); // not rendered until the row is opened
-    fireEvent.click(within(section).getAllByRole('button')[0]);
+    fireEvent.click(within(section).getByRole('button', { name: /coles-search: lookup failed/ }));
     expect(within(section).getByText(/release abc1234 · route · status 429/)).toBeInTheDocument();
     // Collapsed row: where, how often, how many households, when.
     expect(within(section).getByText('/api/coles-search · 4× · 2 households · last 37 min ago')).toBeInTheDocument();
@@ -389,14 +390,142 @@ describe('AdminDashboard (#249)', () => {
     expect(within(section).getByText('You').closest('li')).toHaveTextContent('abcdef12');
   });
 
-  it('a selected household is shown, with a way to clear the filter, and range links keep it', () => {
-    render(<AdminDashboard links={LINKS} data={fixture({ household: 'abcdef12' })} />);
-    expect(screen.getByText(/Household abcdef12/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'clear filter' })).toHaveAttribute('href', '/admin?range=7d');
-    push.mockClear();
-    fireEvent.click(screen.getByRole('tab', { name: '30 days' }));
-    expect(push).toHaveBeenCalledWith('/admin?range=30d&household=abcdef12');
-    expect(screen.getByRole('tab', { name: '7 days' })).toHaveAttribute('aria-selected', 'true');
+  describe('layout (#282)', () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+      window.location.hash = '';
+    });
+    const phone = () => vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} }));
+
+    it('side navigation: one anchor link per area, with the number of inbox items in each', () => {
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      const nav = screen.getByRole('navigation', { name: 'Sections' });
+      const links = within(nav).getAllByRole('link');
+      expect(links.map((a) => a.getAttribute('href'))).toEqual(['#overview', '#status', '#errors', '#ai', '#cost', '#households', '#cycle', '#database', '#debug']);
+      const named = Object.fromEntries(links.map((a) => [a.getAttribute('href'), a.getAttribute('aria-label') ?? a.textContent]));
+      expect(named['#overview']).toMatch(/Overview.*2 need attention/);
+      expect(named['#status']).toMatch(/Status.*1 need attention/);
+      expect(named['#errors']).toMatch(/Errors.*1 need attention/);
+      expect(named['#ai']).not.toMatch(/need attention/);
+      expect(named['#database']).not.toMatch(/need attention/);
+    });
+
+    it('side navigation: no badges when the attention rules could not run', () => {
+      render(<AdminDashboard links={LINKS} data={fixture({ attention: { ok: false, hint: 'is migration 022 applied?' } })} />);
+      expect(within(screen.getByRole('navigation', { name: 'Sections' })).queryByText(/need attention/)).toBeNull();
+    });
+
+    it('on a phone the navigation is in a Sheet behind a Sections button, and choosing an item closes it', () => {
+      phone();
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      expect(screen.queryByRole('navigation', { name: 'Sections' })).toBeNull();
+      fireEvent.click(screen.getByRole('button', { name: 'Sections' }));
+      const nav = screen.getByRole('navigation', { name: 'Sections' });
+      expect(within(nav).getAllByRole('link')).toHaveLength(9);
+      fireEvent.click(within(nav).getAllByRole('link')[2]);
+      expect(screen.queryByRole('navigation', { name: 'Sections' })).toBeNull();
+    });
+
+    it('on a desktop there is no Sections button', () => {
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      expect(screen.queryByRole('button', { name: 'Sections' })).toBeNull();
+    });
+
+    it('every section is on a surface with its title, a one-line note and the rest behind an info button', () => {
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      const notes: Record<string, string> = {
+        Status: 'Is the app up? Checked every 15 minutes.',
+        Errors: 'Problems the app reported, grouped so repeats count once.',
+        'AI agent': 'Calls, success rate, speed and cost over the range.',
+        'Cost and quotas': 'AI spend against the daily cap, Coles lookups against the monthly limit.',
+        Households: 'Who is using the app, most recently active first.',
+        'Weekly cycle and usage': 'How far households get through the weekly routine.',
+        Database: 'Whether every migration has run, and how big the tables are.',
+      };
+      for (const [name, note] of Object.entries(notes)) {
+        const section = screen.getByRole('region', { name });
+        expect(within(section).getByRole('button', { name: `About ${name}` })).toBeInTheDocument();
+        expect(within(section).getByText(note)).toBeInTheDocument();
+        expect(note.length).toBeLessThan(80); // one line
+      }
+      // The long explanation is the tooltip's description, not a paragraph in the section.
+      expect(within(screen.getByRole('region', { name: 'Households' })).getByRole('button', { name: 'About Households' })).toHaveAccessibleDescription(/IDs are short on purpose/);
+    });
+
+    it('section header actions link to the tool for that section, in a new tab', () => {
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      const status = within(screen.getByRole('region', { name: 'Status' })).getByRole('link', { name: 'Uptime workflow' });
+      expect(status).toHaveAttribute('href', LINKS.targets.uptimeWorkflow);
+      expect(status).toHaveAttribute('target', '_blank');
+      expect(within(screen.getByRole('region', { name: 'Errors' })).getByRole('link', { name: 'Runtime logs' })).toHaveAttribute('href', LINKS.targets.vercelLogs);
+    });
+
+    it('the whole page runs at compact density', () => {
+      const { container } = render(<AdminDashboard links={LINKS} data={fixture()} />);
+      const region = container.querySelector('[data-co-density="compact"]');
+      expect(region).not.toBeNull();
+      for (const id of ['overview', 'status', 'errors', 'ai', 'cost', 'households', 'cycle', 'database', 'debug']) expect(region?.querySelector(`#${id}`), id).not.toBeNull();
+    });
+
+    it('KPI cards state their time frame, and the whole card is clickable', () => {
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      const section = screen.getByRole('region', { name: '2 things need attention' });
+      for (const label of ['Status · latest check', 'Errors · 7 days', 'AI spend · today', 'Active households · 7 days']) expect(within(section).getByText(label)).toBeInTheDocument();
+      // Clicking anywhere on the card (here its value) goes to the section.
+      fireEvent.click(within(section).getByText('of $5.00 daily cap'));
+      expect(window.location.hash).toBe('#cost');
+    });
+  });
+
+  describe('page header (#282)', () => {
+    const header = () => screen.getByRole('heading', { level: 1, name: 'Admin' }).closest('div')?.parentElement?.parentElement as HTMLElement;
+
+    it('has the title, when the data was loaded with the exact time on hover, Refresh and the time range', () => {
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      const bar = header();
+      expect(within(bar).getByText('Updated just now')).toBeInTheDocument();
+      expect(within(bar).getByText('Loaded 2026-11-18 12:07 UTC')).toBeInTheDocument(); // the tooltip's description
+      expect(within(bar).getByRole('button', { name: /Refresh/ })).toBeEnabled();
+      expect(within(bar).getByText('Time range')).toBeInTheDocument();
+      expect(within(bar).getByRole('button', { name: /Time range/ })).toBeInTheDocument();
+    });
+
+    it('has no jump-link row and no range tabs: navigation is the side nav, the range is a filter', () => {
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      expect(screen.queryByRole('navigation', { name: 'Jump to a section' })).toBeNull();
+      expect(screen.queryByRole('tab')).toBeNull();
+    });
+
+    it('Refresh re-reads the page without navigating', () => {
+      refresh.mockClear();
+      push.mockClear();
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      fireEvent.click(screen.getByRole('button', { name: /Refresh/ }));
+      expect(refresh).toHaveBeenCalledTimes(1);
+      expect(push).not.toHaveBeenCalled();
+    });
+
+    it('choosing a range navigates, keeping the household', () => {
+      push.mockClear();
+      render(<AdminDashboard links={LINKS} data={fixture({ household: 'abcdef12' })} />);
+      fireEvent.click(within(header()).getByRole('button', { name: /Time range/ }));
+      fireEvent.click(screen.getByRole('option', { name: 'Last 30 days' }));
+      expect(push).toHaveBeenCalledWith('/admin?range=30d&household=abcdef12');
+    });
+
+    it('a selected household is a removable chip, and removing it keeps the range', () => {
+      push.mockClear();
+      render(<AdminDashboard links={LINKS} data={fixture({ household: 'abcdef12' })} />);
+      expect(screen.getByText('Household abcdef12')).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'clear filter' })).toBeNull();
+      fireEvent.click(within(screen.getByRole('status', { name: /Household abcdef12/ })).getByRole('button'));
+      expect(push).toHaveBeenCalledWith('/admin?range=7d');
+    });
+
+    it('shows no chip without a household filter', () => {
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      expect(screen.queryByText(/^Household [0-9a-f]{8}$/)).toBeNull();
+    });
   });
 
   it('weekly cycle: counts under 10 plans, percentages at 10 or more, and the pillar indicators', () => {
@@ -477,6 +606,9 @@ describe('AdminDashboard (#249)', () => {
     expect(container.textContent).not.toMatch(/@/);
   });
 
+  // React's generated ids (`_r_3_`, for the tooltip's description) differ between two renders in one test.
+  const stable = (html: string) => html.replace(/_r_[0-9a-z]+_/g, '_r_');
+
   describe('hydration (React #418)', () => {
     afterEach(() => {
       vi.unstubAllEnvs();
@@ -504,12 +636,12 @@ describe('AdminDashboard (#249)', () => {
     it('renders the same markup whatever the environment, because the links come in as a prop', () => {
       vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://abcd1234.supabase.co');
       vi.stubEnv('ADMIN_VERCEL_PROJECT_URL', 'https://vercel.com/team/app');
-      const withEnv = render(<AdminDashboard links={LINKS} data={fixture()} />).container.innerHTML;
+      const withEnv = stable(render(<AdminDashboard links={LINKS} data={fixture()} />).container.innerHTML);
       cleanup();
 
       vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', '');
       vi.stubEnv('ADMIN_VERCEL_PROJECT_URL', '');
-      const withoutEnv = render(<AdminDashboard links={LINKS} data={fixture()} />).container.innerHTML;
+      const withoutEnv = stable(render(<AdminDashboard links={LINKS} data={fixture()} />).container.innerHTML);
 
       expect(withoutEnv).toBe(withEnv);
       expect(withoutEnv).toContain('https://supabase.com/dashboard/project/abcd1234/sql/new');

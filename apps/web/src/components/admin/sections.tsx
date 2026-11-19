@@ -65,7 +65,12 @@ function Inbox({ items, links, now }: { items: AttentionItem[]; links: AdminLink
 export function Overview({ data, now, links }: { data: DashboardData; now: Date; links: AdminLinks }) {
   const headline = computeHeadline(data, now);
   return (
-    <Section id="overview" title={headline.title} note="Worked out each time the page loads, from the last 24 hours and 7 days across every household. Nothing is emailed.">
+    <Section
+      id="overview"
+      title={headline.title}
+      note="From the last 24 hours and 7 days, across every household."
+      detail="Worked out each time the page loads, whatever range or household the page is filtered to. Nothing is emailed: this page is where problems show."
+    >
       {!data.attention.ok ? <NotLoaded hint={data.attention.hint} /> : data.attention.data.length > 0 && <Inbox items={data.attention.data} links={links} now={now} />}
       <ResponsiveGrid cols={2} colsMd={4} gapX="4" gapY="4">
         {headline.tiles.map((tile) => (
@@ -76,9 +81,15 @@ export function Overview({ data, now, links }: { data: DashboardData; now: Date;
   );
 }
 
-export function Status({ data, now }: { data: Loaded<StatusData>; now: Date }) {
+export function Status({ data, now, links }: { data: Loaded<StatusData>; now: Date; links: AdminLinks }) {
   return (
-    <Section id="status" title="Status" note="Is the app up? Our own health check calls the app and its services every 15 minutes (a scheduled GitHub Actions run).">
+    <Section
+      id="status"
+      title="Status"
+      note="Is the app up? Checked every 15 minutes."
+      detail="Our own health check calls the app and its services every 15 minutes (a scheduled GitHub Actions run) and stores the result. Nothing is emailed."
+      actions={<LinkButtons links={[{ label: "Uptime workflow", href: links.targets.uptimeWorkflow, external: true }]} />}
+    >
       {!data.ok ? <NotLoaded hint={data.hint} /> : <StatusBody status={data.data} now={now} />}
     </Section>
   );
@@ -183,7 +194,13 @@ function ErrorDetails({ group, now, range, links }: { group: ErrorGroup; now: Da
 
 export function Errors({ data, now, range, links }: { data: Loaded<ErrorGroup[]>; now: Date; range: Range; links: AdminLinks }) {
   return (
-    <Section id="errors" title="Errors" note="Problems the app reported, grouped so repeats count once. Open one to see where and when it happened. Messages are scrubbed of emails, links and ids.">
+    <Section
+      id="errors"
+      title="Errors"
+      note="Problems the app reported, grouped so repeats count once."
+      detail="Open one to see where and when it happened. Severity and state come from the counts: a spike is today's count well over the usual daily rate, and a server-side error that hit two or more households is an Error. Messages are scrubbed of emails, links and ids."
+      actions={<LinkButtons links={[{ label: "Runtime logs", href: links.targets.vercelLogs, external: true }]} />}
+    >
       {!data.ok ? (
         <NotLoaded hint={data.hint} />
       ) : data.data.length === 0 ? (
@@ -226,7 +243,12 @@ export function Errors({ data, now, range, links }: { data: Loaded<ErrorGroup[]>
 
 export function AiAgent({ data }: { data: Loaded<AiSummary> }) {
   return (
-    <Section id="ai" title="AI agent" note="How the AI agent is doing over the range: how many calls it made, how often they worked, how long they took and what they cost. Days run midnight to midnight UTC.">
+    <Section
+      id="ai"
+      title="AI agent"
+      note="Calls, success rate, speed and cost over the range."
+      detail="How many calls the AI agent made, how often they worked, how long they took and what they cost. Days run midnight to midnight UTC."
+    >
       {!data.ok ? <NotLoaded hint={data.hint} /> : <AiBody ai={data.data} />}
     </Section>
   );
@@ -293,7 +315,12 @@ function AiBody({ ai }: { ai: AiSummary }) {
 
 export function CostAndQuotas({ data }: { data: Loaded<CostData> }) {
   return (
-    <Section id="cost" title="Cost and quotas" note="AI spend against the daily cap, and Coles lookups against the monthly limit. The daily spend resets at midnight UTC.">
+    <Section
+      id="cost"
+      title="Cost and quotas"
+      note="AI spend against the daily cap, Coles lookups against the monthly limit."
+      detail="The daily spend resets at midnight UTC. Raise the cap with AI_DAILY_SPEND_CAP_USD and the Coles limit with COLES_API_MONTHLY_LIMIT in Vercel."
+    >
       {!data.ok ? <NotLoaded hint={data.hint} /> : <CostBody cost={data.data} />}
     </Section>
   );
@@ -328,7 +355,8 @@ export function Households({ data, range, selected, now }: { data: Loaded<Househ
     <Section
       id="households"
       title="Households"
-      note="Who is using the app, most recently active first. IDs are short on purpose (no names or emails), and You marks your own household. Select an ID to filter the errors, AI and usage sections; select it again to clear."
+      note="Who is using the app, most recently active first."
+      detail="IDs are short on purpose (no names or emails), and You marks your own household. Select an ID to filter the errors, AI and usage sections; select it again to clear."
     >
       {!data.ok ? (
         <NotLoaded hint={data.hint} />
@@ -391,7 +419,8 @@ export function WeeklyCycleSection({ data }: { data: Loaded<WeeklyCycle> }) {
     <Section
       id="cycle"
       title="Weekly cycle and usage"
-      note="How far households get through the weekly routine: compose a plan, confirm it, build the shopping list, send it to Coles, finish shopping. Weeks start on Monday in each household's own time zone (Sydney if unset), and each step counts toward the week the plan was for."
+      note="How far households get through the weekly routine."
+      detail="Compose a plan, confirm it, build the shopping list, send it to Coles, finish shopping. Weeks start on Monday in each household's own time zone (Sydney if unset), and each step counts toward the week the plan was for."
     >
       {!data.ok ? <NotLoaded hint={data.hint} /> : <CycleBody cycle={data.data} />}
     </Section>
@@ -460,7 +489,13 @@ function CycleBody({ cycle }: { cycle: WeeklyCycle }) {
 
 export function Database({ data, links }: { data: Loaded<{ stats: DbStat[]; schema: SchemaCheck[] }>; links: AdminLinks }) {
   return (
-    <Section id="database" title="Database" note="Whether the database has every migration, and how big its tables are. Row counts are Postgres estimates, and a small table can read 0 until Postgres next analyses it.">
+    <Section
+      id="database"
+      title="Database"
+      note="Whether every migration has run, and how big the tables are."
+      detail="Row counts are Postgres estimates, and a small table can read 0 until Postgres next analyses it."
+      actions={links.targets.supabaseSql ? <LinkButtons links={[{ label: "SQL editor", href: links.targets.supabaseSql, external: true }]} /> : undefined}
+    >
       {!data.ok ? <NotLoaded hint={data.hint} /> : <DatabaseBody stats={data.data.stats} schema={data.data.schema} links={links} />}
     </Section>
   );
@@ -516,7 +551,7 @@ function DatabaseBody({ stats, schema, links }: { stats: DbStat[]; schema: Schem
 export function DebugLinks({ links }: { links: AdminLinks }) {
   const { debug } = links;
   return (
-    <Section id="debug" title="Debug pages">
+    <Section id="debug" title="Debug pages" note="Pages for digging into one thing.">
       <Stack direction="row" gap="lg" wrap>
         {debug.map((link) => (
           <Link key={link.href} href={link.href}>

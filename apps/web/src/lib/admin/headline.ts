@@ -38,7 +38,7 @@ function titleFor(data: DashboardData): string {
 }
 
 function statusTile(data: DashboardData, now: Date): HeadlineTile {
-  const base = { id: 'status', label: 'Status', href: '#status' } as const;
+  const base = { id: 'status', label: 'Status · latest check', href: '#status' } as const;
   if (!data.status.ok) return { ...base, value: COULDNT, note: 'See the status section', tone: 'neutral' };
   const { latest, heartbeatStale } = data.status.data;
   if (!latest) return { ...base, value: 'No checks yet', note: 'The Uptime workflow has not recorded one', tone: 'neutral' };
@@ -56,7 +56,7 @@ function statusTile(data: DashboardData, now: Date): HeadlineTile {
 
 function errorsTile(data: DashboardData): HeadlineTile {
   const range = RANGE_WORDS[data.range];
-  const base = { id: 'errors', label: `Errors, last ${range}${data.household ? `, household ${data.household}` : ''}`, href: '#errors' } as const;
+  const base = { id: 'errors', label: `Errors · ${range}${data.household ? ` · household ${data.household}` : ''}`, href: '#errors' } as const;
   if (!data.errors.ok) return { ...base, value: COULDNT, note: 'See the errors section', tone: 'neutral' };
   const total = data.errors.data.reduce((n, group) => n + group.count, 0);
   if (total === 0) return { ...base, value: '0', note: 'None reported', tone: 'ok' };
@@ -68,7 +68,7 @@ function errorsTile(data: DashboardData): HeadlineTile {
 }
 
 function aiTile(data: DashboardData): HeadlineTile {
-  const base = { id: 'ai', label: 'AI spend today', href: '#cost' } as const;
+  const base = { id: 'ai', label: 'AI spend · today', href: '#cost' } as const;
   if (!data.cost.ok) return { ...base, value: COULDNT, note: 'See cost and quotas', tone: 'neutral' };
   const { spendTodayUsd, capUsd } = data.cost.data;
   const fraction = capUsd > 0 ? spendTodayUsd / capUsd : 0;
@@ -77,7 +77,7 @@ function aiTile(data: DashboardData): HeadlineTile {
 
 function householdsTile(data: DashboardData, now: Date): HeadlineTile {
   const range = RANGE_WORDS[data.range];
-  const base = { id: 'households', label: 'Active households', href: '#households' } as const;
+  const base = { id: 'households', label: `Active households · ${range}`, href: '#households' } as const;
   if (!data.households.ok) return { ...base, value: COULDNT, note: 'See households', tone: 'neutral' };
   const since = rangeStart(data.range, now).getTime();
   const households = data.households.data;

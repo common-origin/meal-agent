@@ -11,7 +11,7 @@
  */
 
 import { useState, type ReactNode } from "react";
-import { Box, InlineAlert, List, ListItem, ProgressBar, ResponsiveGrid, Stack, StatusLabel, Typography } from "@common-origin/design-system";
+import { Box, IconButton, InlineAlert, List, ListItem, ProgressBar, ResponsiveGrid, Stack, StatusLabel, Tooltip, Typography } from "@common-origin/design-system";
 import type { Tone } from "@/lib/admin/headline";
 import type { Level } from "@/lib/admin/types";
 
@@ -27,13 +27,28 @@ export function SeverityLabel({ level, label }: { level: Level; label?: string }
 
 const TONE_LEVEL: Record<Tone, Level | null> = { ok: "ok", warning: "warning", bad: "error", neutral: null };
 
-/** A titled region of the page. The region's accessible name is its title. */
-export function Section({ id, title, note, children }: { id: string; title: string; note?: string; children: ReactNode }) {
+/**
+ * A titled region of the page, on a raised surface (#282). The title is on the
+ * left (with an info button whose tooltip holds the longer explanation, out of
+ * the scan path) and `actions` are on the right; `note` is one line at most.
+ * The region's accessible name is its title.
+ */
+export function Section({ id, title, note, detail, actions, children }: { id: string; title: string; note?: string; detail?: string; actions?: ReactNode; children: ReactNode }) {
   return (
-    <Box as="section" id={id} aria-label={title}>
+    <Box as="section" id={id} aria-label={title} bg="surface.raised" border="default" borderRadius="md" p="lg">
       <Stack direction="column" gap="md">
         <Stack direction="column" gap="xs">
-          <Typography variant="h2">{title}</Typography>
+          <Stack direction="row" gap="md" alignItems="center" justifyContent="space-between" wrap>
+            <Stack direction="row" gap="xs" alignItems="center">
+              <Typography variant="h2">{title}</Typography>
+              {detail && (
+                <Tooltip text={detail} kind="description" side="right">
+                  <IconButton variant="naked" size="small" iconName="info" aria-label={`About ${title}`} />
+                </Tooltip>
+              )}
+            </Stack>
+            {actions}
+          </Stack>
           {note && (
             <Typography variant="small" color="subdued">
               {note}
@@ -144,11 +159,25 @@ export function Stats({ children }: { children: ReactNode }) {
   );
 }
 
-/** A headline number linking to its section. Its state is a severity label, and the value and note say the same in words. */
+/**
+ * A headline number linking to its section, which states its time frame in its
+ * label. The whole card is clickable (the label stays the real link for the
+ * keyboard and screen readers). Its state is a severity label, and the value
+ * and note say the same in words.
+ */
 export function Tile({ label, value, note, tone, href }: { label: string; value: string; note: string; tone: Tone; href: string }) {
   const level = TONE_LEVEL[tone];
   return (
-    <Box bg="color.fill.muted" border="default" borderRadius="sm" p="md">
+    <Box
+      bg="color.fill.muted"
+      border="default"
+      borderRadius="sm"
+      p="md"
+      cursor="pointer"
+      onClick={() => {
+        window.location.hash = href.replace(/^#/, "");
+      }}
+    >
       <Stack direction="column" gap="xs">
         <Stack direction="row" gap="sm" alignItems="center" justifyContent="space-between">
           <Typography variant="caption" color="subdued">
