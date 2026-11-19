@@ -476,8 +476,12 @@ only (`ResponsiveGrid`, `Box`, `Stack`, `TabBar`, `ProgressBar`, `List`/`ListIte
 with expandable rows), no custom CSS, table or chart code; the design system has
 no Table, so rows are list items with their numbers in the secondary line, and
 `designSystemOnly.test.ts` fails if `styled-components`, `<table>` or `<details>`
-return. The page shows household short IDs only, never names or
-emails.
+return. The page shows household short IDs only, never names or emails. The
+dashboard components are client components, which have no `process.env` in the
+browser, so anything built from env vars (the Supabase and Vercel links,
+`lib/admin/links.ts`) is built in `app/admin/page.tsx` and passed down as a
+prop; reading the env inside them renders different markup on the client than
+the server sent and fails hydration (React #418, #272).
 
 ## Calendar export
 

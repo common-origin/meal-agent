@@ -3,6 +3,7 @@ import AdminDashboard from "@/components/admin/AdminDashboard";
 import { isAdminEmail } from "@/lib/auth/admin";
 import { getCurrentUser } from "@/lib/supabase/server";
 import { parseHouseholdParam, parseRange } from "@/lib/admin/format";
+import { adminLinks } from "@/lib/admin/links";
 import { loadDashboard } from "@/lib/admin/queries";
 
 export const metadata = { title: "Admin · Meal Agent", robots: { index: false, follow: false } };
@@ -21,5 +22,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
   const params = await searchParams;
   const data = await loadDashboard({ range: parseRange(params.range), household: parseHouseholdParam(params.household), viewerUserId: user.id });
-  return <AdminDashboard data={data} />;
+  // Built here, on the server, and passed down: the dashboard is a client component and the browser has no process.env (React #418 otherwise).
+  return <AdminDashboard data={data} links={adminLinks(process.env)} />;
 }

@@ -1,11 +1,13 @@
-import { describe, it, expect, vi } from 'vitest';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 const push = vi.hoisted(() => vi.fn());
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
 
 import AdminDashboard from '../AdminDashboard';
+import { adminLinks } from '@/lib/admin/links';
 import type { DashboardData } from '@/lib/admin/queries';
 
+const LINKS = adminLinks({ NEXT_PUBLIC_SUPABASE_URL: 'https://abcd1234.supabase.co' });
 const NOW = '2026-11-18T12:07:00.000Z';
 const SLOT = 15 * 60_000;
 const t0 = Date.UTC(2026, 10, 18, 9, 0, 0);
@@ -129,13 +131,13 @@ const fixture = (over: Partial<DashboardData> = {}): DashboardData => ({
 
 describe('AdminDashboard (#249)', () => {
   it('renders every section, in order', () => {
-    render(<AdminDashboard data={fixture()} />);
+    render(<AdminDashboard links={LINKS} data={fixture()} />);
     const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
     expect(headings).toEqual(['2 things need attention', 'Status', 'Errors', 'AI agent', 'Cost and quotas', 'Households', 'Weekly cycle and usage', 'Database', 'Debug pages']);
   });
 
   it('headline: says how many things need attention, with four tiles that link to their sections', () => {
-    render(<AdminDashboard data={fixture()} />);
+    render(<AdminDashboard links={LINKS} data={fixture()} />);
     const section = screen.getByRole('region', { name: '2 things need attention' });
     expect(within(section).getByText(/The latest health check is failing: gemini/)).toBeInTheDocument();
     const hrefs = within(section).getAllByRole('link').map((a) => a.getAttribute('href'));
@@ -148,17 +150,17 @@ describe('AdminDashboard (#249)', () => {
   });
 
   it('headline: "All systems OK" when nothing needs attention', () => {
-    render(<AdminDashboard data={fixture({ attention: { ok: true, data: [] } })} />);
+    render(<AdminDashboard links={LINKS} data={fixture({ attention: { ok: true, data: [] } })} />);
     expect(screen.getByRole('region', { name: 'All systems OK' })).toBeInTheDocument();
   });
 
   it('headline: says so when the attention rules could not run', () => {
-    render(<AdminDashboard data={fixture({ attention: { ok: false, hint: 'is migration 022 applied?' } })} />);
+    render(<AdminDashboard links={LINKS} data={fixture({ attention: { ok: false, hint: 'is migration 022 applied?' } })} />);
     expect(screen.getByRole('region', { name: "Couldn't work out what needs attention" })).toBeInTheDocument();
   });
 
   it('status: dependency states, uptime, missed checks, both releases and the last incident', () => {
-    render(<AdminDashboard data={fixture()} />);
+    render(<AdminDashboard links={LINKS} data={fixture()} />);
     const section = screen.getByRole('region', { name: 'Status' });
     expect(within(section).getByText('50.00%')).toBeInTheDocument();
     expect(within(section).getByText('of 4 slots had no check recorded')).toBeInTheDocument();
@@ -176,7 +178,7 @@ describe('AdminDashboard (#249)', () => {
     const data = fixture();
     if (!data.status.ok) throw new Error('fixture');
     data.status.data.uptime.monitoringSince = t0;
-    render(<AdminDashboard data={data} />);
+    render(<AdminDashboard links={LINKS} data={data} />);
     expect(within(screen.getByRole('region', { name: 'Status' })).getByText(/Monitoring began .*so the uptime below covers that time rather than the whole range/)).toBeInTheDocument();
   });
 
@@ -184,7 +186,7 @@ describe('AdminDashboard (#249)', () => {
     const data = fixture();
     if (!data.status.ok || !data.status.data.latest) throw new Error('fixture');
     data.status.data.latest.checks = {};
-    render(<AdminDashboard data={data} />);
+    render(<AdminDashboard links={LINKS} data={data} />);
     const section = screen.getByRole('region', { name: 'Status' });
     expect(within(section).getByText(/The check recorded no individual results/)).toBeInTheDocument();
     expect(within(section).queryByText(/All 0 checks/)).not.toBeInTheDocument();
@@ -194,14 +196,14 @@ describe('AdminDashboard (#249)', () => {
     const data = fixture();
     if (!data.status.ok) throw new Error('fixture');
     data.status.data.latest = null;
-    render(<AdminDashboard data={data} />);
+    render(<AdminDashboard links={LINKS} data={data} />);
     const section = screen.getByRole('region', { name: 'Status' });
     expect(within(section).getByText(/No health check has been recorded yet/)).toBeInTheDocument();
     expect(within(section).queryByText('Uptime')).not.toBeInTheDocument();
   });
 
   it('errors: a group per fingerprint with its detail', () => {
-    render(<AdminDashboard data={fixture()} />);
+    render(<AdminDashboard links={LINKS} data={fixture()} />);
     const section = screen.getByRole('region', { name: 'Errors' });
     expect(within(section).getByText('coles-search: lookup failed', { selector: 'strong' })).toBeInTheDocument();
     expect(within(section).getByText('/api/coles-search')).toBeInTheDocument();
@@ -212,7 +214,7 @@ describe('AdminDashboard (#249)', () => {
   });
 
   it('AI agent, cost and quotas', () => {
-    render(<AdminDashboard data={fixture()} />);
+    render(<AdminDashboard links={LINKS} data={fixture()} />);
     const ai = screen.getByRole('region', { name: 'AI agent' });
     expect(within(ai).getByText(/gemini-x · 20 calls · 90% worked · median 4000 ms · slowest 5% 9000 ms/)).toBeInTheDocument();
     expect(within(ai).getByText('error 2, http_503 ×2')).toBeInTheDocument();
@@ -223,7 +225,7 @@ describe('AdminDashboard (#249)', () => {
   });
 
   it('households: short IDs only, each linking to a filtered view', () => {
-    render(<AdminDashboard data={fixture()} />);
+    render(<AdminDashboard links={LINKS} data={fixture()} />);
     const section = screen.getByRole('region', { name: 'Households' });
     const link = within(section).getByRole('link', { name: 'Filter the page to household abcdef12' });
     expect(link).toHaveAttribute('href', '/admin?range=7d&household=abcdef12#households');
@@ -231,14 +233,14 @@ describe('AdminDashboard (#249)', () => {
   });
 
   it('households: your own is marked You, and the rest are not', () => {
-    render(<AdminDashboard data={fixture()} />);
+    render(<AdminDashboard links={LINKS} data={fixture()} />);
     const section = screen.getByRole('region', { name: 'Households' });
     expect(within(section).getAllByText('You')).toHaveLength(1);
     expect(within(section).getByText('You').closest('li')).toHaveTextContent('abcdef12');
   });
 
   it('a selected household is shown, with a way to clear the filter, and range links keep it', () => {
-    render(<AdminDashboard data={fixture({ household: 'abcdef12' })} />);
+    render(<AdminDashboard links={LINKS} data={fixture({ household: 'abcdef12' })} />);
     expect(screen.getByText(/Household abcdef12/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'clear filter' })).toHaveAttribute('href', '/admin?range=7d');
     push.mockClear();
@@ -248,7 +250,7 @@ describe('AdminDashboard (#249)', () => {
   });
 
   it('weekly cycle: counts under 10 plans, percentages at 10 or more, and the pillar indicators', () => {
-    render(<AdminDashboard data={fixture()} />);
+    render(<AdminDashboard links={LINKS} data={fixture()} />);
     const section = screen.getByRole('region', { name: 'Weekly cycle and usage' });
     const week = within(section).getByText('Week of 16 Nov').closest('li');
     expect(week).toHaveTextContent('2 composed · 2 confirmed'); // a count, not "100%"
@@ -266,12 +268,12 @@ describe('AdminDashboard (#249)', () => {
     if (!data.cycle.ok) throw new Error('fixture');
     data.cycle.data.weeks[0].composed = 20;
     data.cycle.data.events.funnel = [{ week_start: '2026-11-16', type: 'plan_confirmed', households: 10 }];
-    render(<AdminDashboard data={data} />);
+    render(<AdminDashboard links={LINKS} data={data} />);
     expect(within(screen.getByRole('region', { name: 'Weekly cycle and usage' })).getByText(/20 composed · 10 \(50%\) confirmed/)).toBeInTheDocument();
   });
 
   it('database: lists only the missing migrations, flags dead rows only on tables big enough to matter, and links out', () => {
-    render(<AdminDashboard data={fixture()} />);
+    render(<AdminDashboard links={LINKS} data={fixture()} />);
     const section = screen.getByRole('region', { name: 'Database' });
     expect(within(section).getByText('Migrations 019 to 021: 021 is missing.')).toBeInTheDocument();
     expect(within(section).getByText('021 MISSING')).toBeInTheDocument();
@@ -287,14 +289,14 @@ describe('AdminDashboard (#249)', () => {
     const data = fixture();
     if (!data.database.ok) throw new Error('fixture');
     data.database.data.schema = [{ migration: '019', name: 'app_errors', applied: true }, { migration: '020', name: 'product_events', applied: true }];
-    render(<AdminDashboard data={data} />);
+    render(<AdminDashboard links={LINKS} data={data} />);
     const section = screen.getByRole('region', { name: 'Database' });
     expect(within(section).getByText('Migrations 019 to 020: all 2 applied.')).toBeInTheDocument();
     expect(within(section).queryByText(/MISSING/)).not.toBeInTheDocument();
   });
 
   it('links to the existing debug pages', () => {
-    render(<AdminDashboard data={fixture()} />);
+    render(<AdminDashboard links={LINKS} data={fixture()} />);
     const section = screen.getByRole('region', { name: 'Debug pages' });
     const hrefs = within(section).getAllByRole('link').map((a) => a.getAttribute('href'));
     expect(hrefs).toContain('/debug/api-usage');
@@ -304,6 +306,7 @@ describe('AdminDashboard (#249)', () => {
   it('a section that could not load says so with its migration hint, and the rest still render', () => {
     render(
       <AdminDashboard
+        links={LINKS}
         data={fixture({ errors: { ok: false, hint: 'is migration 019 or 022 applied?' }, cycle: { ok: false, hint: 'is migration 022 applied?' } })}
       />
     );
@@ -315,12 +318,33 @@ describe('AdminDashboard (#249)', () => {
 
   it('every section degrades alone: all failing still renders the page', () => {
     const failed = { ok: false as const, hint: 'is migration 022 applied?' };
-    render(<AdminDashboard data={fixture({ attention: failed, status: failed, errors: failed, ai: failed, cost: failed, households: failed, cycle: failed, database: failed })} />);
+    render(<AdminDashboard links={LINKS} data={fixture({ attention: failed, status: failed, errors: failed, ai: failed, cost: failed, households: failed, cycle: failed, database: failed })} />);
     expect(screen.getAllByText(/Couldn't load/)).toHaveLength(8);
   });
 
   it('shows no email address or name anywhere on the page', () => {
-    const { container } = render(<AdminDashboard data={fixture()} />);
+    const { container } = render(<AdminDashboard links={LINKS} data={fixture()} />);
     expect(container.textContent).not.toMatch(/@/);
+  });
+
+  describe('hydration (React #418)', () => {
+    afterEach(() => vi.unstubAllEnvs());
+
+    // The page builds the links on the server and passes them in. In the browser
+    // process.env has none of these values, so a section that read the env itself
+    // would render different markup from the server's HTML and fail to hydrate.
+    it('renders the same markup whatever the environment, because the links come in as a prop', () => {
+      vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://abcd1234.supabase.co');
+      vi.stubEnv('ADMIN_VERCEL_PROJECT_URL', 'https://vercel.com/team/app');
+      const withEnv = render(<AdminDashboard links={LINKS} data={fixture()} />).container.innerHTML;
+      cleanup();
+
+      vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', '');
+      vi.stubEnv('ADMIN_VERCEL_PROJECT_URL', '');
+      const withoutEnv = render(<AdminDashboard links={LINKS} data={fixture()} />).container.innerHTML;
+
+      expect(withoutEnv).toBe(withEnv);
+      expect(withoutEnv).toContain('https://supabase.com/dashboard/project/abcd1234/sql/new');
+    });
   });
 });

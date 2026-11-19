@@ -6,6 +6,7 @@ import { Stack, TabBar, Typography } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import { RANGES } from "@/lib/admin/format";
 import type { DashboardData } from "@/lib/admin/queries";
+import type { AdminLinks } from "@/lib/admin/links";
 import { AiAgent, CostAndQuotas, Database, DebugLinks, Errors, Households, Overview, Status, WeeklyCycleSection } from "./sections";
 
 const JUMPS: [string, string][] = [
@@ -20,11 +21,12 @@ const JUMPS: [string, string][] = [
 
 /**
  * The /admin overview (#249). The page loads everything on the server and
- * passes it here already serialisable; each section shows its own data or its
+ * passes it here already serialisable (`links` too: it reads env vars the
+ * browser doesn't have, so it can't be built here, #272); each section shows its own data or its
  * own "couldn't load". Mobile-friendly: tables scroll sideways inside their
  * section and the stats wrap.
  */
-export default function AdminDashboard({ data }: { data: DashboardData }) {
+export default function AdminDashboard({ data, links }: { data: DashboardData; links: AdminLinks }) {
   const router = useRouter();
   const now = new Date(data.generatedAt);
   const query = (range: string) => `/admin?range=${range}${data.household ? `&household=${data.household}` : ""}`;
@@ -65,8 +67,8 @@ export default function AdminDashboard({ data }: { data: DashboardData }) {
         <CostAndQuotas data={data.cost} />
         <Households data={data.households} range={data.range} selected={data.household} now={now} />
         <WeeklyCycleSection data={data.cycle} />
-        <Database data={data.database} />
-        <DebugLinks />
+        <Database data={data.database} links={links} />
+        <DebugLinks links={links} />
       </Stack>
     </Main>
   );

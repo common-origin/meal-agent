@@ -9,7 +9,7 @@
 
 import Link from "next/link";
 import { Alert, List, ListItem, ResponsiveGrid, Stack, StatusLabel, Tag, Typography } from "@common-origin/design-system";
-import { adminLinks } from "@/lib/admin/links";
+import type { AdminLinks } from "@/lib/admin/links";
 import { ago, formatBytes, formatDuration, formatUsd, hasManyDeadTuples, MIN_FOR_PERCENT, successPct, utcStamp, weekLabel } from "@/lib/admin/format";
 import { computeHeadline } from "@/lib/admin/headline";
 import { aiProblems, cycleSentence, databaseSummary } from "@/lib/admin/summaries";
@@ -402,17 +402,16 @@ function CycleBody({ cycle }: { cycle: WeeklyCycle }) {
   );
 }
 
-export function Database({ data }: { data: Loaded<{ stats: DbStat[]; schema: SchemaCheck[] }> }) {
+export function Database({ data, links }: { data: Loaded<{ stats: DbStat[]; schema: SchemaCheck[] }>; links: AdminLinks }) {
   return (
     <Section id="database" title="Database" note="Whether the database has every migration, and how big its tables are. Row counts are Postgres estimates, and a small table can read 0 until Postgres next analyses it.">
-      {!data.ok ? <NotLoaded hint={data.hint} /> : <DatabaseBody stats={data.data.stats} schema={data.data.schema} />}
+      {!data.ok ? <NotLoaded hint={data.hint} /> : <DatabaseBody stats={data.data.stats} schema={data.data.schema} links={links} />}
     </Section>
   );
 }
 
-function DatabaseBody({ stats, schema }: { stats: DbStat[]; schema: SchemaCheck[] }) {
+function DatabaseBody({ stats, schema, links }: { stats: DbStat[]; schema: SchemaCheck[]; links: AdminLinks }) {
   const summary = databaseSummary(stats, schema);
-  const links = adminLinks();
   return (
     <Stack direction="column" gap="lg">
       <Stack direction="column" gap="xs">
@@ -460,8 +459,8 @@ function DatabaseBody({ stats, schema }: { stats: DbStat[]; schema: SchemaCheck[
   );
 }
 
-export function DebugLinks() {
-  const { debug } = adminLinks();
+export function DebugLinks({ links }: { links: AdminLinks }) {
+  const { debug } = links;
   return (
     <Section id="debug" title="Debug pages">
       <Stack direction="row" gap="lg" wrap>
