@@ -5,7 +5,17 @@ import { Stack, Typography } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import { RANGES } from "@/lib/admin/format";
 import type { DashboardData } from "@/lib/admin/queries";
-import { AiAgent, CostAndQuotas, Database, DebugLinks, Errors, Households, NeedsAttention, Status, WeeklyCycleSection } from "./sections";
+import { AiAgent, CostAndQuotas, Database, DebugLinks, Errors, Households, Overview, Status, WeeklyCycleSection } from "./sections";
+
+const JUMPS: [string, string][] = [
+  ["status", "Status"],
+  ["errors", "Errors"],
+  ["ai", "AI agent"],
+  ["cost", "Cost"],
+  ["households", "Households"],
+  ["cycle", "Usage"],
+  ["database", "Database"],
+];
 
 /**
  * The /admin overview (#249). The page loads everything on the server and
@@ -36,13 +46,22 @@ export default function AdminDashboard({ data }: { data: DashboardData }) {
               </Typography>
             )}
           </Stack>
-          <Typography variant="caption" color="subdued">
+          <Typography variant="small" color="subdued">
             Loaded {data.generatedAt.slice(0, 16).replace("T", " ")} UTC. Reload for fresh numbers.
           </Typography>
+          <nav aria-label="Jump to a section">
+            <Stack direction="row" gap="md" wrap>
+              {JUMPS.map(([id, label]) => (
+                <a key={id} href={`#${id}`}>
+                  {label}
+                </a>
+              ))}
+            </Stack>
+          </nav>
         </Stack>
 
-        <NeedsAttention data={data.attention} />
-        <Status data={data.status} />
+        <Overview data={data} now={now} />
+        <Status data={data.status} now={now} />
         <Errors data={data.errors} now={now} />
         <AiAgent data={data.ai} />
         <CostAndQuotas data={data.cost} />

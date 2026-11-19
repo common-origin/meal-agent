@@ -22,10 +22,21 @@ export function parseHouseholdParam(value: string | string[] | undefined): strin
 
 export const shortId = (id: string): string => id.slice(0, 8);
 
-/** Strips the full ID: only the short ID leaves the server. */
-export function toHouseholdRow({ id, ...rest }: HouseholdRowRaw): HouseholdRow {
-  return { shortId: shortId(id), ...rest };
+/** Strips the full ID: only the short ID leaves the server. `viewerHouseholdId` marks the signed-in admin's own household. */
+export function toHouseholdRow({ id, ...rest }: HouseholdRowRaw, viewerHouseholdId: string | null = null): HouseholdRow {
+  return { shortId: shortId(id), isYou: viewerHouseholdId !== null && id === viewerHouseholdId, ...rest };
 }
+
+/** Most recently active first; households that have never been active last. */
+export function sortHouseholds(rows: HouseholdRow[]): HouseholdRow[] {
+  const time = (row: HouseholdRow) => (row.last_active ? new Date(row.last_active).getTime() : -Infinity);
+  return [...rows].sort((a, b) => time(b) - time(a));
+}
+
+/** Below this many (estimated) rows a table's dead-tuple ratio is noise: two dead rows in a six-row table is 33%. */
+export const DEAD_TUPLE_MIN_ROWS = 1000;
+export const DEAD_TUPLE_WARN_RATIO = 0.2;
+export const hasManyDeadTuples = (stat: { rows: number; dead_ratio: number }): boolean => stat.rows >= DEAD_TUPLE_MIN_ROWS && stat.dead_ratio > DEAD_TUPLE_WARN_RATIO;
 
 /** The full household ID for a short ID, if one matches (a prefix match on the 8 characters). */
 export function resolveHousehold(short: string | null, households: HouseholdRowRaw[]): string | null {
@@ -84,3 +95,16 @@ export function ago(iso: string | null | undefined, now: Date): string {
   if (hours < 48) return `${hours} h ago`;
   return `${Math.round(hours / 24)} d ago`;
 }
+
+/** 45 minutes, 3 h, 2 h 10 min. */
+export function formatDuration(ms: number): string {
+  const total = Math.max(0, Math.round(ms / 60_000));
+  if (total < 60) return `${total} min`;
+  const hours = Math.floor(total / 60);
+  return total % 60 === 0 ? `${hours} h` : `${hours} h ${total % 60} min`;
+}
+
+/** "2026-11-19 09:16 UTC". */
+export const utcStamp = (value: string | number | Date): string => new Date(value).toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+
+export const RANGE_WORDS: Record<Range, string> = { '24h': '24 hours', '7d': '7 days', '30d': '30 days' };

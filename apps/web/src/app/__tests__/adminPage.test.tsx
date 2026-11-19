@@ -48,13 +48,13 @@ describe('/admin page (#249)', () => {
   it('loads the dashboard for an admin, ignoring case in the email, with the range and household from the URL', async () => {
     mocks.getCurrentUser.mockResolvedValue({ id: 'u1', email: 'Owner@Example.com' });
     await page({ range: '30d', household: 'abcdef12' });
-    expect(mocks.loadDashboard).toHaveBeenCalledWith({ range: '30d', household: 'abcdef12' });
+    expect(mocks.loadDashboard).toHaveBeenCalledWith({ range: '30d', household: 'abcdef12', viewerUserId: 'u1' });
   });
 
   it('falls back to 7d and no household for bad parameters', async () => {
     mocks.getCurrentUser.mockResolvedValue({ id: 'u1', email: 'owner@example.com' });
     await page({ range: 'forever', household: '../../etc/passwd' });
-    expect(mocks.loadDashboard).toHaveBeenCalledWith({ range: '7d', household: null });
+    expect(mocks.loadDashboard).toHaveBeenCalledWith({ range: '7d', household: null, viewerUserId: 'u1' });
   });
 });
 

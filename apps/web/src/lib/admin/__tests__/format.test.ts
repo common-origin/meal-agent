@@ -1,8 +1,13 @@
 import { describe, it, expect } from 'vitest';
+import type { HouseholdRow } from '../types';
 import {
   ago,
   formatBytes,
+  formatDuration,
   formatUsd,
+  hasManyDeadTuples,
+  sortHouseholds,
+  utcStamp,
   parseHouseholdParam,
   parseRange,
   projectMonthEnd,
@@ -115,5 +120,38 @@ describe('admin links', () => {
     expect(links.vercel[1].href).toBe('https://vercel.com/team/app/logs');
     expect(links.debug.map((l) => l.href)).toContain('/admin/debug');
     expect(links.debug.map((l) => l.href)).toContain('/debug/api-usage');
+  });
+});
+
+describe('readability helpers (#270)', () => {
+  const row = (shortId: string, last_active: string | null): HouseholdRow => ({ shortId, isYou: false, members: 1, pending_invites: 0, last_active, has_plan_this_week: false, settings_complete: false, ai_calls: 0, ai_cost_usd: 0, errors: 0, last3_generation_failed: false });
+
+  it('sorts households by most recent activity, never-active last, without changing the input', () => {
+    const input = [row('c', null), row('a', '2026-11-01T00:00:00Z'), row('b', '2026-11-10T00:00:00Z')];
+    expect(sortHouseholds(input).map((h) => h.shortId)).toEqual(['b', 'a', 'c']);
+    expect(input.map((h) => h.shortId)).toEqual(['c', 'a', 'b']);
+  });
+
+  it('marks only the viewer\'s household as theirs, and strips the full ID', () => {
+    const raw = { id: 'abcdef12-0000', members: 1, pending_invites: 0, last_active: null, has_plan_this_week: false, settings_complete: false, ai_calls: 0, ai_cost_usd: 0, errors: 0, last3_generation_failed: false };
+    expect(toHouseholdRow(raw, 'abcdef12-0000')).toMatchObject({ shortId: 'abcdef12', isYou: true });
+    expect(toHouseholdRow(raw, 'other')).toMatchObject({ isYou: false });
+    expect(toHouseholdRow(raw)).toMatchObject({ isYou: false });
+    expect(JSON.stringify(toHouseholdRow(raw, 'abcdef12-0000'))).not.toContain('abcdef12-0000');
+  });
+
+  it('only flags dead tuples on tables with at least 1,000 estimated rows and over 20% dead', () => {
+    expect(hasManyDeadTuples({ rows: 2, dead_ratio: 0.33 })).toBe(false);
+    expect(hasManyDeadTuples({ rows: 999, dead_ratio: 0.9 })).toBe(false);
+    expect(hasManyDeadTuples({ rows: 1000, dead_ratio: 0.2 })).toBe(false);
+    expect(hasManyDeadTuples({ rows: 1000, dead_ratio: 0.21 })).toBe(true);
+  });
+
+  it('formats durations and UTC timestamps', () => {
+    expect(formatDuration(45 * 60_000)).toBe('45 min');
+    expect(formatDuration(3 * 3_600_000)).toBe('3 h');
+    expect(formatDuration(130 * 60_000)).toBe('2 h 10 min');
+    expect(formatDuration(-5)).toBe('0 min');
+    expect(utcStamp('2026-11-19T09:16:30Z')).toBe('2026-11-19 09:16 UTC');
   });
 });

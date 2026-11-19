@@ -8,23 +8,41 @@ const mocks = vi.hoisted(() => ({
   healthRows: [] as { created_at: string; ok: boolean; release?: string; checks?: unknown; total_latency_ms?: number }[],
   rangeCalls: [] as [number, number][],
   readColesQuota: vi.fn(),
+  memberHousehold: null as string | null,
+  memberLookups: [] as string[],
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
   createAdminClient: () => ({
     rpc: (name: string, args?: Record<string, unknown>) => mocks.rpc(name, args),
     from: (table: string) => {
+      if (table === 'household_members') {
+        const m = {
+          select: () => m,
+          eq: (_column: string, userId: string) => {
+            mocks.memberLookups.push(userId);
+            return m;
+          },
+          limit: () => m,
+          maybeSingle: () => Promise.resolve({ data: mocks.memberHousehold ? { household_id: mocks.memberHousehold } : null, error: null }),
+        };
+        return m;
+      }
       if (table !== 'health_checks') throw new Error(`unexpected table ${table}`);
+      let ascending = false;
       const q = {
         select: () => q,
         gte: () => q,
-        order: () => q,
+        order: (_column: string, options?: { ascending?: boolean }) => {
+          if (options && options.ascending !== undefined) ascending = options.ascending;
+          return q;
+        },
         limit: () => q,
         range: (from: number, to: number) => {
           mocks.rangeCalls.push([from, to]);
           return Promise.resolve({ data: mocks.healthRows.slice(from, to + 1), error: null });
         },
-        maybeSingle: () => Promise.resolve({ data: mocks.healthRows[mocks.healthRows.length - 1] ?? null, error: null }),
+        maybeSingle: () => Promise.resolve({ data: (ascending ? mocks.healthRows[0] : mocks.healthRows[mocks.healthRows.length - 1]) ?? null, error: null }),
       };
       return q;
     },
@@ -57,6 +75,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.rangeCalls = [];
   mocks.healthRows = [];
+  mocks.memberHousehold = null;
+  mocks.memberLookups = [];
   for (const key of Object.keys(results)) delete results[key];
   setRpc();
   mocks.rpc.mockImplementation(async (name: string) => {
@@ -134,6 +154,57 @@ describe('loadDashboard (#249)', () => {
     expect(data.status.data.latest).toBeNull();
     expect(data.status.data.heartbeatStale).toBe(true);
     expect(data.status.data.uptime.uptimePct).toBeNull();
+  });
+
+  it('starts the uptime window at the first health check when monitoring began inside the range', async () => {
+    // Monitoring began 2 hours ago; the range is 7 days. Nothing before that is "down" or "no data".
+    const began = now.getTime() - 2 * 3_600_000;
+    mocks.healthRows = Array.from({ length: 8 }, (_, i) => ({ created_at: new Date(began + i * SLOT + 60_000).toISOString(), ok: true, release: 'abc1234', checks: {}, total_latency_ms: 5 }));
+    const data = await loadDashboard({ range: '7d', household: null }, now);
+    if (!data.status.ok) throw new Error('status failed');
+    const { uptime } = data.status.data;
+    expect(uptime.monitoringSince).toBe(Math.floor(began / SLOT) * SLOT);
+    expect(uptime.slots.length).toBeLessThanOrEqual(8);
+    expect(uptime.noDataSlots).toBe(0);
+    expect(uptime.possibleOutages).toEqual([]);
+    expect(uptime.lastIncident).toBeNull();
+    expect(uptime.uptimePct).toBe(100);
+  });
+
+  it('keeps the whole range when monitoring began before it', async () => {
+    const began = now.getTime() - 40 * 86_400_000;
+    mocks.healthRows = [{ created_at: new Date(began).toISOString(), ok: true }];
+    const data = await loadDashboard({ range: '24h', household: null }, now);
+    if (!data.status.ok) throw new Error('status failed');
+    expect(data.status.data.uptime.monitoringSince).toBeNull();
+    expect(data.status.data.uptime.slots.length).toBeGreaterThan(90);
+  });
+
+  it('marks the signed-in admin\'s own household, sorts by last activity, and never sends the full ID', async () => {
+    mocks.memberHousehold = FULL_ID;
+    setRpc({
+      admin_household_summary: [
+        { id: '99999999-0000-0000-0000-000000000000', members: 1, pending_invites: 0, last_active: null, has_plan_this_week: false, settings_complete: false, ai_calls: 0, ai_cost_usd: 0, errors: 0, last3_generation_failed: false },
+        { id: FULL_ID, members: 2, pending_invites: 1, last_active: '2026-11-18T11:00:00Z', has_plan_this_week: true, settings_complete: true, ai_calls: 3, ai_cost_usd: 0.03, errors: 0, last3_generation_failed: false },
+        { id: '55555555-0000-0000-0000-000000000000', members: 1, pending_invites: 0, last_active: '2026-11-10T11:00:00Z', has_plan_this_week: false, settings_complete: true, ai_calls: 0, ai_cost_usd: 0, errors: 0, last3_generation_failed: false },
+      ],
+    });
+    const data = await loadDashboard({ range: '7d', household: null, viewerUserId: 'user-1' }, now);
+    expect(mocks.memberLookups).toEqual(['user-1']);
+    if (!data.households.ok) throw new Error('households failed');
+    expect(data.households.data.map((h) => [h.shortId, h.isYou])).toEqual([['abcdef12', true], ['55555555', false], ['99999999', false]]);
+    expect(JSON.stringify(data)).not.toContain(FULL_ID);
+    expect(JSON.stringify(data)).not.toContain('user-1');
+  });
+
+  it('marks no household as yours when the viewer is in none, or the lookup is skipped', async () => {
+    const data = await loadDashboard({ range: '7d', household: null, viewerUserId: 'user-1' }, now);
+    if (!data.households.ok) throw new Error('households failed');
+    expect(data.households.data.every((h) => !h.isYou)).toBe(true);
+    const skipped = await loadDashboard({ range: '7d', household: null }, now);
+    expect(mocks.memberLookups).toEqual(['user-1']); // only the first call looked
+    if (!skipped.households.ok) throw new Error('households failed');
+    expect(skipped.households.data.every((h) => !h.isYou)).toBe(true);
   });
 
   it('reads every health row past the 1,000-row request limit when building uptime', async () => {

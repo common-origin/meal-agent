@@ -429,7 +429,9 @@ are `ok`, `failing` or `no data`. A missing slot is "no data", not "down",
 because GitHub sometimes drops or delays scheduled runs; two or more
 consecutive empty slots are flagged "possible outage (no heartbeat)", since a
 fully-down app can't record a row; uptime % is ok / (ok + failing) with the
-no-data share beside it. GitHub disables schedules on a public repo after 60
+count of missed checks beside it. When the first health row is newer than the
+start of the range, `/admin` starts the window at that row's slot (`monitoringSince`),
+so time before monitoring began is neither "down" nor "no data". GitHub disables schedules on a public repo after 60
 days without repository activity, which the "no health check in 30 minutes"
 warning catches.
 
@@ -448,6 +450,19 @@ migration isn't applied shows "couldn't load (is migration 0xx applied?)" and
 the rest render. `?range=24h|7d|30d` (default 7d) and `?household=` (the
 8-character short ID; the full ID never leaves the server) filter the errors,
 AI and weekly-cycle sections.
+
+The top of the page (#270) is a headline from `lib/admin/headline.ts` (pure,
+tested): "All systems OK" or "N things need attention", then four tiles (status,
+errors, AI spend today, active households) that link to their sections, then
+each attention item. Sentences that say what a table means (the weekly-cycle
+summary, AI problems, the migrations line) are in `lib/admin/summaries.ts`.
+Detail most visits don't need (week-by-week table, raw event counts, the table
+list) sits in closed `<details>`. In the households table, `isYou` marks the
+signed-in admin's own household (looked up server-side from `household_members`;
+best effort, and the user ID never reaches the page), and rows are sorted by
+last activity. Dead-tuple warnings only apply to tables with at least 1,000
+estimated rows (`hasManyDeadTuples` in `lib/admin/format.ts`): the ratio is noise
+on a six-row table.
 
 "Needs attention" is computed on each load by `lib/admin/attention.ts` (pure,
 tested) from its own reads of the last 24 hours and 7 days across every

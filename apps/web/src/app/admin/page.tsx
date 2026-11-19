@@ -20,6 +20,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   if (!user || !isAdminEmail(user.email)) notFound();
 
   const params = await searchParams;
-  const data = await loadDashboard({ range: parseRange(params.range), household: parseHouseholdParam(params.household) });
+  const data = await loadDashboard({ range: parseRange(params.range), household: parseHouseholdParam(params.household), viewerUserId: user.id });
   return <AdminDashboard data={data} />;
 }

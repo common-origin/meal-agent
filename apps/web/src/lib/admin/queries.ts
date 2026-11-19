@@ -19,7 +19,7 @@ import { dailySpendCapUsd, startOfUtcDay } from '@/lib/ai/usage';
 import { isHeartbeatStale, lastIncident, summariseUptime, SLOT_MS } from '@/lib/health/uptime';
 import { release } from '@/lib/telemetry/release';
 import { computeAttention } from './attention';
-import { projectMonthEnd, rangeStart, resolveHousehold, toHouseholdRow } from './format';
+import { projectMonthEnd, rangeStart, resolveHousehold, sortHouseholds, toHouseholdRow } from './format';
 import type {
   AiSummary,
   AttentionItem,
@@ -53,6 +53,24 @@ async function latestHealthRow(): Promise<HealthCheckRow | null> {
   return (data as unknown as HealthCheckRow | null) ?? null;
 }
 
+async function earliestHealthTime(): Promise<number | null> {
+  const { data, error } = await createAdminClient().from('health_checks').select('created_at').order('created_at', { ascending: true }).limit(1).maybeSingle();
+  if (error) throw new Error(`health_checks: ${error.message}`);
+  const time = data ? new Date((data as { created_at: string }).created_at).getTime() : NaN;
+  return Number.isNaN(time) ? null : time;
+}
+
+/** The full ID of the household the signed-in admin belongs to, for marking "You". Best effort: null on any failure. */
+async function viewerHouseholdId(userId: string): Promise<string | null> {
+  try {
+    const { data, error } = await createAdminClient().from('household_members').select('household_id').eq('user_id', userId).limit(1).maybeSingle();
+    if (error) return null;
+    return (data as { household_id: string } | null)?.household_id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function healthRowsSince(since: Date): Promise<{ created_at: string; ok: boolean }[]> {
   const supabase = createAdminClient();
   return readAllPages<{ created_at: string; ok: boolean }>((from, to) =>
@@ -60,7 +78,7 @@ async function healthRowsSince(since: Date): Promise<{ created_at: string; ok: b
   );
 }
 
-export function uptimeView(rows: { created_at: string; ok: boolean }[], from: Date, to: Date): UptimeView {
+export function uptimeView(rows: { created_at: string; ok: boolean }[], from: Date, to: Date, monitoringSince: number | null = null): UptimeView {
   const summary = summariseUptime(rows, from, to);
   return {
     from: from.getTime(),
@@ -74,16 +92,20 @@ export function uptimeView(rows: { created_at: string; ok: boolean }[], from: Da
     possibleOutages: summary.possibleOutages,
     outageNow: summary.outageNow,
     lastIncident: lastIncident(summary.slots),
+    monitoringSince,
   };
 }
 
 export async function loadStatus(range: Range, now: Date): Promise<StatusData> {
-  const from = rangeStart(range, now);
-  const [latest, rows] = await Promise.all([latestHealthRow(), healthRowsSince(from)]);
+  const rangeFrom = rangeStart(range, now);
+  const [latest, rows, earliest] = await Promise.all([latestHealthRow(), healthRowsSince(rangeFrom), earliestHealthTime()]);
+  // Monitoring began after the range did: start there (on its slot), so the time before it counts as neither down nor "no data".
+  const began = earliest === null ? null : Math.floor(earliest / SLOT_MS) * SLOT_MS;
+  const cutShort = began !== null && began > rangeFrom.getTime();
   return {
     latest,
     heartbeatStale: isHeartbeatStale(latest?.created_at, now),
-    uptime: uptimeView(rows, from, now),
+    uptime: uptimeView(rows, cutShort ? new Date(began) : rangeFrom, now, cutShort ? began : null),
     deployedRelease: release(),
   };
 }
@@ -208,13 +230,15 @@ function loaded<T>(result: PromiseSettledResult<T>, hint: string, section: strin
   return { ok: false, hint };
 }
 
-export async function loadDashboard(params: { range: Range; household: string | null }, now: Date = new Date()): Promise<DashboardData> {
+export async function loadDashboard(params: { range: Range; household: string | null; viewerUserId?: string | null }, now: Date = new Date()): Promise<DashboardData> {
   const since = rangeStart(params.range, now);
 
   // The household list feeds three sections and resolves ?household=; only a filter makes the others wait for it.
   const householdsResult = Promise.allSettled([loadHouseholdsRaw(since)]).then(([result]) => result);
   const settledHouseholds = params.household ? await householdsResult : null;
   const householdId = resolveHousehold(params.household, settledHouseholds?.status === 'fulfilled' ? settledHouseholds.value : []);
+
+  const viewerPromise = params.viewerUserId ? viewerHouseholdId(params.viewerUserId) : Promise.resolve(null);
 
   // Cost and database are also what the attention rules need: loaded once, shared.
   const costPromise = loadCost(now);
@@ -236,9 +260,10 @@ export async function loadDashboard(params: { range: Range; household: string | 
   ]);
   // householdsResult never rejects (it wraps allSettled), so the outer result is always fulfilled.
   const householdsSettled = households.status === 'fulfilled' ? households.value : households;
+  const viewerHousehold = await viewerPromise;
   const householdsLoaded: Loaded<HouseholdRow[]> =
     householdsSettled.status === 'fulfilled'
-      ? { ok: true, data: householdsSettled.value.map(toHouseholdRow) }
+      ? { ok: true, data: sortHouseholds(householdsSettled.value.map((row) => toHouseholdRow(row, viewerHousehold))) }
       : loaded<HouseholdRow[]>(householdsSettled, HINTS.households, 'households');
 
   return {

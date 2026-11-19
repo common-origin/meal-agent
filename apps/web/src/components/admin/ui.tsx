@@ -164,8 +164,8 @@ export function UptimeStrip({ slots }: { slots: { start: number; state: "ok" | "
           <Slot key={slot.start} $state={slot.state} title={`${new Date(slot.start).toISOString().slice(0, 16).replace("T", " ")} UTC: ${slot.state === "no_data" ? "no data" : slot.state}`} />
         ))}
       </Strip>
-      <Typography variant="caption" color="subdued">
-        Each cell is 15 minutes: green ok, red failing, grey no data. Gaps are no data, not downtime: GitHub sometimes skips a scheduled run.
+      <Typography variant="small" color="subdued">
+        Each cell is 15 minutes. Green: checked and healthy. Red: a check failed. Grey: no check was recorded, usually GitHub skipping a run rather than downtime.
       </Typography>
     </Stack>
   );
@@ -181,11 +181,70 @@ export function Stat({ label, value, note }: { label: string; value: ReactNode; 
         {value}
       </Typography>
       {note && (
-        <Typography variant="caption" color="subdued">
+        <Typography variant="small" color="subdued">
           {note}
         </Typography>
       )}
     </Stack>
+  );
+}
+
+const Details = styled.details`
+  summary {
+    cursor: pointer;
+    font: ${tokens.semantic.typography.small};
+    color: ${color.text.default};
+    padding: 4px 0;
+  }
+
+  summary > span + span {
+    color: ${color.text.muted};
+    margin-left: 8px;
+  }
+
+  > div {
+    margin-top: 12px;
+  }
+`;
+
+/** Detail that most visits don't need: closed until opened, with a one-line summary of what's inside. */
+export function Collapsible({ title, summary, children }: { title: string; summary?: string; children: ReactNode }) {
+  return (
+    <Details>
+      <summary>
+        <span>
+          <strong>{title}</strong>
+        </span>
+        {summary && <span>{summary}</span>}
+      </summary>
+      <div>{children}</div>
+    </Details>
+  );
+}
+
+const TileLink = styled.a<{ $tone: "ok" | "warning" | "bad" | "neutral" }>`
+  display: block;
+  flex: 1 1 140px;
+  min-width: 0;
+  padding: 12px 16px;
+  text-decoration: none;
+  color: inherit;
+  background: ${color.fill.muted};
+  border-radius: ${tokens.semantic.radius.sm};
+  border-top: 4px solid ${(p) => (p.$tone === "ok" ? color.fill.success : p.$tone === "warning" ? color.fill.warning : p.$tone === "bad" ? color.fill.danger : color.border.default)};
+
+  &:hover,
+  &:focus-visible {
+    background: ${color.fill["accent-muted"]};
+  }
+`;
+
+/** A headline number that links to its section. The tone is shown as a top border and never alone: the value and note say the same in words. */
+export function Tile({ label, value, note, tone, href }: { label: string; value: string; note: string; tone: "ok" | "warning" | "bad" | "neutral"; href: string }) {
+  return (
+    <TileLink href={href} $tone={tone}>
+      <Stat label={label} value={value} note={note} />
+    </TileLink>
   );
 }
 
