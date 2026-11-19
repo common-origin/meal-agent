@@ -1,27 +1,25 @@
 "use client";
 
 /**
- * Small building blocks for the /admin page, from design-system parts and
- * design tokens: a titled section, a "couldn't load" notice, a table, a
- * bar and the uptime strip. No chart library (#244).
+ * Small building blocks for the /admin page. Everything here is a design-system
+ * part (Box, ResponsiveGrid, Stack, List/ListItem, ProgressBar, Typography,
+ * InlineAlert) arranged for this page: no custom CSS, no table or chart code.
+ * The design system has no Table, so rows are List/ListItem with their numbers
+ * in the secondary line.
  */
 
-import type { ReactNode } from "react";
-import styled from "styled-components";
-import { InlineAlert, Stack, Typography, tokens } from "@common-origin/design-system";
+import { useState, type ReactNode } from "react";
+import { Box, InlineAlert, List, ListItem, ProgressBar, ResponsiveGrid, Stack, Typography } from "@common-origin/design-system";
 
-const color = tokens.semantic.color;
+type Tone = "ok" | "warning" | "bad" | "neutral";
 
+/** A titled region of the page. The region's accessible name is its title. */
 export function Section({ id, title, note, children }: { id: string; title: string; note?: string; children: ReactNode }) {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} style={{ scrollMarginTop: 16 }}>
+    <Box as="section" id={id} aria-label={title}>
       <Stack direction="column" gap="md">
         <Stack direction="column" gap="xs">
-          <h2 id={`${id}-title`} style={{ margin: 0 }}>
-            <Typography variant="h2" as="span">
-              {title}
-            </Typography>
-          </h2>
+          <Typography variant="h2">{title}</Typography>
           {note && (
             <Typography variant="small" color="subdued">
               {note}
@@ -30,7 +28,7 @@ export function Section({ id, title, note, children }: { id: string; title: stri
         </Stack>
         {children}
       </Stack>
-    </section>
+    </Box>
   );
 }
 
@@ -39,133 +37,63 @@ export function NotLoaded({ hint }: { hint: string }) {
   return <InlineAlert variant="warning">{`Couldn't load (${hint})`}</InlineAlert>;
 }
 
-const Scroll = styled.div`
-  overflow-x: auto;
-`;
-
-const StyledTable = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  font: ${tokens.semantic.typography.small};
-  color: ${color.text.default};
-
-  th,
-  td {
-    text-align: left;
-    padding: 6px 12px 6px 0;
-    border-bottom: 1px solid ${color.border.default};
-    vertical-align: top;
-    white-space: nowrap;
-  }
-
-  th {
-    font-weight: 600;
-    color: ${color.text.muted};
-  }
-
-  td.num,
-  th.num {
-    text-align: right;
-    padding-right: 16px;
-    font-variant-numeric: tabular-nums;
-  }
-
-  td.wrap {
-    white-space: normal;
-    min-width: 200px;
-  }
-
-  tr[data-selected="true"] td {
-    background: ${color.fill['accent-muted']};
-  }
-`;
-
-export interface Column<Row> {
-  header: string;
-  render: (row: Row) => ReactNode;
-  align?: "num" | "wrap";
-}
-
-export function DataTable<Row>({ caption, columns, rows, rowKey, selected }: { caption: string; columns: Column<Row>[]; rows: Row[]; rowKey: (row: Row) => string; selected?: (row: Row) => boolean }) {
+/** A row that opens to show more. Use inside a List. */
+export function ExpandableItem({ primary, secondary, badge, children }: { primary: ReactNode; secondary?: ReactNode; badge?: ReactNode; children: ReactNode }) {
+  const [expanded, setExpanded] = useState(false);
   return (
-    <Scroll>
-      <StyledTable>
-        <caption style={{ position: "absolute", left: -9999 }}>{caption}</caption>
-        <thead>
-          <tr>
-            {columns.map((column) => (
-              <th key={column.header} className={column.align === "num" ? "num" : undefined} scope="col">
-                {column.header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={rowKey(row)} data-selected={selected?.(row) ? "true" : undefined}>
-              {columns.map((column) => (
-                <td key={column.header} className={column.align}>
-                  {column.render(row)}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </StyledTable>
-    </Scroll>
+    <ListItem expandable expanded={expanded} onToggle={() => setExpanded((open) => !open)} primary={primary} secondary={secondary} badge={badge}>
+      {children}
+    </ListItem>
   );
 }
 
-const Track = styled.div`
-  background: ${color.fill.muted};
-  border-radius: ${tokens.semantic.radius.sm};
-  height: 10px;
-  overflow: hidden;
-  min-width: 80px;
-`;
-
-const Fill = styled.div<{ $pct: number; $tone: "default" | "warning" | "danger" }>`
-  height: 100%;
-  width: ${(p) => Math.max(0, Math.min(100, p.$pct))}%;
-  background: ${(p) => (p.$tone === "danger" ? color.fill.danger : p.$tone === "warning" ? color.fill.warning : color.fill.accent)};
-`;
-
-/** A horizontal bar for `value` out of `max`, with its text label for screen readers. */
-export function Bar({ value, max, label, tone = "default" }: { value: number; max: number; label: string; tone?: "default" | "warning" | "danger" }) {
-  const pct = max > 0 ? (value / max) * 100 : 0;
+/** Detail most visits don't need: one closed row with a summary of what's inside. */
+export function Disclosure({ title, summary, children }: { title: string; summary?: string; children: ReactNode }) {
   return (
-    <Track role="img" aria-label={label} title={label}>
-      <Fill $pct={pct} $tone={tone} />
-    </Track>
+    <List dividers={false}>
+      <ExpandableItem primary={title} secondary={summary}>
+        {children}
+      </ExpandableItem>
+    </List>
   );
 }
 
-const Strip = styled.div`
-  display: flex;
-  gap: 1px;
-  height: 28px;
-  align-items: stretch;
-`;
+const BAR_COLOR = { ok: "success", warning: "default", bad: "error", neutral: "default" } as const;
 
-const Slot = styled.div<{ $state: "ok" | "failing" | "no_data" }>`
-  flex: 1 1 0;
-  min-width: 1px;
-  border-radius: 1px;
-  background: ${(p) => (p.$state === "ok" ? color.fill.success : p.$state === "failing" ? color.fill.danger : color.fill.muted)};
-`;
+/** A horizontal bar for `value` out of `max`, named for screen readers. */
+export function Bar({ value, max, label, tone = "neutral" }: { value: number; max: number; label: string; tone?: Tone }) {
+  const pct = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
+  return <ProgressBar value={pct} color={BAR_COLOR[tone]} height="sm" aria-label={label} />;
+}
 
-/** One cell per 15-minute slot: ok, failing, or no data. Never colour alone: each cell carries its text in the tooltip, and the legend names the states. */
+const SLOT_FILL = { ok: "color.fill.success", failing: "color.fill.danger", no_data: "color.fill.muted" } as const;
+
+/** One cell per 15-minute slot: ok, failing, or no data. Never colour alone: the strip names its counts, and the legend names the states. */
 export function UptimeStrip({ slots }: { slots: { start: number; state: "ok" | "failing" | "no_data" }[] }) {
-  if (slots.length === 0) return <Typography variant="small" color="subdued">No completed 15-minute slots in this range yet.</Typography>;
+  if (slots.length === 0) {
+    return (
+      <Typography variant="small" color="subdued">
+        No completed 15-minute slots in this range yet.
+      </Typography>
+    );
+  }
+  const count = (state: "ok" | "failing" | "no_data") => slots.filter((slot) => slot.state === state).length;
+  // Neighbouring slots in the same state become one cell, as wide as the run is long, so 30 days is a handful of elements, not 2,880.
+  const runs = slots.reduce<{ state: "ok" | "failing" | "no_data"; start: number; length: number }[]>((acc, slot) => {
+    const last = acc[acc.length - 1];
+    if (last && last.state === slot.state) last.length += 1;
+    else acc.push({ state: slot.state, start: slot.start, length: 1 });
+    return acc;
+  }, []);
   return (
     <Stack direction="column" gap="xs">
-      <Strip role="img" aria-label={`Uptime: ${slots.filter((s) => s.state === "ok").length} ok, ${slots.filter((s) => s.state === "failing").length} failing, ${slots.filter((s) => s.state === "no_data").length} no data, in ${slots.length} slots of 15 minutes`}>
-        {slots.map((slot) => (
-          <Slot key={slot.start} $state={slot.state} title={`${new Date(slot.start).toISOString().slice(0, 16).replace("T", " ")} UTC: ${slot.state === "no_data" ? "no data" : slot.state}`} />
+      <Box display="flex" gap="none" role="img" aria-label={`Uptime: ${count("ok")} ok, ${count("failing")} failing, ${count("no_data")} no data, in ${slots.length} slots of 15 minutes`}>
+        {runs.map((run) => (
+          <Box key={run.start} bg={SLOT_FILL[run.state]} height="28px" minWidth="1px" style={{ flex: `${run.length} 1 0` }} />
         ))}
-      </Strip>
-      <Typography variant="caption" color="subdued">
-        Each cell is 15 minutes: green ok, red failing, grey no data. Gaps are no data, not downtime: GitHub sometimes skips a scheduled run.
+      </Box>
+      <Typography variant="small" color="subdued">
+        Each cell is 15 minutes. Green: checked and healthy. Red: a check failed. Grey: no check was recorded, usually GitHub skipping a run rather than downtime.
       </Typography>
     </Stack>
   );
@@ -181,11 +109,41 @@ export function Stat({ label, value, note }: { label: string; value: ReactNode; 
         {value}
       </Typography>
       {note && (
-        <Typography variant="caption" color="subdued">
+        <Typography variant="small" color="subdued">
           {note}
         </Typography>
       )}
     </Stack>
+  );
+}
+
+/** Stats laid out on the design system's grid: two across on a phone, four from the medium breakpoint. */
+export function Stats({ children }: { children: ReactNode }) {
+  return (
+    <ResponsiveGrid cols={2} colsMd={4} gapX="4" gapY="4">
+      {children}
+    </ResponsiveGrid>
+  );
+}
+
+const TILE_BORDER = { ok: "success", warning: "warning", bad: "danger", neutral: "default" } as const;
+
+/** A headline number linking to its section. The tone is the border colour and never alone: the value and note say the same in words. */
+export function Tile({ label, value, note, tone, href }: { label: string; value: string; note: string; tone: Tone; href: string }) {
+  return (
+    <Box bg="color.fill.muted" border={TILE_BORDER[tone]} borderRadius="sm" p="md">
+      <Stack direction="column" gap="xs">
+        <Typography variant="caption" color="subdued">
+          <a href={href}>{label}</a>
+        </Typography>
+        <Typography variant="h3" as="div">
+          {value}
+        </Typography>
+        <Typography variant="small" color="subdued">
+          {note}
+        </Typography>
+      </Stack>
+    </Box>
   );
 }
 

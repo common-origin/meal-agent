@@ -100,9 +100,10 @@ export interface HouseholdRowRaw {
   last3_generation_failed: boolean;
 }
 
-/** A household as the page shows it: the short ID only. */
+/** A household as the page shows it: the short ID only, and whether it is the signed-in admin's own. */
 export interface HouseholdRow extends Omit<HouseholdRowRaw, 'id'> {
   shortId: string;
+  isYou: boolean;
 }
 
 export interface DbStat {
@@ -139,6 +140,12 @@ export interface UptimeView {
   possibleOutages: { start: number; end: number; slots: number }[];
   outageNow: boolean;
   lastIncident: { start: number; end: number; slots: number } | null;
+  /**
+   * Set when the first health check is more recent than the start of the range:
+   * `from` then begins here, so time before monitoring began is neither "down"
+   * nor "no data". Null when the range is fully covered.
+   */
+  monitoringSince: number | null;
 }
 
 export interface StatusData {

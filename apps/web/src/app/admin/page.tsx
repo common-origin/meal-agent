@@ -21,7 +21,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   if (!user || !isAdminEmail(user.email)) notFound();
 
   const params = await searchParams;
-  const data = await loadDashboard({ range: parseRange(params.range), household: parseHouseholdParam(params.household) });
+  const data = await loadDashboard({ range: parseRange(params.range), household: parseHouseholdParam(params.household), viewerUserId: user.id });
   // Built here, on the server, and passed down: the dashboard is a client component and the browser has no process.env (React #418 otherwise).
   return <AdminDashboard data={data} links={adminLinks(process.env)} />;
 }

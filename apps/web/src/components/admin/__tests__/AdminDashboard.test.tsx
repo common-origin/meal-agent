@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+const push = vi.hoisted(() => vi.fn());
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
+
 import AdminDashboard from '../AdminDashboard';
-import type { DashboardData } from '@/lib/admin/queries';
 import { adminLinks } from '@/lib/admin/links';
+import type { DashboardData } from '@/lib/admin/queries';
 
 const LINKS = adminLinks({ NEXT_PUBLIC_SUPABASE_URL: 'https://abcd1234.supabase.co' });
 const NOW = '2026-11-18T12:07:00.000Z';
@@ -43,6 +46,7 @@ const fixture = (over: Partial<DashboardData> = {}): DashboardData => ({
         possibleOutages: [{ start: t0 + 2 * SLOT, end: t0 + 4 * SLOT, slots: 2 }],
         outageNow: true,
         lastIncident: { start: t0 + SLOT, end: t0 + 4 * SLOT, slots: 3 },
+        monitoringSince: null,
       },
     },
   },
@@ -80,8 +84,8 @@ const fixture = (over: Partial<DashboardData> = {}): DashboardData => ({
   households: {
     ok: true,
     data: [
-      { shortId: 'abcdef12', members: 2, pending_invites: 1, last_active: '2026-11-18T11:00:00Z', has_plan_this_week: true, settings_complete: true, ai_calls: 12, ai_cost_usd: 0.2, errors: 1, last3_generation_failed: false },
-      { shortId: '12345678', members: 1, pending_invites: 0, last_active: null, has_plan_this_week: false, settings_complete: false, ai_calls: 0, ai_cost_usd: 0, errors: 0, last3_generation_failed: false },
+      { shortId: 'abcdef12', isYou: true, members: 2, pending_invites: 1, last_active: '2026-11-18T11:00:00Z', has_plan_this_week: true, settings_complete: true, ai_calls: 12, ai_cost_usd: 0.2, errors: 1, last3_generation_failed: false },
+      { shortId: '12345678', isYou: false, members: 1, pending_invites: 0, last_active: null, has_plan_this_week: false, settings_complete: false, ai_calls: 0, ai_cost_usd: 0, errors: 0, last3_generation_failed: false },
     ],
   },
   cycle: {
@@ -113,7 +117,8 @@ const fixture = (over: Partial<DashboardData> = {}): DashboardData => ({
     data: {
       stats: [
         { table: 'ai_usage', rows: 1234, dead_rows: 10, dead_ratio: 0.008, size_bytes: 524288 },
-        { table: 'meal_plans', rows: 50, dead_rows: 30, dead_ratio: 0.375, size_bytes: 65536 },
+        { table: 'meal_plans', rows: 5000, dead_rows: 3000, dead_ratio: 0.375, size_bytes: 65536 },
+        { table: 'shopping_lists', rows: 2, dead_rows: 1, dead_ratio: 0.33, size_bytes: 65536 },
       ],
       schema: [
         { migration: '019', name: 'app_errors', applied: true },
@@ -128,28 +133,84 @@ describe('AdminDashboard (#249)', () => {
   it('renders every section, in order', () => {
     render(<AdminDashboard links={LINKS} data={fixture()} />);
     const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
-    expect(headings).toEqual(['Needs attention', 'Status', 'Errors', 'AI agent', 'Cost and quotas', 'Households', 'Weekly cycle and usage', 'Database', 'Debug pages']);
+    expect(headings).toEqual(['2 things need attention', 'Status', 'Errors', 'AI agent', 'Cost and quotas', 'Households', 'Weekly cycle and usage', 'Database', 'Debug pages']);
   });
 
-  it('needs attention: each item links to its section', () => {
+  it('headline: says how many things need attention, with four tiles that link to their sections', () => {
     render(<AdminDashboard links={LINKS} data={fixture()} />);
-    const section = screen.getByRole('region', { name: 'Needs attention' });
+    const section = screen.getByRole('region', { name: '2 things need attention' });
     expect(within(section).getByText(/The latest health check is failing: gemini/)).toBeInTheDocument();
-    const links = within(section).getAllByRole('link').map((a) => a.getAttribute('href'));
-    expect(links).toEqual(['#status', '#errors']);
+    const hrefs = within(section).getAllByRole('link').map((a) => a.getAttribute('href'));
+    expect(hrefs).toEqual(['#status', '#errors', '#cost', '#households', '#status', '#errors']);
+    expect(within(section).getByText('Failing')).toBeInTheDocument();
+    expect(within(section).getByText('gemini failing')).toBeInTheDocument();
+    expect(within(section).getByText('$1.00')).toBeInTheDocument();
+    expect(within(section).getByText('of $5.00 daily cap')).toBeInTheDocument();
+    expect(within(section).getByText('1 of 2')).toBeInTheDocument();
   });
 
-  it('status: dependency states, uptime, no-data share, both releases and the last incident', () => {
+  it('headline: "All systems OK" when nothing needs attention', () => {
+    render(<AdminDashboard links={LINKS} data={fixture({ attention: { ok: true, data: [] } })} />);
+    expect(screen.getByRole('region', { name: 'All systems OK' })).toBeInTheDocument();
+  });
+
+  it('headline: says so when the attention rules could not run', () => {
+    render(<AdminDashboard links={LINKS} data={fixture({ attention: { ok: false, hint: 'is migration 022 applied?' } })} />);
+    expect(screen.getByRole('region', { name: "Couldn't work out what needs attention" })).toBeInTheDocument();
+  });
+
+  it('status: dependency states, uptime, missed checks, both releases and the last incident', () => {
     render(<AdminDashboard links={LINKS} data={fixture()} />);
     const section = screen.getByRole('region', { name: 'Status' });
     expect(within(section).getByText('50.00%')).toBeInTheDocument();
-    expect(within(section).getByText('50%')).toBeInTheDocument(); // no-data share
+    expect(within(section).getByText('of 4 slots had no check recorded')).toBeInTheDocument();
     expect(within(section).getByText('def5678')).toBeInTheDocument();
-    expect(within(section).getByText(/Latest health row: abc1234 \(differs\)/)).toBeInTheDocument();
+    expect(within(section).getByText('The latest check ran on abc1234')).toBeInTheDocument();
     expect(within(section).getByText('45 min')).toBeInTheDocument(); // the incident: 3 slots
     expect(within(section).getByText(/billing_errors_last_hour/)).toBeInTheDocument();
-    expect(within(section).getByText(/Possible outages \(no heartbeat\)/)).toBeInTheDocument();
+    expect(within(section).getByText(/gemini failing/)).toBeInTheDocument();
+    expect(within(section).getByText(/Possible outages/)).toBeInTheDocument();
     expect(within(section).getByRole('img', { name: /1 ok, 1 failing, 2 no data, in 4 slots/ })).toBeInTheDocument();
+    expect(within(section).queryByText(/Monitoring began/)).not.toBeInTheDocument();
+  });
+
+  it('status: says when monitoring began partway through the range, and that uptime covers only that time', () => {
+    const data = fixture();
+    if (!data.status.ok) throw new Error('fixture');
+    data.status.data.uptime.monitoringSince = t0;
+    render(<AdminDashboard links={LINKS} data={data} />);
+    expect(within(screen.getByRole('region', { name: 'Status' })).getByText(/Monitoring began .*so the uptime below covers that time rather than the whole range/)).toBeInTheDocument();
+  });
+
+  it('status: does not claim "All 0 checks passed" when the row has no individual results', () => {
+    const data = fixture();
+    if (!data.status.ok || !data.status.data.latest) throw new Error('fixture');
+    data.status.data.latest.checks = {};
+    render(<AdminDashboard links={LINKS} data={data} />);
+    const section = screen.getByRole('region', { name: 'Status' });
+    expect(within(section).getByText(/The check recorded no individual results/)).toBeInTheDocument();
+    expect(within(section).queryByText(/All 0 checks/)).not.toBeInTheDocument();
+  });
+
+  it('status: with no health check recorded yet, there is no uptime strip to misread', () => {
+    const data = fixture();
+    if (!data.status.ok) throw new Error('fixture');
+    data.status.data.latest = null;
+    render(<AdminDashboard links={LINKS} data={data} />);
+    const section = screen.getByRole('region', { name: 'Status' });
+    expect(within(section).getByText(/No health check has been recorded yet/)).toBeInTheDocument();
+    expect(within(section).queryByText('Uptime')).not.toBeInTheDocument();
+  });
+
+  it('uptime strip: neighbouring slots in one state are one cell, sized by the run', () => {
+    const data = fixture();
+    if (!data.status.ok) throw new Error('fixture');
+    const slots = Array.from({ length: 600 }, (_, i) => ({ start: t0 + i * SLOT, state: i < 300 ? ('ok' as const) : i < 302 ? ('failing' as const) : ('ok' as const) }));
+    data.status.data.uptime.slots = slots;
+    render(<AdminDashboard links={LINKS} data={data} />);
+    const strip = screen.getByRole('img', { name: /598 ok, 2 failing, 0 no data, in 600 slots/ });
+    expect(strip.children).toHaveLength(3);
+    expect(Array.from(strip.children).map((cell) => (cell as HTMLElement).style.flex)).toEqual(['300 1 0px', '2 1 0px', '298 1 0px']);
   });
 
   it('errors: a group per fingerprint with its detail', () => {
@@ -159,15 +220,15 @@ describe('AdminDashboard (#249)', () => {
     expect(within(section).getByText('/api/coles-search')).toBeInTheDocument();
     expect(within(section).getByText('releases abc1234')).toBeInTheDocument();
     expect(within(section).getByText('2 households')).toBeInTheDocument();
-    expect(within(section).getByText('status 429')).toBeInTheDocument();
+    expect(within(section).getByText(/release abc1234 · route · status 429/)).toBeInTheDocument();
+    expect(within(section).getByText(/4× · last/)).toBeInTheDocument();
   });
 
   it('AI agent, cost and quotas', () => {
     render(<AdminDashboard links={LINKS} data={fixture()} />);
     const ai = screen.getByRole('region', { name: 'AI agent' });
-    expect(within(ai).getByText('90%')).toBeInTheDocument();
-    expect(within(ai).getByText('4000 ms')).toBeInTheDocument();
-    expect(within(ai).getByText('http_503 ×2')).toBeInTheDocument();
+    expect(within(ai).getByText(/gemini-x · 20 calls · 90% worked · median 4000 ms · slowest 5% 9000 ms/)).toBeInTheDocument();
+    expect(within(ai).getByText('error 2, http_503 ×2')).toBeInTheDocument();
     const cost = screen.getByRole('region', { name: 'Cost and quotas' });
     expect(within(cost).getByText('$1.00 of $5.00')).toBeInTheDocument();
     expect(within(cost).getByText('$17.00')).toBeInTheDocument();
@@ -182,23 +243,34 @@ describe('AdminDashboard (#249)', () => {
     expect(link).toHaveTextContent('abcdef12');
   });
 
+  it('households: your own is marked You, and the rest are not', () => {
+    render(<AdminDashboard links={LINKS} data={fixture()} />);
+    const section = screen.getByRole('region', { name: 'Households' });
+    expect(within(section).getAllByText('You')).toHaveLength(1);
+    expect(within(section).getByText('You').closest('li')).toHaveTextContent('abcdef12');
+  });
+
   it('a selected household is shown, with a way to clear the filter, and range links keep it', () => {
     render(<AdminDashboard links={LINKS} data={fixture({ household: 'abcdef12' })} />);
     expect(screen.getByText(/Household abcdef12/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'clear filter' })).toHaveAttribute('href', '/admin?range=7d');
-    expect(screen.getByRole('link', { name: '30d' })).toHaveAttribute('href', '/admin?range=30d&household=abcdef12');
-    expect(screen.getByRole('link', { name: '7d' })).toHaveAttribute('aria-current', 'true');
+    push.mockClear();
+    fireEvent.click(screen.getByRole('tab', { name: '30 days' }));
+    expect(push).toHaveBeenCalledWith('/admin?range=30d&household=abcdef12');
+    expect(screen.getByRole('tab', { name: '7 days' })).toHaveAttribute('aria-selected', 'true');
   });
 
   it('weekly cycle: counts under 10 plans, percentages at 10 or more, and the pillar indicators', () => {
     render(<AdminDashboard links={LINKS} data={fixture()} />);
     const section = screen.getByRole('region', { name: 'Weekly cycle and usage' });
-    const row = within(section).getByRole('row', { name: /16 Nov/ });
-    expect(row).toHaveTextContent('2'); // confirmed: a count, not "100%"
-    expect(row).not.toHaveTextContent('%');
+    const week = within(section).getByText('Week of 16 Nov').closest('li');
+    expect(week).toHaveTextContent('2 composed · 2 confirmed'); // a count, not "100%"
+    expect(week).not.toHaveTextContent('%');
     expect(within(section).getByText('1.3')).toBeInTheDocument(); // (3 swaps + 1 edit) / 3 plans
-    expect(within(section).getByText('7 AI / 1 imported / 1 user-added')).toBeInTheDocument();
+    expect(within(section).getByText('9')).toBeInTheDocument(); // recipes added
+    expect(within(section).getByText(/7 by AI, 1 imported, 1 by hand/)).toBeInTheDocument();
     expect(within(section).getByText('3.5')).toBeInTheDocument();
+    expect(within(section).getByText('Week of 16 Nov: of 2 households, 2 composed a plan, 2 confirmed it, 0 built a shopping list, 0 sent it to Coles and 1 finished shopping.')).toBeInTheDocument();
     expect(within(section).getByText('swap 5')).toBeInTheDocument();
   });
 
@@ -208,19 +280,30 @@ describe('AdminDashboard (#249)', () => {
     data.cycle.data.weeks[0].composed = 20;
     data.cycle.data.events.funnel = [{ week_start: '2026-11-16', type: 'plan_confirmed', households: 10 }];
     render(<AdminDashboard links={LINKS} data={data} />);
-    expect(within(screen.getByRole('region', { name: 'Weekly cycle and usage' })).getByText('10 (50%)')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Weekly cycle and usage' })).getByText(/20 composed · 10 \(50%\) confirmed/)).toBeInTheDocument();
   });
 
-  it('database: migration status, dead tuples flagged above 20%, and links out', () => {
+  it('database: lists only the missing migrations, flags dead rows only on tables big enough to matter, and links out', () => {
     render(<AdminDashboard links={LINKS} data={fixture()} />);
     const section = screen.getByRole('region', { name: 'Database' });
+    expect(within(section).getByText('Migrations 019 to 021: 021 is missing.')).toBeInTheDocument();
     expect(within(section).getByText('021 MISSING')).toBeInTheDocument();
-    expect(within(section).getByText('019 applied')).toBeInTheDocument();
+    expect(within(section).queryByText('019 applied')).not.toBeInTheDocument();
     const flagged = within(section).getByText('High dead tuples');
-    expect(flagged.closest('tr')).toHaveTextContent('meal_plans');
-    expect(within(section).queryAllByText('High dead tuples')).toHaveLength(1);
-    expect(within(section).getByText('37.5%')).toBeInTheDocument();
+    expect(flagged.closest('li')).toHaveTextContent('meal_plans');
+    expect(within(section).queryAllByText('High dead tuples')).toHaveLength(1); // shopping_lists is 33% dead but has 2 rows
+    expect(within(section).getByText('meal_plans have many dead rows and may need a vacuum.'.replace('have', 'has'))).toBeInTheDocument();
     expect(within(section).getByRole('link', { name: 'Vercel project' })).toBeInTheDocument();
+  });
+
+  it('database: with every migration applied it says so in one line', () => {
+    const data = fixture();
+    if (!data.database.ok) throw new Error('fixture');
+    data.database.data.schema = [{ migration: '019', name: 'app_errors', applied: true }, { migration: '020', name: 'product_events', applied: true }];
+    render(<AdminDashboard links={LINKS} data={data} />);
+    const section = screen.getByRole('region', { name: 'Database' });
+    expect(within(section).getByText('Migrations 019 to 020: all 2 applied.')).toBeInTheDocument();
+    expect(within(section).queryByText(/MISSING/)).not.toBeInTheDocument();
   });
 
   it('links to the existing debug pages', () => {
