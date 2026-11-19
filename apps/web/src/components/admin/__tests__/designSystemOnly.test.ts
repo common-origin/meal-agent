@@ -22,9 +22,9 @@ describe('/admin uses the design system, not custom styling (#270)', () => {
     expect(source).not.toMatch(/<(table|details|style)[\s>]/);
   });
 
-  it.each(files)('%s has no hard-coded layout CSS in a style prop beyond the one flex weight', (name) => {
+  it.each(files)('%s has no hard-coded layout CSS in a style prop beyond the one flex weight of the uptime strip', (name) => {
     const source = readFileSync(join(dir, name), 'utf8');
     const styles = source.match(/style=\{\{[^}]*\}\}/g) ?? [];
-    expect(styles.filter((s) => !/^style=\{\{ flex: "1 1 0" \}\}$/.test(s))).toEqual([]);
+    expect(styles.filter((s) => !/^style=\{\{ flex: `\$\{run\.length\} 1 0` \}\}$/.test(s))).toEqual([]);
   });
 });

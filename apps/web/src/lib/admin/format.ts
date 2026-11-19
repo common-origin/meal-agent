@@ -111,3 +111,6 @@ export function formatDuration(ms: number): string {
 export const utcStamp = (value: string | number | Date): string => new Date(value).toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
 
 export const RANGE_WORDS: Record<Range, string> = { '24h': '24 hours', '7d': '7 days', '30d': '30 days' };
+
+/** "1 call", "2 calls". */
+export const plural = (n: number, one: string, many = `${one}s`): string => `${n} ${n === 1 ? one : many}`;

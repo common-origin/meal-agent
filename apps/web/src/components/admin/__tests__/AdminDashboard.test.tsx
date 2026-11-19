@@ -202,6 +202,17 @@ describe('AdminDashboard (#249)', () => {
     expect(within(section).queryByText('Uptime')).not.toBeInTheDocument();
   });
 
+  it('uptime strip: neighbouring slots in one state are one cell, sized by the run', () => {
+    const data = fixture();
+    if (!data.status.ok) throw new Error('fixture');
+    const slots = Array.from({ length: 600 }, (_, i) => ({ start: t0 + i * SLOT, state: i < 300 ? ('ok' as const) : i < 302 ? ('failing' as const) : ('ok' as const) }));
+    data.status.data.uptime.slots = slots;
+    render(<AdminDashboard links={LINKS} data={data} />);
+    const strip = screen.getByRole('img', { name: /598 ok, 2 failing, 0 no data, in 600 slots/ });
+    expect(strip.children).toHaveLength(3);
+    expect(Array.from(strip.children).map((cell) => (cell as HTMLElement).style.flex)).toEqual(['300 1 0px', '2 1 0px', '298 1 0px']);
+  });
+
   it('errors: a group per fingerprint with its detail', () => {
     render(<AdminDashboard links={LINKS} data={fixture()} />);
     const section = screen.getByRole('region', { name: 'Errors' });

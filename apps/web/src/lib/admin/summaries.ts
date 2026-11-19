@@ -3,10 +3,8 @@
  * numbers means. Pure, so they're unit tested without rendering anything.
  */
 
-import { hasManyDeadTuples, weekLabel } from './format';
+import { hasManyDeadTuples, plural, weekLabel } from './format';
 import type { AiTaskRow, DbStat, SchemaCheck, WeeklyCycle } from './types';
-
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 /** The steps after "composed", in order, with how each reads in a sentence. */
 const STEPS: { type: string; text: string }[] = [

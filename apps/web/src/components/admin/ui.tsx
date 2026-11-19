@@ -78,11 +78,18 @@ export function UptimeStrip({ slots }: { slots: { start: number; state: "ok" | "
     );
   }
   const count = (state: "ok" | "failing" | "no_data") => slots.filter((slot) => slot.state === state).length;
+  // Neighbouring slots in the same state become one cell, as wide as the run is long, so 30 days is a handful of elements, not 2,880.
+  const runs = slots.reduce<{ state: "ok" | "failing" | "no_data"; start: number; length: number }[]>((acc, slot) => {
+    const last = acc[acc.length - 1];
+    if (last && last.state === slot.state) last.length += 1;
+    else acc.push({ state: slot.state, start: slot.start, length: 1 });
+    return acc;
+  }, []);
   return (
     <Stack direction="column" gap="xs">
       <Box display="flex" gap="none" role="img" aria-label={`Uptime: ${count("ok")} ok, ${count("failing")} failing, ${count("no_data")} no data, in ${slots.length} slots of 15 minutes`}>
-        {slots.map((slot) => (
-          <Box key={slot.start} bg={SLOT_FILL[slot.state]} height="28px" minWidth="1px" style={{ flex: "1 1 0" }} />
+        {runs.map((run) => (
+          <Box key={run.start} bg={SLOT_FILL[run.state]} height="28px" minWidth="1px" style={{ flex: `${run.length} 1 0` }} />
         ))}
       </Box>
       <Typography variant="small" color="subdued">

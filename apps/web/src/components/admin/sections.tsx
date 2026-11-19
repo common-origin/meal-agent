@@ -10,7 +10,7 @@
 import Link from "next/link";
 import { Alert, List, ListItem, ResponsiveGrid, Stack, StatusLabel, Tag, Typography } from "@common-origin/design-system";
 import type { AdminLinks } from "@/lib/admin/links";
-import { ago, formatBytes, formatDuration, formatUsd, hasManyDeadTuples, MIN_FOR_PERCENT, successPct, utcStamp, weekLabel } from "@/lib/admin/format";
+import { ago, formatBytes, formatDuration, formatUsd, hasManyDeadTuples, MIN_FOR_PERCENT, plural, successPct, utcStamp, weekLabel } from "@/lib/admin/format";
 import { computeHeadline } from "@/lib/admin/headline";
 import { aiProblems, cycleSentence, databaseSummary } from "@/lib/admin/summaries";
 import type { DashboardData } from "@/lib/admin/queries";
@@ -18,7 +18,6 @@ import type { AiSummary, AttentionItem, CostData, DbStat, ErrorGroup, HouseholdR
 import { Bar, Disclosure, Empty, ExpandableItem, NotLoaded, Section, Stat, Stats, Tile, UptimeStrip } from "./ui";
 
 const when = utcStamp;
-const plural = (n: number, one: string) => `${n} ${n === 1 ? one : `${one}s`}`;
 const dot = (parts: (string | null | false | undefined)[]) => parts.filter(Boolean).join(" · ");
 
 const SECTION_NAMES: Record<AttentionItem["section"], string> = {

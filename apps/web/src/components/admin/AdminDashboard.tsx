@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Stack, TabBar, Typography } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
-import { RANGES } from "@/lib/admin/format";
+import { RANGES, RANGE_WORDS } from "@/lib/admin/format";
 import type { DashboardData } from "@/lib/admin/queries";
 import type { AdminLinks } from "@/lib/admin/links";
 import { AiAgent, CostAndQuotas, Database, DebugLinks, Errors, Households, Overview, Status, WeeklyCycleSection } from "./sections";
@@ -37,7 +37,7 @@ export default function AdminDashboard({ data, links }: { data: DashboardData; l
           <Typography variant="h1">Admin</Typography>
           <TabBar
             aria-label="Time range"
-            tabs={RANGES.map((range) => ({ id: range, label: range === "24h" ? "24 hours" : range === "7d" ? "7 days" : "30 days" }))}
+            tabs={RANGES.map((range) => ({ id: range, label: RANGE_WORDS[range] }))}
             activeTab={data.range}
             onTabChange={(range) => router.push(query(range))}
           />
