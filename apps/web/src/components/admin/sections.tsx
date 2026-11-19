@@ -298,9 +298,9 @@ export function Households({ data, range, selected, now }: { data: Loaded<Househ
             <ListItem
               key={h.shortId}
               selected={h.shortId === selected}
-              // ListItem renders primary and secondary inside a <p>, so only inline content
-              // (text, a link, a Tag) may go here: a Stack or other block element is invalid
-              // HTML and fails hydration (React #418).
+              // ListItem renders `primary` inside a <p>, so only inline content (text, a link,
+              // a Tag) may go here: a Stack or other block element is invalid HTML and fails
+              // hydration (React #418). Design-system gap: ListItem could render it in a div.
               primary={
                 <>
                   <Link href={href(h.shortId)} aria-label={`Filter the page to household ${h.shortId}`}>
