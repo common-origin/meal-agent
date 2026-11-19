@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 const push = vi.hoisted(() => vi.fn());
 const refresh = vi.hoisted(() => vi.fn());
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push, refresh }) }));
@@ -403,7 +403,7 @@ describe('AdminDashboard (#249)', () => {
       const links = within(nav).getAllByRole('link');
       expect(links.map((a) => a.getAttribute('href'))).toEqual(['#overview', '#status', '#errors', '#ai', '#cost', '#households', '#cycle', '#database', '#debug']);
       const named = Object.fromEntries(links.map((a) => [a.getAttribute('href'), a.getAttribute('aria-label') ?? a.textContent]));
-      expect(named['#overview']).toMatch(/Overview.*2 need attention/);
+      expect(named['#overview']).not.toMatch(/need attention/); // the inbox itself: the badges below add up to it
       expect(named['#status']).toMatch(/Status.*1 need attention/);
       expect(named['#errors']).toMatch(/Errors.*1 need attention/);
       expect(named['#ai']).not.toMatch(/need attention/);
@@ -435,10 +435,10 @@ describe('AdminDashboard (#249)', () => {
       render(<AdminDashboard links={LINKS} data={fixture()} />);
       const notes: Record<string, string> = {
         Status: 'Is the app up? Checked every 15 minutes.',
-        Errors: 'Problems the app reported, grouped so repeats count once.',
+        Errors: 'Grouped so repeats count once. Open a row for the details.',
         'AI agent': 'Calls, success rate, speed and cost over the range.',
         'Cost and quotas': 'AI spend against the daily cap, Coles lookups against the monthly limit.',
-        Households: 'Who is using the app, most recently active first.',
+        Households: 'Most recently active first. Select an ID to filter the page.',
         'Weekly cycle and usage': 'How far households get through the weekly routine.',
         Database: 'Whether every migration has run, and how big the tables are.',
       };
@@ -475,10 +475,81 @@ describe('AdminDashboard (#249)', () => {
       fireEvent.click(within(section).getByText('of $5.00 daily cap'));
       expect(window.location.hash).toBe('#cost');
     });
+
+    it('a click on a card\'s own label link is left to the link, not handled twice', () => {
+      const hash = vi.spyOn(window.location, 'hash', 'set');
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      const section = screen.getByRole('region', { name: '2 things need attention' });
+      fireEvent.click(within(section).getByRole('link', { name: 'AI spend · today' }));
+      expect(hash).not.toHaveBeenCalled();
+    });
+
+    it('marks the area in view in the navigation, and keeps it between sections', () => {
+      let report: (entries: { target: { id: string }; isIntersecting: boolean }[]) => void = () => {};
+      vi.stubGlobal(
+        'IntersectionObserver',
+        class {
+          constructor(callback: typeof report, options?: { rootMargin?: string }) {
+            if (options?.rootMargin === '-10% 0px -60% 0px') report = callback; // ours, not next/link's prefetch observers
+          }
+          observe() {}
+          unobserve() {}
+          disconnect() {}
+        }
+      );
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      const nav = screen.getByRole('navigation', { name: 'Sections' });
+      expect(within(nav).queryByRole('link', { current: 'page' })).toBeNull();
+      act(() => report([{ target: { id: 'errors' }, isIntersecting: true }]));
+      expect(within(nav).getByRole('link', { current: 'page' })).toHaveAttribute('href', '#errors');
+      // Two in the band at once: the one higher up the page wins. None in it: the last one stays.
+      act(() => report([{ target: { id: 'status' }, isIntersecting: true }]));
+      expect(within(nav).getByRole('link', { current: 'page' })).toHaveAttribute('href', '#status');
+      act(() => report([{ target: { id: 'status' }, isIntersecting: false }, { target: { id: 'errors' }, isIntersecting: false }]));
+      expect(within(nav).getByRole('link', { current: 'page' })).toHaveAttribute('href', '#status');
+    });
+
+    it('a Sheet left open does not come back when the window narrows again', () => {
+      let wide = false;
+      const listeners = new Set<() => void>();
+      vi.stubGlobal('matchMedia', () => ({
+        get matches() {
+          return wide;
+        },
+        addEventListener: (_: string, fn: () => void) => listeners.add(fn),
+        removeEventListener: (_: string, fn: () => void) => listeners.delete(fn),
+      }));
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Sections' }));
+      expect(screen.getByRole('navigation', { name: 'Sections' })).toBeInTheDocument();
+      wide = true;
+      act(() => listeners.forEach((fn) => fn()));
+      wide = false;
+      act(() => listeners.forEach((fn) => fn()));
+      fireEvent.click(screen.getByRole('button', { name: 'Sections' }));
+      // Opened once by the click above, not twice: one navigation, and it closes in one go.
+      fireEvent.click(within(screen.getByRole('navigation', { name: 'Sections' })).getAllByRole('link')[0]);
+      expect(screen.queryByRole('navigation', { name: 'Sections' })).toBeNull();
+    });
   });
 
   describe('page header (#282)', () => {
     const header = () => screen.getByRole('heading', { level: 1, name: 'Admin' }).closest('div')?.parentElement?.parentElement as HTMLElement;
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] });
+      vi.setSystemTime(new Date(NOW));
+    });
+    afterEach(() => vi.useRealTimers());
+
+    it('"Updated" reads the true age at once when the data is old (a cached page), and keeps counting', () => {
+      vi.setSystemTime(new Date(new Date(NOW).getTime() + 3 * 3_600_000));
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      expect(within(header()).getByText('Updated 3 h ago')).toBeInTheDocument();
+      act(() => {
+        vi.advanceTimersByTime(60 * 60_000);
+      });
+      expect(within(header()).getByText('Updated 4 h ago')).toBeInTheDocument();
+    });
 
     it('has the title, when the data was loaded with the exact time on hover, Refresh and the time range', () => {
       render(<AdminDashboard links={LINKS} data={fixture()} />);

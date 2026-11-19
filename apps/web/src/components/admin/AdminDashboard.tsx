@@ -1,29 +1,66 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Box, Grid, GridCol, Sheet, Stack, tokens } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import { countBySection } from "@/lib/admin/attention";
 import type { DashboardData } from "@/lib/admin/queries";
 import type { AdminLinks } from "@/lib/admin/links";
-import { AdminNav } from "./AdminNav";
+import { AdminNav, NAV_IDS } from "./AdminNav";
 import { PageHeader } from "./PageHeader";
 import { AiAgent, CostAndQuotas, Database, DebugLinks, Errors, Households, Overview, Status, WeeklyCycleSection } from "./sections";
 
 const DESKTOP_QUERY = `(min-width: ${tokens.base.breakpoint.lg})`;
 
-/** Whether the screen is wide enough for the side navigation. True on the server and where matchMedia is missing; the browser corrects it after hydrating. */
+// One MediaQueryList, kept (React reads the snapshot on every render); rebuilt only if matchMedia itself is replaced.
+let desktopQuery: { matchMedia: typeof window.matchMedia; list: MediaQueryList } | null = null;
+const desktopMedia = (): MediaQueryList | null => {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return null;
+  if (desktopQuery?.matchMedia !== window.matchMedia) desktopQuery = { matchMedia: window.matchMedia, list: window.matchMedia(DESKTOP_QUERY) };
+  return desktopQuery.list;
+};
+
+/**
+ * Whether the screen is wide enough for the side navigation. True on the server
+ * and where matchMedia is missing; the browser corrects it right after hydrating
+ * (so a phone briefly gets the desktop layout before the single column).
+ */
 function useIsDesktop(): boolean {
   return useSyncExternalStore(
     (onChange) => {
-      if (typeof window.matchMedia !== "function") return () => {};
-      const query = window.matchMedia(DESKTOP_QUERY);
-      query.addEventListener("change", onChange);
-      return () => query.removeEventListener("change", onChange);
+      const query = desktopMedia();
+      query?.addEventListener("change", onChange);
+      return () => query?.removeEventListener("change", onChange);
     },
-    () => (typeof window.matchMedia === "function" ? window.matchMedia(DESKTOP_QUERY).matches : true),
+    () => desktopMedia()?.matches ?? true,
     () => true
   );
+}
+
+/** The section nearest the top of the screen, for marking it in the navigation. Null until one scrolls into view, and where IntersectionObserver is missing. */
+function useActiveSection(ids: readonly string[]): string | null {
+  const [active, setActive] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    const visible = new Set<string>();
+    // The band between 10% and 40% down the screen: a section is "current" while it crosses it.
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) visible.add(entry.target.id);
+          else visible.delete(entry.target.id);
+        }
+        setActive((previous) => ids.find((id) => visible.has(id)) ?? previous);
+      },
+      { rootMargin: "-10% 0px -60% 0px" }
+    );
+    for (const id of ids) {
+      const element = document.getElementById(id);
+      if (element) observer.observe(element);
+    }
+    return () => observer.disconnect();
+  }, [ids]);
+  return active;
 }
 
 /**
@@ -38,6 +75,13 @@ function useIsDesktop(): boolean {
 export default function AdminDashboard({ data, links }: { data: DashboardData; links: AdminLinks }) {
   const desktop = useIsDesktop();
   const [navOpen, setNavOpen] = useState(false);
+  const current = useActiveSection(NAV_IDS);
+  // Widening the window swaps the Sheet for the sidebar: a Sheet left open must not come back when it narrows again.
+  const [wasDesktop, setWasDesktop] = useState(desktop);
+  if (desktop !== wasDesktop) {
+    setWasDesktop(desktop);
+    if (desktop) setNavOpen(false);
+  }
   const now = new Date(data.generatedAt);
   const counts = data.attention.ok ? countBySection(data.attention.data) : null;
   return (
@@ -49,7 +93,7 @@ export default function AdminDashboard({ data, links }: { data: DashboardData; l
             {desktop && (
               <GridCol span={12} spanLg={3}>
                 <Box position="sticky" top="16px">
-                  <AdminNav counts={counts} />
+                  <AdminNav counts={counts} current={current} />
                 </Box>
               </GridCol>
             )}
@@ -71,7 +115,15 @@ export default function AdminDashboard({ data, links }: { data: DashboardData; l
       </Box>
       {!desktop && (
         <Sheet isOpen={navOpen} onClose={() => setNavOpen(false)} position="left" title="Sections" width="20rem">
-          <AdminNav counts={counts} onNavigate={() => setNavOpen(false)} />
+          <AdminNav
+            counts={counts}
+            current={current}
+            onNavigate={(id) => {
+              setNavOpen(false);
+              // The Sheet's scroll lock lifts as it closes, which can undo the link's own jump: scroll again once it has.
+              requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView?.());
+            }}
+          />
         </Sheet>
       )}
     </Main>

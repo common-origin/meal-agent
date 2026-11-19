@@ -493,7 +493,8 @@ The page is laid out like a console (#282): `PageHeader` (title, "Updated … ag
 with the exact time in a tooltip, Refresh, the range as a Dropdown, and the
 household filter as a removable InputChip), `AdminNav` (the design system's
 SidebarNav, one anchor link per area with the number of inbox items in it as a
-badge; below the `lg` breakpoint it sits in a Sheet behind a Sections button),
+badge and the area in view marked current by an IntersectionObserver; below the
+`lg` breakpoint it sits in a Sheet behind a Sections button),
 each section on a raised `Box` surface (`Section` in `ui.tsx`: title and actions
 on one row, a one-line note, the long explanation in a Tooltip on an info button),
 KPI tiles that state their time frame and are clickable as a whole, and

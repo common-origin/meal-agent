@@ -68,8 +68,8 @@ export function Overview({ data, now, links }: { data: DashboardData; now: Date;
     <Section
       id="overview"
       title={headline.title}
-      note="From the last 24 hours and 7 days, across every household."
-      detail="Worked out each time the page loads, whatever range or household the page is filtered to. Nothing is emailed: this page is where problems show."
+      note="The inbox covers every household. The numbers below follow the filters."
+      detail="Worked out each time the page loads from the last 24 hours and 7 days, whatever range or household the page is filtered to. Nothing is emailed: this page is where problems show."
     >
       {!data.attention.ok ? <NotLoaded hint={data.attention.hint} /> : data.attention.data.length > 0 && <Inbox items={data.attention.data} links={links} now={now} />}
       <ResponsiveGrid cols={2} colsMd={4} gapX="4" gapY="4">
@@ -197,7 +197,7 @@ export function Errors({ data, now, range, links }: { data: Loaded<ErrorGroup[]>
     <Section
       id="errors"
       title="Errors"
-      note="Problems the app reported, grouped so repeats count once."
+      note="Grouped so repeats count once. Open a row for the details."
       detail="Open one to see where and when it happened. Severity and state come from the counts: a spike is today's count well over the usual daily rate, and a server-side error that hit two or more households is an Error. Messages are scrubbed of emails, links and ids."
       actions={<LinkButtons links={[{ label: "Runtime logs", href: links.targets.vercelLogs, external: true }]} />}
     >
@@ -355,7 +355,7 @@ export function Households({ data, range, selected, now }: { data: Loaded<Househ
     <Section
       id="households"
       title="Households"
-      note="Who is using the app, most recently active first."
+      note="Most recently active first. Select an ID to filter the page."
       detail="IDs are short on purpose (no names or emails), and You marks your own household. Select an ID to filter the errors, AI and usage sections; select it again to clear."
     >
       {!data.ok ? (

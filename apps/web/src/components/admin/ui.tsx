@@ -174,7 +174,10 @@ export function Tile({ label, value, note, tone, href }: { label: string; value:
       borderRadius="sm"
       p="md"
       cursor="pointer"
-      onClick={() => {
+      onClick={(event) => {
+        // The label is the real link: a click on it, or the end of selecting text, isn't a click on the card.
+        if (event.target instanceof Element && event.target.closest("a")) return;
+        if (window.getSelection()?.toString()) return;
         window.location.hash = href.replace(/^#/, "");
       }}
     >

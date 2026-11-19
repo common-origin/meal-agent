@@ -1,28 +1,45 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useSyncExternalStore, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Box, Button, Dropdown, IconButton, InputChip, Stack, Tooltip, Typography } from "@common-origin/design-system";
 import { ago, RANGES, RANGE_WORDS, utcStamp } from "@/lib/admin/format";
 import type { Range } from "@/lib/admin/types";
 
-/** A clock that follows real time, but never reads earlier than the data's own load time (a Refresh brings a newer one). */
+// A clock every header shares: the real time, refreshed every 30 seconds while something is listening.
+const clock = { now: 0, listeners: new Set<() => void>(), timer: undefined as ReturnType<typeof setInterval> | undefined };
+function tick() {
+  clock.now = Date.now();
+  clock.listeners.forEach((listener) => listener());
+}
+function subscribeClock(listener: () => void) {
+  clock.listeners.add(listener);
+  if (clock.listeners.size === 1) clock.timer = setInterval(tick, 30_000);
+  tick(); // the real time as soon as the browser is listening
+  return () => {
+    clock.listeners.delete(listener);
+    if (clock.listeners.size === 0) clearInterval(clock.timer);
+  };
+}
+
+/**
+ * The time to measure "Updated … ago" against: real time, but never earlier
+ * than the data's own load time (a Refresh brings a newer one). Hydration
+ * renders with the server snapshot (0, so the load time), which matches the
+ * server's HTML; React then re-reads the real time at once, so data served from
+ * a cache hours later reads its true age instead of "just now".
+ */
 function useClock(loadedAt: string): Date {
-  const loaded = new Date(loadedAt);
-  const [tick, setTick] = useState<Date | null>(null);
-  useEffect(() => {
-    const id = setInterval(() => setTick(new Date()), 30_000);
-    return () => clearInterval(id);
-  }, []);
-  return tick && tick > loaded ? tick : loaded;
+  const now = useSyncExternalStore(subscribeClock, () => clock.now, () => 0);
+  return new Date(Math.max(new Date(loadedAt).getTime(), now));
 }
 
 /**
  * The page header (#282): the title on the left; on the right when the data
  * was loaded (the exact time in a tooltip), a Refresh button and the time
  * range. The household filter, when there is one, is a removable chip.
- * The first render reads "just now" on the server and the browser alike, so
- * the clock ticking on never causes a hydration mismatch.
+ * The first render reads the same on the server and in the browser (see
+ * useClock), so the clock never causes a hydration mismatch.
  */
 export function PageHeader({ range, household, generatedAt, menu }: { range: Range; household: string | null; generatedAt: string; menu?: { onOpen: () => void } }) {
   const router = useRouter();
