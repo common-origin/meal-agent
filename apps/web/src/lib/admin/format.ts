@@ -136,6 +136,23 @@ export function formatDuration(ms: number): string {
 /** "2026-11-19 09:16 UTC". */
 export const utcStamp = (value: string | number | Date): string => new Date(value).toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
 
+/**
+ * "3 h ago (2026-11-19 09:16 UTC)": relative first, with the exact UTC time in
+ * visible text beside it. (Not the design system's DateFormatter: it formats in
+ * the viewer's time zone, so the server's HTML and the browser's would differ and
+ * fail to hydrate, and it can't show UTC.) "never" with no time.
+ */
+export function agoWithStamp(iso: string | null | undefined, now: Date): string {
+  return iso ? `${ago(iso, now)} (${utcStamp(iso)})` : 'never';
+}
+
+/** "18 Nov 11:00": a short UTC date and time, for a narrow column (the column says UTC). */
+export function utcShort(value: string | number | Date): string {
+  const date = new Date(value);
+  const day = date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  return `${day} ${date.toISOString().slice(11, 16)}`;
+}
+
 export const RANGE_WORDS: Record<Range, string> = { '24h': '24 hours', '7d': '7 days', '30d': '30 days' };
 
 /** "1 call", "2 calls". */

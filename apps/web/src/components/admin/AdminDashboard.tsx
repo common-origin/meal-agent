@@ -89,7 +89,14 @@ export default function AdminDashboard({ data, links }: { data: DashboardData; l
             {desktop && (
               <GridCol span={12} spanLg={3}>
                 {/* Stops below the app's sticky header, as in-page jumps do (globals.css). */}
-                <Box position="sticky" top="calc(var(--app-header-height, 0px) + var(--co-semantic-space-400))">
+                {/* A rail taller than the screen scrolls on its own, so the last items stay reachable. */}
+                <Box
+                  data-testid="admin-nav-rail"
+                  position="sticky"
+                  top="calc(var(--app-header-height, 0px) + var(--co-semantic-space-400))"
+                  maxHeight="calc(100vh - var(--app-header-height, 0px) - 2 * var(--co-semantic-space-400))"
+                  overflowY="auto"
+                >
                   <AdminNav counts={counts} current={current} />
                 </Box>
               </GridCol>
@@ -99,7 +106,7 @@ export default function AdminDashboard({ data, links }: { data: DashboardData; l
                 <Overview data={data} now={now} links={links} />
                 <Status data={data.status} now={now} links={links} />
                 <Errors data={data.errors} now={now} range={data.range} links={links} />
-                <AiAgent data={data.ai} />
+                <AiAgent data={data.ai} now={now} />
                 <CostAndQuotas data={data.cost} />
                 <Households data={data.households} range={data.range} selected={data.household} now={now} />
                 <WeeklyCycleSection data={data.cycle} />

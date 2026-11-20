@@ -312,7 +312,8 @@ describe('AdminDashboard (#249)', () => {
     data.status.data.latest = null;
     render(<AdminDashboard links={LINKS} data={data} />);
     const section = screen.getByRole('region', { name: 'Status' });
-    expect(within(section).getByText(/No health check has been recorded yet/)).toBeInTheDocument();
+    expect(within(section).getByText('No health check yet')).toBeInTheDocument();
+    expect(within(section).getByText('Run the Uptime workflow once from GitHub Actions.')).toBeInTheDocument();
     expect(within(section).queryByText('Uptime')).not.toBeInTheDocument();
   });
 
@@ -515,9 +516,9 @@ describe('AdminDashboard (#249)', () => {
     render(<AdminDashboard links={LINKS} data={fixture()} />);
     const section = screen.getByRole('region', { name: 'Households' });
     const table = within(section).getByRole('table', { name: 'Households' });
-    expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Household', 'Members', 'Last active', 'Plan this week', 'Settings done', 'AI calls / cost', 'Errors', 'Page filter']);
+    expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Household', 'Members', 'Last active (UTC)', 'Plan this week', 'Settings done', 'AI calls / cost', 'Errors', 'Page filter']);
     const first = within(within(table).getAllByRole('row')[1]).getAllByRole('cell');
-    expect(first.map((c) => c.textContent)).toEqual(['abcdef12You', '2+1 invited', '1 h ago', 'Yes', 'Yes', '12$0.200', '1 errorpending status', 'Filter']);
+    expect(first.map((c) => c.textContent)).toEqual(['abcdef12You', '2+1 invited', '1 h ago18 Nov 11:00', 'Yes', 'Yes', '12$0.200', '1 errorpending status', 'Filter']);
     const second = within(within(table).getAllByRole('row')[2]).getAllByRole('cell');
     expect(second.map((c) => c.textContent)).toEqual(['12345678', '1', 'never', 'No', 'No', '0$0.00', '0', 'Filter']);
     const link = within(section).getByRole('link', { name: 'Filter the page to household abcdef12' });
@@ -731,18 +732,19 @@ describe('AdminDashboard (#249)', () => {
     it('"Updated" reads the true age at once when the data is old (a cached page), and keeps counting', () => {
       vi.setSystemTime(new Date(new Date(NOW).getTime() + 3 * 3_600_000));
       render(<AdminDashboard links={LINKS} data={fixture()} />);
-      expect(within(header()).getByText('Updated 3 h ago')).toBeInTheDocument();
+      expect(within(header()).getByText('Updated 3 h ago (loaded 2026-11-18 12:07 UTC)')).toBeInTheDocument();
       act(() => {
         vi.advanceTimersByTime(60 * 60_000);
       });
-      expect(within(header()).getByText('Updated 4 h ago')).toBeInTheDocument();
+      expect(within(header()).getByText('Updated 4 h ago (loaded 2026-11-18 12:07 UTC)')).toBeInTheDocument();
     });
 
-    it('has the title, when the data was loaded with the exact time on hover, Refresh and the time range', () => {
+    it('has the title, when the data was loaded with the exact time in view, Refresh and the time range', () => {
       render(<AdminDashboard links={LINKS} data={fixture()} />);
       const bar = header();
-      expect(within(bar).getByText('Updated just now')).toBeInTheDocument();
-      expect(within(bar).getByText('Loaded 2026-11-18 12:07 UTC')).toBeInTheDocument(); // the tooltip's description
+      // The exact time is visible text beside the age: no hover-only tooltip, so no tab stop that has no name.
+      expect(within(bar).getByText('Updated just now (loaded 2026-11-18 12:07 UTC)')).toBeInTheDocument();
+      expect(bar.querySelectorAll('[tabindex="0"]:not(button, a, input, [role="button"], [role="combobox"])')).toHaveLength(0);
       expect(within(bar).getByRole('button', { name: /Refresh/ })).toBeEnabled();
       expect(within(bar).getByText('Time range')).toBeInTheDocument();
       expect(within(bar).getByRole('button', { name: /Time range/ })).toBeInTheDocument();
@@ -910,6 +912,118 @@ describe('AdminDashboard (#249)', () => {
   it('shows no email address or name anywhere on the page', () => {
     const { container } = render(<AdminDashboard links={LINKS} data={fixture()} />);
     expect(container.textContent).not.toMatch(/@/);
+  });
+
+  describe('formatting (#288)', () => {
+    it('durations: milliseconds under a second, else seconds to one decimal', () => {
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      const status = screen.getByRole('region', { name: 'Status' });
+      expect(within(status).getByText(/321 ms in total/)).toBeInTheDocument();
+      const ai = screen.getByRole('region', { name: 'AI agent' });
+      expect(within(ai).getByText(/· 900 ms$/)).toBeInTheDocument(); // the failed call
+      expect(within(ai).getByText('4.0 s')).toBeInTheDocument(); // p50
+      expect(screen.queryByText(/\d{4,} ms/)).toBeNull();
+    });
+
+    it('times: relative first with the exact UTC time beside it', () => {
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      const status = screen.getByRole('region', { name: 'Status' });
+      expect(within(status).getByText(/7 min ago \(2026-11-18 12:00 UTC\), 321 ms in total/)).toBeInTheDocument();
+      const ai = screen.getByRole('region', { name: 'AI agent' });
+      expect(within(ai).getByText('1 h ago (2026-11-18 11:00 UTC) · generation')).toBeInTheDocument();
+      const errors = screen.getByRole('region', { name: 'Errors' });
+      fireEvent.click(within(errors).getByRole('button', { name: /coles-search: lookup failed/ })); // the details mount once the row opens
+      expect(within(errors).getAllByText('37 min ago (2026-11-18 11:30 UTC)')).toHaveLength(2); // last seen, and the latest occurrence
+      expect(within(errors).getByText('2 h ago (2026-11-18 10:00 UTC)')).toBeInTheDocument(); // first seen
+      // A household's last activity is relative with the UTC time under it, and the inbox says exactly when an item started.
+      const households = screen.getByRole('region', { name: 'Households' });
+      expect(within(households).getByText('18 Nov 11:00')).toBeInTheDocument();
+      expect(within(screen.getByRole('region', { name: '2 things need attention' })).getByText('Started 1 h ago (2026-11-18 11:00 UTC)')).toBeInTheDocument();
+    });
+
+    it('dollar totals are MoneyDisplay, and under a cent they keep their precision', () => {
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      const cost = screen.getByRole('region', { name: 'Cost and quotas' });
+      expect(within(cost).getByText('$10.00')).toBeInTheDocument();
+      expect(within(cost).getByText('$17.00')).toBeInTheDocument();
+      cleanup();
+      const data = fixture();
+      if (!data.cost.ok) throw new Error('fixture');
+      data.cost.data.monthToDateUsd = 0.003;
+      data.cost.data.projectedMonthUsd = 0;
+      render(<AdminDashboard links={LINKS} data={data} />);
+      expect(within(screen.getByRole('region', { name: 'Cost and quotas' })).getByText('$0.003')).toBeInTheDocument();
+      expect(within(screen.getByRole('region', { name: 'Cost and quotas' })).getByText('$0.00')).toBeInTheDocument();
+    });
+
+    it('empty sections are the small EmptyState, with a title and a line of explanation', () => {
+      const data = fixture({ errors: { ok: true, data: [] }, households: { ok: true, data: [] } });
+      if (!data.ai.ok) throw new Error('fixture');
+      data.ai.data = { ...data.ai.data, by_task: [], failures: [] };
+      render(<AdminDashboard links={LINKS} data={data} />);
+      const empty = (section: string) => within(screen.getByRole('region', { name: section })).getByRole('status', { name: /^Empty state/ });
+      expect(empty('Errors')).toHaveAccessibleName('Empty state: No errors');
+      expect(empty('Errors')).toHaveTextContent('Nothing was recorded in this range.');
+      expect(empty('AI agent')).toHaveAccessibleName('Empty state: No AI calls');
+      expect(empty('Households')).toHaveAccessibleName('Empty state: No households yet');
+    });
+  });
+
+  describe('mobile and accessibility (#288)', () => {
+    it('the sticky side navigation scrolls on its own when taller than the screen', () => {
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      const rail = screen.getByTestId('admin-nav-rail');
+      expect(getComputedStyle(rail).position).toBe('sticky');
+      expect(getComputedStyle(rail).overflowY).toBe('auto');
+      // Viewport height, less the app header and the space above and below. (happy-dom can't resolve the vars, so read the rule itself.)
+      const css = Array.from(document.querySelectorAll('style')).map((tag) => tag.textContent ?? '').join('');
+      expect(css).toMatch(/max-height:\s*calc\(100vh - var\(--app-header-height, 0px\) - 2 \* var\(--co-semantic-space-400\)\)/);
+    });
+
+    it('headings run h1, then a section title per area, with no level skipped (apart from the design system EmptyState titles)', () => {
+      const data = fixture({ errors: { ok: true, data: [] } });
+      const { container } = render(<AdminDashboard links={LINKS} data={data} />);
+      const headings = Array.from(container.querySelectorAll('h1, h2, h3, h4, h5, h6')).filter((h) => !h.closest('[role="status"]'));
+      const levels = headings.map((h) => Number(h.tagName[1]));
+      expect(levels[0]).toBe(1);
+      expect(levels.filter((level) => level === 1)).toHaveLength(1);
+      levels.forEach((level, i) => {
+        if (i > 0) expect(level - levels[i - 1], `${headings[i].textContent} follows ${headings[i - 1].textContent}`).toBeLessThanOrEqual(1);
+      });
+    });
+
+    it('every section is a named region, and every table has a name', () => {
+      const { container } = render(<AdminDashboard links={LINKS} data={fixture()} />);
+      for (const section of Array.from(container.querySelectorAll('section'))) expect(section.getAttribute('aria-label'), section.id).toBeTruthy();
+      for (const table of screen.getAllByRole('table')) expect(table).toHaveAccessibleName();
+    });
+
+    it('every button, link and bar has a name, and every icon-only control says what it does', () => {
+      const { container } = render(<AdminDashboard links={LINKS} data={fixture({ household: 'abcdef12' })} />);
+      for (const role of ['button', 'link', 'progressbar', 'img'] as const) {
+        for (const element of screen.getAllByRole(role)) {
+          expect(element, `${role}: ${element.outerHTML.slice(0, 120)}`).toHaveAccessibleName();
+        }
+      }
+      // Controls inside collapsed rows aren't in the accessibility tree yet: each still carries a label or text for when it opens.
+      for (const element of Array.from(container.querySelectorAll('a, button'))) {
+        expect((element.getAttribute('aria-label') ?? element.textContent ?? '').trim(), element.outerHTML.slice(0, 120)).not.toBe('');
+      }
+      // The icon-only ones: the info buttons beside each section title, the chip's remove button.
+      expect(screen.getByRole('button', { name: 'About Households' })).toBeInTheDocument();
+      const iconOnly = Array.from(container.querySelectorAll('button')).filter((b) => !(b.textContent ?? '').trim());
+      expect(iconOnly.length).toBeGreaterThan(0);
+      for (const button of iconOnly) expect(button.getAttribute('aria-label'), button.outerHTML.slice(0, 120)).toBeTruthy();
+    });
+
+    it('on a phone the Sections menu button is named, and the page has no horizontal-only content in a hover tooltip', () => {
+      vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} }));
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      expect(screen.getByRole('button', { name: 'Sections' })).toHaveAccessibleName('Sections');
+      // Hover-only text isn't needed to act: the exact times are visible, the env var names are visible.
+      expect(screen.getByText(/loaded 2026-11-18 12:07 UTC/)).toBeInTheDocument();
+      expect(screen.getByText('Set with AI_DAILY_SPEND_CAP_USD in Vercel; raise it to allow more.')).toBeInTheDocument();
+    });
   });
 
   // React's generated ids (`_r_3_`, for the tooltip's description) differ between two renders in one test.

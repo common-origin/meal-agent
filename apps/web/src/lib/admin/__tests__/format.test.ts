@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { HouseholdRow } from '../types';
 import {
   ago,
+  agoWithStamp,
   formatBytes,
   formatCount,
   formatDuration,
@@ -9,6 +10,7 @@ import {
   formatUsd,
   hasManyDeadTuples,
   sortHouseholds,
+  utcShort,
   utcStamp,
   parseHouseholdParam,
   parseRange,
@@ -184,5 +186,18 @@ describe('readability helpers (#270)', () => {
     expect(quotaLevel(5, 5, 0.8)).toBe('error');
     expect(quotaLevel(7, 5, 0.8)).toBe('error');
     expect(quotaLevel(0, 0, 0.8)).toBe('unknown');
+  });
+
+  it('shows relative time first with the exact UTC time beside it', () => {
+    const now = new Date('2026-11-19T12:00:00Z');
+    expect(agoWithStamp('2026-11-19T09:16:30Z', now)).toBe('3 h ago (2026-11-19 09:16 UTC)');
+    expect(agoWithStamp('2026-11-19T11:59:50Z', now)).toBe('just now (2026-11-19 11:59 UTC)');
+    expect(agoWithStamp(null, now)).toBe('never');
+    expect(agoWithStamp(undefined, now)).toBe('never');
+  });
+
+  it('shortens a UTC time for a narrow column, in UTC whatever the viewer\'s time zone', () => {
+    expect(utcShort('2026-11-19T09:16:30Z')).toBe('19 Nov 09:16');
+    expect(utcShort('2026-12-31T23:59:00Z')).toBe('31 Dec 23:59');
   });
 });

@@ -2,20 +2,35 @@
 
 /**
  * Small building blocks for the /admin page. Everything here is a design-system
- * part (Box, ResponsiveGrid, Stack, List/ListItem, ProgressBar, Typography,
- * InlineAlert) arranged for this page: no table or chart code, and no custom
- * CSS beyond one inline `flex` in UptimeStrip that sizes each run of slots
- * (the design system's Box has no flex-grow prop).
- * The design system has no Table or DataTable, so DataGrid lays columns out on
- * its Grid with ARIA table roles (gap: a DataTable replaces it), and BarRow is
- * the stand-in for a bar chart (gap: a chart or BarList replaces it).
+ * part (Box, Grid, ResponsiveGrid, Stack, List/ListItem, ProgressBar, Tooltip,
+ * Typography, EmptyState, MoneyDisplay, InlineAlert) arranged for this page, with
+ * no custom CSS beyond one inline `flex` in UptimeStrip that sizes each run of
+ * slots (the design system's Box has no flex-grow prop).
+ *
+ * Design-system gaps these stand in for (each says what would replace it):
+ * - DataGrid: no Table or DataTable, so Grid rows with ARIA table roles and a
+ *   header row. A DataTable replaces it.
+ * - BarRow: no chart or BarList; ProgressBar rows. A chart or BarList replaces it.
+ * - UptimeStrip: no Tracker; Box cells with Tooltips. A Tracker replaces it.
+ * - Meter, Tile, Section: no Card; Boxes on surface tokens. A Card replaces them.
+ * - SeverityLabel: StatusLabel has no `warning` status, so a warning is `pending`.
+ * - Responsive show/hide: none, so useMediaQuery decides header row vs. per-cell
+ *   labels (the wide layout renders first on the server). A responsive-visibility
+ *   prop replaces it.
+ * - EmptyState's title is always an h4 and it is a live region, which skips a
+ *   heading level under a section's h2.
+ * - ListItem renders primary in a paragraph and secondary in a span: inline content only.
+ * - No tabular numerals or right-align for numbers: numeric columns right-justify
+ *   with a Stack.
+ * - DateFormatter formats in the viewer's time zone (hydration mismatch, and no
+ *   UTC), so times are visible text from lib/admin/format.ts.
  */
 
 import { useState, type ReactNode } from "react";
-import { Box, Grid, GridCol, IconButton, InlineAlert, List, ListItem, ProgressBar, ResponsiveGrid, Stack, StatusLabel, Tooltip, Typography, tokens } from "@common-origin/design-system";
+import { Box, EmptyState, Grid, GridCol, IconButton, InlineAlert, List, ListItem, MoneyDisplay, ProgressBar, ResponsiveGrid, Stack, StatusLabel, Tooltip, Typography, tokens } from "@common-origin/design-system";
 import type { Tone } from "@/lib/admin/headline";
 import type { Level } from "@/lib/admin/types";
-import { ago, formatDuration, utcStamp } from "@/lib/admin/format";
+import { ago, formatDuration, formatUsd, utcStamp } from "@/lib/admin/format";
 import { useMediaQuery } from "./useMediaQuery";
 
 // The one severity vocabulary for the page (#279). The design system has no warning status
@@ -411,10 +426,25 @@ export function Field({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function Empty({ children }: { children: ReactNode }) {
-  return (
-    <Typography variant="body" color="subdued">
-      {children}
-    </Typography>
-  );
+/**
+ * An empty section: the design system's small EmptyState. (Its title is always an
+ * h4 and it is a live region: a gap, since under a section's h2 that skips a level.)
+ */
+export function Empty({ title, children }: { title: string; children: string }) {
+  return <EmptyState size="small" illustration="empty" title={title} description={children} />;
+}
+
+/**
+ * A dollar amount: MoneyDisplay (two decimals, so a total reads "$17.00"), except
+ * under a cent, where two decimals would show a real cost as "$0.00".
+ */
+export function Dollars({ amount }: { amount: number }) {
+  if (amount !== 0 && Math.abs(amount) < 0.01) {
+    return (
+      <Typography variant="h3" as="span">
+        {formatUsd(amount)}
+      </Typography>
+    );
+  }
+  return <MoneyDisplay amount={amount} currency="USD" locale="en-US" size="large" />;
 }

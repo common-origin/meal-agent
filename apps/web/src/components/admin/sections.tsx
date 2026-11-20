@@ -12,12 +12,12 @@ import { Button, List, ListItem, ResponsiveGrid, Stack, Tag, Typography } from "
 import { attentionWhen, COLES_WARN_FRACTION, SPEND_WARN_FRACTION } from "@/lib/admin/attention";
 import { errorInvestigateLinks, prioritiseErrors } from "@/lib/admin/errors";
 import { resolveAction, type AdminLink, type AdminLinks, type ResolvedAction } from "@/lib/admin/links";
-import { ago, ERROR_GROUP_LIMIT, formatBytes, formatCount, formatDuration, formatMs, formatUsd, hasManyDeadTuples, MIN_FOR_PERCENT, plural, quotaLevel, successPct, utcStamp, weekLabel } from "@/lib/admin/format";
+import { ago, agoWithStamp, ERROR_GROUP_LIMIT, formatBytes, formatCount, formatDuration, formatMs, formatUsd, hasManyDeadTuples, MIN_FOR_PERCENT, plural, quotaLevel, successPct, utcShort, utcStamp, weekLabel } from "@/lib/admin/format";
 import { computeHeadline } from "@/lib/admin/headline";
 import { aiProblems, databaseSummary, weekSteps, weeklyFunnel } from "@/lib/admin/summaries";
 import type { DashboardData } from "@/lib/admin/queries";
 import type { AiSummary, AiTaskRow, AttentionItem, CostData, DbStat, ErrorGroup, HouseholdRow, Loaded, Range, SchemaCheck, StatusData, WeeklyCycle } from "@/lib/admin/types";
-import { Bar, BarRow, DataGrid, Disclosure, Empty, ExpandableItem, Field, Meter, NotLoaded, Section, SeverityLabel, Stat, Stats, Tile, UptimeStrip, type Column } from "./ui";
+import { Bar, BarRow, DataGrid, Disclosure, Dollars, Empty, ExpandableItem, Field, Meter, NotLoaded, Section, SeverityLabel, Stat, Stats, Tile, UptimeStrip, type Column } from "./ui";
 
 const when = utcStamp;
 const dot = (parts: (string | null | false | undefined)[]) => parts.filter(Boolean).join(" · ");
@@ -43,6 +43,11 @@ function Inbox({ items, links, now }: { items: AttentionItem[]; links: AdminLink
         <ExpandableItem key={item.id} primary={item.title} secondary={dot([item.where, attentionWhen(item, now)])} badge={<SeverityLabel level={item.severity} />}>
           <Stack direction="column" gap="md">
             <Typography variant="body">{item.message}</Typography>
+            {item.since && (
+              <Typography variant="small" color="subdued">
+                {`Started ${agoWithStamp(item.since, now)}`}
+              </Typography>
+            )}
             <Stack direction="column" gap="xs">
               <Typography variant="label">How to fix</Typography>
               {item.fix.map((step, i) => (
@@ -100,12 +105,12 @@ function StatusBody({ status, now }: { status: StatusData; now: Date }) {
   const incident = uptime.lastIncident;
   const checks = latest ? Object.entries(latest.checks ?? {}) : [];
   const failing = checks.filter(([, check]) => !check.ok).map(([name]) => name);
-  if (!latest) return <Empty>No health check has been recorded yet. Run the Uptime workflow once from GitHub Actions.</Empty>;
+  if (!latest) return <Empty title="No health check yet">Run the Uptime workflow once from GitHub Actions.</Empty>;
   return (
     <Stack direction="column" gap="lg">
       <Stack direction="column" gap="sm">
         <Typography variant="body">
-          {checks.length === 0 ? "The check recorded no individual results" : failing.length === 0 ? `All ${checks.length} checks passed` : `${failing.join(", ")} failing`} {ago(latest.created_at, now)} ({when(latest.created_at)}, {latest.total_latency_ms} ms in total).
+          {checks.length === 0 ? "The check recorded no individual results" : failing.length === 0 ? `All ${checks.length} checks passed` : `${failing.join(", ")} failing`} {agoWithStamp(latest.created_at, now)}, {formatMs(latest.total_latency_ms)} in total.
         </Typography>
         <Stack direction="row" gap="md" wrap>
           {checks.map(([name, check]) => (
@@ -123,7 +128,7 @@ function StatusBody({ status, now }: { status: StatusData; now: Date }) {
 
       {uptime.monitoringSince !== null && (
         <Typography variant="small" color="subdued">
-          Monitoring began {ago(new Date(uptime.monitoringSince).toISOString(), now)} ({when(uptime.monitoringSince)}), so the uptime below covers that time rather than the whole range.
+          Monitoring began {agoWithStamp(new Date(uptime.monitoringSince).toISOString(), now)}, so the uptime below covers that time rather than the whole range.
         </Typography>
       )}
 
@@ -171,15 +176,15 @@ function ErrorDetails({ group, now, range, links }: { group: ErrorGroup; now: Da
         <Field label="Source" value={group.source} />
         <Field label="Households affected" value={String(group.households)} />
         <Field label="Events" value={events} />
-        <Field label="First seen" value={`${ago(group.first_seen, now)} (${when(group.first_seen)})`} />
-        <Field label="Last seen" value={`${ago(group.last_seen, now)} (${when(group.last_seen)})`} />
+        <Field label="First seen" value={agoWithStamp(group.first_seen, now)} />
+        <Field label="Last seen" value={agoWithStamp(group.last_seen, now)} />
         <Field label="Releases" value={group.releases.join(", ") || "–"} />
       </ResponsiveGrid>
       <Stack direction="column" gap="xs">
         <Typography variant="label">Recent occurrences</Typography>
         <List>
           {group.latest.map((o) => (
-            <ListItem key={`${o.created_at}-${o.release}-${o.digest ?? ""}`} primary={when(o.created_at)} secondary={dot([`release ${o.release}`, o.source, contextText(o.context, o.digest)])} />
+            <ListItem key={`${o.created_at}-${o.release}-${o.digest ?? ""}`} primary={agoWithStamp(o.created_at, now)} secondary={dot([`release ${o.release}`, o.source, contextText(o.context, o.digest)])} />
           ))}
         </List>
       </Stack>
@@ -203,7 +208,7 @@ export function Errors({ data, now, range, links }: { data: Loaded<ErrorGroup[]>
       {!data.ok ? (
         <NotLoaded hint={data.hint} />
       ) : data.data.length === 0 ? (
-        <Empty>No errors in this range.</Empty>
+        <Empty title="No errors">Nothing was recorded in this range.</Empty>
       ) : (
         <Stack direction="column" gap="sm">
           {data.data.length >= ERROR_GROUP_LIMIT && (
@@ -240,7 +245,7 @@ export function Errors({ data, now, range, links }: { data: Loaded<ErrorGroup[]>
   );
 }
 
-export function AiAgent({ data }: { data: Loaded<AiSummary> }) {
+export function AiAgent({ data, now }: { data: Loaded<AiSummary>; now: Date }) {
   return (
     <Section
       id="ai"
@@ -248,7 +253,7 @@ export function AiAgent({ data }: { data: Loaded<AiSummary> }) {
       note="Per task over the range. p50 is the typical call, p95 the slowest 5%."
       detail="How many calls the AI agent made, how often they worked, how long they took (p50 is the median, p95 is the time 95% of calls beat) and what they cost. Tokens are the average per call. Days run midnight to midnight UTC."
     >
-      {!data.ok ? <NotLoaded hint={data.hint} /> : <AiBody ai={data.data} />}
+      {!data.ok ? <NotLoaded hint={data.hint} /> : <AiBody ai={data.data} now={now} />}
     </Section>
   );
 }
@@ -270,9 +275,9 @@ const AI_COLUMNS: Column<AiTaskRow>[] = [
   { id: "cost", header: "Cost", span: 1, numeric: true, narrowSpan: 4, cell: (r) => formatUsd(Number(r.cost_usd)) },
 ];
 
-function AiBody({ ai }: { ai: AiSummary }) {
+function AiBody({ ai, now }: { ai: AiSummary; now: Date }) {
   const maxCalls = Math.max(1, ...ai.daily.map((day) => day.calls));
-  if (ai.by_task.length === 0) return <Empty>No AI calls in this range.</Empty>;
+  if (ai.by_task.length === 0) return <Empty title="No AI calls">None in this range.</Empty>;
   return (
     <Stack direction="column" gap="lg">
       <DataGrid
@@ -305,14 +310,14 @@ function AiBody({ ai }: { ai: AiSummary }) {
       <Stack direction="column" gap="xs">
         <Typography variant="label">Latest failed calls</Typography>
         {ai.failures.length === 0 ? (
-          <Empty>No failed calls in this range.</Empty>
+          <Empty title="No failed calls">None in this range.</Empty>
         ) : (
           <List>
             {ai.failures.map((f) => (
               <ListItem
                 key={`${f.created_at}-${f.task}-${f.model}-${f.status}-${f.error_code ?? ""}-${f.latency_ms}`}
-                primary={`${when(f.created_at)} · ${f.task}`}
-                secondary={dot([f.model, f.status, f.error_code, `${f.latency_ms} ms`])}
+                primary={`${agoWithStamp(f.created_at, now)} · ${f.task}`}
+                secondary={dot([f.model, f.status, f.error_code, formatMs(f.latency_ms)])}
               />
             ))}
           </List>
@@ -364,8 +369,8 @@ function CostBody({ cost }: { cost: CostData }) {
         )}
       </ResponsiveGrid>
       <Stats>
-        <Stat label="Month to date" value={formatUsd(cost.monthToDateUsd)} note={`Day ${cost.daysElapsed.toFixed(1)} of ${cost.daysInMonth}`} />
-        <Stat label="Projected month end" value={formatUsd(cost.projectedMonthUsd)} note="This month so far, scaled up to a full month" />
+        <Stat label="Month to date" value={<Dollars amount={cost.monthToDateUsd} />} note={`Day ${cost.daysElapsed.toFixed(1)} of ${cost.daysInMonth}`} />
+        <Stat label="Projected month end" value={<Dollars amount={cost.projectedMonthUsd} />} note="This month so far, scaled up to a full month" />
       </Stats>
     </Stack>
   );
@@ -373,7 +378,7 @@ function CostBody({ cost }: { cost: CostData }) {
 
 export function Households({ data, range, selected, now }: { data: Loaded<HouseholdRow[]>; range: Range; selected: string | null; now: Date }) {
   const href = (shortId: string) => (shortId === selected ? `/admin?range=${range}#households` : `/admin?range=${range}&household=${shortId}#households`);
-  // Out of 12: ID 2, members 1, last active 1, plan 1, settings 1, AI 2, errors 2 (a status label), filter 2.
+  // Out of 12: ID 2, members 1, last active 2, plan 1, settings 1, AI 1, errors 2 (a status label), filter 2.
   const columns: Column<HouseholdRow>[] = [
     {
       id: "id",
@@ -407,13 +412,29 @@ export function Households({ data, range, selected, now }: { data: Loaded<Househ
         </Stack>
       ),
     },
-    { id: "active", header: "Last active", span: 1, cell: (h) => ago(h.last_active, now) },
+    {
+      id: "active",
+      header: "Last active (UTC)",
+      span: 2,
+      cell: (h) => (
+        <Stack direction="column" gap="none">
+          <Typography variant="small" as="div">
+            {ago(h.last_active, now)}
+          </Typography>
+          {h.last_active && (
+            <Typography variant="caption" color="subdued" as="div">
+              {utcShort(h.last_active)}
+            </Typography>
+          )}
+        </Stack>
+      ),
+    },
     { id: "plan", header: "Plan this week", span: 1, cell: (h) => (h.has_plan_this_week ? "Yes" : "No") },
     { id: "settings", header: "Settings done", span: 1, cell: (h) => (h.settings_complete ? "Yes" : "No") },
     {
       id: "ai",
       header: "AI calls / cost",
-      span: 2,
+      span: 1,
       numeric: true,
       cell: (h) => (
         <Stack direction="column" gap="none">
@@ -455,7 +476,7 @@ export function Households({ data, range, selected, now }: { data: Loaded<Househ
       {!data.ok ? (
         <NotLoaded hint={data.hint} />
       ) : data.data.length === 0 ? (
-        <Empty>No households yet.</Empty>
+        <Empty title="No households yet">Households appear here once someone signs up.</Empty>
       ) : (
         <DataGrid label="Households" columns={columns} rows={data.data} rowKey={(h) => h.shortId} selected={(h) => h.shortId === selected} />
       )}
@@ -485,8 +506,8 @@ export function WeeklyCycleSection({ data }: { data: Loaded<WeeklyCycle> }) {
 /** The newest week as ranked bars, one per step of the routine. Percentages only from 10 composed plans (MIN_FOR_PERCENT); under that, counts. */
 function Funnel({ cycle }: { cycle: WeeklyCycle }) {
   const funnel = weeklyFunnel(cycle);
-  if (!funnel) return <Empty>No weekly plans have been composed yet.</Empty>;
-  if (funnel.composed === 0) return <Empty>{`Week of ${funnel.label}: no household has composed a plan yet.`}</Empty>;
+  if (!funnel) return <Empty title="No plans yet">No weekly plans have been composed yet.</Empty>;
+  if (funnel.composed === 0) return <Empty title="No plans this week">{`Week of ${funnel.label}: no household has composed a plan yet.`}</Empty>;
   return (
     <Stack direction="column" gap="sm">
       <Stack direction="column" gap="xs">
@@ -553,7 +574,7 @@ function CycleBody({ cycle }: { cycle: WeeklyCycle }) {
 
       <Disclosure title="Raw event counts" summary={countsSorted.length === 0 ? "none in these weeks" : plural(countsSorted.length, "kind")}>
         {countsSorted.length === 0 ? (
-          <Empty>No events in these weeks.</Empty>
+          <Empty title="No events">None in these weeks.</Empty>
         ) : (
           <Stack direction="row" gap="sm" wrap>
             {countsSorted.map(([type, n]) => (
