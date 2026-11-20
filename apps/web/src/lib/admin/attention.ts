@@ -10,7 +10,7 @@
  */
 
 import { ago, shortId } from './format';
-import type { AiSummary, AttentionAction, AttentionItem, ErrorGroup, HealthCheckRow, HouseholdRowRaw, SchemaCheck } from './types';
+import type { AiSummary, AttentionAction, AttentionItem, AttentionSection, ErrorGroup, HealthCheckRow, HouseholdRowRaw, SchemaCheck } from './types';
 
 export const SPIKE_MIN_24H = 5;
 export const SPIKE_FACTOR = 3;
@@ -350,6 +350,15 @@ export function computeAttention(input: AttentionInput): AttentionItem[] {
 
   // Errors before warnings, otherwise in the order found.
   return [...items.filter((item) => item.severity === 'error'), ...items.filter((item) => item.severity === 'warning')];
+}
+
+export type AttentionCounts = Record<AttentionSection, number>;
+
+/** How many attention items belong to each area of the page, for the navigation badges. */
+export function countBySection(items: AttentionItem[]): AttentionCounts {
+  const counts: AttentionCounts = { status: 0, errors: 0, ai: 0, cost: 0, households: 0, database: 0 };
+  for (const item of items) counts[item.section] += 1;
+  return counts;
 }
 
 /** "since 3 h ago" when the rule knows when it started, else the period it looked at. */

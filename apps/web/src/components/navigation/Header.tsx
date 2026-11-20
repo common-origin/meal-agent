@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Stack, Typography, Button, Box, tokens } from "@common-origin/design-system";
@@ -8,6 +8,9 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useGenerationActivity } from "@/components/generation/GenerationActivityProvider";
 import { clearHouseholdScopedCaches } from "@/lib/storage";
+
+const HEADER_ID = "app-header";
+const HEADER_HEIGHT_VAR = "--app-header-height";
 
 const NAV_ITEMS = [
   { href: '/plan', label: 'Plan' },
@@ -55,13 +58,35 @@ export default function Header() {
   };
 
   // Don't show header on landing, login, or signup pages
-  if (pathname === "/" || pathname === "/login" || pathname === "/signup") {
+  const hidden = pathname === "/" || pathname === "/login" || pathname === "/signup";
+
+  // The header is sticky, so it would cover whatever an in-page link jumps to. Its height goes in
+  // --app-header-height, which globals.css adds to the page's scroll-padding-top (and sticky parts
+  // such as /admin's side navigation use to stop below it). Kept current as the header wraps.
+  useEffect(() => {
+    const root = document.documentElement;
+    const header = document.getElementById(HEADER_ID);
+    if (hidden || !header) return;
+    const publish = () => root.style.setProperty(HEADER_HEIGHT_VAR, `${header.offsetHeight}px`);
+    publish();
+    // A page opened at #id was scrolled there before this ran, with no room for the header: scroll again now there is.
+    if (window.location.hash) document.getElementById(decodeURIComponent(window.location.hash.slice(1)))?.scrollIntoView();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(publish);
+    observer?.observe(header);
+    return () => {
+      observer?.disconnect();
+      root.style.removeProperty(HEADER_HEIGHT_VAR);
+    };
+  }, [hidden]);
+
+  if (hidden) {
     return null;
   }
 
   return (
     <Box
       as="header"
+      id={HEADER_ID}
       borderBottom="default"
       p="lg"
       bg="surface.base"

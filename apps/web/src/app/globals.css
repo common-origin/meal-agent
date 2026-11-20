@@ -13,6 +13,12 @@ body {
   overflow-x: clip;
 }
 
+/* In-page jumps (#id links, scrollIntoView) stop below the sticky header, whose height
+   Header.tsx keeps in --app-header-height (0 where there's no header), plus a little room. */
+html {
+  scroll-padding-top: calc(var(--app-header-height, 0px) + var(--co-semantic-space-400));
+}
+
 body {
   background: var(--background);
   /* The design system's body font (Inter), so text outside its components doesn't fall back to

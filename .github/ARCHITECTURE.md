@@ -466,7 +466,7 @@ tiles (status, errors, AI spend today, active households) that link to their
 sections. Sentences that say what a table means (the weekly-cycle
 summary, AI problems, the migrations line) are in `lib/admin/summaries.ts`.
 Detail most visits don't need (week-by-week table, raw event counts, the table
-list) sits in closed `<details>`. In the households table, `isYou` marks the
+list) sits in closed expandable rows (`Disclosure` in `ui.tsx`). In the households list, `isYou` marks the
 signed-in admin's own household (looked up server-side from `household_members`;
 best effort, and the user ID never reaches the page), and rows are sorted by
 last activity. Dead-tuple warnings only apply to tables with at least 1,000
@@ -489,9 +489,19 @@ household's own time zone (`family_settings.full_settings.location.timeZone`
 when Postgres knows it), else Australia/Sydney (`lib/timeZones.ts`); recipe
 creation dates are bucketed in Australia/Sydney. Percentiles are computed in
 SQL (`percentile_cont`), the attention rules and projections in TypeScript.
+The page is laid out like a console (#282): `PageHeader` (title, "Updated … ago"
+with the exact time in a tooltip, Refresh, the range as a Dropdown, and the
+household filter as a removable InputChip), `AdminNav` (the design system's
+SidebarNav, one anchor link per area with the number of inbox items in it as a
+badge and the area in view marked current by an IntersectionObserver; below the
+`lg` breakpoint it sits in a Sheet behind a Sections button),
+each section on a raised `Box` surface (`Section` in `ui.tsx`: title and actions
+on one row, a one-line note, the long explanation in a Tooltip on an info button),
+KPI tiles that state their time frame and are clickable as a whole, and
+`data-co-density="compact"` on the whole region.
 Components are in `components/admin/`: design-system parts and its layout grid
-only (`ResponsiveGrid`, `Box`, `Stack`, `TabBar`, `ProgressBar`, `List`/`ListItem`
-with expandable rows), no custom CSS, table or chart code; the design system has
+only (`Grid`, `ResponsiveGrid`, `Box`, `Stack`, `SidebarNav`, `Sheet`, `Dropdown`,
+`ProgressBar`, `StatusLabel`, `List`/`ListItem` with expandable rows), no custom CSS, table or chart code; the design system has
 no Table, so rows are list items with their numbers in the secondary line, and
 `designSystemOnly.test.ts` fails if `styled-components`, `<table>` or `<details>`
 return. The page shows household short IDs only, never names or emails. The

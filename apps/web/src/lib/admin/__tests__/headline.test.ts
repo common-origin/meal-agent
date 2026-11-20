@@ -81,13 +81,13 @@ describe('computeHeadline (#270)', () => {
   });
 
   it('errors tile: total occurrences and how many kinds, labelled with the range', () => {
-    expect(tile(computeHeadline(data(), now), 'errors')).toMatchObject({ label: 'Errors, last 7 days', value: '0', tone: 'ok' });
-    expect(tile(computeHeadline(data({ range: '24h', errors: { ok: true, data: [group(3), group(2)] } }), now), 'errors')).toMatchObject({ label: 'Errors, last 24 hours', value: '5', note: '2 kinds of error', tone: 'warning' });
+    expect(tile(computeHeadline(data(), now), 'errors')).toMatchObject({ label: 'Errors · 7 days', value: '0', tone: 'ok' });
+    expect(tile(computeHeadline(data({ range: '24h', errors: { ok: true, data: [group(3), group(2)] } }), now), 'errors')).toMatchObject({ label: 'Errors · 24 hours', value: '5', note: '2 kinds of error', tone: 'warning' });
     expect(tile(computeHeadline(data({ errors: { ok: true, data: [group(1)] } }), now), 'errors').note).toBe('1 kind of error');
   });
 
   it('errors tile says when the page is filtered to one household', () => {
-    expect(tile(computeHeadline(data({ household: 'abcdef12' }), now), 'errors').label).toBe('Errors, last 7 days, household abcdef12');
+    expect(tile(computeHeadline(data({ household: 'abcdef12' }), now), 'errors').label).toBe('Errors · 7 days · household abcdef12');
   });
 
   it('AI spend tile warns from 80% of the daily cap and fails at 100%', () => {
