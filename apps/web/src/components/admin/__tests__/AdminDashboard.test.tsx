@@ -425,8 +425,8 @@ describe('AdminDashboard (#249)', () => {
     render(<AdminDashboard links={LINKS} data={fixture()} />);
     const cost = screen.getByRole('region', { name: 'Cost and quotas' });
     const meters = [
-      { label: 'AI spend today (UTC)', value: '$1.00 of $5.00', status: 'Status: OK', note: '20% of the daily cap, which resets at midnight UTC', env: 'AI_DAILY_SPEND_CAP_USD' },
-      { label: 'Coles lookups, 2026-11', value: '850 of 1000', status: 'Status: Near the limit', note: '150 remaining this month', env: 'COLES_API_MONTHLY_LIMIT' },
+      { label: 'AI spend today (UTC)', value: '$1.00 of $5.00', status: 'Status: OK', note: '20% of the daily cap, which resets at midnight UTC', limit: 'Set with AI_DAILY_SPEND_CAP_USD in Vercel; raise it to allow more.' },
+      { label: 'Coles lookups, 2026-11', value: '850 of 1000', status: 'Status: Near the limit', note: '150 remaining this month', limit: 'Set with COLES_API_MONTHLY_LIMIT in Vercel; keep it within your RapidAPI plan.' },
     ];
     for (const meter of meters) {
       const card = within(cost).getByTestId(`meter-${meter.label}`);
@@ -435,8 +435,18 @@ describe('AdminDashboard (#249)', () => {
       expect(within(card).getByRole('status')).toHaveAttribute('aria-label', meter.status);
       expect(within(card).getByRole('progressbar', { name: `${meter.label}: ${meter.value}` })).toBeInTheDocument();
       expect(within(card).getByText(meter.note)).toBeInTheDocument();
-      expect(within(card).getByText(`Raise the limit with ${meter.env} in Vercel.`)).toBeInTheDocument();
+      expect(within(card).getByText(meter.limit)).toBeInTheDocument();
     }
+  });
+
+  it('cost and quotas: just under the cap reads 99%, not 100%, beside a "near the limit" label', () => {
+    const data = fixture();
+    if (!data.cost.ok) throw new Error('fixture');
+    data.cost.data.spendTodayUsd = 4.98;
+    render(<AdminDashboard links={LINKS} data={data} />);
+    const cost = screen.getByRole('region', { name: 'Cost and quotas' });
+    expect(within(cost).getByText('99% of the daily cap, which resets at midnight UTC')).toBeInTheDocument();
+    expect(within(cost).getAllByText('Near the limit')).toHaveLength(2);
   });
 
   it('cost and quotas: at the cap the meter is an error', () => {
@@ -794,6 +804,7 @@ describe('AdminDashboard (#249)', () => {
     expect(bar('Sent to Coles: 0 of 2')).toHaveAttribute('aria-valuenow', '0');
     expect(bar('Done: 1 of 2')).toHaveAttribute('aria-valuenow', '50');
     expect(within(section).getByText('Week of 16 Nov, households at each step')).toBeInTheDocument();
+    expect(within(section).getByText('2 households in total. Each bar is a step against the plans composed.')).toBeInTheDocument();
     expect(within(section).getByTestId('bar-row-Done')).toHaveTextContent('1'); // a count, not "50%": under 10 plans
     expect(within(section).getByText('swap 5')).toBeInTheDocument();
   });
@@ -806,7 +817,7 @@ describe('AdminDashboard (#249)', () => {
     const section = screen.getByRole('region', { name: 'Weekly cycle and usage' });
     expect(within(section).getByRole('progressbar', { name: 'Composed: 2 of 2' })).toBeInTheDocument();
     expect(within(section).queryByRole('progressbar', { name: /^Confirmed/ })).toBeNull();
-    expect(within(section).getByText("Migration 020 isn't applied, so every step after composing shows 0.")).toBeInTheDocument();
+    expect(within(section).getByText("Migration 020 isn't applied, so the steps after composing aren't charted above, and show 0 in the week-by-week list.")).toBeInTheDocument();
   });
 
   it('weekly cycle: shows percentages once there are 10 or more plans in a week', () => {

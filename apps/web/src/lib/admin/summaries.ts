@@ -15,24 +15,33 @@ export const FUNNEL_STEPS: { id: string; type: string | null; label: string }[] 
   { id: 'done', type: 'shopping_completed', label: 'Done' },
 ];
 
+export interface FunnelStep {
+  id: string;
+  label: string;
+  count: number;
+}
+
+/** Every step of one week with its household count; the product-event steps are 0 when migration 020 isn't applied. */
+export function weekSteps(cycle: WeeklyCycle, weekStart: string, composed: number): FunnelStep[] {
+  const at = (type: string) => cycle.events.funnel.find((f) => f.week_start === weekStart && f.type === type)?.households ?? 0;
+  return FUNNEL_STEPS.map((step) => ({ id: step.id, label: step.label, count: step.type === null ? composed : at(step.type) }));
+}
+
 export interface WeeklyFunnel {
-  weekStart: string;
   /** "16 Nov". */
   label: string;
   composed: number;
   households: number;
-  /** False when migration 020 isn't applied: only "Composed" has a real count, so the later steps are left out rather than shown as zeros. */
-  eventsAvailable: boolean;
-  steps: { id: string; label: string; count: number }[];
+  /** Composed, then each later step: only Composed when migration 020 isn't applied, rather than a row of zeros. */
+  steps: FunnelStep[];
 }
 
 /** The newest week's funnel, whatever order the weeks arrive in, or null when no weeks have been composed. */
 export function weeklyFunnel(cycle: WeeklyCycle): WeeklyFunnel | null {
   const latest = [...cycle.weeks].sort((a, b) => (a.week_start < b.week_start ? 1 : -1))[0];
   if (!latest) return null;
-  const at = (type: string) => cycle.events.funnel.find((f) => f.week_start === latest.week_start && f.type === type)?.households ?? 0;
-  const steps = FUNNEL_STEPS.filter((step) => step.type === null || cycle.events.available).map((step) => ({ id: step.id, label: step.label, count: step.type === null ? latest.composed : at(step.type) }));
-  return { weekStart: latest.week_start, label: weekLabel(latest.week_start), composed: latest.composed, households: cycle.households_total, eventsAvailable: cycle.events.available, steps };
+  const steps = weekSteps(cycle, latest.week_start, latest.composed);
+  return { label: weekLabel(latest.week_start), composed: latest.composed, households: cycle.households_total, steps: cycle.events.available ? steps : steps.slice(0, 1) };
 }
 
 /** What went wrong for one AI task and model: failed statuses and their top error codes, or "None". */

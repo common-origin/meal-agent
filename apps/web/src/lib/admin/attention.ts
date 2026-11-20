@@ -9,7 +9,7 @@
  * to do it.
  */
 
-import { ago, shortId } from './format';
+import { ago, quotaLevel, shortId } from './format';
 import type { AiSummary, AttentionAction, AttentionItem, AttentionSection, ErrorGroup, HealthCheckRow, HouseholdRowRaw, SchemaCheck } from './types';
 
 export const SPIKE_MIN_24H = 5;
@@ -247,18 +247,19 @@ export function computeAttention(input: AttentionInput): AttentionItem[] {
 
   if (input.spend && input.spend.capUsd > 0) {
     const fraction = input.spend.todayUsd / input.spend.capUsd;
-    if (fraction >= SPEND_WARN_FRACTION) {
+    const level = quotaLevel(input.spend.todayUsd, input.spend.capUsd, SPEND_WARN_FRACTION);
+    if (level === 'warning' || level === 'error') {
       add({
         id: 'ai-spend',
-        severity: fraction >= 1 ? 'error' : 'warning',
+        severity: level,
         section: 'cost',
-        title: fraction >= 1 ? 'AI daily cap reached' : 'AI spend near the daily cap',
+        title: level === 'error' ? 'AI daily cap reached' : 'AI spend near the daily cap',
         where: 'Cost and quotas · AI spend today',
         since: null,
         window: 'today (UTC)',
         message: `Today's AI spend is ${Math.round(fraction * 100)}% of the daily cap ($${input.spend.todayUsd.toFixed(2)} of $${input.spend.capUsd.toFixed(2)})`,
         fix: [
-          fraction >= 1 ? 'AI features are paused for every household until midnight UTC.' : 'At the cap, AI features pause for every household until midnight UTC.',
+          level === 'error' ? 'AI features are paused for every household until midnight UTC.' : 'At the cap, AI features pause for every household until midnight UTC.',
           'Check the AI agent section for a task that is calling far more than usual (a retry loop shows as many failed calls).',
           'To allow more today, raise AI_DAILY_SPEND_CAP_USD in Vercel and redeploy.',
         ],
@@ -269,12 +270,13 @@ export function computeAttention(input: AttentionInput): AttentionItem[] {
 
   if (input.coles && input.coles.limit > 0) {
     const fraction = input.coles.used / input.coles.limit;
-    if (fraction >= COLES_WARN_FRACTION) {
+    const level = quotaLevel(input.coles.used, input.coles.limit, COLES_WARN_FRACTION);
+    if (level === 'warning' || level === 'error') {
       add({
         id: 'coles-quota',
-        severity: fraction >= 1 ? 'error' : 'warning',
+        severity: level,
         section: 'cost',
-        title: fraction >= 1 ? 'Coles lookups used up' : 'Coles lookups running low',
+        title: level === 'error' ? 'Coles lookups used up' : 'Coles lookups running low',
         where: 'Cost and quotas · Coles lookups',
         since: null,
         window: 'this month',

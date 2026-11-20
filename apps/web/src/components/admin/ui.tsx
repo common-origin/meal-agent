@@ -298,10 +298,10 @@ const METER_TONE: Record<Level, Tone> = { error: "bad", warning: "warning", ok: 
 /**
  * A usage meter on a card (a design-system gap: there is no Card or meter): what
  * it measures, how bad (a severity label), the figure, a bar, a note, and the
- * setting that raises the limit, named in visible text because a tooltip can't
+ * setting that sets the limit, named in visible text because a tooltip can't
  * open on touch. Every meter has the same anatomy so they read side by side.
  */
-export function Meter({ label, value, used, limit, level, note, raiseWith }: { label: string; value: string; used: number; limit: number; level: Level; note: string; raiseWith: string }) {
+export function Meter({ label, value, used, limit, level, note, limitNote }: { label: string; value: string; used: number; limit: number; level: Level; note: string; limitNote: string }) {
   return (
     <Box bg="color.fill.muted" border="default" borderRadius="sm" p="md" data-testid={`meter-${label}`}>
       <Stack direction="column" gap="sm">
@@ -319,7 +319,7 @@ export function Meter({ label, value, used, limit, level, note, raiseWith }: { l
           {note}
         </Typography>
         <Typography variant="small" color="subdued">
-          {`Raise the limit with ${raiseWith} in Vercel.`}
+          {limitNote}
         </Typography>
       </Stack>
     </Box>

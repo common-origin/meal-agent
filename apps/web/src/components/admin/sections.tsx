@@ -14,7 +14,7 @@ import { errorInvestigateLinks, prioritiseErrors } from "@/lib/admin/errors";
 import { resolveAction, type AdminLink, type AdminLinks, type ResolvedAction } from "@/lib/admin/links";
 import { ago, ERROR_GROUP_LIMIT, formatBytes, formatCount, formatDuration, formatMs, formatUsd, hasManyDeadTuples, MIN_FOR_PERCENT, plural, quotaLevel, successPct, utcStamp, weekLabel } from "@/lib/admin/format";
 import { computeHeadline } from "@/lib/admin/headline";
-import { aiProblems, databaseSummary, weeklyFunnel } from "@/lib/admin/summaries";
+import { aiProblems, databaseSummary, weekSteps, weeklyFunnel } from "@/lib/admin/summaries";
 import type { DashboardData } from "@/lib/admin/queries";
 import type { AiSummary, AiTaskRow, AttentionItem, CostData, DbStat, ErrorGroup, HouseholdRow, Loaded, Range, SchemaCheck, StatusData, WeeklyCycle } from "@/lib/admin/types";
 import { Bar, BarRow, DataGrid, Disclosure, Empty, ExpandableItem, Field, Meter, NotLoaded, Section, SeverityLabel, Stat, Stats, Tile, UptimeStrip, type Column } from "./ui";
@@ -336,7 +336,7 @@ export function CostAndQuotas({ data }: { data: Loaded<CostData> }) {
 }
 
 function CostBody({ cost }: { cost: CostData }) {
-  const spendPct = cost.capUsd > 0 ? Math.round((cost.spendTodayUsd / cost.capUsd) * 100) : 0;
+  const spendPct = cost.capUsd > 0 ? Math.floor((cost.spendTodayUsd / cost.capUsd) * 100) : 0; // floored: $4.98 of $5.00 is 99%, not "100%" beside a "near" label
   return (
     <Stack direction="column" gap="lg">
       <ResponsiveGrid cols={1} colsMd={2} gapX="4" gapY="4">
@@ -347,7 +347,7 @@ function CostBody({ cost }: { cost: CostData }) {
           limit={cost.capUsd}
           level={quotaLevel(cost.spendTodayUsd, cost.capUsd, SPEND_WARN_FRACTION)}
           note={`${spendPct}% of the daily cap, which resets at midnight UTC`}
-          raiseWith="AI_DAILY_SPEND_CAP_USD"
+          limitNote="Set with AI_DAILY_SPEND_CAP_USD in Vercel; raise it to allow more."
         />
         {cost.coles ? (
           <Meter
@@ -357,7 +357,7 @@ function CostBody({ cost }: { cost: CostData }) {
             limit={cost.coles.limit}
             level={quotaLevel(cost.coles.used, cost.coles.limit, COLES_WARN_FRACTION)}
             note={`${cost.coles.remaining} remaining this month`}
-            raiseWith="COLES_API_MONTHLY_LIMIT"
+            limitNote="Set with COLES_API_MONTHLY_LIMIT in Vercel; keep it within your RapidAPI plan."
           />
         ) : (
           <NotLoaded hint="is migration 018 applied?" />
@@ -463,13 +463,6 @@ export function Households({ data, range, selected, now }: { data: Loaded<Househ
   );
 }
 
-const FUNNEL: { type: string; text: string }[] = [
-  { type: "plan_confirmed", text: "confirmed" },
-  { type: "shopping_list_built", text: "list built" },
-  { type: "coles_list_sent", text: "sent to Coles" },
-  { type: "shopping_completed", text: "shopping done" },
-];
-
 /** A household count: just the count under 10 composed plans, else the count and its share of them. */
 function funnelCell(count: number, composed: number): string {
   if (composed < MIN_FOR_PERCENT) return String(count);
@@ -496,7 +489,12 @@ function Funnel({ cycle }: { cycle: WeeklyCycle }) {
   if (funnel.composed === 0) return <Empty>{`Week of ${funnel.label}: no household has composed a plan yet.`}</Empty>;
   return (
     <Stack direction="column" gap="sm">
-      <Typography variant="label">{`Week of ${funnel.label}, households at each step`}</Typography>
+      <Stack direction="column" gap="xs">
+        <Typography variant="label">{`Week of ${funnel.label}, households at each step`}</Typography>
+        <Typography variant="small" color="subdued">
+          {`${plural(funnel.households, "household")} in total. Each bar is a step against the plans composed.`}
+        </Typography>
+      </Stack>
       {funnel.steps.map((step) => (
         <BarRow
           key={step.id}
@@ -511,7 +509,6 @@ function Funnel({ cycle }: { cycle: WeeklyCycle }) {
 
 function CycleBody({ cycle }: { cycle: WeeklyCycle }) {
   const { events } = cycle;
-  const at = (week: string, type: string) => events.funnel.find((f) => f.week_start === week && f.type === type)?.households ?? 0;
   const sum = (o: Record<string, number>) => Object.values(o).reduce((a, b) => a + b, 0);
   const composedTotal = cycle.weeks.reduce((n, w) => n + w.composed, 0);
   const manual = sum(events.swaps) + sum(events.edits);
@@ -523,7 +520,7 @@ function CycleBody({ cycle }: { cycle: WeeklyCycle }) {
       <Funnel cycle={cycle} />
       {!events.available && (
         <Typography variant="small" color="subdued">
-          {"Migration 020 isn't applied, so every step after composing shows 0."}
+          {"Migration 020 isn't applied, so the steps after composing aren't charted above, and show 0 in the week-by-week list."}
         </Typography>
       )}
 
@@ -548,7 +545,7 @@ function CycleBody({ cycle }: { cycle: WeeklyCycle }) {
             <ListItem
               key={w.week_start}
               primary={`Week of ${weekLabel(w.week_start)}`}
-              secondary={dot([`${w.composed} composed`, ...FUNNEL.map(({ type, text }) => `${funnelCell(at(w.week_start, type), w.composed)} ${text}`)])}
+              secondary={dot(weekSteps(cycle, w.week_start, w.composed).map((step, i) => `${i === 0 ? step.count : funnelCell(step.count, w.composed)} ${step.label.toLowerCase()}`))}
             />
           ))}
         </List>
