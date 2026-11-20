@@ -988,6 +988,14 @@ describe('AdminDashboard (#249)', () => {
       expect(css).toMatch(/max-height:\s*calc\(100vh - var\(--app-header-height, 0px\) - 2 \* var\(--co-semantic-space-400\)\)/);
     });
 
+    it('the side navigation keeps default density, while the page around it is compact', () => {
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      const rail = screen.getByTestId('admin-nav-rail');
+      expect(rail).toHaveAttribute('data-co-density', 'default');
+      expect(rail.parentElement?.closest('[data-co-density]')).toHaveAttribute('data-co-density', 'compact');
+      expect(within(rail).getByRole('navigation', { name: 'Sections' })).toBeInTheDocument();
+    });
+
     it('headings run h1, then a section title per area, with no level skipped (apart from the design system EmptyState titles)', () => {
       const data = fixture({ errors: { ok: true, data: [] } });
       const { container } = render(<AdminDashboard links={LINKS} data={data} />);

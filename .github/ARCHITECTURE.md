@@ -501,7 +501,8 @@ sticky rail has a max height and scrolls on its own),
 each section on a raised `Box` surface (`Section` in `ui.tsx`: title and actions
 on one row, a one-line note, the long explanation in a Tooltip on an info button),
 KPI tiles that state their time frame and are clickable as a whole, and
-`data-co-density="compact"` on the whole region.
+`data-co-density="compact"` on the whole region except the side navigation,
+which keeps `default` so its rows are the standard height.
 
 Data is shown as columns and visuals, not sentences (#284, #286). `DataGrid` in
 `ui.tsx` lays rows out on the design system's `Grid` with ARIA table roles and a
