@@ -13,6 +13,7 @@ import {
   parseHouseholdParam,
   parseRange,
   projectMonthEnd,
+  quotaLevel,
   rangeStart,
   resolveHousehold,
   shareLabel,
@@ -175,5 +176,13 @@ describe('readability helpers (#270)', () => {
     expect(formatCount(1234567)).toBe('1,234,567');
     expect(formatCount(0)).toBe('0');
     expect(formatCount(null)).toBe('–');
+  });
+
+  it('grades usage against a limit: ok, warning from the threshold, error at the limit', () => {
+    expect(quotaLevel(1, 5, 0.8)).toBe('ok');
+    expect(quotaLevel(4, 5, 0.8)).toBe('warning');
+    expect(quotaLevel(5, 5, 0.8)).toBe('error');
+    expect(quotaLevel(7, 5, 0.8)).toBe('error');
+    expect(quotaLevel(0, 0, 0.8)).toBe('unknown');
   });
 });

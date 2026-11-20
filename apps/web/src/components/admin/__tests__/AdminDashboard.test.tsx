@@ -323,8 +323,34 @@ describe('AdminDashboard (#249)', () => {
     data.status.data.uptime.slots = slots;
     render(<AdminDashboard links={LINKS} data={data} />);
     const strip = screen.getByRole('img', { name: /598 ok, 2 failing, 0 no data, in 600 slots/ });
+    // Each run sits in a tooltip's wrapper: the cell is its first child.
     expect(strip.children).toHaveLength(3);
-    expect(Array.from(strip.children).map((cell) => (cell as HTMLElement).style.flex)).toEqual(['300 1 0px', '2 1 0px', '298 1 0px']);
+    expect(Array.from(strip.children).map((run) => (run.firstElementChild as HTMLElement).style.flex)).toEqual(['300 1 0px', '2 1 0px', '298 1 0px']);
+  });
+
+  it('uptime strip: where it starts and ends, the uptime beside it, a tooltip per run and an inline key', () => {
+    render(<AdminDashboard links={LINKS} data={fixture()} />);
+    const section = screen.getByRole('region', { name: 'Status' });
+    const strip = within(section).getByRole('img', { name: /Uptime: 1 ok/ });
+    // Start and end labels under the strip (the first slot is three hours before the page loaded).
+    expect(within(section).getByText('3 h ago')).toBeInTheDocument();
+    expect(within(section).getByText('Now')).toBeInTheDocument();
+    // Each run's state and time range, as the tooltip's description (merged: the two no-data slots are one 30 minute run).
+    expect(strip.children).toHaveLength(3);
+    expect(within(section).getByText('Healthy: 2026-11-18 09:00 UTC to 2026-11-18 09:15 UTC (15 min)')).toBeInTheDocument();
+    expect(within(section).getByText('Check failing: 2026-11-18 09:15 UTC to 2026-11-18 09:30 UTC (15 min)')).toBeInTheDocument();
+    expect(within(section).getByText('No check recorded: 2026-11-18 09:30 UTC to 2026-11-18 10:00 UTC (30 min)')).toBeInTheDocument();
+    // The runs are not tab stops: there'd be hundreds, and the outages are listed in text.
+    expect(strip.querySelectorAll('[tabindex]')).toHaveLength(0);
+    // The key names each state, in words, beside a swatch.
+    expect(within(section).getByText('Healthy')).toBeInTheDocument();
+    expect(within(section).getByText('Check failing')).toBeInTheDocument();
+    expect(within(section).getByText(/No check recorded \(usually GitHub skipping a run/)).toBeInTheDocument();
+    expect(within(section).queryByText(/Each cell is 15 minutes/)).toBeNull();
+    // Uptime % is beside the strip, in the same row of the grid.
+    const tracker = within(section).getByTestId('uptime-tracker');
+    expect(within(tracker).getByRole('img', { name: /Uptime: 1 ok/ })).toBe(strip);
+    expect(within(tracker).getByText('50.00%')).toBeInTheDocument();
   });
 
   it('errors: a group per fingerprint with its detail', () => {
@@ -393,6 +419,52 @@ describe('AdminDashboard (#249)', () => {
     expect(within(cost).getByText('$1.00 of $5.00')).toBeInTheDocument();
     expect(within(cost).getByText('$17.00')).toBeInTheDocument();
     expect(within(cost).getByText('850 of 1000')).toBeInTheDocument();
+  });
+
+  it('cost and quotas: two meters with the same anatomy, and the setting that raises each limit as visible text', () => {
+    render(<AdminDashboard links={LINKS} data={fixture()} />);
+    const cost = screen.getByRole('region', { name: 'Cost and quotas' });
+    const meters = [
+      { label: 'AI spend today (UTC)', value: '$1.00 of $5.00', status: 'Status: OK', note: '20% of the daily cap, which resets at midnight UTC', limit: 'Set with AI_DAILY_SPEND_CAP_USD in Vercel; raise it to allow more.' },
+      { label: 'Coles lookups, 2026-11', value: '850 of 1000', status: 'Status: Near the limit', note: '150 remaining this month', limit: 'Set with COLES_API_MONTHLY_LIMIT in Vercel; keep it within your RapidAPI plan.' },
+    ];
+    for (const meter of meters) {
+      const card = within(cost).getByTestId(`meter-${meter.label}`);
+      expect(within(card).getByText(meter.label)).toBeInTheDocument();
+      expect(within(card).getByText(meter.value)).toBeInTheDocument();
+      expect(within(card).getByRole('status')).toHaveAttribute('aria-label', meter.status);
+      expect(within(card).getByRole('progressbar', { name: `${meter.label}: ${meter.value}` })).toBeInTheDocument();
+      expect(within(card).getByText(meter.note)).toBeInTheDocument();
+      expect(within(card).getByText(meter.limit)).toBeInTheDocument();
+    }
+  });
+
+  it('cost and quotas: just under the cap reads 99%, not 100%, beside a "near the limit" label', () => {
+    const data = fixture();
+    if (!data.cost.ok) throw new Error('fixture');
+    data.cost.data.spendTodayUsd = 4.98;
+    render(<AdminDashboard links={LINKS} data={data} />);
+    const cost = screen.getByRole('region', { name: 'Cost and quotas' });
+    expect(within(cost).getByText('99% of the daily cap, which resets at midnight UTC')).toBeInTheDocument();
+    expect(within(cost).getAllByText('Near the limit')).toHaveLength(2);
+  });
+
+  it('cost and quotas: at the cap the meter is an error', () => {
+    const data = fixture();
+    if (!data.cost.ok) throw new Error('fixture');
+    data.cost.data.spendTodayUsd = 5;
+    render(<AdminDashboard links={LINKS} data={data} />);
+    expect(within(screen.getByRole('region', { name: 'Cost and quotas' })).getByText('At the limit').closest('[role="status"]')).toHaveAttribute('aria-label', 'Status: At the limit');
+  });
+
+  it('cost and quotas: with no Coles quota row the AI meter still shows, and the other says why', () => {
+    const data = fixture();
+    if (!data.cost.ok) throw new Error('fixture');
+    data.cost.data.coles = null;
+    render(<AdminDashboard links={LINKS} data={data} />);
+    const cost = screen.getByRole('region', { name: 'Cost and quotas' });
+    expect(within(cost).getByText('$1.00 of $5.00')).toBeInTheDocument();
+    expect(within(cost).getByText("Couldn't load (is migration 018 applied?)")).toBeInTheDocument();
   });
 
   it('AI agent: a phone gets label/value pairs instead of a header row', () => {
@@ -724,8 +796,28 @@ describe('AdminDashboard (#249)', () => {
     expect(within(section).getByText('9')).toBeInTheDocument(); // recipes added
     expect(within(section).getByText(/7 by AI, 1 imported, 1 by hand/)).toBeInTheDocument();
     expect(within(section).getByText('3.5')).toBeInTheDocument();
-    expect(within(section).getByText('Week of 16 Nov: of 2 households, 2 composed a plan, 2 confirmed it, 0 built a shopping list, 0 sent it to Coles and 1 finished shopping.')).toBeInTheDocument();
+    // The newest week as ranked bars: composed, then each step with its count.
+    const bar = (name: string) => within(section).getByRole('progressbar', { name });
+    expect(bar('Composed: 2 of 2')).toHaveAttribute('aria-valuenow', '100');
+    expect(bar('Confirmed: 2 of 2')).toHaveAttribute('aria-valuenow', '100');
+    expect(bar('List built: 0 of 2')).toHaveAttribute('aria-valuenow', '0');
+    expect(bar('Sent to Coles: 0 of 2')).toHaveAttribute('aria-valuenow', '0');
+    expect(bar('Done: 1 of 2')).toHaveAttribute('aria-valuenow', '50');
+    expect(within(section).getByText('Week of 16 Nov, households at each step')).toBeInTheDocument();
+    expect(within(section).getByText('2 households in total. Each bar is a step against the plans composed.')).toBeInTheDocument();
+    expect(within(section).getByTestId('bar-row-Done')).toHaveTextContent('1'); // a count, not "50%": under 10 plans
     expect(within(section).getByText('swap 5')).toBeInTheDocument();
+  });
+
+  it('weekly cycle: the funnel stops at composing when product events are not applied, and says so', () => {
+    const data = fixture();
+    if (!data.cycle.ok) throw new Error('fixture');
+    data.cycle.data.events.available = false;
+    render(<AdminDashboard links={LINKS} data={data} />);
+    const section = screen.getByRole('region', { name: 'Weekly cycle and usage' });
+    expect(within(section).getByRole('progressbar', { name: 'Composed: 2 of 2' })).toBeInTheDocument();
+    expect(within(section).queryByRole('progressbar', { name: /^Confirmed/ })).toBeNull();
+    expect(within(section).getByText("Migration 020 isn't applied, so the steps after composing aren't charted above, and show 0 in the week-by-week list.")).toBeInTheDocument();
   });
 
   it('weekly cycle: shows percentages once there are 10 or more plans in a week', () => {

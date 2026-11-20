@@ -15,6 +15,7 @@ import { useState, type ReactNode } from "react";
 import { Box, Grid, GridCol, IconButton, InlineAlert, List, ListItem, ProgressBar, ResponsiveGrid, Stack, StatusLabel, Tooltip, Typography, tokens } from "@common-origin/design-system";
 import type { Tone } from "@/lib/admin/headline";
 import type { Level } from "@/lib/admin/types";
+import { ago, formatDuration, utcStamp } from "@/lib/admin/format";
 import { useMediaQuery } from "./useMediaQuery";
 
 // The one severity vocabulary for the page (#279). The design system has no warning status
@@ -223,10 +224,22 @@ export function DataGrid<Row>({ label, columns, rows, rowKey, selected, footer }
   );
 }
 
+type SlotState = "ok" | "failing" | "no_data";
 const SLOT_FILL = { ok: "color.fill.success", failing: "color.fill.danger", no_data: "color.fill.muted" } as const;
+const SLOT_WORD: Record<SlotState, string> = { ok: "Healthy", failing: "Check failing", no_data: "No check recorded" };
+const SLOT_MS = 15 * 60_000;
 
-/** One cell per 15-minute slot: ok, failing, or no data. Never colour alone: the strip names its counts, and the legend names the states. */
-export function UptimeStrip({ slots }: { slots: { start: number; state: "ok" | "failing" | "no_data" }[] }) {
+/**
+ * The uptime tracker (a design-system gap: there is no Tracker): one cell per
+ * 15-minute slot (ok, failing, or no data), with where it starts and ends under
+ * it, the uptime % beside it and an inline key. Neighbouring slots in one state
+ * are one cell as wide as the run is long (30 days is a handful of elements, not
+ * 2,880), and each run's tooltip gives its state and time range. A tooltip can't
+ * open on touch or by keyboard (and a tab stop per run would be hundreds), so
+ * what matters is also in text: the strip names its counts, the key names the
+ * states, and the outages are listed below it.
+ */
+export function UptimeStrip({ slots, from, now, uptimePct }: { slots: { start: number; state: SlotState }[]; from: number; now: Date; uptimePct: number | null }) {
   if (slots.length === 0) {
     return (
       <Typography variant="small" color="subdued">
@@ -234,25 +247,82 @@ export function UptimeStrip({ slots }: { slots: { start: number; state: "ok" | "
       </Typography>
     );
   }
-  const count = (state: "ok" | "failing" | "no_data") => slots.filter((slot) => slot.state === state).length;
-  // Neighbouring slots in the same state become one cell, as wide as the run is long, so 30 days is a handful of elements, not 2,880.
-  const runs = slots.reduce<{ state: "ok" | "failing" | "no_data"; start: number; length: number }[]>((acc, slot) => {
+  const count = (state: SlotState) => slots.filter((slot) => slot.state === state).length;
+  const runs = slots.reduce<{ state: SlotState; start: number; length: number }[]>((acc, slot) => {
     const last = acc[acc.length - 1];
     if (last && last.state === slot.state) last.length += 1;
     else acc.push({ state: slot.state, start: slot.start, length: 1 });
     return acc;
   }, []);
   return (
-    <Stack direction="column" gap="xs">
-      <Box display="flex" gap="none" role="img" aria-label={`Uptime: ${count("ok")} ok, ${count("failing")} failing, ${count("no_data")} no data, in ${slots.length} slots of 15 minutes`}>
-        {runs.map((run) => (
-          <Box key={run.start} bg={SLOT_FILL[run.state]} height="28px" minWidth="1px" style={{ flex: `${run.length} 1 0` }} />
-        ))}
-      </Box>
-      <Typography variant="small" color="subdued">
-        Each cell is 15 minutes. Green: checked and healthy. Red: a check failed. Grey: no check was recorded, usually GitHub skipping a run rather than downtime.
-      </Typography>
-    </Stack>
+    <Grid cols={12} gapX="6" gapY="4" data-testid="uptime-tracker">
+      <GridCol span={12} spanMd={9}>
+        <Stack direction="column" gap="xs">
+          <Box display="flex" gap="none" role="img" aria-label={`Uptime: ${count("ok")} ok, ${count("failing")} failing, ${count("no_data")} no data, in ${slots.length} slots of 15 minutes`}>
+            {runs.map((run) => (
+              <Tooltip key={run.start} text={`${SLOT_WORD[run.state]}: ${utcStamp(run.start)} to ${utcStamp(run.start + run.length * SLOT_MS)} (${formatDuration(run.length * SLOT_MS)})`} kind="description" side="top">
+                <Box bg={SLOT_FILL[run.state]} height="28px" minWidth="1px" style={{ flex: `${run.length} 1 0` }} />
+              </Tooltip>
+            ))}
+          </Box>
+          <Stack direction="row" justifyContent="space-between" gap="md">
+            <Typography variant="caption" color="subdued">
+              {ago(new Date(from).toISOString(), now)}
+            </Typography>
+            <Typography variant="caption" color="subdued">
+              Now
+            </Typography>
+          </Stack>
+          <Stack direction="row" gap="md" wrap>
+            {(Object.keys(SLOT_WORD) as SlotState[]).map((state) => (
+              <Stack key={state} direction="row" gap="xs" alignItems="center">
+                <Box bg={SLOT_FILL[state]} width="12px" height="12px" borderRadius="sm" />
+                <Typography variant="caption" color="subdued">
+                  {state === "no_data" ? "No check recorded (usually GitHub skipping a run, not downtime)" : SLOT_WORD[state]}
+                </Typography>
+              </Stack>
+            ))}
+          </Stack>
+        </Stack>
+      </GridCol>
+      <GridCol span={12} spanMd={3}>
+        <Stat label="Uptime" value={uptimePct === null ? "–" : `${uptimePct.toFixed(2)}%`} note={`${count("ok")} healthy and ${count("failing")} failing 15-minute slots`} />
+      </GridCol>
+    </Grid>
+  );
+}
+
+const METER_WORD: Record<Level, string> = { error: "At the limit", warning: "Near the limit", ok: "OK", unknown: "Unknown" };
+const METER_TONE: Record<Level, Tone> = { error: "bad", warning: "warning", ok: "ok", unknown: "neutral" };
+
+/**
+ * A usage meter on a card (a design-system gap: there is no Card or meter): what
+ * it measures, how bad (a severity label), the figure, a bar, a note, and the
+ * setting that sets the limit, named in visible text because a tooltip can't
+ * open on touch. Every meter has the same anatomy so they read side by side.
+ */
+export function Meter({ label, value, used, limit, level, note, limitNote }: { label: string; value: string; used: number; limit: number; level: Level; note: string; limitNote: string }) {
+  return (
+    <Box bg="color.fill.muted" border="default" borderRadius="sm" p="md" data-testid={`meter-${label}`}>
+      <Stack direction="column" gap="sm">
+        <Stack direction="row" gap="sm" alignItems="center" justifyContent="space-between" wrap>
+          <Typography variant="caption" color="subdued">
+            {label}
+          </Typography>
+          <SeverityLabel level={level} label={METER_WORD[level]} />
+        </Stack>
+        <Typography variant="h3" as="div">
+          {value}
+        </Typography>
+        <Bar value={used} max={limit} label={`${label}: ${value}`} tone={METER_TONE[level]} />
+        <Typography variant="small" color="subdued">
+          {note}
+        </Typography>
+        <Typography variant="small" color="subdued">
+          {limitNote}
+        </Typography>
+      </Stack>
+    </Box>
   );
 }
 
