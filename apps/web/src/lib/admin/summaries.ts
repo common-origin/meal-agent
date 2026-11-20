@@ -3,28 +3,36 @@
  * numbers means. Pure, so they're unit tested without rendering anything.
  */
 
-import { hasManyDeadTuples, plural, weekLabel } from './format';
+import { hasManyDeadTuples, weekLabel } from './format';
 import type { AiTaskRow, DbStat, SchemaCheck, WeeklyCycle } from './types';
 
-/** The steps after "composed", in order, with how each reads in a sentence. */
-const STEPS: { type: string; text: string }[] = [
-  { type: 'plan_confirmed', text: 'confirmed it' },
-  { type: 'shopping_list_built', text: 'built a shopping list' },
-  { type: 'coles_list_sent', text: 'sent it to Coles' },
-  { type: 'shopping_completed', text: 'finished shopping' },
+/** The weekly routine, in order: the first step is composing a plan, the rest are product events. */
+export const FUNNEL_STEPS: { id: string; type: string | null; label: string }[] = [
+  { id: 'composed', type: null, label: 'Composed' },
+  { id: 'confirmed', type: 'plan_confirmed', label: 'Confirmed' },
+  { id: 'list', type: 'shopping_list_built', label: 'List built' },
+  { id: 'coles', type: 'coles_list_sent', label: 'Sent to Coles' },
+  { id: 'done', type: 'shopping_completed', label: 'Done' },
 ];
 
-/** "Week of 16 Nov: of 2 households, 1 composed a plan, 0 confirmed it, …" for the newest week with data. */
-export function cycleSentence(cycle: WeeklyCycle): string {
+export interface WeeklyFunnel {
+  weekStart: string;
+  /** "16 Nov". */
+  label: string;
+  composed: number;
+  households: number;
+  /** False when migration 020 isn't applied: only "Composed" has a real count, so the later steps are left out rather than shown as zeros. */
+  eventsAvailable: boolean;
+  steps: { id: string; label: string; count: number }[];
+}
+
+/** The newest week's funnel, whatever order the weeks arrive in, or null when no weeks have been composed. */
+export function weeklyFunnel(cycle: WeeklyCycle): WeeklyFunnel | null {
   const latest = [...cycle.weeks].sort((a, b) => (a.week_start < b.week_start ? 1 : -1))[0];
-  if (!latest) return 'No weekly plans have been composed yet.';
-  const label = weekLabel(latest.week_start);
-  if (latest.composed === 0) return `Week of ${label}: no household has composed a plan yet.`;
+  if (!latest) return null;
   const at = (type: string) => cycle.events.funnel.find((f) => f.week_start === latest.week_start && f.type === type)?.households ?? 0;
-  const head = `Week of ${label}: of ${plural(cycle.households_total, 'household')}, ${latest.composed} composed a plan`;
-  if (!cycle.events.available) return `${head}.`;
-  const rest = STEPS.map((step) => `${at(step.type)} ${step.text}`);
-  return `${head}, ${rest.slice(0, -1).join(', ')} and ${rest[rest.length - 1]}.`;
+  const steps = FUNNEL_STEPS.filter((step) => step.type === null || cycle.events.available).map((step) => ({ id: step.id, label: step.label, count: step.type === null ? latest.composed : at(step.type) }));
+  return { weekStart: latest.week_start, label: weekLabel(latest.week_start), composed: latest.composed, households: cycle.households_total, eventsAvailable: cycle.events.available, steps };
 }
 
 /** What went wrong for one AI task and model: failed statuses and their top error codes, or "None". */

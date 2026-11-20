@@ -9,15 +9,15 @@
 
 import Link from "next/link";
 import { Button, List, ListItem, ResponsiveGrid, Stack, Tag, Typography } from "@common-origin/design-system";
-import { attentionWhen } from "@/lib/admin/attention";
+import { attentionWhen, COLES_WARN_FRACTION, SPEND_WARN_FRACTION } from "@/lib/admin/attention";
 import { errorInvestigateLinks, prioritiseErrors } from "@/lib/admin/errors";
 import { resolveAction, type AdminLink, type AdminLinks, type ResolvedAction } from "@/lib/admin/links";
-import { ago, ERROR_GROUP_LIMIT, formatBytes, formatCount, formatDuration, formatMs, formatUsd, hasManyDeadTuples, MIN_FOR_PERCENT, plural, successPct, utcStamp, weekLabel } from "@/lib/admin/format";
+import { ago, ERROR_GROUP_LIMIT, formatBytes, formatCount, formatDuration, formatMs, formatUsd, hasManyDeadTuples, MIN_FOR_PERCENT, plural, quotaLevel, successPct, utcStamp, weekLabel } from "@/lib/admin/format";
 import { computeHeadline } from "@/lib/admin/headline";
-import { aiProblems, cycleSentence, databaseSummary } from "@/lib/admin/summaries";
+import { aiProblems, databaseSummary, weeklyFunnel } from "@/lib/admin/summaries";
 import type { DashboardData } from "@/lib/admin/queries";
 import type { AiSummary, AiTaskRow, AttentionItem, CostData, DbStat, ErrorGroup, HouseholdRow, Loaded, Range, SchemaCheck, StatusData, WeeklyCycle } from "@/lib/admin/types";
-import { Bar, BarRow, DataGrid, Disclosure, Empty, ExpandableItem, Field, NotLoaded, Section, SeverityLabel, Stat, Stats, Tile, UptimeStrip, type Column } from "./ui";
+import { Bar, BarRow, DataGrid, Disclosure, Empty, ExpandableItem, Field, Meter, NotLoaded, Section, SeverityLabel, Stat, Stats, Tile, UptimeStrip, type Column } from "./ui";
 
 const when = utcStamp;
 const dot = (parts: (string | null | false | undefined)[]) => parts.filter(Boolean).join(" · ");
@@ -127,10 +127,9 @@ function StatusBody({ status, now }: { status: StatusData; now: Date }) {
         </Typography>
       )}
 
-      <UptimeStrip slots={uptime.slots} />
+      <UptimeStrip slots={uptime.slots} from={uptime.from} now={now} uptimePct={uptime.uptimePct} />
 
       <Stats>
-        <Stat label="Uptime" value={uptime.uptimePct === null ? "–" : `${uptime.uptimePct.toFixed(2)}%`} note={`${uptime.okSlots} healthy and ${uptime.failingSlots} failing 15-minute slots`} />
         <Stat label="Missed checks" value={String(uptime.noDataSlots)} note={`of ${uptime.slots.length} slots had no check recorded`} />
         <Stat label="Deployed release" value={status.deployedRelease} note={latest.release === status.deployedRelease ? "Matches the latest check" : `The latest check ran on ${latest.release}`} />
         <Stat label="Last incident" value={incident ? formatDuration(incident.end - incident.start) : "None"} note={incident ? `${when(incident.start)} to ${when(incident.end)}` : "In this range"} />
@@ -337,24 +336,37 @@ export function CostAndQuotas({ data }: { data: Loaded<CostData> }) {
 }
 
 function CostBody({ cost }: { cost: CostData }) {
-  const spendPct = cost.capUsd > 0 ? (cost.spendTodayUsd / cost.capUsd) * 100 : 0;
-  const colesFraction = cost.coles ? cost.coles.used / cost.coles.limit : 0;
+  const spendPct = cost.capUsd > 0 ? Math.round((cost.spendTodayUsd / cost.capUsd) * 100) : 0;
   return (
     <Stack direction="column" gap="lg">
+      <ResponsiveGrid cols={1} colsMd={2} gapX="4" gapY="4">
+        <Meter
+          label="AI spend today (UTC)"
+          value={`${formatUsd(cost.spendTodayUsd)} of ${formatUsd(cost.capUsd)}`}
+          used={cost.spendTodayUsd}
+          limit={cost.capUsd}
+          level={quotaLevel(cost.spendTodayUsd, cost.capUsd, SPEND_WARN_FRACTION)}
+          note={`${spendPct}% of the daily cap, which resets at midnight UTC`}
+          raiseWith="AI_DAILY_SPEND_CAP_USD"
+        />
+        {cost.coles ? (
+          <Meter
+            label={`Coles lookups, ${cost.coles.month}`}
+            value={`${cost.coles.used} of ${cost.coles.limit}`}
+            used={cost.coles.used}
+            limit={cost.coles.limit}
+            level={quotaLevel(cost.coles.used, cost.coles.limit, COLES_WARN_FRACTION)}
+            note={`${cost.coles.remaining} remaining this month`}
+            raiseWith="COLES_API_MONTHLY_LIMIT"
+          />
+        ) : (
+          <NotLoaded hint="is migration 018 applied?" />
+        )}
+      </ResponsiveGrid>
       <Stats>
-        <Stat label="AI spend today (UTC)" value={`${formatUsd(cost.spendTodayUsd)} of ${formatUsd(cost.capUsd)}`} note={`${Math.round(spendPct)}% of the daily cap`} />
         <Stat label="Month to date" value={formatUsd(cost.monthToDateUsd)} note={`Day ${cost.daysElapsed.toFixed(1)} of ${cost.daysInMonth}`} />
         <Stat label="Projected month end" value={formatUsd(cost.projectedMonthUsd)} note="This month so far, scaled up to a full month" />
       </Stats>
-      <Bar value={cost.spendTodayUsd} max={cost.capUsd} label={`${Math.round(spendPct)}% of the daily AI spend cap`} tone={spendPct >= 100 ? "bad" : spendPct >= 80 ? "warning" : "ok"} />
-      {cost.coles ? (
-        <Stack direction="column" gap="sm">
-          <Stat label={`Coles lookups, ${cost.coles.month}`} value={`${cost.coles.used} of ${cost.coles.limit}`} note={`${cost.coles.remaining} remaining`} />
-          <Bar value={cost.coles.used} max={cost.coles.limit} label={`${cost.coles.used} of ${cost.coles.limit} Coles lookups used`} tone={colesFraction >= 1 ? "bad" : colesFraction >= 0.8 ? "warning" : "ok"} />
-        </Stack>
-      ) : (
-        <NotLoaded hint="is migration 018 applied?" />
-      )}
     </Stack>
   );
 }
@@ -477,6 +489,26 @@ export function WeeklyCycleSection({ data }: { data: Loaded<WeeklyCycle> }) {
   );
 }
 
+/** The newest week as ranked bars, one per step of the routine. Percentages only from 10 composed plans (MIN_FOR_PERCENT); under that, counts. */
+function Funnel({ cycle }: { cycle: WeeklyCycle }) {
+  const funnel = weeklyFunnel(cycle);
+  if (!funnel) return <Empty>No weekly plans have been composed yet.</Empty>;
+  if (funnel.composed === 0) return <Empty>{`Week of ${funnel.label}: no household has composed a plan yet.`}</Empty>;
+  return (
+    <Stack direction="column" gap="sm">
+      <Typography variant="label">{`Week of ${funnel.label}, households at each step`}</Typography>
+      {funnel.steps.map((step) => (
+        <BarRow
+          key={step.id}
+          label={step.label}
+          value={funnelCell(step.count, funnel.composed)}
+          bar={<Bar value={step.count} max={funnel.composed} label={`${step.label}: ${step.count} of ${funnel.composed}`} tone="neutral" />}
+        />
+      ))}
+    </Stack>
+  );
+}
+
 function CycleBody({ cycle }: { cycle: WeeklyCycle }) {
   const { events } = cycle;
   const at = (week: string, type: string) => events.funnel.find((f) => f.week_start === week && f.type === type)?.households ?? 0;
@@ -488,7 +520,7 @@ function CycleBody({ cycle }: { cycle: WeeklyCycle }) {
 
   return (
     <Stack direction="column" gap="lg">
-      <Typography variant="body">{cycleSentence(cycle)}</Typography>
+      <Funnel cycle={cycle} />
       {!events.available && (
         <Typography variant="small" color="subdued">
           {"Migration 020 isn't applied, so every step after composing shows 0."}

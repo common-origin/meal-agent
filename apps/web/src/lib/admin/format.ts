@@ -1,6 +1,6 @@
 /** Small pure helpers for the /admin page. */
 
-import type { HouseholdRow, HouseholdRowRaw, Range } from './types';
+import type { HouseholdRow, HouseholdRowRaw, Level, Range } from './types';
 
 export const RANGES: Range[] = ['24h', '7d', '30d'];
 export const DEFAULT_RANGE: Range = '7d';
@@ -61,6 +61,13 @@ export const MIN_FOR_PERCENT = 10;
 export function shareLabel(count: number, total: number): string {
   if (total <= 0) return '–';
   return total < MIN_FOR_PERCENT ? `${count} of ${total}` : `${Math.round((count / total) * 100)}%`;
+}
+
+/** How close usage is to a limit: an error at or over it, a warning from `warnAt` (a fraction) up, else ok; unknown with no limit. */
+export function quotaLevel(used: number, limit: number, warnAt: number): Level {
+  if (!(limit > 0)) return 'unknown';
+  const fraction = used / limit;
+  return fraction >= 1 ? 'error' : fraction >= warnAt ? 'warning' : 'ok';
 }
 
 /** A success rate as a percentage with one decimal, or null with no calls. */

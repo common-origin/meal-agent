@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { aiProblems, cycleSentence, databaseSummary } from '../summaries';
+import { aiProblems, databaseSummary, weeklyFunnel } from '../summaries';
 import type { WeeklyCycle } from '../types';
 
 const cycle = (over: Partial<WeeklyCycle> = {}, funnel: WeeklyCycle['events']['funnel'] = [], available = true): WeeklyCycle => ({
@@ -15,19 +15,28 @@ const cycle = (over: Partial<WeeklyCycle> = {}, funnel: WeeklyCycle['events']['f
   ...over,
 });
 
-describe('cycleSentence (#270)', () => {
-  it('describes the newest week step by step, whatever order the weeks arrive in', () => {
-    const text = cycleSentence(cycle({}, [{ week_start: '2026-11-16', type: 'plan_confirmed', households: 1 }, { week_start: '2026-11-09', type: 'plan_confirmed', households: 0 }]));
-    expect(text).toBe('Week of 16 Nov: of 2 households, 1 composed a plan, 1 confirmed it, 0 built a shopping list, 0 sent it to Coles and 0 finished shopping.');
+describe('weeklyFunnel (#286)', () => {
+  it('is the newest week, step by step, whatever order the weeks arrive in', () => {
+    const funnel = weeklyFunnel(cycle({}, [{ week_start: '2026-11-16', type: 'plan_confirmed', households: 1 }, { week_start: '2026-11-09', type: 'plan_confirmed', households: 0 }]));
+    expect(funnel).toMatchObject({ weekStart: '2026-11-16', label: '16 Nov', composed: 1, households: 2, eventsAvailable: true });
+    expect(funnel?.steps).toEqual([
+      { id: 'composed', label: 'Composed', count: 1 },
+      { id: 'confirmed', label: 'Confirmed', count: 1 },
+      { id: 'list', label: 'List built', count: 0 },
+      { id: 'coles', label: 'Sent to Coles', count: 0 },
+      { id: 'done', label: 'Done', count: 0 },
+    ]);
   });
 
-  it('says so when nobody composed a plan that week, or there are no weeks', () => {
-    expect(cycleSentence(cycle({ weeks: [{ week_start: '2026-11-16', composed: 0, recipes_ai: 0, recipes_imported: 0, recipes_user_added: 0 }] }))).toBe('Week of 16 Nov: no household has composed a plan yet.');
-    expect(cycleSentence(cycle({ weeks: [] }))).toBe('No weekly plans have been composed yet.');
+  it('is null when there are no weeks, and still has the week when nobody composed a plan', () => {
+    expect(weeklyFunnel(cycle({ weeks: [] }))).toBeNull();
+    expect(weeklyFunnel(cycle({ weeks: [{ week_start: '2026-11-16', composed: 0, recipes_ai: 0, recipes_imported: 0, recipes_user_added: 0 }] }))?.composed).toBe(0);
   });
 
-  it('stops at composing when product events are unavailable, instead of printing a row of zeros', () => {
-    expect(cycleSentence(cycle({ households_total: 1 }, [], false))).toBe('Week of 16 Nov: of 1 household, 1 composed a plan.');
+  it('stops at composing when product events are unavailable, instead of a row of zeros', () => {
+    const funnel = weeklyFunnel(cycle({ households_total: 1 }, [], false));
+    expect(funnel?.eventsAvailable).toBe(false);
+    expect(funnel?.steps).toEqual([{ id: 'composed', label: 'Composed', count: 1 }]);
   });
 });
 
