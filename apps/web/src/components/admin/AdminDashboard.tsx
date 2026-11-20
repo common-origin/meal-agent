@@ -65,7 +65,8 @@ function useActiveSection(ids: readonly string[]): string | null {
  * browser doesn't have, so it can't be built here, #272); each section shows its own data or its
  * own "couldn't load". Laid out like a product console (#282): a header with
  * the range and Refresh, navigation down the side (in a Sheet on a phone),
- * and each section on its own surface, all at compact density. On a phone
+ * and each section on its own surface, its data at compact density (the
+ * navigation stays at default density). On a phone
  * the stats grid drops to two columns and rows wrap.
  */
 export default function AdminDashboard({ data, links }: { data: DashboardData; links: AdminLinks }) {
@@ -90,8 +91,10 @@ export default function AdminDashboard({ data, links }: { data: DashboardData; l
               <GridCol span={12} spanLg={3}>
                 {/* Stops below the app's sticky header, as in-page jumps do (globals.css). */}
                 {/* A rail taller than the screen scrolls on its own, so the last items stay reachable. */}
+                {/* Default density: the page's compact density is for its data, and navigation keeps the standard row height (as in the phone's Sheet). */}
                 <Box
                   data-testid="admin-nav-rail"
+                  data-co-density="default"
                   position="sticky"
                   px="xs"
                   top="calc(var(--app-header-height, 0px) + var(--co-semantic-space-400))"
