@@ -352,7 +352,25 @@ describe('AdminDashboard (#249)', () => {
   });
 
   describe('hydration (React #418)', () => {
-    afterEach(() => vi.unstubAllEnvs());
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      vi.restoreAllMocks();
+    });
+
+    // ListItem renders `primary` inside a <p> (and `secondary` in a <span>). A Stack (a div)
+    // in a <p> is invalid HTML: the browser closes the <p> early when it parses the server's
+    // HTML, React finds a different tree on hydration and throws #418. jsdom builds the tree
+    // as written and doesn't repair it, so check the markup. Expanded content is always in
+    // the DOM (just hidden), so no clicking is needed to cover it.
+    it('puts no block element inside a paragraph', () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { container } = render(<AdminDashboard links={LINKS} data={fixture()} />);
+      const blocks = 'address, article, aside, blockquote, dd, details, div, dl, dt, fieldset, figure, footer, form, h1, h2, h3, h4, h5, h6, header, hr, li, main, menu, nav, ol, p, pre, section, table, ul';
+      const offenders = Array.from(container.querySelectorAll('p')).flatMap((p) => Array.from(p.querySelectorAll(blocks)).map((el) => `<${el.tagName.toLowerCase()}> inside <p>: ${p.textContent?.slice(0, 60)}`));
+      expect(offenders).toEqual([]);
+      const nesting = spy.mock.calls.filter((args) => /validateDOMNesting|cannot be a descendant|cannot contain/.test(String(args[0])));
+      expect(nesting).toEqual([]);
+    });
 
     // The page builds the links on the server and passes them in. In the browser
     // process.env has none of these values, so a section that read the env itself
