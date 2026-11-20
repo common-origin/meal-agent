@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import { Box, Grid, GridCol, Sheet, Stack, tokens } from "@common-origin/design-system";
 import Main from "@/components/app/Main";
 import { countBySection } from "@/lib/admin/attention";
@@ -8,34 +8,13 @@ import type { DashboardData } from "@/lib/admin/queries";
 import type { AdminLinks } from "@/lib/admin/links";
 import { AdminNav, NAV_IDS } from "./AdminNav";
 import { PageHeader } from "./PageHeader";
-import { AiAgent, CostAndQuotas, Database, DebugLinks, Errors, Households, Overview, Status, WeeklyCycleSection } from "./sections";
+import { AiAgent, CostAndQuotas, Database, Errors, Households, Overview, Status, Tools, WeeklyCycleSection } from "./sections";
+import { useMediaQuery } from "./useMediaQuery";
 
 const DESKTOP_QUERY = `(min-width: ${tokens.base.breakpoint.lg})`;
 
-// One MediaQueryList, kept (React reads the snapshot on every render); rebuilt only if matchMedia itself is replaced.
-let desktopQuery: { matchMedia: typeof window.matchMedia; list: MediaQueryList } | null = null;
-const desktopMedia = (): MediaQueryList | null => {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return null;
-  if (desktopQuery?.matchMedia !== window.matchMedia) desktopQuery = { matchMedia: window.matchMedia, list: window.matchMedia(DESKTOP_QUERY) };
-  return desktopQuery.list;
-};
-
-/**
- * Whether the screen is wide enough for the side navigation. True on the server
- * and where matchMedia is missing; the browser corrects it right after hydrating
- * (so a phone briefly gets the desktop layout before the single column).
- */
-function useIsDesktop(): boolean {
-  return useSyncExternalStore(
-    (onChange) => {
-      const query = desktopMedia();
-      query?.addEventListener("change", onChange);
-      return () => query?.removeEventListener("change", onChange);
-    },
-    () => desktopMedia()?.matches ?? true,
-    () => true
-  );
-}
+/** Whether the screen is wide enough for the side navigation (see useMediaQuery for the server and no-matchMedia default). */
+const useIsDesktop = (): boolean => useMediaQuery(DESKTOP_QUERY);
 
 /** The section nearest the top of the screen, for marking it in the navigation. Null until one scrolls into view, and where IntersectionObserver is missing. */
 function useActiveSection(ids: readonly string[]): string | null {
@@ -125,7 +104,7 @@ export default function AdminDashboard({ data, links }: { data: DashboardData; l
                 <Households data={data.households} range={data.range} selected={data.household} now={now} />
                 <WeeklyCycleSection data={data.cycle} />
                 <Database data={data.database} links={links} />
-                <DebugLinks links={links} />
+                <Tools links={links} />
               </Stack>
             </GridCol>
           </Grid>

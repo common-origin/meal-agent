@@ -163,7 +163,7 @@ describe('AdminDashboard (#249)', () => {
   it('renders every section, in order', () => {
     render(<AdminDashboard links={LINKS} data={fixture()} />);
     const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
-    expect(headings).toEqual(['2 things need attention', 'Status', 'Errors', 'AI agent', 'Cost and quotas', 'Households', 'Weekly cycle and usage', 'Database', 'Debug pages']);
+    expect(headings).toEqual(['2 things need attention', 'Status', 'Errors', 'AI agent', 'Cost and quotas', 'Households', 'Weekly cycle and usage', 'Database', 'Tools']);
   });
 
   it('headline: says how many things need attention, with four tiles that link to their sections', () => {
@@ -367,27 +367,75 @@ describe('AdminDashboard (#249)', () => {
   it('AI agent, cost and quotas', () => {
     render(<AdminDashboard links={LINKS} data={fixture()} />);
     const ai = screen.getByRole('region', { name: 'AI agent' });
-    expect(within(ai).getByText(/gemini-x · 20 calls · 90% worked · median 4000 ms · slowest 5% 9000 ms/)).toBeInTheDocument();
+    // Real columns: a header row of labels over one row of cells per task.
+    const table = within(ai).getByRole('table', { name: 'AI calls by task' });
+    expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Task', 'Model', 'Calls', 'Success', 'p50', 'p95', 'Tokens in', 'Tokens out', 'Cost']);
+    const row = within(table).getAllByRole('row')[1];
+    expect(within(row).getAllByRole('cell').map((c) => c.textContent)).toEqual(['generation', 'gemini-x', '20', '90%', '4.0 s', '9.0 s', '1,200', '800', '$0.400']);
     expect(within(ai).getByText('error 2, http_503 ×2')).toBeInTheDocument();
+    // Calls per day: the day label sits in the same row as its bar.
+    const day = within(ai).getByText('2026-11-18');
+    expect(within(day.closest('div')?.parentElement?.parentElement as HTMLElement).getByRole('progressbar', { name: '2026-11-18: 20 calls, 18 ok' })).toBeInTheDocument();
+    expect(within(ai).getByText('20 calls, 18 ok, $0.400')).toBeInTheDocument();
     const cost = screen.getByRole('region', { name: 'Cost and quotas' });
     expect(within(cost).getByText('$1.00 of $5.00')).toBeInTheDocument();
     expect(within(cost).getByText('$17.00')).toBeInTheDocument();
     expect(within(cost).getByText('850 of 1000')).toBeInTheDocument();
   });
 
-  it('households: short IDs only, each linking to a filtered view', () => {
+  it('AI agent: a phone gets label/value pairs instead of a header row', () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} }));
+    render(<AdminDashboard links={LINKS} data={fixture()} />);
+    const table = within(screen.getByRole('region', { name: 'AI agent' })).getByRole('table', { name: 'AI calls by task' });
+    expect(within(table).queryAllByRole('columnheader')).toHaveLength(0);
+    const cells = within(within(table).getAllByRole('row')[0]).getAllByRole('cell');
+    expect(cells[0].textContent).toBe('generation'); // the row's name, unlabelled
+    expect(cells[2].textContent).toBe('Calls20');
+    expect(cells[4].textContent).toBe('p504.0 s');
+    vi.unstubAllGlobals();
+  });
+
+  it('AI agent: says what went wrong under a task that has failures, and nothing under one that has none', () => {
+    const data = fixture();
+    if (!data.ai.ok) throw new Error('fixture');
+    data.ai.data.by_task.push({ task: 'extract', model: 'gemini-y', calls: 3, ok_calls: 3, p50_ms: 850, p95_ms: 1200, avg_input_tokens: null, avg_output_tokens: null, cost_usd: 0, statuses: { ok: 3 }, top_errors: [] });
+    render(<AdminDashboard links={LINKS} data={data} />);
+    const table = within(screen.getByRole('region', { name: 'AI agent' })).getByRole('table', { name: 'AI calls by task' });
+    const rows = within(table).getAllByRole('row');
+    expect(rows).toHaveLength(3);
+    expect(rows[1]).toHaveTextContent('error 2, http_503 ×2');
+    expect(rows[2]).not.toHaveTextContent('http_503');
+    expect(within(rows[2]).getAllByRole('cell').map((c) => c.textContent)).toEqual(['extract', 'gemini-y', '3', '100%', '850 ms', '1.2 s', '–', '–', '$0.00']);
+  });
+
+  it('households: short IDs only, in columns, each with an explicit Filter action', () => {
     render(<AdminDashboard links={LINKS} data={fixture()} />);
     const section = screen.getByRole('region', { name: 'Households' });
+    const table = within(section).getByRole('table', { name: 'Households' });
+    expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Household', 'Members', 'Last active', 'Plan this week', 'Settings done', 'AI calls / cost', 'Errors', 'Page filter']);
+    const first = within(within(table).getAllByRole('row')[1]).getAllByRole('cell');
+    expect(first.map((c) => c.textContent)).toEqual(['abcdef12You', '2+1 invited', '1 h ago', 'Yes', 'Yes', '12$0.200', '1 errorpending status', 'Filter']);
+    const second = within(within(table).getAllByRole('row')[2]).getAllByRole('cell');
+    expect(second.map((c) => c.textContent)).toEqual(['12345678', '1', 'never', 'No', 'No', '0$0.00', '0', 'Filter']);
     const link = within(section).getByRole('link', { name: 'Filter the page to household abcdef12' });
     expect(link).toHaveAttribute('href', '/admin?range=7d&household=abcdef12#households');
-    expect(link).toHaveTextContent('abcdef12');
+    expect(link).toHaveTextContent('Filter');
+  });
+
+  it('households: the filtered one is shaded and its action clears the filter', () => {
+    render(<AdminDashboard links={LINKS} data={fixture({ household: 'abcdef12' })} />);
+    const section = screen.getByRole('region', { name: 'Households' });
+    const clear = within(section).getByRole('link', { name: 'Clear the filter on household abcdef12' });
+    expect(clear).toHaveAttribute('href', '/admin?range=7d#households');
+    expect(clear).toHaveTextContent('Clear');
+    expect(within(section).getByRole('link', { name: 'Filter the page to household 12345678' })).toHaveAttribute('href', '/admin?range=7d&household=12345678#households');
   });
 
   it('households: your own is marked You, and the rest are not', () => {
     render(<AdminDashboard links={LINKS} data={fixture()} />);
     const section = screen.getByRole('region', { name: 'Households' });
     expect(within(section).getAllByText('You')).toHaveLength(1);
-    expect(within(section).getByText('You').closest('li')).toHaveTextContent('abcdef12');
+    expect(within(section).getByText('You').closest('[role="row"]')).toHaveTextContent('abcdef12');
   });
 
   describe('layout (#282)', () => {
@@ -403,7 +451,7 @@ describe('AdminDashboard (#249)', () => {
       render(<AdminDashboard links={LINKS} data={fixture()} />);
       const nav = screen.getByRole('navigation', { name: 'Sections' });
       const links = within(nav).getAllByRole('link');
-      expect(links.map((a) => a.getAttribute('href'))).toEqual(['#overview', '#status', '#errors', '#ai', '#cost', '#households', '#cycle', '#database', '#debug']);
+      expect(links.map((a) => a.getAttribute('href'))).toEqual(['#overview', '#status', '#errors', '#ai', '#cost', '#households', '#cycle', '#database', '#tools']);
       const named = Object.fromEntries(links.map((a) => [a.getAttribute('href'), a.getAttribute('aria-label') ?? a.textContent]));
       expect(named['#overview']).not.toMatch(/need attention/); // the inbox itself: the badges below add up to it
       expect(named['#status']).toMatch(/Status.*1 need attention/);
@@ -438,9 +486,9 @@ describe('AdminDashboard (#249)', () => {
       const notes: Record<string, string> = {
         Status: 'Is the app up? Checked every 15 minutes.',
         Errors: 'Grouped so repeats count once. Open a row for the details.',
-        'AI agent': 'Calls, success rate, speed and cost over the range.',
+        'AI agent': 'Per task over the range. p50 is the typical call, p95 the slowest 5%.',
         'Cost and quotas': 'AI spend against the daily cap, Coles lookups against the monthly limit.',
-        Households: 'Most recently active first. Select an ID to filter the page.',
+        Households: 'Most recently active first. Use Filter to focus the page on one.',
         'Weekly cycle and usage': 'How far households get through the weekly routine.',
         Database: 'Whether every migration has run, and how big the tables are.',
       };
@@ -466,7 +514,7 @@ describe('AdminDashboard (#249)', () => {
       const { container } = render(<AdminDashboard links={LINKS} data={fixture()} />);
       const region = container.querySelector('[data-co-density="compact"]');
       expect(region).not.toBeNull();
-      for (const id of ['overview', 'status', 'errors', 'ai', 'cost', 'households', 'cycle', 'database', 'debug']) expect(region?.querySelector(`#${id}`), id).not.toBeNull();
+      for (const id of ['overview', 'status', 'errors', 'ai', 'cost', 'households', 'cycle', 'database', 'tools']) expect(region?.querySelector(`#${id}`), id).not.toBeNull();
     });
 
     it('KPI cards state their time frame, and the whole card is clickable', () => {
@@ -540,7 +588,7 @@ describe('AdminDashboard (#249)', () => {
       act(() => {
         window.dispatchEvent(new Event('scroll'));
       });
-      expect(within(nav).getByRole('link', { current: 'page' })).toHaveAttribute('href', '#debug');
+      expect(within(nav).getByRole('link', { current: 'page' })).toHaveAttribute('href', '#tools');
       height.mockRestore();
       window.scrollY = 0;
     });
@@ -658,35 +706,63 @@ describe('AdminDashboard (#249)', () => {
     expect(within(screen.getByRole('region', { name: 'Weekly cycle and usage' })).getByText(/20 composed · 10 \(50%\) confirmed/)).toBeInTheDocument();
   });
 
-  it('database: lists only the missing migrations, flags dead rows only on tables big enough to matter, and links out', () => {
+  it('database: a status list of migrations, and tables as columns that flag dead rows only where they matter', () => {
     render(<AdminDashboard links={LINKS} data={fixture()} />);
     const section = screen.getByRole('region', { name: 'Database' });
     expect(within(section).getByText('Migrations 019 to 021: 021 is missing.')).toBeInTheDocument();
-    expect(within(section).getByText('021 MISSING')).toBeInTheDocument();
-    expect(within(section).queryByText('019 applied')).not.toBeInTheDocument();
-    const flagged = within(section).getByText('High dead tuples');
-    expect(flagged.closest('li')).toHaveTextContent('meal_plans');
-    expect(within(section).queryAllByText('High dead tuples')).toHaveLength(1); // shopping_lists is 33% dead but has 2 rows
-    expect(within(section).getByText('meal_plans have many dead rows and may need a vacuum.'.replace('have', 'has'))).toBeInTheDocument();
-    expect(within(section).getByRole('link', { name: 'Vercel project' })).toBeInTheDocument();
+    // Open by default when something is missing: every migration with its status.
+    const migrations = within(section).getByText('019 · app_errors').closest('li') as HTMLElement;
+    expect(within(migrations).getByText('Applied')).toBeInTheDocument();
+    const missing = within(section).getByText('021 · health_checks').closest('li') as HTMLElement;
+    expect(within(missing).getByText('Missing').closest('[role="status"]')).toHaveAttribute('aria-label', 'Status: Missing');
+    const table = within(section).getByRole('table', { name: 'Database tables' });
+    expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Table', 'Rows (est.)', 'Size', 'Dead rows', 'Flag']);
+    const rows = within(table).getAllByRole('row').slice(1);
+    expect(rows.map((r) => within(r).getAllByRole('cell').map((c) => c.textContent))).toEqual([
+      ['ai_usage', '1,234', '512 KB', '0.8%', '–'],
+      ['meal_plans', '5,000', '64 KB', '37.5%', 'High dead tuplespending status'],
+      ['shopping_lists', '2', '64 KB', '33.0%', '–'], // 33% dead but 2 rows: not flagged
+    ]);
+    expect(within(section).getByText('meal_plans has many dead rows and may need a vacuum.')).toBeInTheDocument();
+    // The loose Supabase and Vercel links moved to Tools; only the header action stays.
+    expect(within(section).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual([LINKS.targets.supabaseSql]);
   });
 
-  it('database: with every migration applied it says so in one line', () => {
+  it('database: with every migration applied it says so in one line, and the list is closed', () => {
     const data = fixture();
     if (!data.database.ok) throw new Error('fixture');
     data.database.data.schema = [{ migration: '019', name: 'app_errors', applied: true }, { migration: '020', name: 'product_events', applied: true }];
     render(<AdminDashboard links={LINKS} data={data} />);
     const section = screen.getByRole('region', { name: 'Database' });
     expect(within(section).getByText('Migrations 019 to 020: all 2 applied.')).toBeInTheDocument();
-    expect(within(section).queryByText(/MISSING/)).not.toBeInTheDocument();
+    expect(within(section).queryByText('Missing')).not.toBeInTheDocument();
+    expect(within(section).getByText('all 2 applied')).toBeInTheDocument();
   });
 
-  it('links to the existing debug pages', () => {
+  it('tools: every Supabase, Vercel, GitHub and debug link in one section, external ones with an icon and a new tab', () => {
     render(<AdminDashboard links={LINKS} data={fixture()} />);
-    const section = screen.getByRole('region', { name: 'Debug pages' });
-    const hrefs = within(section).getAllByRole('link').map((a) => a.getAttribute('href'));
-    expect(hrefs).toContain('/debug/api-usage');
-    expect(hrefs).toContain('/admin/debug');
+    const section = screen.getByRole('region', { name: 'Tools' });
+    const links = within(section).getAllByRole('link');
+    const hrefs = links.map((a) => a.getAttribute('href'));
+    for (const link of [...LINKS.supabase, ...LINKS.vercel, ...LINKS.debug]) expect(hrefs).toContain(link.href);
+    expect(hrefs).toContain(LINKS.targets.uptimeWorkflow);
+    expect(hrefs).toContain(LINKS.targets.githubRepo);
+    const external = within(section).getByRole('link', { name: 'Vercel project (opens in a new tab)' });
+    expect(external).toHaveAttribute('target', '_blank');
+    expect(external).toHaveAttribute('rel', 'noreferrer');
+    expect(external.querySelector('svg')).not.toBeNull(); // the external-link icon
+    const internal = within(section).getByRole('link', { name: 'API usage' });
+    expect(internal).toHaveAttribute('href', '/debug/api-usage');
+    expect(internal).not.toHaveAttribute('target');
+    expect(internal.querySelector('svg')).toBeNull();
+    // Nothing is left loose in the other sections.
+    for (const name of ['Database', 'Status']) expect(within(screen.getByRole('region', { name })).queryByRole('link', { name: /Supabase|Vercel project/ })).toBeNull();
+  });
+
+  it('tools: without a hosted Supabase project there is no Supabase group', () => {
+    const noSupabase = adminLinks({});
+    render(<AdminDashboard links={noSupabase} data={fixture()} />);
+    expect(within(screen.getByRole('region', { name: 'Tools' })).queryByText('Supabase')).toBeNull();
   });
 
   it('a section that could not load says so with its migration hint, and the rest still render', () => {

@@ -11,13 +11,13 @@ import Link from "next/link";
 import { Button, List, ListItem, ResponsiveGrid, Stack, Tag, Typography } from "@common-origin/design-system";
 import { attentionWhen } from "@/lib/admin/attention";
 import { errorInvestigateLinks, prioritiseErrors } from "@/lib/admin/errors";
-import { resolveAction, type AdminLinks, type ResolvedAction } from "@/lib/admin/links";
-import { ago, ERROR_GROUP_LIMIT, formatBytes, formatDuration, formatUsd, hasManyDeadTuples, MIN_FOR_PERCENT, plural, successPct, utcStamp, weekLabel } from "@/lib/admin/format";
+import { resolveAction, type AdminLink, type AdminLinks, type ResolvedAction } from "@/lib/admin/links";
+import { ago, ERROR_GROUP_LIMIT, formatBytes, formatCount, formatDuration, formatMs, formatUsd, hasManyDeadTuples, MIN_FOR_PERCENT, plural, successPct, utcStamp, weekLabel } from "@/lib/admin/format";
 import { computeHeadline } from "@/lib/admin/headline";
 import { aiProblems, cycleSentence, databaseSummary } from "@/lib/admin/summaries";
 import type { DashboardData } from "@/lib/admin/queries";
-import type { AiSummary, AttentionItem, CostData, DbStat, ErrorGroup, HouseholdRow, Loaded, Range, SchemaCheck, StatusData, WeeklyCycle } from "@/lib/admin/types";
-import { Bar, Disclosure, Empty, ExpandableItem, Field, NotLoaded, Section, SeverityLabel, Stat, Stats, Tile, UptimeStrip } from "./ui";
+import type { AiSummary, AiTaskRow, AttentionItem, CostData, DbStat, ErrorGroup, HouseholdRow, Loaded, Range, SchemaCheck, StatusData, WeeklyCycle } from "@/lib/admin/types";
+import { Bar, BarRow, DataGrid, Disclosure, Empty, ExpandableItem, Field, NotLoaded, Section, SeverityLabel, Stat, Stats, Tile, UptimeStrip, type Column } from "./ui";
 
 const when = utcStamp;
 const dot = (parts: (string | null | false | undefined)[]) => parts.filter(Boolean).join(" · ");
@@ -246,50 +246,60 @@ export function AiAgent({ data }: { data: Loaded<AiSummary> }) {
     <Section
       id="ai"
       title="AI agent"
-      note="Calls, success rate, speed and cost over the range."
-      detail="How many calls the AI agent made, how often they worked, how long they took and what they cost. Days run midnight to midnight UTC."
+      note="Per task over the range. p50 is the typical call, p95 the slowest 5%."
+      detail="How many calls the AI agent made, how often they worked, how long they took (p50 is the median, p95 is the time 95% of calls beat) and what they cost. Tokens are the average per call. Days run midnight to midnight UTC."
     >
       {!data.ok ? <NotLoaded hint={data.hint} /> : <AiBody ai={data.data} />}
     </Section>
   );
 }
 
+/** Out of 12: task 2, model 3, then seven numbers of 1 each. The numbers are right-aligned; on a phone each is a label/value pair, three across. */
+const AI_COLUMNS: Column<AiTaskRow>[] = [
+  { id: "task", header: "Task", span: 2, primary: true, cell: (r) => (
+      <Typography variant="label" as="div">
+        {r.task}
+      </Typography>
+    ) },
+  { id: "model", header: "Model", span: 3, narrowSpan: 12, cell: (r) => r.model },
+  { id: "calls", header: "Calls", span: 1, numeric: true, narrowSpan: 4, cell: (r) => formatCount(r.calls) },
+  { id: "success", header: "Success", span: 1, numeric: true, narrowSpan: 4, cell: (r) => (r.calls > 0 ? `${successPct(r.ok_calls, r.calls)}%` : "–") },
+  { id: "p50", header: "p50", span: 1, numeric: true, narrowSpan: 4, cell: (r) => formatMs(r.p50_ms) },
+  { id: "p95", header: "p95", span: 1, numeric: true, narrowSpan: 4, cell: (r) => formatMs(r.p95_ms) },
+  { id: "in", header: "Tokens in", span: 1, numeric: true, narrowSpan: 4, cell: (r) => formatCount(r.avg_input_tokens) },
+  { id: "out", header: "Tokens out", span: 1, numeric: true, narrowSpan: 4, cell: (r) => formatCount(r.avg_output_tokens) },
+  { id: "cost", header: "Cost", span: 1, numeric: true, narrowSpan: 4, cell: (r) => formatUsd(Number(r.cost_usd)) },
+];
+
 function AiBody({ ai }: { ai: AiSummary }) {
   const maxCalls = Math.max(1, ...ai.daily.map((day) => day.calls));
   if (ai.by_task.length === 0) return <Empty>No AI calls in this range.</Empty>;
   return (
     <Stack direction="column" gap="lg">
-      <List>
-        {ai.by_task.map((r) => {
+      <DataGrid
+        label="AI calls by task"
+        columns={AI_COLUMNS}
+        rows={ai.by_task}
+        rowKey={(r) => `${r.task}-${r.model}`}
+        footer={(r) => {
           const problems = aiProblems(r);
-          return (
-            <ListItem
-              key={`${r.task}-${r.model}`}
-              primary={r.task}
-              secondary={dot([
-                r.model,
-                plural(r.calls, "call"),
-                `${successPct(r.ok_calls, r.calls) ?? "–"}% worked`,
-                r.p50_ms === null ? null : `median ${r.p50_ms} ms`,
-                r.p95_ms === null ? null : `slowest 5% ${r.p95_ms} ms`,
-                `tokens in/out ${r.avg_input_tokens ?? "–"} / ${r.avg_output_tokens ?? "–"}`,
-                formatUsd(Number(r.cost_usd)),
-              ])}
-              badge={problems === "None" ? undefined : <SeverityLabel level="error" label={problems} />}
-            />
+          return problems === "None" ? null : (
+            <Stack direction="row" gap="xs" alignItems="center">
+              <SeverityLabel level="error" label={problems} />
+            </Stack>
           );
-        })}
-      </List>
+        }}
+      />
 
-      <Stack direction="column" gap="xs">
+      <Stack direction="column" gap="sm">
         <Typography variant="label">Calls per day</Typography>
         {ai.daily.map((day) => (
-          <Stack key={day.day} direction="column" gap="xs">
-            <Typography variant="small">
-              {day.day}: {day.calls} calls, {day.ok_calls} ok, {formatUsd(Number(day.cost_usd))}
-            </Typography>
-            <Bar value={day.calls} max={maxCalls} label={`${day.day}: ${day.calls} calls, ${day.ok_calls} ok`} tone={day.ok_calls < day.calls ? "bad" : "ok"} />
-          </Stack>
+          <BarRow
+            key={day.day}
+            label={day.day}
+            value={`${plural(day.calls, "call")}, ${day.ok_calls} ok, ${formatUsd(Number(day.cost_usd))}`}
+            bar={<Bar value={day.calls} max={maxCalls} label={`${day.day}: ${day.calls} calls, ${day.ok_calls} ok`} tone={day.ok_calls < day.calls ? "bad" : "ok"} />}
+          />
         ))}
       </Stack>
 
@@ -351,51 +361,91 @@ function CostBody({ cost }: { cost: CostData }) {
 
 export function Households({ data, range, selected, now }: { data: Loaded<HouseholdRow[]>; range: Range; selected: string | null; now: Date }) {
   const href = (shortId: string) => (shortId === selected ? `/admin?range=${range}#households` : `/admin?range=${range}&household=${shortId}#households`);
+  // Out of 12: ID 2, members 1, last active 2, plan 1, settings 1, AI 2, errors 1, filter 2.
+  const columns: Column<HouseholdRow>[] = [
+    {
+      id: "id",
+      header: "Household",
+      span: 2,
+      primary: true,
+      cell: (h) => (
+        <>
+          <Typography variant="label" as="div">
+            {h.shortId}
+          </Typography>
+          {h.isYou && <Tag size="small">You</Tag>}
+        </>
+      ),
+    },
+    {
+      id: "members",
+      header: "Members",
+      span: 1,
+      numeric: true,
+      cell: (h) => (
+        <Stack direction="column" gap="none">
+          <Typography variant="small" as="div">
+            {String(h.members)}
+          </Typography>
+          {h.pending_invites > 0 && (
+            <Typography variant="caption" color="subdued" as="div">
+              {`+${h.pending_invites} invited`}
+            </Typography>
+          )}
+        </Stack>
+      ),
+    },
+    { id: "active", header: "Last active", span: 2, cell: (h) => ago(h.last_active, now) },
+    { id: "plan", header: "Plan this week", span: 1, cell: (h) => (h.has_plan_this_week ? "Yes" : "No") },
+    { id: "settings", header: "Settings done", span: 1, cell: (h) => (h.settings_complete ? "Yes" : "No") },
+    {
+      id: "ai",
+      header: "AI calls / cost",
+      span: 2,
+      numeric: true,
+      cell: (h) => (
+        <Stack direction="column" gap="none">
+          <Typography variant="small" as="div">
+            {formatCount(h.ai_calls)}
+          </Typography>
+          <Typography variant="caption" color="subdued" as="div">
+            {formatUsd(Number(h.ai_cost_usd))}
+          </Typography>
+        </Stack>
+      ),
+    },
+    { id: "errors", header: "Errors", span: 1, cell: (h) => (h.errors > 0 ? <SeverityLabel level="warning" label={plural(h.errors, "error")} /> : "0") },
+    {
+      id: "filter",
+      header: "Page filter",
+      span: 2,
+      cell: (h) => (
+        <Button
+          purpose="link"
+          variant="secondary"
+          size="small"
+          url={href(h.shortId)}
+          linkComponent={Link}
+          aria-label={h.shortId === selected ? `Clear the filter on household ${h.shortId}` : `Filter the page to household ${h.shortId}`}
+        >
+          {h.shortId === selected ? "Clear" : "Filter"}
+        </Button>
+      ),
+    },
+  ];
   return (
     <Section
       id="households"
       title="Households"
-      note="Most recently active first. Select an ID to filter the page."
-      detail="IDs are short on purpose (no names or emails), and You marks your own household. Select an ID to filter the errors, AI and usage sections; select it again to clear."
+      note="Most recently active first. Use Filter to focus the page on one."
+      detail="IDs are short on purpose (no names or emails), and You marks your own household. Filter narrows the errors, AI and usage sections to that household; Clear removes it."
     >
       {!data.ok ? (
         <NotLoaded hint={data.hint} />
       ) : data.data.length === 0 ? (
         <Empty>No households yet.</Empty>
       ) : (
-        <List>
-          {data.data.map((h) => (
-            <ListItem
-              key={h.shortId}
-              selected={h.shortId === selected}
-              // ListItem renders `primary` inside a <p>, so only inline content (text, a link,
-              // a Tag) may go here: a Stack or other block element is invalid HTML and fails
-              // hydration (React #418). Design-system gap: ListItem could render it in a div.
-              primary={
-                <>
-                  <Link href={href(h.shortId)} aria-label={`Filter the page to household ${h.shortId}`}>
-                    {h.shortId}
-                  </Link>
-                  {h.isYou && (
-                    <>
-                      {" "}
-                      <Tag size="small">You</Tag>
-                    </>
-                  )}
-                </>
-              }
-              secondary={dot([
-                plural(h.members, "member"),
-                h.pending_invites > 0 && plural(h.pending_invites, "pending invite"),
-                `active ${ago(h.last_active, now)}`,
-                `plan this week: ${h.has_plan_this_week ? "yes" : "no"}`,
-                `settings done: ${h.settings_complete ? "yes" : "no"}`,
-                `${plural(h.ai_calls, "AI call")} (${formatUsd(Number(h.ai_cost_usd))})`,
-              ])}
-              badge={h.errors > 0 ? <SeverityLabel level="warning" label={plural(h.errors, "error")} /> : undefined}
-            />
-          ))}
-        </List>
+        <DataGrid label="Households" columns={columns} rows={data.data} rowKey={(h) => h.shortId} selected={(h) => h.shortId === selected} />
       )}
     </Section>
   );
@@ -493,72 +543,102 @@ export function Database({ data, links }: { data: Loaded<{ stats: DbStat[]; sche
       id="database"
       title="Database"
       note="Whether every migration has run, and how big the tables are."
-      detail="Row counts are Postgres estimates, and a small table can read 0 until Postgres next analyses it."
+      detail="Row counts are Postgres estimates, and a small table can read 0 until Postgres next analyses it. Dead rows are space Postgres hasn't reclaimed yet; a high share on a big table means it may need a vacuum."
       actions={links.targets.supabaseSql ? <LinkButtons links={[{ label: "SQL editor", href: links.targets.supabaseSql, external: true }]} /> : undefined}
     >
-      {!data.ok ? <NotLoaded hint={data.hint} /> : <DatabaseBody stats={data.data.stats} schema={data.data.schema} links={links} />}
+      {!data.ok ? <NotLoaded hint={data.hint} /> : <DatabaseBody stats={data.data.stats} schema={data.data.schema} />}
     </Section>
   );
 }
 
-function DatabaseBody({ stats, schema, links }: { stats: DbStat[]; schema: SchemaCheck[]; links: AdminLinks }) {
+/** Out of 12: table 3, rows 2, size 2, dead 2, flag 3. */
+const TABLE_COLUMNS: Column<DbStat>[] = [
+  { id: "table", header: "Table", span: 3, primary: true, cell: (s) => (
+    <Typography variant="label" as="div">
+      {s.table}
+    </Typography>
+  ) },
+  { id: "rows", header: "Rows (est.)", span: 2, numeric: true, narrowSpan: 4, cell: (s) => formatCount(s.rows) },
+  { id: "size", header: "Size", span: 2, numeric: true, narrowSpan: 4, cell: (s) => formatBytes(s.size_bytes) },
+  { id: "dead", header: "Dead rows", span: 2, numeric: true, narrowSpan: 4, cell: (s) => `${(s.dead_ratio * 100).toFixed(1)}%` },
+  { id: "flag", header: "Flag", span: 3, narrowSpan: 12, cell: (s) => (hasManyDeadTuples(s) ? <SeverityLabel level="warning" label="High dead tuples" /> : "–") },
+];
+
+function DatabaseBody({ stats, schema }: { stats: DbStat[]; schema: SchemaCheck[] }) {
   const summary = databaseSummary(stats, schema);
   return (
     <Stack direction="column" gap="lg">
       <Stack direction="column" gap="xs">
         <Typography variant="body">{summary.migrations}</Typography>
-        {summary.missing.length > 0 && (
-          <Stack direction="row" gap="sm" wrap>
-            {summary.missing.map((migration) => (
-              <SeverityLabel key={migration} level="error" label={`${migration} MISSING`} />
-            ))}
-          </Stack>
-        )}
         {summary.needVacuum.length > 0 && (
           <Typography variant="small" color="subdued">
             {summary.needVacuum.join(", ")} {summary.needVacuum.length === 1 ? "has" : "have"} many dead rows and may need a vacuum.
           </Typography>
         )}
       </Stack>
-      <Disclosure title="Tables" summary={`${summary.tables} tables, ${formatBytes(summary.totalBytes)} in total`}>
-        <List>
-          {stats.map((s) => (
-            <ListItem
-              key={s.table}
-              primary={s.table}
-              secondary={dot([`${s.rows.toLocaleString("en-AU")} rows (estimate)`, formatBytes(s.size_bytes), `${(s.dead_ratio * 100).toFixed(1)}% dead rows`])}
-              badge={hasManyDeadTuples(s) ? <SeverityLabel level="warning" label="High dead tuples" /> : undefined}
-            />
-          ))}
-        </List>
+      {schema.length > 0 && (
+        <Disclosure title="Migrations" summary={summary.missing.length === 0 ? `all ${schema.length} applied` : `${summary.missing.length} missing`} defaultExpanded={summary.missing.length > 0}>
+          <List>
+            {schema.map((check) => (
+              <ListItem
+                key={check.migration}
+                primary={`${check.migration} · ${check.name}`}
+                badge={<SeverityLabel level={check.applied ? "ok" : "error"} label={check.applied ? "Applied" : "Missing"} />}
+              />
+            ))}
+          </List>
+        </Disclosure>
+      )}
+      <Disclosure title="Tables" summary={`${summary.tables} tables, ${formatBytes(summary.totalBytes)} in total`} defaultExpanded={summary.needVacuum.length > 0}>
+        <DataGrid label="Database tables" columns={TABLE_COLUMNS} rows={stats} rowKey={(s) => s.table} />
       </Disclosure>
-      <Stack direction="row" gap="lg" wrap>
-        {links.supabase.map((link) => (
-          <a key={link.href} href={link.href} target="_blank" rel="noreferrer">
-            Supabase: {link.label}
-          </a>
-        ))}
-        {links.vercel.map((link) => (
-          <a key={link.href} href={link.href} target="_blank" rel="noreferrer">
-            {link.label}
-          </a>
-        ))}
-      </Stack>
     </Stack>
   );
 }
 
-export function DebugLinks({ links }: { links: AdminLinks }) {
-  const { debug } = links;
+/** A link row in the Tools section: the link, with an external-link icon (and a name that says so) when it opens another site. */
+function ToolLink({ link, external }: { link: AdminLink; external: boolean }) {
   return (
-    <Section id="debug" title="Debug pages" note="Pages for digging into one thing.">
-      <Stack direction="row" gap="lg" wrap>
-        {debug.map((link) => (
-          <Link key={link.href} href={link.href}>
+    <ListItem
+      primary={
+        external ? (
+          <Button purpose="link" variant="naked" size="small" iconName="lineOut" url={link.href} target="_blank" rel="noreferrer" aria-label={`${link.label} (opens in a new tab)`}>
             {link.label}
-          </Link>
-        ))}
-      </Stack>
+          </Button>
+        ) : (
+          <Button purpose="link" variant="naked" size="small" url={link.href} linkComponent={Link}>
+            {link.label}
+          </Button>
+        )
+      }
+    />
+  );
+}
+
+/** Every link out of the page in one place: the Supabase and Vercel dashboards, GitHub, and this app's own debug pages. */
+export function Tools({ links }: { links: AdminLinks }) {
+  const { targets } = links;
+  const groups: { title: string; links: AdminLink[]; external: boolean }[] = [
+    { title: "Supabase", links: links.supabase, external: true },
+    { title: "Vercel and GitHub", links: [...links.vercel, { label: "Uptime workflow", href: targets.uptimeWorkflow }, { label: "GitHub repository", href: targets.githubRepo }], external: true },
+    { title: "Debug pages", links: links.debug, external: false },
+  ];
+  return (
+    <Section id="tools" title="Tools" note="Dashboards and pages for digging into one thing.">
+      <ResponsiveGrid cols={1} colsMd={3} gapX="6" gapY="4">
+        {groups
+          .filter((group) => group.links.length > 0)
+          .map((group) => (
+            <Stack key={group.title} direction="column" gap="xs">
+              <Typography variant="label">{group.title}</Typography>
+              <List>
+                {group.links.map((link) => (
+                  <ToolLink key={link.href} link={link} external={group.external} />
+                ))}
+              </List>
+            </Stack>
+          ))}
+      </ResponsiveGrid>
     </Section>
   );
 }
