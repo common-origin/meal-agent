@@ -182,15 +182,16 @@ export function Tile({ label, value, note, tone, href }: { label: string; value:
       }}
     >
       <Stack direction="column" gap="xs">
-        <Stack direction="row" gap="sm" alignItems="center" justifyContent="space-between">
-          <Typography variant="caption" color="subdued">
-            <a href={href}>{label}</a>
+        {/* The label has the full width to itself; the severity sits beside the value and drops under it on a narrow card (two across on a phone). */}
+        <Typography variant="caption" color="subdued">
+          <a href={href}>{label}</a>
+        </Typography>
+        <Stack direction="row" gap="sm" alignItems="center" justifyContent="space-between" wrap>
+          <Typography variant="h3" as="div">
+            {value}
           </Typography>
           {level && <SeverityLabel level={level} />}
         </Stack>
-        <Typography variant="h3" as="div">
-          {value}
-        </Typography>
         <Typography variant="small" color="subdued">
           {note}
         </Typography>

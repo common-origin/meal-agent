@@ -92,7 +92,8 @@ export default function AdminDashboard({ data, links }: { data: DashboardData; l
           <Grid cols={12} gap="6">
             {desktop && (
               <GridCol span={12} spanLg={3}>
-                <Box position="sticky" top="16px">
+                {/* Stops below the app's sticky header, as in-page jumps do (globals.css). */}
+                <Box position="sticky" top="calc(var(--app-header-height, 0px) + var(--co-semantic-space-400))">
                   <AdminNav counts={counts} current={current} />
                 </Box>
               </GridCol>
