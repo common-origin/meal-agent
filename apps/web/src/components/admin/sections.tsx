@@ -361,7 +361,7 @@ function CostBody({ cost }: { cost: CostData }) {
 
 export function Households({ data, range, selected, now }: { data: Loaded<HouseholdRow[]>; range: Range; selected: string | null; now: Date }) {
   const href = (shortId: string) => (shortId === selected ? `/admin?range=${range}#households` : `/admin?range=${range}&household=${shortId}#households`);
-  // Out of 12: ID 2, members 1, last active 2, plan 1, settings 1, AI 2, errors 1, filter 2.
+  // Out of 12: ID 2, members 1, last active 1, plan 1, settings 1, AI 2, errors 2 (a status label), filter 2.
   const columns: Column<HouseholdRow>[] = [
     {
       id: "id",
@@ -395,7 +395,7 @@ export function Households({ data, range, selected, now }: { data: Loaded<Househ
         </Stack>
       ),
     },
-    { id: "active", header: "Last active", span: 2, cell: (h) => ago(h.last_active, now) },
+    { id: "active", header: "Last active", span: 1, cell: (h) => ago(h.last_active, now) },
     { id: "plan", header: "Plan this week", span: 1, cell: (h) => (h.has_plan_this_week ? "Yes" : "No") },
     { id: "settings", header: "Settings done", span: 1, cell: (h) => (h.settings_complete ? "Yes" : "No") },
     {
@@ -414,7 +414,7 @@ export function Households({ data, range, selected, now }: { data: Loaded<Househ
         </Stack>
       ),
     },
-    { id: "errors", header: "Errors", span: 1, cell: (h) => (h.errors > 0 ? <SeverityLabel level="warning" label={plural(h.errors, "error")} /> : "0") },
+    { id: "errors", header: "Errors", span: 2, cell: (h) => (h.errors > 0 ? <SeverityLabel level="warning" label={plural(h.errors, "error")} /> : "0") },
     {
       id: "filter",
       header: "Page filter",
@@ -577,7 +577,7 @@ function DatabaseBody({ stats, schema }: { stats: DbStat[]; schema: SchemaCheck[
         )}
       </Stack>
       {schema.length > 0 && (
-        <Disclosure title="Migrations" summary={summary.missing.length === 0 ? `all ${schema.length} applied` : `${summary.missing.length} missing`} defaultExpanded={summary.missing.length > 0}>
+        <Disclosure key={summary.missing.length > 0 ? "missing" : "applied"} title="Migrations" summary={summary.missing.length === 0 ? `all ${schema.length} applied` : `${summary.missing.length} missing`} defaultExpanded={summary.missing.length > 0}>
           <List>
             {schema.map((check) => (
               <ListItem
@@ -589,7 +589,7 @@ function DatabaseBody({ stats, schema }: { stats: DbStat[]; schema: SchemaCheck[
           </List>
         </Disclosure>
       )}
-      <Disclosure title="Tables" summary={`${summary.tables} tables, ${formatBytes(summary.totalBytes)} in total`} defaultExpanded={summary.needVacuum.length > 0}>
+      <Disclosure key={summary.needVacuum.length > 0 ? "flagged" : "clear"} title="Tables" summary={`${summary.tables} tables, ${formatBytes(summary.totalBytes)} in total`} defaultExpanded={summary.needVacuum.length > 0}>
         <DataGrid label="Database tables" columns={TABLE_COLUMNS} rows={stats} rowKey={(s) => s.table} />
       </Disclosure>
     </Stack>

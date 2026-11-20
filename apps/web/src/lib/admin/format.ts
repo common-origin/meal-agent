@@ -110,9 +110,9 @@ export function ago(iso: string | null | undefined, now: Date): string {
 /** A latency: "850 ms" under a second, else seconds to one decimal ("7.5 s"); "–" when there is none. */
 export function formatMs(ms: number | null | undefined): string {
   if (ms === null || ms === undefined || !Number.isFinite(ms)) return '–';
-  if (ms < 1000) return `${Math.round(ms)} ms`;
-  const seconds = ms / 1000;
-  return `${seconds.toFixed(seconds < 100 ? 1 : 0)} s`;
+  if (ms < 999.5) return `${Math.round(ms)} ms`;
+  const tenths = Math.round(ms / 100); // tenths of a second, rounded once so no value prints as "1000 ms" or "100.0 s"
+  return tenths >= 1000 ? `${Math.round(ms / 1000)} s` : `${(tenths / 10).toFixed(1)} s`;
 }
 
 /** A whole number with thousands separators: 1,234. */

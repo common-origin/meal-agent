@@ -160,6 +160,14 @@ const fixture = (over: Partial<DashboardData> = {}): DashboardData => ({
 });
 
 describe('AdminDashboard (#249)', () => {
+  // A wide desktop by default (every media query matches): the side navigation and the table columns. Tests for a phone or the in-between width stub their own.
+  beforeEach(() => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener: () => {}, removeEventListener: () => {} }));
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('renders every section, in order', () => {
     render(<AdminDashboard links={LINKS} data={fixture()} />);
     const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
@@ -371,12 +379,16 @@ describe('AdminDashboard (#249)', () => {
     const table = within(ai).getByRole('table', { name: 'AI calls by task' });
     expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Task', 'Model', 'Calls', 'Success', 'p50', 'p95', 'Tokens in', 'Tokens out', 'Cost']);
     const row = within(table).getAllByRole('row')[1];
-    expect(within(row).getAllByRole('cell').map((c) => c.textContent)).toEqual(['generation', 'gemini-x', '20', '90%', '4.0 s', '9.0 s', '1,200', '800', '$0.400']);
-    expect(within(ai).getByText('error 2, http_503 ×2')).toBeInTheDocument();
+    const cells = within(row).getAllByRole('cell');
+    expect(cells.slice(0, 9).map((c) => c.textContent)).toEqual(['generation', 'gemini-x', '20', '90%', '4.0 s', '9.0 s', '1,200', '800', '$0.400']);
+    // What went wrong is a cell of the row too, so assistive tech reads it with the row.
+    expect(cells).toHaveLength(10);
+    expect(cells[9]).toHaveTextContent('error 2, http_503 ×2');
     // Calls per day: the day label sits in the same row as its bar.
-    const day = within(ai).getByText('2026-11-18');
-    expect(within(day.closest('div')?.parentElement?.parentElement as HTMLElement).getByRole('progressbar', { name: '2026-11-18: 20 calls, 18 ok' })).toBeInTheDocument();
-    expect(within(ai).getByText('20 calls, 18 ok, $0.400')).toBeInTheDocument();
+    const day = within(ai).getByTestId('bar-row-2026-11-18');
+    expect(within(day).getByText('2026-11-18')).toBeInTheDocument();
+    expect(within(day).getByRole('progressbar', { name: '2026-11-18: 20 calls, 18 ok' })).toBeInTheDocument();
+    expect(within(day).getByText('20 calls, 18 ok, $0.400')).toBeInTheDocument();
     const cost = screen.getByRole('region', { name: 'Cost and quotas' });
     expect(within(cost).getByText('$1.00 of $5.00')).toBeInTheDocument();
     expect(within(cost).getByText('$17.00')).toBeInTheDocument();
@@ -395,6 +407,24 @@ describe('AdminDashboard (#249)', () => {
     vi.unstubAllGlobals();
   });
 
+  it('columns only where there is room: not beside the side navigation, between the large and extra-large breakpoints', () => {
+    const queries: string[] = [];
+    vi.stubGlobal('matchMedia', (query: string) => {
+      queries.push(query);
+      return { matches: true, addEventListener: () => {}, removeEventListener: () => {} };
+    });
+    render(<AdminDashboard links={LINKS} data={fixture()} />);
+    expect(queries).toContain('(min-width: 768px) and (max-width: 1023.98px), (min-width: 1280px)');
+  });
+
+  it('beside the side navigation (large, below extra-large) rows are label/value pairs, not squeezed columns', () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(min-width: 1024px)', addEventListener: () => {}, removeEventListener: () => {} }));
+    render(<AdminDashboard links={LINKS} data={fixture()} />);
+    expect(screen.getByRole('navigation', { name: 'Sections' })).toBeInTheDocument();
+    expect(screen.queryAllByRole('columnheader')).toHaveLength(0);
+    expect(within(screen.getByRole('table', { name: 'Households' })).getAllByRole('cell')[2]).toHaveTextContent('Last active');
+  });
+
   it('AI agent: says what went wrong under a task that has failures, and nothing under one that has none', () => {
     const data = fixture();
     if (!data.ai.ok) throw new Error('fixture');
@@ -405,6 +435,7 @@ describe('AdminDashboard (#249)', () => {
     expect(rows).toHaveLength(3);
     expect(rows[1]).toHaveTextContent('error 2, http_503 ×2');
     expect(rows[2]).not.toHaveTextContent('http_503');
+    expect(within(rows[2]).getAllByRole('cell')).toHaveLength(9);
     expect(within(rows[2]).getAllByRole('cell').map((c) => c.textContent)).toEqual(['extract', 'gemini-y', '3', '100%', '850 ms', '1.2 s', '–', '–', '$0.00']);
   });
 

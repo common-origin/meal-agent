@@ -162,6 +162,8 @@ describe('readability helpers (#270)', () => {
   it('formats latencies: milliseconds under a second, else seconds to one decimal', () => {
     expect(formatMs(850)).toBe('850 ms');
     expect(formatMs(999.4)).toBe('999 ms');
+    expect(formatMs(999.6)).toBe('1.0 s');
+    expect(formatMs(99_960)).toBe('100 s');
     expect(formatMs(1000)).toBe('1.0 s');
     expect(formatMs(7528)).toBe('7.5 s');
     expect(formatMs(120_000)).toBe('120 s');

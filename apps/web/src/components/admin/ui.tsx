@@ -104,7 +104,7 @@ export function Bar({ value, max, label, tone = "neutral" }: { value: number; ma
 /** One row of a label, a bar and its value. On a phone the value sits beside the label and the bar drops under both. */
 export function BarRow({ label, value, bar }: { label: string; value: ReactNode; bar: ReactNode }) {
   return (
-    <Grid cols={12} gapX="3" gapY="1">
+    <Grid cols={12} gapX="3" gapY="1" data-testid={`bar-row-${label}`}>
       <GridCol span={6} spanMd={3}>
         <Typography variant="small" as="div">
           {label}
@@ -124,15 +124,19 @@ export function BarRow({ label, value, bar }: { label: string; value: ReactNode;
   );
 }
 
-const MEDIUM_QUERY = `(min-width: ${tokens.base.breakpoint.md})`;
+// Where the columns have room: from the medium breakpoint up to just below the large one (full width, no
+// sidebar), and again from the extra-large one. Between them the side navigation takes a quarter of the
+// page and 12 columns are too narrow for a label or a figure, so rows fall back to label/value pairs.
+const { md, lg, xl } = tokens.base.breakpoint;
+const COLUMNS_QUERY = `(min-width: ${md}) and (max-width: ${parseFloat(lg) - 0.02}px), (min-width: ${xl})`;
 
 export interface Column<Row> {
   id: string;
-  /** The column's label: the header from the medium breakpoint, beside each value on a phone. */
+  /** The column's label: the header where the columns fit (see COLUMNS_QUERY), beside each value elsewhere. */
   header: string;
-  /** Width out of 12 columns from the medium breakpoint. */
+  /** Width out of 12 columns where the columns fit. */
   span: number;
-  /** Numbers line up on the right (from the medium breakpoint). */
+  /** Numbers line up on the right where the columns fit. */
   numeric?: boolean;
   /** The row's name: shown first and across the whole row on a phone, without a label. */
   primary?: boolean;
@@ -140,6 +144,8 @@ export interface Column<Row> {
   narrowSpan?: 4 | 6 | 12;
   cell: (row: Row) => ReactNode;
 }
+
+const narrow = (column: Pick<Column<never>, "primary" | "narrowSpan">): number => (column.primary ? 12 : (column.narrowSpan ?? 6));
 
 const asContent = (value: ReactNode): ReactNode =>
   typeof value === "string" || typeof value === "number" ? (
@@ -152,14 +158,14 @@ const asContent = (value: ReactNode): ReactNode =>
 
 /**
  * Rows with real columns, standing in for a DataTable (a design-system gap).
- * From the medium breakpoint it is a header row over aligned rows; on a phone
- * each cell carries its own label (label/value pairs), the first column naming
- * the row. ARIA table roles give assistive tech the structure a native table
- * has. `footer` adds a full-width line under a row (what went
- * wrong, say), and `selected` shades a row.
+ * Where the columns fit it is a header row over aligned rows; elsewhere (a
+ * phone, or beside the side navigation) each cell carries its own label
+ * (label/value pairs), the first column naming the row. ARIA table roles give
+ * assistive tech the structure a native table has. `footer` adds a full-width
+ * line under a row (what went wrong, say), and `selected` shades a row.
  */
 export function DataGrid<Row>({ label, columns, rows, rowKey, selected, footer }: { label: string; columns: Column<Row>[]; rows: Row[]; rowKey: (row: Row) => string; selected?: (row: Row) => boolean; footer?: (row: Row) => ReactNode }) {
-  const wide = useMediaQuery(MEDIUM_QUERY);
+  const wide = useMediaQuery(COLUMNS_QUERY);
   return (
     <Box role="table" aria-label={label}>
       {wide && (
@@ -181,6 +187,7 @@ export function DataGrid<Row>({ label, columns, rows, rowKey, selected, footer }
       )}
       {rows.map((row) => {
         const isSelected = selected?.(row) ?? false;
+        const extra = footer?.(row);
         return (
           <Box key={rowKey(row)} role="row" borderBottom="default" py="sm" bg={isSelected ? "color.fill.muted" : undefined}>
             <Stack direction="column" gap="xs">
@@ -188,7 +195,7 @@ export function DataGrid<Row>({ label, columns, rows, rowKey, selected, footer }
                 {columns.map((column) => {
                   const value = asContent(column.cell(row));
                   return (
-                    <GridCol key={column.id} span={column.primary ? 12 : (column.narrowSpan ?? 6)} spanMd={column.span}>
+                    <GridCol key={column.id} span={narrow(column)} spanMd={column.span} spanLg={narrow(column)} spanXl={column.span}>
                       <Box role="cell">
                         {wide || column.primary ? (
                           <Stack direction="row" justifyContent={wide && column.numeric ? "flex-end" : "flex-start"} alignItems="center" gap="xs">
@@ -207,7 +214,7 @@ export function DataGrid<Row>({ label, columns, rows, rowKey, selected, footer }
                   );
                 })}
               </Grid>
-              {footer?.(row)}
+              {extra && <Box role="cell">{extra}</Box>}
             </Stack>
           </Box>
         );
