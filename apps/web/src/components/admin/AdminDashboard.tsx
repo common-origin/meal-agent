@@ -93,6 +93,7 @@ export default function AdminDashboard({ data, links }: { data: DashboardData; l
                 <Box
                   data-testid="admin-nav-rail"
                   position="sticky"
+                  px="xs"
                   top="calc(var(--app-header-height, 0px) + var(--co-semantic-space-400))"
                   maxHeight="calc(100vh - var(--app-header-height, 0px) - 2 * var(--co-semantic-space-400))"
                   overflowY="auto"

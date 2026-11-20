@@ -199,5 +199,6 @@ describe('readability helpers (#270)', () => {
   it('shortens a UTC time for a narrow column, in UTC whatever the viewer\'s time zone', () => {
     expect(utcShort('2026-11-19T09:16:30Z')).toBe('19 Nov 09:16');
     expect(utcShort('2026-12-31T23:59:00Z')).toBe('31 Dec 23:59');
+    expect(utcShort('2026-09-05T00:05:00Z')).toBe('5 Sep 00:05'); // "Sep", whatever the locale data says
   });
 });

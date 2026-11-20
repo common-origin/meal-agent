@@ -17,7 +17,7 @@ import { computeHeadline } from "@/lib/admin/headline";
 import { aiProblems, databaseSummary, weekSteps, weeklyFunnel } from "@/lib/admin/summaries";
 import type { DashboardData } from "@/lib/admin/queries";
 import type { AiSummary, AiTaskRow, AttentionItem, CostData, DbStat, ErrorGroup, HouseholdRow, Loaded, Range, SchemaCheck, StatusData, WeeklyCycle } from "@/lib/admin/types";
-import { Bar, BarRow, DataGrid, Disclosure, Dollars, Empty, ExpandableItem, Field, Meter, NotLoaded, Section, SeverityLabel, Stat, Stats, Tile, UptimeStrip, type Column } from "./ui";
+import { Bar, BarRow, DataGrid, Disclosure, Dollars, Empty, ExpandableItem, Field, Meter, NotLoaded, Note, Section, SeverityLabel, Stat, Stats, Tile, UptimeStrip, type Column } from "./ui";
 
 const when = utcStamp;
 const dot = (parts: (string | null | false | undefined)[]) => parts.filter(Boolean).join(" · ");
@@ -310,7 +310,7 @@ function AiBody({ ai, now }: { ai: AiSummary; now: Date }) {
       <Stack direction="column" gap="xs">
         <Typography variant="label">Latest failed calls</Typography>
         {ai.failures.length === 0 ? (
-          <Empty title="No failed calls">None in this range.</Empty>
+          <Note>No failed calls in this range.</Note>
         ) : (
           <List>
             {ai.failures.map((f) => (
@@ -414,7 +414,7 @@ export function Households({ data, range, selected, now }: { data: Loaded<Househ
     },
     {
       id: "active",
-      header: "Last active (UTC)",
+      header: "Last active",
       span: 2,
       cell: (h) => (
         <Stack direction="column" gap="none">
@@ -423,7 +423,7 @@ export function Households({ data, range, selected, now }: { data: Loaded<Househ
           </Typography>
           {h.last_active && (
             <Typography variant="caption" color="subdued" as="div">
-              {utcShort(h.last_active)}
+              {`${utcShort(h.last_active)} UTC`}
             </Typography>
           )}
         </Stack>
@@ -574,7 +574,7 @@ function CycleBody({ cycle }: { cycle: WeeklyCycle }) {
 
       <Disclosure title="Raw event counts" summary={countsSorted.length === 0 ? "none in these weeks" : plural(countsSorted.length, "kind")}>
         {countsSorted.length === 0 ? (
-          <Empty title="No events">None in these weeks.</Empty>
+          <Note>No events in these weeks.</Note>
         ) : (
           <Stack direction="row" gap="sm" wrap>
             {countsSorted.map(([type, n]) => (

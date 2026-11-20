@@ -146,11 +146,12 @@ export function agoWithStamp(iso: string | null | undefined, now: Date): string 
   return iso ? `${ago(iso, now)} (${utcStamp(iso)})` : 'never';
 }
 
-/** "18 Nov 11:00": a short UTC date and time, for a narrow column (the column says UTC). */
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** "18 Nov 11:00": a short UTC date and time for a narrow column. Built from fixed names, not the runtime's locale data, so the server and the browser always agree (a mismatch fails hydration). */
 export function utcShort(value: string | number | Date): string {
   const date = new Date(value);
-  const day = date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', timeZone: 'UTC' });
-  return `${day} ${date.toISOString().slice(11, 16)}`;
+  return `${date.getUTCDate()} ${MONTHS[date.getUTCMonth()]} ${date.toISOString().slice(11, 16)}`;
 }
 
 export const RANGE_WORDS: Record<Range, string> = { '24h': '24 hours', '7d': '7 days', '30d': '30 days' };

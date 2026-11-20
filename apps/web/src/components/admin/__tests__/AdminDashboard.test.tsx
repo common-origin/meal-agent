@@ -516,9 +516,9 @@ describe('AdminDashboard (#249)', () => {
     render(<AdminDashboard links={LINKS} data={fixture()} />);
     const section = screen.getByRole('region', { name: 'Households' });
     const table = within(section).getByRole('table', { name: 'Households' });
-    expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Household', 'Members', 'Last active (UTC)', 'Plan this week', 'Settings done', 'AI calls / cost', 'Errors', 'Page filter']);
+    expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Household', 'Members', 'Last active', 'Plan this week', 'Settings done', 'AI calls / cost', 'Errors', 'Page filter']);
     const first = within(within(table).getAllByRole('row')[1]).getAllByRole('cell');
-    expect(first.map((c) => c.textContent)).toEqual(['abcdef12You', '2+1 invited', '1 h ago18 Nov 11:00', 'Yes', 'Yes', '12$0.200', '1 errorpending status', 'Filter']);
+    expect(first.map((c) => c.textContent)).toEqual(['abcdef12You', '2+1 invited', '1 h ago18 Nov 11:00 UTC', 'Yes', 'Yes', '12$0.200', '1 errorpending status', 'Filter']);
     const second = within(within(table).getAllByRole('row')[2]).getAllByRole('cell');
     expect(second.map((c) => c.textContent)).toEqual(['12345678', '1', 'never', 'No', 'No', '0$0.00', '0', 'Filter']);
     const link = within(section).getByRole('link', { name: 'Filter the page to household abcdef12' });
@@ -937,7 +937,7 @@ describe('AdminDashboard (#249)', () => {
       expect(within(errors).getByText('2 h ago (2026-11-18 10:00 UTC)')).toBeInTheDocument(); // first seen
       // A household's last activity is relative with the UTC time under it, and the inbox says exactly when an item started.
       const households = screen.getByRole('region', { name: 'Households' });
-      expect(within(households).getByText('18 Nov 11:00')).toBeInTheDocument();
+      expect(within(households).getByText('18 Nov 11:00 UTC')).toBeInTheDocument();
       expect(within(screen.getByRole('region', { name: '2 things need attention' })).getByText('Started 1 h ago (2026-11-18 11:00 UTC)')).toBeInTheDocument();
     });
 
@@ -946,6 +946,13 @@ describe('AdminDashboard (#249)', () => {
       const cost = screen.getByRole('region', { name: 'Cost and quotas' });
       expect(within(cost).getByText('$10.00')).toBeInTheDocument();
       expect(within(cost).getByText('$17.00')).toBeInTheDocument();
+      cleanup();
+      // Under a dollar it matches every other cost on the page ($0.014, not $0.01).
+      const small = fixture();
+      if (!small.cost.ok) throw new Error('fixture');
+      small.cost.data.monthToDateUsd = 0.014;
+      render(<AdminDashboard links={LINKS} data={small} />);
+      expect(within(screen.getByRole('region', { name: 'Cost and quotas' })).getByText('$0.014')).toBeInTheDocument();
       cleanup();
       const data = fixture();
       if (!data.cost.ok) throw new Error('fixture');
@@ -984,6 +991,13 @@ describe('AdminDashboard (#249)', () => {
       const data = fixture({ errors: { ok: true, data: [] } });
       const { container } = render(<AdminDashboard links={LINKS} data={data} />);
       const headings = Array.from(container.querySelectorAll('h1, h2, h3, h4, h5, h6')).filter((h) => !h.closest('[role="status"]'));
+      // The only headings left out are the design system EmptyState's h4 titles (a gap: it can't set its level).
+      const skipped = Array.from(container.querySelectorAll('h1, h2, h3, h4, h5, h6')).filter((h) => h.closest('[role="status"]'));
+      expect(skipped.length).toBeGreaterThan(0);
+      for (const heading of skipped) {
+        expect(heading.tagName).toBe('H4');
+        expect(heading.closest('[role="status"]')).toHaveAccessibleName(/^Empty state: /);
+      }
       const levels = headings.map((h) => Number(h.tagName[1]));
       expect(levels[0]).toBe(1);
       expect(levels.filter((level) => level === 1)).toHaveLength(1);
@@ -1016,7 +1030,7 @@ describe('AdminDashboard (#249)', () => {
       for (const button of iconOnly) expect(button.getAttribute('aria-label'), button.outerHTML.slice(0, 120)).toBeTruthy();
     });
 
-    it('on a phone the Sections menu button is named, and the page has no horizontal-only content in a hover tooltip', () => {
+    it('on a phone the Sections menu button is named, and the exact times and limit settings are visible text, not hover-only', () => {
       vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} }));
       render(<AdminDashboard links={LINKS} data={fixture()} />);
       expect(screen.getByRole('button', { name: 'Sections' })).toHaveAccessibleName('Sections');

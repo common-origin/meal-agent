@@ -426,9 +426,19 @@ export function Field({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** One quiet line for an empty list inside a section (a sub-list, not the whole section). */
+export function Note({ children }: { children: string }) {
+  return (
+    <Typography variant="body" color="subdued">
+      {children}
+    </Typography>
+  );
+}
+
 /**
  * An empty section: the design system's small EmptyState. (Its title is always an
- * h4 and it is a live region: a gap, since under a section's h2 that skips a level.)
+ * h4 and it is a live region: a gap, since under a section's h2 that skips a level.
+ * So it is for a whole section being empty, and a sub-list uses Note.)
  */
 export function Empty({ title, children }: { title: string; children: string }) {
   return <EmptyState size="small" illustration="empty" title={title} description={children} />;
@@ -436,10 +446,11 @@ export function Empty({ title, children }: { title: string; children: string }) 
 
 /**
  * A dollar amount: MoneyDisplay (two decimals, so a total reads "$17.00"), except
- * under a cent, where two decimals would show a real cost as "$0.00".
+ * under a dollar, where it keeps formatUsd's three decimals like every other cost
+ * on the page ($0.014 must not read "$0.01" here and "$0.014" beside it).
  */
 export function Dollars({ amount }: { amount: number }) {
-  if (amount !== 0 && Math.abs(amount) < 0.01) {
+  if (amount !== 0 && Math.abs(amount) < 1) {
     return (
       <Typography variant="h3" as="span">
         {formatUsd(amount)}
