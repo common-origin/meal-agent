@@ -13,7 +13,7 @@ const ITEMS: { id: string; label: string; icon: IconName; count: (counts: Attent
   { id: "households", label: "Households", icon: "users", count: (counts) => counts.households },
   { id: "cycle", label: "Weekly cycle", icon: "calendar", count: () => 0 },
   { id: "database", label: "Database", icon: "table", count: (counts) => counts.database },
-  { id: "debug", label: "Debug pages", icon: "settings", count: () => 0 },
+  { id: "tools", label: "Tools", icon: "settings", count: () => 0 },
 ];
 
 /** The id of each area's section on the page, in page order. */

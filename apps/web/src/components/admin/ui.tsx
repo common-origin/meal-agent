@@ -6,14 +6,16 @@
  * InlineAlert) arranged for this page: no table or chart code, and no custom
  * CSS beyond one inline `flex` in UptimeStrip that sizes each run of slots
  * (the design system's Box has no flex-grow prop).
- * The design system has no Table, so rows are List/ListItem with their numbers
- * in the secondary line.
+ * The design system has no Table or DataTable, so DataGrid lays columns out on
+ * its Grid with ARIA table roles (gap: a DataTable replaces it), and BarRow is
+ * the stand-in for a bar chart (gap: a chart or BarList replaces it).
  */
 
 import { useState, type ReactNode } from "react";
-import { Box, IconButton, InlineAlert, List, ListItem, ProgressBar, ResponsiveGrid, Stack, StatusLabel, Tooltip, Typography } from "@common-origin/design-system";
+import { Box, Grid, GridCol, IconButton, InlineAlert, List, ListItem, ProgressBar, ResponsiveGrid, Stack, StatusLabel, Tooltip, Typography, tokens } from "@common-origin/design-system";
 import type { Tone } from "@/lib/admin/headline";
 import type { Level } from "@/lib/admin/types";
+import { useMediaQuery } from "./useMediaQuery";
 
 // The one severity vocabulary for the page (#279). The design system has no warning status
 // (gap: it needs a StatusLabel `warning`), so a warning is `pending` with a "Warning" label.
@@ -71,8 +73,8 @@ export function NotLoaded({ hint }: { hint: string }) {
  * closed row's content in the page (hidden); `lazy` renders it only once the
  * row is open, for long lists of heavy rows (up to 100 error groups).
  */
-export function ExpandableItem({ primary, secondary, badge, lazy = false, children }: { primary: ReactNode; secondary?: ReactNode; badge?: ReactNode; lazy?: boolean; children: ReactNode }) {
-  const [expanded, setExpanded] = useState(false);
+export function ExpandableItem({ primary, secondary, badge, lazy = false, defaultExpanded = false, children }: { primary: ReactNode; secondary?: ReactNode; badge?: ReactNode; lazy?: boolean; defaultExpanded?: boolean; children: ReactNode }) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
   return (
     <ListItem expandable expanded={expanded} onToggle={() => setExpanded((open) => !open)} primary={primary} secondary={secondary} badge={badge}>
       {lazy && !expanded ? null : children}
@@ -81,10 +83,10 @@ export function ExpandableItem({ primary, secondary, badge, lazy = false, childr
 }
 
 /** Detail most visits don't need: one closed row with a summary of what's inside. */
-export function Disclosure({ title, summary, children }: { title: string; summary?: string; children: ReactNode }) {
+export function Disclosure({ title, summary, defaultExpanded = false, children }: { title: string; summary?: string; defaultExpanded?: boolean; children: ReactNode }) {
   return (
     <List dividers={false}>
-      <ExpandableItem primary={title} secondary={summary}>
+      <ExpandableItem primary={title} secondary={summary} defaultExpanded={defaultExpanded}>
         {children}
       </ExpandableItem>
     </List>
@@ -97,6 +99,128 @@ const BAR_COLOR = { ok: "success", warning: "default", bad: "error", neutral: "d
 export function Bar({ value, max, label, tone = "neutral" }: { value: number; max: number; label: string; tone?: Tone }) {
   const pct = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
   return <ProgressBar value={pct} color={BAR_COLOR[tone]} height="sm" aria-label={label} />;
+}
+
+/** One row of a label, a bar and its value. On a phone the value sits beside the label and the bar drops under both. */
+export function BarRow({ label, value, bar }: { label: string; value: ReactNode; bar: ReactNode }) {
+  return (
+    <Grid cols={12} gapX="3" gapY="1" data-testid={`bar-row-${label}`}>
+      <GridCol span={6} spanMd={3}>
+        <Typography variant="small" as="div">
+          {label}
+        </Typography>
+      </GridCol>
+      <GridCol span={12} spanMd={5} order={3} orderMd={2}>
+        <Box display="flex" alignItems="center" height="100%">
+          <Box width="100%">{bar}</Box>
+        </Box>
+      </GridCol>
+      <GridCol span={6} spanMd={4} order={2} orderMd={3}>
+        <Typography variant="small" color="subdued" as="div">
+          {value}
+        </Typography>
+      </GridCol>
+    </Grid>
+  );
+}
+
+// Where the columns have room: from the medium breakpoint up to just below the large one (full width, no
+// sidebar), and again from the extra-large one. Between them the side navigation takes a quarter of the
+// page and 12 columns are too narrow for a label or a figure, so rows fall back to label/value pairs.
+const { md, lg, xl } = tokens.base.breakpoint;
+const COLUMNS_QUERY = `(min-width: ${md}) and (max-width: ${parseFloat(lg) - 0.02}px), (min-width: ${xl})`;
+
+export interface Column<Row> {
+  id: string;
+  /** The column's label: the header where the columns fit (see COLUMNS_QUERY), beside each value elsewhere. */
+  header: string;
+  /** Width out of 12 columns where the columns fit. */
+  span: number;
+  /** Numbers line up on the right where the columns fit. */
+  numeric?: boolean;
+  /** The row's name: shown first and across the whole row on a phone, without a label. */
+  primary?: boolean;
+  /** Width out of 12 on a phone, for a column that isn't primary. Default 6 (two across). */
+  narrowSpan?: 4 | 6 | 12;
+  cell: (row: Row) => ReactNode;
+}
+
+const narrow = (column: Pick<Column<never>, "primary" | "narrowSpan">): number => (column.primary ? 12 : (column.narrowSpan ?? 6));
+
+const asContent = (value: ReactNode): ReactNode =>
+  typeof value === "string" || typeof value === "number" ? (
+    <Typography variant="small" as="div">
+      {value}
+    </Typography>
+  ) : (
+    value
+  );
+
+/**
+ * Rows with real columns, standing in for a DataTable (a design-system gap).
+ * Where the columns fit it is a header row over aligned rows; elsewhere (a
+ * phone, or beside the side navigation) each cell carries its own label
+ * (label/value pairs), the first column naming the row. ARIA table roles give
+ * assistive tech the structure a native table has. `footer` adds a full-width
+ * line under a row (what went wrong, say), and `selected` shades a row.
+ */
+export function DataGrid<Row>({ label, columns, rows, rowKey, selected, footer }: { label: string; columns: Column<Row>[]; rows: Row[]; rowKey: (row: Row) => string; selected?: (row: Row) => boolean; footer?: (row: Row) => ReactNode }) {
+  const wide = useMediaQuery(COLUMNS_QUERY);
+  return (
+    <Box role="table" aria-label={label}>
+      {wide && (
+        <Box role="row" borderBottom="default" pb="xs">
+          <Grid cols={12} gapX="3">
+            {columns.map((column) => (
+              <GridCol key={column.id} span={column.span}>
+                <Box role="columnheader">
+                  <Stack direction="row" justifyContent={column.numeric ? "flex-end" : "flex-start"}>
+                    <Typography variant="caption" color="subdued" as="div">
+                      {column.header}
+                    </Typography>
+                  </Stack>
+                </Box>
+              </GridCol>
+            ))}
+          </Grid>
+        </Box>
+      )}
+      {rows.map((row) => {
+        const isSelected = selected?.(row) ?? false;
+        const extra = footer?.(row);
+        return (
+          <Box key={rowKey(row)} role="row" borderBottom="default" py="sm" bg={isSelected ? "color.fill.muted" : undefined}>
+            <Stack direction="column" gap="xs">
+              <Grid cols={12} gapX="3" gapY="2">
+                {columns.map((column) => {
+                  const value = asContent(column.cell(row));
+                  return (
+                    <GridCol key={column.id} span={narrow(column)} spanMd={column.span} spanLg={narrow(column)} spanXl={column.span}>
+                      <Box role="cell">
+                        {wide || column.primary ? (
+                          <Stack direction="row" justifyContent={wide && column.numeric ? "flex-end" : "flex-start"} alignItems="center" gap="xs">
+                            {value}
+                          </Stack>
+                        ) : (
+                          <Stack direction="column" gap="xs">
+                            <Typography variant="caption" color="subdued" as="div">
+                              {column.header}
+                            </Typography>
+                            {value}
+                          </Stack>
+                        )}
+                      </Box>
+                    </GridCol>
+                  );
+                })}
+              </Grid>
+              {extra && <Box role="cell">{extra}</Box>}
+            </Stack>
+          </Box>
+        );
+      })}
+    </Box>
+  );
 }
 
 const SLOT_FILL = { ok: "color.fill.success", failing: "color.fill.danger", no_data: "color.fill.muted" } as const;

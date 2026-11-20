@@ -3,7 +3,9 @@ import type { HouseholdRow } from '../types';
 import {
   ago,
   formatBytes,
+  formatCount,
   formatDuration,
+  formatMs,
   formatUsd,
   hasManyDeadTuples,
   sortHouseholds,
@@ -155,5 +157,23 @@ describe('readability helpers (#270)', () => {
     expect(formatDuration(130 * 60_000)).toBe('2 h 10 min');
     expect(formatDuration(-5)).toBe('0 min');
     expect(utcStamp('2026-11-19T09:16:30Z')).toBe('2026-11-19 09:16 UTC');
+  });
+
+  it('formats latencies: milliseconds under a second, else seconds to one decimal', () => {
+    expect(formatMs(850)).toBe('850 ms');
+    expect(formatMs(999.4)).toBe('999 ms');
+    expect(formatMs(999.6)).toBe('1.0 s');
+    expect(formatMs(99_960)).toBe('100 s');
+    expect(formatMs(1000)).toBe('1.0 s');
+    expect(formatMs(7528)).toBe('7.5 s');
+    expect(formatMs(120_000)).toBe('120 s');
+    expect(formatMs(null)).toBe('–');
+    expect(formatMs(undefined)).toBe('–');
+  });
+
+  it('formats counts with thousands separators, and a dash for none', () => {
+    expect(formatCount(1234567)).toBe('1,234,567');
+    expect(formatCount(0)).toBe('0');
+    expect(formatCount(null)).toBe('–');
   });
 });

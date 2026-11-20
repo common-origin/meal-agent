@@ -22,6 +22,17 @@ describe('/admin uses the design system, not custom styling (#270)', () => {
     expect(source).not.toMatch(/<(table|details|style)[\s>]/);
   });
 
+  it.each(files)('%s writes no raw layout or control elements: those come from the design system', (name) => {
+    const source = readFileSync(join(dir, name), 'utf8');
+    expect(source).not.toMatch(/<(div|span|p|ul|ol|li|section|nav|header|footer|button|input|select|textarea|img|svg|hr|h[1-6])[\s>/]/);
+  });
+
+  it('ARIA table roles live in one place: the DataGrid in ui.tsx, which stands in for the missing DataTable', () => {
+    for (const name of files.filter((file) => file !== 'ui.tsx')) {
+      expect(readFileSync(join(dir, name), 'utf8'), name).not.toMatch(/role=["'](table|row|cell|columnheader|rowgroup)["']/);
+    }
+  });
+
   it.each(files)('%s has no hex or rgb colour: colours are design-system tokens', (name) => {
     const source = readFileSync(join(dir, name), 'utf8');
     expect(source).not.toMatch(/["'`]#[0-9a-fA-F]{3,8}["'`]/);

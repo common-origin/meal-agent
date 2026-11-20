@@ -107,6 +107,17 @@ export function ago(iso: string | null | undefined, now: Date): string {
   return `${Math.round(hours / 24)} d ago`;
 }
 
+/** A latency: "850 ms" under a second, else seconds to one decimal ("7.5 s"); "–" when there is none. */
+export function formatMs(ms: number | null | undefined): string {
+  if (ms === null || ms === undefined || !Number.isFinite(ms)) return '–';
+  if (ms < 999.5) return `${Math.round(ms)} ms`;
+  const tenths = Math.round(ms / 100); // tenths of a second, rounded once so no value prints as "1000 ms" or "100.0 s"
+  return tenths >= 1000 ? `${Math.round(ms / 1000)} s` : `${(tenths / 10).toFixed(1)} s`;
+}
+
+/** A whole number with thousands separators: 1,234. */
+export const formatCount = (n: number | null | undefined): string => (n === null || n === undefined ? '–' : n.toLocaleString('en-AU'));
+
 /** 45 minutes, 3 h, 2 h 10 min. */
 export function formatDuration(ms: number): string {
   const total = Math.max(0, Math.round(ms / 60_000));
