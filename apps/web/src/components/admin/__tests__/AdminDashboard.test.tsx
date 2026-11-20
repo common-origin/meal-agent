@@ -393,6 +393,8 @@ describe('AdminDashboard (#249)', () => {
   describe('layout (#282)', () => {
     afterEach(() => {
       vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+      delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
       window.location.hash = '';
     });
     const phone = () => vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} }));
@@ -476,12 +478,25 @@ describe('AdminDashboard (#249)', () => {
       expect(window.location.hash).toBe('#cost');
     });
 
+    it('a second click on the same card still scrolls to its section', () => {
+      const scrolled: string[] = [];
+      const scrollIntoView = vi.fn(function (this: HTMLElement) {
+        scrolled.push(this.id);
+      });
+      Element.prototype.scrollIntoView = scrollIntoView;
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      const section = screen.getByRole('region', { name: '2 things need attention' });
+      fireEvent.click(within(section).getByText('of $5.00 daily cap'));
+      fireEvent.click(within(section).getByText('of $5.00 daily cap'));
+      expect(scrolled).toEqual(['cost', 'cost']);
+    });
+
     it('a click on a card\'s own label link is left to the link, not handled twice', () => {
-      const hash = vi.spyOn(window.location, 'hash', 'set');
+      const push = vi.spyOn(window.history, 'pushState');
       render(<AdminDashboard links={LINKS} data={fixture()} />);
       const section = screen.getByRole('region', { name: '2 things need attention' });
       fireEvent.click(within(section).getByRole('link', { name: 'AI spend · today' }));
-      expect(hash).not.toHaveBeenCalled();
+      expect(push).not.toHaveBeenCalled();
     });
 
     it('marks the area in view in the navigation, and keeps it between sections', () => {
@@ -507,6 +522,27 @@ describe('AdminDashboard (#249)', () => {
       expect(within(nav).getByRole('link', { current: 'page' })).toHaveAttribute('href', '#status');
       act(() => report([{ target: { id: 'status' }, isIntersecting: false }, { target: { id: 'errors' }, isIntersecting: false }]));
       expect(within(nav).getByRole('link', { current: 'page' })).toHaveAttribute('href', '#status');
+    });
+
+    it('at the end of the page marks the last section, which can never reach the band', () => {
+      vi.stubGlobal(
+        'IntersectionObserver',
+        class {
+          observe() {}
+          unobserve() {}
+          disconnect() {}
+        }
+      );
+      const height = vi.spyOn(document.documentElement, 'scrollHeight', 'get').mockReturnValue(3000);
+      render(<AdminDashboard links={LINKS} data={fixture()} />);
+      const nav = screen.getByRole('navigation', { name: 'Sections' });
+      window.scrollY = 3000 - window.innerHeight;
+      act(() => {
+        window.dispatchEvent(new Event('scroll'));
+      });
+      expect(within(nav).getByRole('link', { current: 'page' })).toHaveAttribute('href', '#debug');
+      height.mockRestore();
+      window.scrollY = 0;
     });
 
     it('a Sheet left open does not come back when the window narrows again', () => {

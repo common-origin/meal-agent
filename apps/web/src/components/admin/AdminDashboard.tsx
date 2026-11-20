@@ -43,6 +43,18 @@ function useActiveSection(ids: readonly string[]): string | null {
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined") return;
     const visible = new Set<string>();
+    const update = () =>
+      setActive((previous) => {
+        // At the end of the page the last, short sections can never reach the band: the one the hash
+        // names (a nav or card click) if it's on screen, else the last section.
+        const root = document.documentElement;
+        if (root.scrollHeight > window.innerHeight && window.innerHeight + window.scrollY >= root.scrollHeight - 2) {
+          const hash = decodeURIComponent(window.location.hash.slice(1));
+          const target = ids.includes(hash) ? document.getElementById(hash) : null;
+          return target && target.getBoundingClientRect().top < window.innerHeight ? hash : ids[ids.length - 1];
+        }
+        return ids.find((id) => visible.has(id)) ?? previous;
+      });
     // The band between 10% and 40% down the screen: a section is "current" while it crosses it.
     const observer = new IntersectionObserver(
       (entries) => {
@@ -50,7 +62,7 @@ function useActiveSection(ids: readonly string[]): string | null {
           if (entry.isIntersecting) visible.add(entry.target.id);
           else visible.delete(entry.target.id);
         }
-        setActive((previous) => ids.find((id) => visible.has(id)) ?? previous);
+        update();
       },
       { rootMargin: "-10% 0px -60% 0px" }
     );
@@ -58,7 +70,12 @@ function useActiveSection(ids: readonly string[]): string | null {
       const element = document.getElementById(id);
       if (element) observer.observe(element);
     }
-    return () => observer.disconnect();
+    // Reaching the end of the page changes no intersection, so check on scroll too (cheap: same value, no re-render).
+    window.addEventListener("scroll", update, { passive: true });
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", update);
+    };
   }, [ids]);
   return active;
 }

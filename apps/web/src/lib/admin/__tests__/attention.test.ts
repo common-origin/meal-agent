@@ -241,17 +241,17 @@ describe('failingSince', () => {
 });
 
 describe('countBySection', () => {
-  it('counts the inbox items in each area, and in total, for the navigation badges', () => {
+  it('counts the inbox items in each area, for the navigation badges', () => {
     const items = computeAttention({
       now,
       errors7d: [group({ first_seen: hoursAgo(3) }), group({ fingerprint: 'f2', label: 'spiky', count_24h: 10, count_7d: 14 })],
       spend: { todayUsd: 4.5, capUsd: 5 },
       schema: [{ migration: '021', name: 'health_checks', applied: false }],
     });
-    expect(countBySection(items)).toEqual({ status: 0, errors: 2, ai: 0, cost: 1, households: 0, database: 1, total: 4 });
+    expect(countBySection(items)).toEqual({ status: 0, errors: 2, ai: 0, cost: 1, households: 0, database: 1 });
   });
   it('is all zero for an empty inbox', () => {
-    expect(countBySection([])).toEqual({ status: 0, errors: 0, ai: 0, cost: 0, households: 0, database: 0, total: 0 });
+    expect(countBySection([])).toEqual({ status: 0, errors: 0, ai: 0, cost: 0, households: 0, database: 0 });
   });
 });
 

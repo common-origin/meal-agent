@@ -352,11 +352,11 @@ export function computeAttention(input: AttentionInput): AttentionItem[] {
   return [...items.filter((item) => item.severity === 'error'), ...items.filter((item) => item.severity === 'warning')];
 }
 
-export type AttentionCounts = Record<AttentionSection, number> & { total: number };
+export type AttentionCounts = Record<AttentionSection, number>;
 
 /** How many attention items belong to each area of the page, for the navigation badges. */
 export function countBySection(items: AttentionItem[]): AttentionCounts {
-  const counts: AttentionCounts = { status: 0, errors: 0, ai: 0, cost: 0, households: 0, database: 0, total: items.length };
+  const counts: AttentionCounts = { status: 0, errors: 0, ai: 0, cost: 0, households: 0, database: 0 };
   for (const item of items) counts[item.section] += 1;
   return counts;
 }

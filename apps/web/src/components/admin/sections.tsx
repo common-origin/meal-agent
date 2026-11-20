@@ -68,7 +68,7 @@ export function Overview({ data, now, links }: { data: DashboardData; now: Date;
     <Section
       id="overview"
       title={headline.title}
-      note="The inbox covers every household. The numbers below follow the filters."
+      note="The inbox, status and spend cover everything. Errors and active households follow the range."
       detail="Worked out each time the page loads from the last 24 hours and 7 days, whatever range or household the page is filtered to. Nothing is emailed: this page is where problems show."
     >
       {!data.attention.ok ? <NotLoaded hint={data.attention.hint} /> : data.attention.data.length > 0 && <Inbox items={data.attention.data} links={links} now={now} />}

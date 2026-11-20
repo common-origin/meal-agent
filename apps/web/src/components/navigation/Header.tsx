@@ -69,6 +69,8 @@ export default function Header() {
     if (hidden || !header) return;
     const publish = () => root.style.setProperty(HEADER_HEIGHT_VAR, `${header.offsetHeight}px`);
     publish();
+    // A page opened at #id was scrolled there before this ran, with no room for the header: scroll again now there is.
+    if (window.location.hash) document.getElementById(decodeURIComponent(window.location.hash.slice(1)))?.scrollIntoView();
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(publish);
     observer?.observe(header);
     return () => {

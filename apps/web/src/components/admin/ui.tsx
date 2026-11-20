@@ -178,7 +178,10 @@ export function Tile({ label, value, note, tone, href }: { label: string; value:
         // The label is the real link: a click on it, or the end of selecting text, isn't a click on the card.
         if (event.target instanceof Element && event.target.closest("a")) return;
         if (window.getSelection()?.toString()) return;
-        window.location.hash = href.replace(/^#/, "");
+        // Scroll ourselves: setting location.hash to the hash it already has (a second click) doesn't move the page.
+        const id = href.replace(/^#/, "");
+        window.history.pushState(null, "", `#${id}`);
+        document.getElementById(id)?.scrollIntoView();
       }}
     >
       <Stack direction="column" gap="xs">
