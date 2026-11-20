@@ -140,11 +140,10 @@ export function BarRow({ label, value, bar }: { label: string; value: ReactNode;
   );
 }
 
-// Where the columns have room: from the medium breakpoint up to just below the large one (full width, no
-// sidebar), and again from the extra-large one. Between them the side navigation takes a quarter of the
-// page and 12 columns are too narrow for a label or a figure, so rows fall back to label/value pairs.
-const { md, lg, xl } = tokens.base.breakpoint;
-const COLUMNS_QUERY = `(min-width: ${md}) and (max-width: ${parseFloat(lg) - 0.02}px), (min-width: ${xl})`;
+// Where the columns have room: from the medium breakpoint up. Beside the side navigation (large and up)
+// a section is still about as wide as the full-width page is at the medium breakpoint (~700px), so the
+// columns fit there too; only a phone falls back to label/value pairs.
+const COLUMNS_QUERY = `(min-width: ${tokens.base.breakpoint.md})`;
 
 export interface Column<Row> {
   id: string;
@@ -174,8 +173,8 @@ const asContent = (value: ReactNode): ReactNode =>
 
 /**
  * Rows with real columns, standing in for a DataTable (a design-system gap).
- * Where the columns fit it is a header row over aligned rows; elsewhere (a
- * phone, or beside the side navigation) each cell carries its own label
+ * Where the columns fit (from the medium breakpoint) it is a header row over
+ * aligned rows; on a phone each cell carries its own label
  * (label/value pairs), the first column naming the row. ARIA table roles give
  * assistive tech the structure a native table has. `footer` adds a full-width
  * line under a row (what went wrong, say), and `selected` shades a row.
@@ -211,7 +210,7 @@ export function DataGrid<Row>({ label, columns, rows, rowKey, selected, footer }
                 {columns.map((column) => {
                   const value = asContent(column.cell(row));
                   return (
-                    <GridCol key={column.id} span={narrow(column)} spanMd={column.span} spanLg={narrow(column)} spanXl={column.span}>
+                    <GridCol key={column.id} span={narrow(column)} spanMd={column.span}>
                       <Box role="cell">
                         {wide || column.primary ? (
                           <Stack direction="row" justifyContent={wide && column.numeric ? "flex-end" : "flex-start"} alignItems="center" gap="xs">

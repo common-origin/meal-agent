@@ -480,20 +480,21 @@ describe('AdminDashboard (#249)', () => {
     vi.unstubAllGlobals();
   });
 
-  it('columns only where there is room: not beside the side navigation, between the large and extra-large breakpoints', () => {
+  it('columns from the medium breakpoint up, beside the side navigation too', () => {
     const queries: string[] = [];
     vi.stubGlobal('matchMedia', (query: string) => {
       queries.push(query);
       return { matches: true, addEventListener: () => {}, removeEventListener: () => {} };
     });
     render(<AdminDashboard links={LINKS} data={fixture()} />);
-    expect(queries).toContain('(min-width: 768px) and (max-width: 1023.98px), (min-width: 1280px)');
+    expect(queries).toContain('(min-width: 768px)');
+    expect(screen.getByRole('navigation', { name: 'Sections' })).toBeInTheDocument();
+    expect(within(screen.getByRole('table', { name: 'Households' })).getAllByRole('columnheader').length).toBeGreaterThan(0);
   });
 
-  it('beside the side navigation (large, below extra-large) rows are label/value pairs, not squeezed columns', () => {
-    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(min-width: 1024px)', addEventListener: () => {}, removeEventListener: () => {} }));
+  it('below the medium breakpoint (a phone) rows are label/value pairs, not squeezed columns', () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} }));
     render(<AdminDashboard links={LINKS} data={fixture()} />);
-    expect(screen.getByRole('navigation', { name: 'Sections' })).toBeInTheDocument();
     expect(screen.queryAllByRole('columnheader')).toHaveLength(0);
     expect(within(screen.getByRole('table', { name: 'Households' })).getAllByRole('cell')[2]).toHaveTextContent('Last active');
   });

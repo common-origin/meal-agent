@@ -506,9 +506,9 @@ KPI tiles that state their time frame and are clickable as a whole, and
 Data is shown as columns and visuals, not sentences (#284, #286). `DataGrid` in
 `ui.tsx` lays rows out on the design system's `Grid` with ARIA table roles and a
 header row, and is used for AI calls by task, households and database tables. The
-columns apply where there is room (from `md` up to just below `lg`, and from `xl`;
-beside the side navigation they are too narrow) and everywhere else each cell
-carries its own label, so a phone gets label/value pairs; `useMediaQuery` decides
+columns apply from `md` up (beside the side navigation too: a section there is
+about as wide as the full-width page at `md`), and below it each cell carries
+its own label, so a phone gets label/value pairs; `useMediaQuery` decides
 which, and it reads wide on the server, so a narrow screen corrects after hydrating.
 `BarRow` (ProgressBar rows) draws calls per day and the weekly funnel (counts only
 under 10 composed plans, `MIN_FOR_PERCENT`); `UptimeStrip` is the uptime tracker
