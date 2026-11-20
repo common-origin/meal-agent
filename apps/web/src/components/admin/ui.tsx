@@ -11,9 +11,21 @@
  */
 
 import { useState, type ReactNode } from "react";
-import { Box, InlineAlert, List, ListItem, ProgressBar, ResponsiveGrid, Stack, Typography } from "@common-origin/design-system";
+import { Box, InlineAlert, List, ListItem, ProgressBar, ResponsiveGrid, Stack, StatusLabel, Typography } from "@common-origin/design-system";
+import type { Tone } from "@/lib/admin/headline";
+import type { Level } from "@/lib/admin/types";
 
-type Tone = "ok" | "warning" | "bad" | "neutral";
+// The one severity vocabulary for the page (#279). The design system has no warning status
+// (gap: it needs a StatusLabel `warning`), so a warning is `pending` with a "Warning" label.
+const LEVEL_STATUS = { error: "failed", warning: "pending", ok: "completed", unknown: "cancelled" } as const;
+const LEVEL_WORD: Record<Level, string> = { error: "Error", warning: "Warning", ok: "OK", unknown: "Unknown" };
+
+/** How bad something is, as a design-system StatusLabel. Static on load, so it isn't announced as a live region. */
+export function SeverityLabel({ level, label }: { level: Level; label?: string }) {
+  return <StatusLabel status={LEVEL_STATUS[level]} label={label ?? LEVEL_WORD[level]} size="small" liveRegion={false} />;
+}
+
+const TONE_LEVEL: Record<Tone, Level | null> = { ok: "ok", warning: "warning", bad: "error", neutral: null };
 
 /** A titled region of the page. The region's accessible name is its title. */
 export function Section({ id, title, note, children }: { id: string; title: string; note?: string; children: ReactNode }) {
@@ -39,12 +51,16 @@ export function NotLoaded({ hint }: { hint: string }) {
   return <InlineAlert variant="warning">{`Couldn't load (${hint})`}</InlineAlert>;
 }
 
-/** A row that opens to show more. Use inside a List. */
-export function ExpandableItem({ primary, secondary, badge, children }: { primary: ReactNode; secondary?: ReactNode; badge?: ReactNode; children: ReactNode }) {
+/**
+ * A row that opens to show more. Use inside a List. The design system keeps a
+ * closed row's content in the page (hidden); `lazy` renders it only once the
+ * row is open, for long lists of heavy rows (up to 100 error groups).
+ */
+export function ExpandableItem({ primary, secondary, badge, lazy = false, children }: { primary: ReactNode; secondary?: ReactNode; badge?: ReactNode; lazy?: boolean; children: ReactNode }) {
   const [expanded, setExpanded] = useState(false);
   return (
     <ListItem expandable expanded={expanded} onToggle={() => setExpanded((open) => !open)} primary={primary} secondary={secondary} badge={badge}>
-      {children}
+      {lazy && !expanded ? null : children}
     </ListItem>
   );
 }
@@ -128,16 +144,18 @@ export function Stats({ children }: { children: ReactNode }) {
   );
 }
 
-const TILE_BORDER = { ok: "success", warning: "warning", bad: "danger", neutral: "default" } as const;
-
-/** A headline number linking to its section. The tone is the border colour and never alone: the value and note say the same in words. */
+/** A headline number linking to its section. Its state is a severity label, and the value and note say the same in words. */
 export function Tile({ label, value, note, tone, href }: { label: string; value: string; note: string; tone: Tone; href: string }) {
+  const level = TONE_LEVEL[tone];
   return (
-    <Box bg="color.fill.muted" border={TILE_BORDER[tone]} borderRadius="sm" p="md">
+    <Box bg="color.fill.muted" border="default" borderRadius="sm" p="md">
       <Stack direction="column" gap="xs">
-        <Typography variant="caption" color="subdued">
-          <a href={href}>{label}</a>
-        </Typography>
+        <Stack direction="row" gap="sm" alignItems="center" justifyContent="space-between">
+          <Typography variant="caption" color="subdued">
+            <a href={href}>{label}</a>
+          </Typography>
+          {level && <SeverityLabel level={level} />}
+        </Stack>
         <Typography variant="h3" as="div">
           {value}
         </Typography>
@@ -146,6 +164,20 @@ export function Tile({ label, value, note, tone, href }: { label: string; value:
         </Typography>
       </Stack>
     </Box>
+  );
+}
+
+/** A label over a value, for the details of one thing (an error's route, its first seen, …). */
+export function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <Stack direction="column" gap="xs">
+      <Typography variant="caption" color="subdued">
+        {label}
+      </Typography>
+      <Typography variant="small" as="div">
+        {value}
+      </Typography>
+    </Stack>
   );
 }
 

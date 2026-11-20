@@ -18,7 +18,7 @@ import { BILLING_ERROR_CODES } from '@/lib/ai/run';
 import { dailySpendCapUsd, startOfUtcDay } from '@/lib/ai/usage';
 import { isHeartbeatStale, lastIncident, summariseUptime, SLOT_MS } from '@/lib/health/uptime';
 import { release } from '@/lib/telemetry/release';
-import { computeAttention } from './attention';
+import { computeAttention, failingSince } from './attention';
 import { projectMonthEnd, rangeStart, resolveHousehold, sortHouseholds, toHouseholdRow } from './format';
 import type {
   AiSummary,
@@ -191,6 +191,7 @@ export async function loadAttention(
         latest: health[0],
         heartbeatStale: isHeartbeatStale(health[0]?.created_at, now),
         outageNow: summariseUptime(health[1], new Date(now.getTime() - 6 * 3_600_000 - SLOT_MS), now).outageNow,
+        failingSince: failingSince(health[1]),
       }
     : null;
 
