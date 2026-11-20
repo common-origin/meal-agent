@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Button, Dropdown, IconButton, InputChip, Stack, Tooltip, Typography } from "@common-origin/design-system";
+import { Button, Dropdown, IconButton, InputChip, Stack, Typography } from "@common-origin/design-system";
 import { ago, RANGES, RANGE_WORDS, utcStamp } from "@/lib/admin/format";
 import type { Range } from "@/lib/admin/types";
 
@@ -36,7 +36,7 @@ function useClock(loadedAt: string): Date {
 
 /**
  * The page header (#282): the title on the left; on the right when the data
- * was loaded (the exact time in a tooltip), a Refresh button and the time
+ * was loaded (with the exact UTC time in the same line), a Refresh button and the time
  * range. The household filter, when there is one, is a removable chip.
  * The first render reads the same on the server and in the browser (see
  * useClock), so the clock never causes a hydration mismatch.
@@ -54,13 +54,10 @@ export function PageHeader({ range, household, generatedAt, menu }: { range: Ran
           <Typography variant="h1">Admin</Typography>
         </Stack>
         <Stack direction="row" gap="md" alignItems="flex-end" wrap>
-          <Tooltip text={`Loaded ${utcStamp(generatedAt)}`} kind="description" side="bottom">
-            <Box tabIndex={0}>
-              <Typography variant="small" color="subdued">
-                {`Updated ${ago(generatedAt, clock)}`}
-              </Typography>
-            </Box>
-          </Tooltip>
+          {/* Visible text, not a tooltip: a hover hint needs a focusable trigger (a tab stop with no name) and can't open on touch. */}
+          <Typography variant="small" color="subdued">
+            {`Updated ${ago(generatedAt, clock)} (loaded ${utcStamp(generatedAt)})`}
+          </Typography>
           <Button variant="secondary" size="small" iconName="refresh" disabled={refreshing} onClick={() => startRefresh(() => router.refresh())}>
             {refreshing ? "Refreshing" : "Refresh"}
           </Button>

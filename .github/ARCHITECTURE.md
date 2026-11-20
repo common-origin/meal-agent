@@ -463,10 +463,12 @@ tested): "All systems OK" or "N things need attention", then the triage inbox
 (#279: one expandable row per attention item with a severity label, title,
 where, since when, numbered "How to fix" steps and action links), then four
 tiles (status, errors, AI spend today, active households) that link to their
-sections. Sentences that say what a table means (the weekly-cycle
-summary, AI problems, the migrations line) are in `lib/admin/summaries.ts`.
-Detail most visits don't need (week-by-week table, raw event counts, the table
-list) sits in closed expandable rows (`Disclosure` in `ui.tsx`). In the households list, `isYou` marks the
+sections. What a table of numbers means (the newest week's funnel, AI
+problems, the migrations line) is worked out in `lib/admin/summaries.ts`
+(`weeklyFunnel`, `weekSteps`, `aiProblems`, `databaseSummary`). Detail most
+visits don't need (week-by-week list, raw event counts, the migrations list and
+the table list) sits in expandable rows (`Disclosure` in `ui.tsx`); the migrations
+list opens by itself when one is missing and the tables list when one is flagged. In the households list, `isYou` marks the
 signed-in admin's own household (looked up server-side from `household_members`;
 best effort, and the user ID never reaches the page), and rows are sorted by
 last activity. Dead-tuple warnings only apply to tables with at least 1,000
@@ -489,22 +491,51 @@ household's own time zone (`family_settings.full_settings.location.timeZone`
 when Postgres knows it), else Australia/Sydney (`lib/timeZones.ts`); recipe
 creation dates are bucketed in Australia/Sydney. Percentiles are computed in
 SQL (`percentile_cont`), the attention rules and projections in TypeScript.
-The page is laid out like a console (#282): `PageHeader` (title, "Updated … ago"
-with the exact time in a tooltip, Refresh, the range as a Dropdown, and the
+The page is laid out like a console (#282): `PageHeader` (title, "Updated … ago
+(loaded <UTC time>)" as visible text, Refresh, the range as a Dropdown, and the
 household filter as a removable InputChip), `AdminNav` (the design system's
 SidebarNav, one anchor link per area with the number of inbox items in it as a
 badge and the area in view marked current by an IntersectionObserver; below the
-`lg` breakpoint it sits in a Sheet behind a Sections button),
+`lg` breakpoint it sits in a Sheet behind a Sections button, and on a desktop the
+sticky rail has a max height and scrolls on its own),
 each section on a raised `Box` surface (`Section` in `ui.tsx`: title and actions
 on one row, a one-line note, the long explanation in a Tooltip on an info button),
 KPI tiles that state their time frame and are clickable as a whole, and
 `data-co-density="compact"` on the whole region.
+
+Data is shown as columns and visuals, not sentences (#284, #286). `DataGrid` in
+`ui.tsx` lays rows out on the design system's `Grid` with ARIA table roles and a
+header row, and is used for AI calls by task, households and database tables. The
+columns apply from `md` up (beside the side navigation too: a section there is
+about as wide as the full-width page at `md`), and below it each cell carries
+its own label, so a phone gets label/value pairs; `useMediaQuery` decides
+which, and it reads wide on the server, so a narrow screen corrects after hydrating.
+`BarRow` (ProgressBar rows) draws calls per day and the weekly funnel (counts only
+under 10 composed plans, `MIN_FOR_PERCENT`); `UptimeStrip` is the uptime tracker
+(merged runs with a tooltip each, start and "Now" labels, the uptime % beside it,
+an inline key); `Meter` is the card for AI spend against its cap and Coles
+lookups against the monthly limit, graded by `quotaLevel`
+(`lib/admin/format.ts`, the same function the inbox uses) with the env var that
+sets each limit as visible text. The Tools section holds every Supabase, Vercel,
+GitHub and debug link.
+
+Formatting is shared (`lib/admin/format.ts`, unit tested): latencies as `7.5 s`
+and `850 ms` (`formatMs`), relative time first with the exact UTC time in visible
+text beside it (`agoWithStamp`; the design system's `DateFormatter` formats in
+the viewer's time zone, which would fail to hydrate), dollar totals in
+`MoneyDisplay` (two decimals, so under a cent they stay as `formatUsd` text), and
+empty sections as the design system's small `EmptyState`.
+
 Components are in `components/admin/`: design-system parts and its layout grid
 only (`Grid`, `ResponsiveGrid`, `Box`, `Stack`, `SidebarNav`, `Sheet`, `Dropdown`,
-`ProgressBar`, `StatusLabel`, `List`/`ListItem` with expandable rows), no custom CSS, table or chart code; the design system has
-no Table, so rows are list items with their numbers in the secondary line, and
-`designSystemOnly.test.ts` fails if `styled-components`, `<table>` or `<details>`
-return. The page shows household short IDs only, never names or emails. The
+`ProgressBar`, `StatusLabel`, `Tooltip`, `EmptyState`, `MoneyDisplay`,
+`List`/`ListItem` with expandable rows), no custom CSS or chart code. The design
+system has no Table, chart, Tracker or Card, so `ui.tsx` builds the stand-ins above
+and its header comment lists each gap and what would replace it.
+`designSystemOnly.test.ts` fails if `styled-components`, `<table>`, `<details>`,
+a hex colour, a raw layout element or a stray `style` prop returns, and keeps
+ARIA table roles inside `DataGrid`. The page shows household short IDs only,
+never names or emails. The
 dashboard components are client components, which have no `process.env` in the
 browser, so anything built from env vars (the Supabase and Vercel links,
 `lib/admin/links.ts`) is built in `app/admin/page.tsx` and passed down as a

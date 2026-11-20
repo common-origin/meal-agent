@@ -2,20 +2,35 @@
 
 /**
  * Small building blocks for the /admin page. Everything here is a design-system
- * part (Box, ResponsiveGrid, Stack, List/ListItem, ProgressBar, Typography,
- * InlineAlert) arranged for this page: no table or chart code, and no custom
- * CSS beyond one inline `flex` in UptimeStrip that sizes each run of slots
- * (the design system's Box has no flex-grow prop).
- * The design system has no Table or DataTable, so DataGrid lays columns out on
- * its Grid with ARIA table roles (gap: a DataTable replaces it), and BarRow is
- * the stand-in for a bar chart (gap: a chart or BarList replaces it).
+ * part (Box, Grid, ResponsiveGrid, Stack, List/ListItem, ProgressBar, Tooltip,
+ * Typography, EmptyState, MoneyDisplay, InlineAlert) arranged for this page, with
+ * no custom CSS beyond one inline `flex` in UptimeStrip that sizes each run of
+ * slots (the design system's Box has no flex-grow prop).
+ *
+ * Design-system gaps these stand in for (each says what would replace it):
+ * - DataGrid: no Table or DataTable, so Grid rows with ARIA table roles and a
+ *   header row. A DataTable replaces it.
+ * - BarRow: no chart or BarList; ProgressBar rows. A chart or BarList replaces it.
+ * - UptimeStrip: no Tracker; Box cells with Tooltips. A Tracker replaces it.
+ * - Meter, Tile, Section: no Card; Boxes on surface tokens. A Card replaces them.
+ * - SeverityLabel: StatusLabel has no `warning` status, so a warning is `pending`.
+ * - Responsive show/hide: none, so useMediaQuery decides header row vs. per-cell
+ *   labels (the wide layout renders first on the server). A responsive-visibility
+ *   prop replaces it.
+ * - EmptyState's title is always an h4 and it is a live region, which skips a
+ *   heading level under a section's h2.
+ * - ListItem renders primary in a paragraph and secondary in a span: inline content only.
+ * - No tabular numerals or right-align for numbers: numeric columns right-justify
+ *   with a Stack.
+ * - DateFormatter formats in the viewer's time zone (hydration mismatch, and no
+ *   UTC), so times are visible text from lib/admin/format.ts.
  */
 
 import { useState, type ReactNode } from "react";
-import { Box, Grid, GridCol, IconButton, InlineAlert, List, ListItem, ProgressBar, ResponsiveGrid, Stack, StatusLabel, Tooltip, Typography, tokens } from "@common-origin/design-system";
+import { Box, EmptyState, Grid, GridCol, IconButton, InlineAlert, List, ListItem, MoneyDisplay, ProgressBar, ResponsiveGrid, Stack, StatusLabel, Tooltip, Typography, tokens } from "@common-origin/design-system";
 import type { Tone } from "@/lib/admin/headline";
 import type { Level } from "@/lib/admin/types";
-import { ago, formatDuration, utcStamp } from "@/lib/admin/format";
+import { ago, formatDuration, formatUsd, utcStamp } from "@/lib/admin/format";
 import { useMediaQuery } from "./useMediaQuery";
 
 // The one severity vocabulary for the page (#279). The design system has no warning status
@@ -125,11 +140,10 @@ export function BarRow({ label, value, bar }: { label: string; value: ReactNode;
   );
 }
 
-// Where the columns have room: from the medium breakpoint up to just below the large one (full width, no
-// sidebar), and again from the extra-large one. Between them the side navigation takes a quarter of the
-// page and 12 columns are too narrow for a label or a figure, so rows fall back to label/value pairs.
-const { md, lg, xl } = tokens.base.breakpoint;
-const COLUMNS_QUERY = `(min-width: ${md}) and (max-width: ${parseFloat(lg) - 0.02}px), (min-width: ${xl})`;
+// Where the columns have room: from the medium breakpoint up. Beside the side navigation (large and up)
+// a section is still about as wide as the full-width page is at the medium breakpoint (~700px), so the
+// columns fit there too; only a phone falls back to label/value pairs.
+const COLUMNS_QUERY = `(min-width: ${tokens.base.breakpoint.md})`;
 
 export interface Column<Row> {
   id: string;
@@ -159,8 +173,8 @@ const asContent = (value: ReactNode): ReactNode =>
 
 /**
  * Rows with real columns, standing in for a DataTable (a design-system gap).
- * Where the columns fit it is a header row over aligned rows; elsewhere (a
- * phone, or beside the side navigation) each cell carries its own label
+ * Where the columns fit (from the medium breakpoint) it is a header row over
+ * aligned rows; on a phone each cell carries its own label
  * (label/value pairs), the first column naming the row. ARIA table roles give
  * assistive tech the structure a native table has. `footer` adds a full-width
  * line under a row (what went wrong, say), and `selected` shades a row.
@@ -196,7 +210,7 @@ export function DataGrid<Row>({ label, columns, rows, rowKey, selected, footer }
                 {columns.map((column) => {
                   const value = asContent(column.cell(row));
                   return (
-                    <GridCol key={column.id} span={narrow(column)} spanMd={column.span} spanLg={narrow(column)} spanXl={column.span}>
+                    <GridCol key={column.id} span={narrow(column)} spanMd={column.span}>
                       <Box role="cell">
                         {wide || column.primary ? (
                           <Stack direction="row" justifyContent={wide && column.numeric ? "flex-end" : "flex-start"} alignItems="center" gap="xs">
@@ -411,10 +425,36 @@ export function Field({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function Empty({ children }: { children: ReactNode }) {
+/** One quiet line for an empty list inside a section (a sub-list, not the whole section). */
+export function Note({ children }: { children: string }) {
   return (
     <Typography variant="body" color="subdued">
       {children}
     </Typography>
   );
+}
+
+/**
+ * An empty section: the design system's small EmptyState. (Its title is always an
+ * h4 and it is a live region: a gap, since under a section's h2 that skips a level.
+ * So it is for a whole section being empty, and a sub-list uses Note.)
+ */
+export function Empty({ title, children }: { title: string; children: string }) {
+  return <EmptyState size="small" illustration="empty" title={title} description={children} />;
+}
+
+/**
+ * A dollar amount: MoneyDisplay (two decimals, so a total reads "$17.00"), except
+ * under a dollar, where it keeps formatUsd's three decimals like every other cost
+ * on the page ($0.014 must not read "$0.01" here and "$0.014" beside it).
+ */
+export function Dollars({ amount }: { amount: number }) {
+  if (amount !== 0 && Math.abs(amount) < 1) {
+    return (
+      <Typography variant="h3" as="span">
+        {formatUsd(amount)}
+      </Typography>
+    );
+  }
+  return <MoneyDisplay amount={amount} currency="USD" locale="en-US" size="large" />;
 }
