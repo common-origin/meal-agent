@@ -53,7 +53,7 @@ An AI-powered multi-user meal planning application that helps households plan we
   - URL extraction and parsing
 
 ### UI & Design
-- **@common-origin/design-system v1.14.0** - 15+ production components
+- **@common-origin/design-system** - see `apps/web/package.json` for the installed version
 - **WCAG 2.1 AA Compliant** - Fully accessible
 - **Responsive Design** - Mobile-first approach
 
@@ -175,7 +175,7 @@ meal-agent/
 
 ## 🎨 Design System
 
-Built with [Common Origin Design System v1.14.0](https://common-origin-design-system.vercel.app/)
+Built with the [Common Origin Design System](https://common-origin-design-system.vercel.app/) (installed version: `apps/web/package.json`)
 
 ### Components Used
 - **Sheet** - Drawers (Pantry, Swap, Regenerate, Weekly Overrides)
